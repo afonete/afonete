@@ -1,0 +1,387 @@
+<?php $__env->startSection('contents'); ?>
+    <div class="container bg-white min-h-screen py-4 px-3">
+        <?php if(session('status')): ?>
+            <div class="alert alert-success">
+                <?php echo e(session('status')); ?>
+
+            </div>
+        <?php endif; ?>
+
+        <header class="bg-blue-50 py-[2rem] rounded  flex items-center justify-between">
+            <h1 class="text-2xl uppercase text-slate-700 font-bold">BANNER-CAMPAIN</h1>
+            <button onclick="window.history.back()" class="text-white  rounded py-3 px-2 bg-purple-500 hover:bg-purple-600 cursor-pointer outline-none border-none">Back</button>
+        </header>
+
+
+
+
+<div class=" mx-auto">
+
+	<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+
+        <div x-data="{ activeTab: 'general' }" x-cloak class="p-6">
+            <!-- Tabs -->
+            <div class="flex space-x-4 mb-4">
+                <button
+                    :class="{ 'bg-blue-500 text-white': activeTab === 'general', 'bg-gray-500 text-white': activeTab !== 'general' }"
+                    class="px-4 py-2 rounded-lg"
+                    @click="activeTab = 'general'">
+                    General Settings
+                </button>
+                <button
+                    :class="{ 'bg-blue-500 text-white': activeTab === 'level', 'bg-gray-500 text-white': activeTab !== 'level' }"
+                    class="px-4 py-2 rounded-lg"
+                    @click="activeTab = 'level'">
+                    Level Settings
+                </button>
+                
+            </div>
+
+            <!-- General Settings Tab -->
+        <div  x-show="activeTab === 'general'" >
+
+
+            <div class="grid grid-cols-2 gap-3">
+                
+                <div>
+                    <div class="border  rounded-lg self-start my-2">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Campain Name</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+
+                            <input id="costPerAction" type="text" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Campain Name">
+                        </div>
+                    </div>
+                    
+                    <div class="border  rounded-lg self-start my-2">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Campain Target Link</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+
+                            <input id="costPerAction" type="text" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Campain Target Link">
+
+                        </div>
+                    </div>
+
+
+
+                   <div x-data="{viewType:'default'}" class="flex gap-2">
+
+                    <div class="border  rounded-lg self-start my-2 flex-1">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Campain Target Views</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+
+                            <select class="block w-full mt-2 py-3 border border-gray-300 rounded-lg px-2" x-model="viewType">
+                                <option value="default">Choose</option>
+                                <option value="1000">1k Views</option>
+                                <option value="5000">5k Views</option>
+                                <option value="10000">10k Views</option>
+                                <option value="500000">500k Views</option>
+                                <option value="2500000">2500k Views</option>
+                                <option value="custom">Custom Views</option>
+
+                            </select>
+
+                        </div>
+                    </div>
+
+
+                    <div class="border  rounded-lg self-start my-2 flex-1" x-show="viewType=='custom'">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Enter Custom Target Views</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+
+                            <input id="costPerAction" name="customviews" type="number" min="1" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Enter views Target">
+
+
+                        </div>
+                    </div>
+
+                   </div>
+                  
+                   <div class="flex gap-2" x-data="{viewType:'default'}" >
+                     
+                   <div class="border  rounded-lg self-start my-2 flex-1">
+                    <div  class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">Campain Target Duration</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+
+                        <select class="block w-full mt-2 py-3 border border-gray-300 rounded-lg px-2" x-model="viewType" name="duration">
+                            <option value="default">Choose</option>
+                            <option value="1">1 Day(0.004$ per view)</option>
+                            <option value="3">3 Days(0.012$ per view)</option>
+                            <option value="7">7 Days(0.012$ per view)</option>
+                            <option value="15">15 Days(0.012$ per view)</option>
+                            <option value="30">30 Days(0.012$ per view)</option>
+                            <option value="60">60 Days(0.012$ per view)</option>
+                            <option value="custom">custom</option>
+                            
+
+                        </select>
+
+                    </div>
+                   </div>
+
+
+                   <div x-data="{
+                    startDate: '',
+                    endDate: '',
+                    duration: '',
+                    calculateDuration() {
+                        if (this.startDate && this.endDate) {
+                            const start = new Date(this.startDate);
+                            const end = new Date(this.endDate);
+                            const timeDiff = end - start;
+                            const daysDiff = timeDiff / (1000 * 3600 * 24);
+                            this.duration = daysDiff > 0 ? daysDiff + ' days' : '';
+                        }
+                    }
+                }" class="flex flex-wrap gap-4" x-show="viewType == 'custom'">
+                
+                <!-- Start Date -->
+                <div class="border rounded-lg self-start my-2 flex-1">
+                    <div class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">Start Date</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+                        <input type="date" x-model="startDate" @change="calculateDuration" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            
+                <!-- End Date -->
+                <div class="border rounded-lg self-start my-2 flex-1">
+                    <div class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">End Date</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+                        <input type="date" x-model="endDate" @change="calculateDuration" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            
+                <!-- Duration (Read-only) -->
+                <div class="border rounded-lg self-start my-2 flex-1">
+                    <div class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">Duration (Days)</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+                        <input type="text" x-model="duration" readonly class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Duration will be calculated...">
+                    </div>
+                </div>
+            
+                <!-- Cost -->
+                <div class="border rounded-lg self-start my-2 flex-1">
+                    <div class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">Cost(Per View)</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+                        <input type="number" name="cost" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Set Cost...">
+                    </div>
+                </div>
+            </div>
+
+            
+                </div>
+
+                   <div class="border  rounded-lg self-start my-2 flex-1">
+                    <div  class="bg-gray-200 rounded-e py-2 px-3">
+                        <h2 class="text-lg font-semibold mb-4">Geo Targeting</h2>
+                    </div>
+                    <div class="mb-4 px-3 py-2">
+
+                        <select class="block w-full mt-2 py-3 border border-gray-300 rounded-lg px-2" x-model="viewType">
+                            <option value="default">Choose</option>
+                            <option value="1000">US</option>
+                            <option value="5000">Africa</option>
+                            <option value="10000">Europe</option>
+                            <option value="500000">Asia</option>
+                            <option value="2500000">U.K</option>
+                            <option value="custom">Oceania</option>
+
+                        </select>
+
+                    </div>
+                   </div>
+
+                <div class="flex gap-2">
+                    <div class="border  rounded-lg self-start my-2 flex-1">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Set Question</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+                            <input  type="text" name="question" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Set Question........">
+                        </div>
+                    </div>
+                    <div class="border  rounded-lg self-start my-2 flex-1">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Set Answer</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+                            <input  type="text" name="answer" class="block w-full mt-2 py-3 border border-gray-300 rounded-lg" placeholder="Set Answer........">
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+
+
+                <div>
+                    <div class="border rounded-lg self-start my-2">
+                        <div class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Terms Settings</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+                            <!-- Trix Editor -->
+                            <input id="terms-content" type="hidden" name="content">
+                            <trix-editor input="terms-content" class="trix-editor"></trix-editor>
+                        </div>
+                    </div>
+
+
+
+                    <div class="border  rounded-lg self-start my-2 flex-1">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Feature Image (512*512)</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+                            <input  type="file" name="image" class="block w-full mt-2 py-2 border border-gray-300 rounded-lg" placeholder="Set Answer........">
+                        </div>
+                    </div>
+
+
+                    <div x-data="{
+                        banners: [{ id: 1, file: null }]
+                    }" class="max-w-4xl mx-auto p-6 bg-white border rounded-lg shadow-lg">
+                        <!-- Header -->
+                        <h2 class="text-xl font-semibold mb-4">Banner Images</h2>
+                    
+                        <!-- Table -->
+                        <table class="table-auto w-full border">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border px-4 py-2">Feature Image</th>
+                                    <th class="border px-4 py-2">Image Dimensions</th>
+                                    <th class="border px-4 py-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(banner, index) in banners" :key="banner.id">
+                                    <tr>
+                                        <!-- Feature Image Upload -->
+                                        <td class="border px-4 py-2">
+                                            <div class="flex items-center">
+                                                <label class="block">
+                                                    <input type="file" class="sr-only" @change="banner.file = $event.target.files[0]" />
+                                                    <div class="flex items-center border p-2 rounded-lg cursor-pointer">
+                                                        <img src="https://via.placeholder.com/50" alt="Placeholder" class="h-10 w-10 mr-4">
+                                                        <span x-text="banner.file ? banner.file.name : 'No file chosen'" class="text-gray-600"></span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </td>
+                    
+                                        <!-- Image Dimensions -->
+                                        <td class="border px-4 py-2 text-center">
+                                            <span class="block py-2 px-4 bg-blue-500 text-white rounded-lg">512x512</span>
+                                        </td>
+                    
+                                        <!-- Actions -->
+                                        <td class="border px-4 py-2 text-center">
+                                            <button @click="removeBanner(index)" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    
+                        <!-- Add Banner Button -->
+                        <div class="mt-4">
+                            <button @click="addBanner" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                                Add Banner
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        function bannersData() {
+                            return {
+                                banners: [{ id: 1, file: null }], // Initial single banner
+                                addBanner() {
+                                    const newId = this.banners.length + 1;
+                                    this.banners.push({ id: newId, file: null });
+                                },
+                                removeBanner(index) {
+                                    this.banners.splice(index, 1);
+                                }
+                            };
+                        }
+                    </script>
+                    
+
+                    <div class="border  rounded-lg self-start my-2 flex-1">
+                        <div  class="bg-gray-200 rounded-e py-2 px-3">
+                            <h2 class="text-lg font-semibold mb-4">Status</h2>
+                        </div>
+                        <div class="mb-4 px-3 py-2">
+                            <label>
+                                <input type="radio" name="status" value="Draft"> Draft
+                            </label>
+
+                            <label>
+                                <input type="radio" checked name="status" value="Public"> Public
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </div>
+
+          
+        </div>
+
+            <!-- Level Settings Tab -->
+            <div x-show="activeTab === 'level'" class="border p-4 rounded-lg">
+                <h2 class="text-lg font-semibold mb-4">Tobe Discussed</h2>
+              
+            </div>
+
+            <!-- Recurring Settings Tab -->
+            <div x-show="activeTab === 'recurring'" class="border p-4 rounded-lg">
+                <h2 class="text-lg font-semibold">Recurring Settings Content</h2>
+                <!-- Add your recurring settings content here -->
+            </div>
+
+            <!-- Postback Tab -->
+            <div x-show="activeTab === 'postback'" class="border p-4 rounded-lg">
+                <h2 class="text-lg font-semibold">Postback Settings Content</h2>
+                <!-- Add your postback settings content here -->
+            </div>
+
+            <!-- Conversion API Tab -->
+            <div x-show="activeTab === 'conversion'" class="border p-4 rounded-lg">
+                <h2 class="text-lg font-semibold">Conversion API Settings Content</h2>
+                <!-- Add your conversion API content here -->
+            </div>
+        </div>
+        
+        <div class="px-2 pb-4">
+            <button type="submit" class="w-full py-3 bg-purple-400 my-2 text-white  px-2 font-bold rounded hover:bg-purple-800 ">Save Campain</button>
+ 
+        </div>
+
+	</div>
+
+
+
+    </div>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('admin.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH /home/cwkwkueb/test.focoin.eu/resources/views/admin/campain/BannerCampain.blade.php ENDPATH**/ ?>

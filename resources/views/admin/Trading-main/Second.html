@@ -1,0 +1,188 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecondPage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-indigo-900 font-sans">
+
+
+      
+<!-- Responsive Navigation Bar -->
+<nav class="bg-purple-800 text-white py-4 px-5">
+  <div class="container mx-auto flex flex-wrap items-center justify-center">
+    <div class="flex items-center">
+      <button id="menu-button" class="block lg:hidden px-2 text-white focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+    </button>
+
+      <div class="hidden lg:flex space-x-4 sm:ms-0" >
+        <div class="hidden lg:flex space-x-4">
+          <a href="#" class="px-10 font-medium text-white py-1 rounded-lg bg-gradient-to-r from-yellow-400 to-purple-500 hover:from-orange-600 hover:to-purple-600">Advertise</a>
+          <a href="#" class="px-10 font-medium text-white py-1 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">Exchange</a>
+          <a href="#" class="hover:text-gray-400">White Paper</a>
+          <a href="#" class="hover:text-gray-400">FAQ</a>
+          <a href="#" class="hover:text-gray-400">English</a>
+        </div>
+      </div>
+    </div>
+    <!-- <div class="hidden lg:flex space-x-4">
+      <a href="#" class="">Registration</a>
+      <a href="#" class="hover:text-gray-400">Log in</a>
+    </div> -->
+  </div>
+  <div id="mobile-menu" class="hidden lg:hidden space-x-2">
+    <a href="#" class="hover:text-gray-400">Advertise</a>
+    <a href="#" class="hover:text-gray-400">Exchange</a>
+    <a href="#" class="hover:text-gray-400">White Paper</a>
+    <a href="#" class="hover:text-gray-400">FAQ</a>
+    <a href="#" class="hover:text-gray-400">English</a>
+  </div>
+</nav>
+
+  <header class=" bg-gradient-to-r from-violet-800 to-indigo-950  w-full p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 mx-2">
+      <div class="text-center">
+        <h1 class="font-bold text-2xl text-white">Focoin <span class="text-3xl">Exchange</span> </h1>
+        <p class="font-bold flex text-xl justify-center text-white"> Introduction <ion-icon name="chevron-forward-sharp" class="text-xl mt-2 "></ion-icon> 
+          <span class="text-transparent bg-gradient-to-r from-yellow-400 via-red-500  bg-clip-text">Exchange</span>
+</p>
+      </div>
+      <div class="text-center mt-4 md:mt-0 md:text-start"> 
+        <button class="px-10 font-bold text-white py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+          Sign-In Now
+      </button>
+      </div>
+    </div>
+  </header>
+
+
+    <div class="px-10 py-4 my-6 gap-4 grid grid-cols-1 md:grid-cols-3 sm:grid-cols-1">
+        
+      <!-- left division -->
+            <div class="mx-auto px-2 rounded-md w-full md:w-4/5   ">
+                <div class="flex justify-between">
+                    <button class="w-1/2 text-center py-2 rounded-t-3xl bg-violet-950 text-amber-300">
+                        Buy
+                    </button>
+                    <button class="w-1/2 text-center py-2 rounded-t-3xl bg-white/20 text-amber-300">
+                        Sell
+                    </button>
+                </div>
+
+                <div class="text-white bg-violet-950 py-3  px-2 ">
+           <div class="text-center ">
+                    <h2 class="text-xl font-bold mb-4 text-amber-300">Buy Coins</h2>
+                    <p class="mb-4">Purchase Focoin in an instant</p>
+                </div>
+
+                <hr class="mb-4" />
+
+                <label class="block mb-2">How much Focoin 🪙 would you like to purchase?</label>
+                <form action="">
+                    <input type="number" placeholder="0.0" class="w-full p-2 mb-4 rounded-lg bg-white/10 text-white" />
+                    <label class="block mb-2">USD Price</label>
+                    <input type="text" placeholder="$0.00000000" class="w-full p-2 mb-4 rounded-lg bg-white/10 text-white" />
+                </form>
+
+                <div class="text-center my-2">
+                    <button class="bg-red-500 text-white px-10 py-1 rounded-lg flex justify-center mx-24"> <img src="https://cdn3.iconfinder.com/data/icons/fluent-regular-24px-vol-5/24/ic_fluent_location_live_24_regular-512.png" alt="" class="mt-1 space-x-4 h-4 w-4"> LIVE</button>
+                    <h1 class="ml-2">1 FOCOIN = $0.02079564</h1>
+                </div>
+                <button class="w-full py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600">
+                    Sign-In Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Second division -->
+        <div class="col-span-2 rounded-md">
+            <!-- sub division one-->
+            <div class="w-full bg-violet-950 px-3 py-2 rounded-md">
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <h1 class="font-medium text-amber-300">151 K</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Sells Orders</span>
+                            <ion-icon name="information-circle" class="mt-1 text-xl"></ion-icon>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="font-medium text-amber-300">1.244 K</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Buy Orders</span>
+                            <ion-icon name="information-circle" class="mt-1 text-xl"></ion-icon>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="font-medium text-amber-300">1.88M</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Investors</span>
+                            <ion-icon name="information-circle" class="mt-1 text-xl"></ion-icon>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="text-amber-300 font-medium">$3,280,022.8866</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Trade Volume</span>
+                            <ion-icon name="information-circle" class="mt-1 text-xl"></ion-icon>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="text-amber-300 font-medium">397,902,677</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Circulating Supply</span>
+                            <ion-icon name="information-circle" class="text-xl"></ion-icon>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="text-amber-300 font-medium">500,000,000</h1>
+                        <p class="text-gray-400 flex justify-center text-sm">
+                            <span>Total Supply</span>
+                            <ion-icon name="information-circle" class="mt-1 text-xl"></ion-icon>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- sub division two -->
+            <div class="w-full bg-violet-950 px-4 py-3 mt-2 rounded-md">
+                <canvas id="myChart" class="w-full h-full"></canvas>
+              </div>
+              
+              
+        </div>
+    </div>
+
+    <!-- Tailwindcss -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <!-- chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="chart.js"></script>
+
+      <!-- JavaScript for toggling the mobile menu -->
+  <script>
+    document.getElementById('menu-button').onclick = function() {
+      var menu = document.getElementById('mobile-menu');
+      if (menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+      } else {
+        menu.classList.add('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+@extends('admin.sidebar')
+
+@section('contents')
+    <div class="container bg-white min-h-screen py-4 px-3">
+        @if(session('status'))
+            <div class="alert alert-success">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <header class="bg-blue-50 py-[2rem] rounded ">
+          <h1 class="text-2xl uppercase text-slate-700 font-bold">ADVENTURE - EDIT ({{$adventure->name}})</h1>
+        </header>
+
+
+
+
+
+    <div class=" mx-auto">
+
+        <div class="relative overflow-x-auto sm:rounded-lg py-3">
+
+
+
+            @if (session('message'))
+
+            <div class="text-green-500 my-2 py-2 px-1 bg-green-200 rounded">
+                <strong class="">
+                    {{session('message')}}
+                </strong>
+            </div>
+
+            @endif
+
+            @if ($errors->any())
+                <div class="bg-red-400 py-2 px-2 rounded shadow-sm">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li class="text-red-600">{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('adventures.update', $adventure->id) }}" method="POST" class="block sm:grid grid-cols-3 gap-3">
+            @csrf
+                @method('PUT')
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700  pb-2">Name: </label>
+                    <input type="text" id="name" name="name" class=" block w-full border-gray-300
+                        rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                        placeholder="Ex: UVP, default:UVP"
+                        value="{{$adventure->name}}"
+                        >
+                </div>
+
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700  pb-2">Plan: </label>
+                    <input type="text"  name="plan" class=" block w-full border-gray-300
+                        rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                        placeholder="Ex: Venture Light"
+                        value="{{$adventure->plan}}"
+                        >
+                </div>
+
+                <div>
+                    <label for="percentage_earning" class="block text-sm font-medium text-gray-700  pb-2">Percentage (%): </label>
+                    <input type="number" step="0.01" id="percentage_earning"
+                        name="percentage" placeholder="Ex:  1%"
+                        class=" block w-full border-gray-300 rounded-md sha
+                        dow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required
+                        value="{{$adventure->percentage}}"
+                        >
+                </div>
+
+
+                <div>
+                    <label for="min_amount" class="block text-sm font-medium text-gray-700  pb-2">Minimum Amount: </label>
+                    <input type="number" id="min_amount" name="min_amount"
+                        class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
+                        focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 19000$"
+                        value="{{$adventure->min_amount}}"
+                        >
+                </div>
+                <div>
+                    <label for="max_amount" class="block text-sm font-medium text-gray-700  pb-2">Maximum Amount: </label>
+                    <input type="number" id="max_amount" name="max_amount"
+                    class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
+                        focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 400000$"
+                        value="{{$adventure->max_amount}}"
+                        >
+                </div>
+                <div>
+                    <label for="duration" class="block text-sm font-medium text-gray-700  pb-2">Duration: </label>
+                    <input type="number" id="duration" name="duration"
+                    class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
+                    focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 100 days"
+                    value="{{$adventure->duration}}"
+                    >
+                </div>
+                <div>
+                    <label for="total_return" class="block text-sm font-medium text-gray-700  pb-2">Total Return (%): </label>
+                    <input type="number" id="total_return" name="total_return"
+                        class=" block w-full border-gray-300 rounded-md shadow-sm
+                        focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required
+
+                        placeholder="EX: 130%"
+                        value="{{$adventure->total_return}}"
+
+                        >
+                </div>
+
+                <div>
+
+                    <label for="currency" class="block text-sm font-medium text-gray-700  pb-2">Choose a currency:</label>
+                    <select name="currency" id="currency"   class=" block w-full border-gray-300 rounded-md shadow-sm
+                    focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 py-2 px-2 text-gray-500">
+                        <option value="EUR" {{$adventure->currency == "EUR" ?'selected':''}}>Euro (€)</option>
+                        <option value="USD" {{$adventure->currency == "USD" ?'selected':''}}>USD ($)</option>
+                    </select>
+
+                </div>
+
+                <div>
+                    <label for="current_price" class="block text-sm font-medium text-gray-700  pb-2">Current Price : </label>
+                    <input type="number" id="current_price" name="current_price"
+                        class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                        required
+                        value="{{$adventure->current_price}}"
+                        >
+                </div>
+
+                <div class=" col-span-3 my-2">
+                    <button type="submit"
+                    class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-sm
+                        hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 w-full sm:w-auto">
+                        UPDATE <i class="fa fa-save"></i>
+                    </button>
+                </div>
+            </form>
+
+
+        </div>
+
+
+    </div>
+</div>
+    <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+    <!-- Bootstrap 4 -->
+    <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+    <script>
+
+
+
+      $(document).ready(function(){
+
+        $('#searchInput').on('keyup', function() {
+        var value = $(this).val().toLowerCase();
+        $('#myTable tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+
+
+
+    $('#openModal').click(function() {
+                $('#modal').removeClass('hidden');
+            });
+
+            $('#closeModal').click(function() {
+                $('#modal').addClass('hidden');
+                $("#action").value = ""
+            });
+
+      })
+      function show(action,deposit){
+        // alert(deposit)
+
+        $('#modal').removeClass('hidden');
+        // $("#action").value(action)
+        // $("#deposit").value(deposit);
+        $("#inputs").html(`
+        <input type="hidden" name="action" value="${action}"/>
+        <input type="hidden" name="deposit" value="${deposit}"/>
+        `)
+
+    }
+    </script>
+    </div>
+@endsection

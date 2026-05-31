@@ -1,0 +1,85 @@
+{
+   
+    "name": "fonepo/fonepo",
+    "type": "project",
+    "description": "Fonepo Affiliate || Earn money infinetely.",
+    "keywords": ["Earn", "Success"],
+    "license": "MIT",
+    "require": {
+        "php": "^7.3|^8.0",
+        "dompdf/dompdf": "^2.0",
+        "giggsey/libphonenumber-for-php": "^8.13",
+        "guzzlehttp/guzzle": "^7.8",
+        "inertiajs/inertia-laravel": "^0.4.0",
+        "laravel/breeze": "^1.10",
+        "laravel/framework": "^8.75",
+        "laravel/jetstream": "^2.9",
+        "laravel/sanctum": "^2.11",
+        "laravel/tinker": "^2.5",
+        "league/omnipay": "^3.2",
+        "mcamara/laravel-localization": "^1.8",
+        "omnipay/paypal": "^3.0",
+        "php-http/guzzle7-adapter": "^1.0",
+        "plisio/plisio-api-php": "^1.0",
+        "plisio/plisio-sdk-laravel": "^1.0",
+        "railsware/mailtrap-php": "^1.9",
+        "tightenco/ziggy": "^1.0",
+        "wildbit/swiftmailer-postmark": "^3.4"
+    },
+    "require-dev": {
+        "facade/ignition": "^2.5",
+        "fakerphp/faker": "^1.9.1",
+        "laravel/sail": "^1.0.1",
+        "mockery/mockery": "^1.4.4",
+        "nunomaduro/collision": "^5.10",
+        "phpunit/phpunit": "^9.5.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        },
+ "files": [
+    
+        "app/Helpers/PlisioHelper.php"
+
+    ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@/usr/local/bin/php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@/usr/local/bin/php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@/usr/local/bin/php artisan key:generate --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "cache-dir": "/home/afonliww/fonepo.com/cache",
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -1,0 +1,33 @@
+changed today 
+
+views--
+admin/manage-clubs
+admin/user-clubs
+admin/contacted
+admin/user-subscribed
+admin/pending-user
+admin/fc1
+admin/fc2
+admin/verify
+
+
+routes
+web.php
+
+controller
+user/events.php
+
+http/request
+kernel
+
+middleware
+contract
+
+
+
+added
+views/user/events.blade.php
+model -m /event (php artisan make:model Event -m, php artisan migrate)
+middleware/adminauthentication (php artisan make:middleware adminAuthentication)
+
+

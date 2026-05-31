@@ -1,0 +1,598 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+
+    <style>
+        .show{
+            display: none;
+        }
+        .dropdown-content {
+    display: none;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+    </style>
+</head>
+<body class=" bg-indigo-950/50 font-sans">
+
+    
+<!-- Responsive Navigation Bar -->
+<nav class="bg-blue-950 text-white py-4 px-5">
+    <div class="container mx-auto flex flex-wrap items-center justify-between">
+      <div class="flex items-center">
+        <button id="menu-button" class="block lg:hidden px-2 text-white focus:outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+        </button>
+        <div class="hidden lg:flex space-x-4 md:ms-40 sm:ms-0" >
+          <a href="#" class="hover:text-gray-400">Deal</a>
+          <a href="#" class="hover:text-gray-400">Verification</a>
+          <a href="#" class="hover:text-gray-400">Discount</a>
+          <a href="#" class="hover:text-gray-400">Insurance</a>
+          <a href="#" class="hover:text-gray-400">Evaluate</a>
+          <a href="#" class="hover:text-gray-400">Payment Fees</a>
+          <a href="#" class="hover:text-gray-400">FAQ</a>
+          <a href="#" class="hover:text-gray-400">Introduce</a>
+          <a href="#" class="hover:text-gray-400">Contact</a>
+        </div>
+      </div>
+      <div class="hidden lg:flex space-x-4">
+        <a href="#" class="">Registration</a>
+        <a href="#" class="hover:text-gray-400">Log in</a>
+      </div>
+    </div>
+    <div id="mobile-menu" class="hidden lg:hidden">
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Deal</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Verification</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Discount</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Insurance</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Evaluate</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Payment Fees</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">FAQ</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Introduce</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Contact</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400 ">Registration</a>
+      <a href="#" class="block py-2 px-4 hover:text-gray-400">Log in</a>
+    </div>
+  </nav>
+
+
+  
+
+
+
+    <!-- Header -->
+    <div class="flex items-center justify-center mt-3">
+        <header class="bg-white text-black text-center p-4 rounded-md md:w-1/2 sm:w-full">
+            <h1 class="text-lg font-semibold">CHOOSE THE EXCHANGE DIRECTION</h1>
+            <div class="grid grid-cols-1 md:grid-cols-3 sm:grid-cols-1 gap-0 mt-3">
+                <div>
+                    <h2 class="font-medium">YOU SEND</h2>
+                    
+                    <select class="py-2 px-3 my-2 rounded bg-violet-950  text-amber-300 w-full">
+                        <option> PerfectMoney USD</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                </div>
+                <!-- Exchange button -->
+                <div class="flex items-center justify-center">
+                    <button class="bg-red-500 text-white py-2 px-4 rounded-md md:mt-6">Exchange</button>
+                </div>
+                <div>
+                    <h2 class="font-medium">YOU RECEIVE</h2>
+                    <select class="py-2 px-3 my-2 rounded bg-violet-950  text-amber-300 w-full">
+                        <option>Bitcoin</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                </div>
+            </div>
+        </header>
+    </div>
+
+
+
+    <div class="px-10 mb-5">
+
+    <!-- Announcement -->
+    <div class="mt-3 text-center p-2 rounded-md bg-indigo-950">
+        <h1 class="text-white font-semibold">AUTO PAY PM BUY AND SELL, USDT-AUTO 5s PERCENTAGE</h1>
+        <p class="text-amber-300">DISCOUNT UP TO 25% INSURANCE $2000 / Order</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <!-- I Have Section -->
+        <div class="bg-indigo-950 p-4 rounded-md shadow-md">
+            <div class="flex justify-between mb-2">
+                <button class="bg-white text-black px-8 font-bold rounded-md">Sell</button>
+                <h2 class="text-lg font-bold mb-4 flex justify-end text-white"> 
+                    <ion-icon name="arrow-up-outline" class="text-xl mt-1 font-bold text-white"></ion-icon> 
+                       I HAVE</h2>
+            </div>
+           
+            <ul class="space-y-1">
+                <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100 rounded">
+                    <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" alt="PM"
+                    class=" rounded-full h-7  w-8 mt-1">
+                    Perfect Money 
+
+                   
+                        <input class="w-24  h-7 rounded-md text-black" type="text" name=""  placeholder="Amount">
+
+                        <select name="" id="" class="h-7 text-black px-2 rounded-md">
+                            <option value="">USD</option>
+                            <option value="">EUR</option>
+                        </select>
+                    
+                </li>
+            
+                <!-- start of btn one -->
+                <li class="flex items-center justify-between p-1 bg-white/25 text-gray-100   rounded dropbtn " data-target="dropbtncomponent">
+                    <span class="flex items-center justify-start">
+                        <img src="https://cdn.coinmooner.com/logo/39181.png?v=0" 
+                        class="h-8 w-8 rounded-full mr-1  mt-1">
+                        Focoin
+                    </span>
+                   
+
+                    <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                </li>
+
+                <div class="dropdown-content bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent">
+                    <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                    <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex Focoin PM <span class="text-blue-500 bg-blue-100 p-1 rounded">1 1.0107</span> </p>
+                </div>
+                <!-- end of dropbtncomponent one -->
+
+                <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent1">
+                    <span class="flex items-center justify-start">
+                        <img src="https://e7.pngegg.com/pngimages/415/124/png-clipart-mastercard-visa-bank-card-payment-mastercard-text-service.png"
+                        class="h-9 w-8 rounded-full  mr-1 mt-1">
+                        VISA/Master Card 
+                    </span>
+                    <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                </li>
+                
+                <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent1">
+                    <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                    <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                </div>
+
+                <!-- start of dropbtn -->
+                <li class="flex items-center justify-between space-x-2 p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent2">
+                    <span class="flex items-center justify-start">
+                    <img src="https://thumbnail.imgbin.com/9/1/13/imgbin-tether-united-states-dollar-cryptocurrency-fiat-money-bitfinex-others-43SNp6PdtPb8gSbc1wqv2yebf_t.jpg" alt="PM" 
+                    class="h-7 w-7 rounded-full  mr-1 mt-1">
+                    USDT ERC20 
+                </span>
+                <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                </li>
+
+                <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent2">
+                    <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                    <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                </div>
+                <!-- end of dropbtncomponent -->
+
+
+                </ul>
+
+                <hr class="my-3">
+
+                <ul class="space-y-1 ">
+                    <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent3">
+                        <span class="flex items-center justify-start">
+
+                            <img src="https://c0.klipartz.com/pngpicture/429/35/sticker-png-mobile-payment-mtn-group-money-mobile-phones-airtel-logo-text-service-logo-payment-mobile-payment.png" alt="PM" 
+                            class="h-8 w-8 rounded-full  mr-1  mt-1">
+                            Mobile Payment
+                        </span>
+                        <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                    </li>
+                    <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent3">
+                        <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                        <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                        <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                        <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                    </div>
+                    <!-- end of dropbtncomponent -->
+
+                    <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent4">
+                        <span class="flex items-center justify-start">
+                            <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-VietinBank-CTG-Ori.png" alt="PM" 
+                            class="h-8 w-8 rounded-full mr-1  mt-1">
+                            VietnBank
+                        </span>
+                        <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                    </li>
+                    <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent4">
+                        <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                        <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                        <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                        <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                    </div>
+                    <!-- end of dropbtncomponent -->
+
+                <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent5">
+                    <span class="flex items-center justify-start">
+                        <img src="https://w7.pngwing.com/pngs/803/833/png-transparent-logo-paypal-computer-icons-paypal-blue-angle-logo-thumbnail.png" alt="PM"
+                        class="h-8 w-8  rounded-full  mr-1 mt-1">
+                        Paypal USD
+                    </span>
+                    <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                </li>
+                <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent5">
+                    <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                    <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                </div>
+                <!-- end of dropbtncomponent -->
+
+                <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100  rounded dropbtn" data-target="dropbtncomponent6">
+                    <span class="flex items-center justify-start">
+                    <img src="https://play-lh.googleusercontent.com/Ddr3ZQEu6Vef9JV9ITALeyBEXvYwQWZ3kKJXxrdncD9JR0xlsO--J6zo7uGARfuTBmk" alt="PM" 
+                 class="h-8 w-8 rounded-full  mr-1 mt-1">
+                 TechComBank 
+                </span>
+                 <span> <ion-icon name="chevron-down" class="text-2xl font-bold mr-2 "></ion-icon> </span>
+                </li>
+                <div class="dropdown-content  bg-gray-100 rounded-sm px-10 space-y-2 pb-3" id="dropbtncomponent6">
+                    <h2 class="text-lg font-medium">We have :  <span class="text-red-500">20,000 $ </span></h2>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">Buy USDT <span class="text-red-500 bg-red-100 p-2 rounded">25,955 VND</span></p>
+                    <p class="flex items-center justify-between bg-indigo-950 p-2 rounded-md text-white">SellUSDT <span class="text-green-500 bg-green-100 p-2 rounded">25,955 VND</span></p>
+                    <p  class="flex items-center justify-between bg-indigo-950 px-2 py-1 rounded-md text-white">Ex PM USD  <span class="text-blue-500 bg-blue-100 p-1 rounded">1 0.9555</span> </p>
+                </div>
+                <!-- end of dropbtncomponent -->
+
+
+                <!-- Repeat for other options -->
+            </ul>
+
+            <hr class="my-4">
+
+            <div class="">
+                <label class="block font-bold mb-2 text-center text-white">YOU WANT TO SEND</label>
+                <!-- <input type="text" class="w-full p-2 border rounded bg-gray-200" placeholder="Amount"> -->
+            </div>
+        </div>
+
+        <!-- I Want Section -->
+        <div class="bg-indigo-950 p-4  rounded-md shadow-md" style="height: 610px;">
+            <div class="flex justify-between mb-2">
+            <h2 class="text-lg font-bold mb-4 flex justify-start text-white">I WANT
+                <ion-icon name="arrow-down-outline" class="text-xl mt-1 font-bold"></ion-icon> </h2>
+                
+                <button class="bg-white text-black px-8 font-bold rounded-md">Buy</button>
+           </div>
+            <ul class="space-y-1">
+                <li class="flex items-center justify-between p-2 bg-white/25 text-gray-100 rounded">
+                    <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" alt="PM"
+                    class=" rounded-full h-7  w-8 mt-1">
+                    Perfect Money 
+
+                   
+                        <input class="w-24  h-7 rounded-md text-black" type="text" name=""  placeholder="Amount">
+
+                        <select name="" id="" class="h-7 rounded-md text-black px-2">
+                            <option value="">RWF</option>
+                        </select>
+
+                </li>
+                <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                    <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" 
+                    class="h-7 w-8 rounded-full mr-1  mt-1">Perfect Money Voucher
+                </li>
+                <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                    <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" 
+                    class="h-7 w-8 rounded-full mr-1  mt-1"> Perfect Money Euro
+                </li>
+                <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                    <img src="https://thumbnail.imgbin.com/9/1/13/imgbin-tether-united-states-dollar-cryptocurrency-fiat-money-bitfinex-others-43SNp6PdtPb8gSbc1wqv2yebf_t.jpg" alt="PM" 
+                    class="h-7 w-7 rounded-full mr-1  mt-1"> USDT ERC20
+                </li>
+                </ul>
+
+                <hr class="my-3">
+
+                <ul class="space-y-1 ">
+                    <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                       <img src="https://www.saokim.com.vn/wp-content/uploads/2023/01/Bieu-Tuong-Logo-Ngan-Hang-Vietcombank.png" alt="PM" 
+                        class="h-8 w-12 rounded-full  mt-1"> VietcomBank 
+                    </li>
+                    <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                       <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-VietinBank-CTG-Ori.png" alt="PM" 
+                        class="h-8 w-8 rounded-full  mr-1 mt-1">  VietnBank 
+                    </li>
+                <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                   <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-ACB-Ori.png" alt="PM"
+                     class="h-8 w-8  rounded-full  mr-1 mt-1">   Achaubank
+                </li>
+                <li class="flex items-center justify-start p-2 bg-white/25 text-gray-100  rounded">
+                  <img src="https://play-lh.googleusercontent.com/Ddr3ZQEu6Vef9JV9ITALeyBEXvYwQWZ3kKJXxrdncD9JR0xlsO--J6zo7uGARfuTBmk" alt="PM" 
+                 class="h-8 w-8 rounded-full  mr-1 mt-1"> TechComBank
+                </li>
+                <!-- Repeat for other options -->
+            </ul>
+            <hr class="my-4">
+            <div class="">
+                <label class="block font-bold mb-2 text-center text-white">YOU WANT TO RECEIVE</label>
+                <!-- <input type="text" class="w-full p-2 border rounded bg-gray-200" placeholder="Amount"> -->
+            </div>
+        </div>
+
+        <!-- Exchange Rates Section -->
+        <div class="rounded-md ">
+
+            <div class="rounded-md bg-indigo-950 p-4 mb-10 text-white shadow-md">
+            <h2 class="text-lg font-bold mb-4 flex space-x-1">
+                <span class="mr-20"> EXCHANGE RATES</span>
+
+               
+                    <span> <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" alt="PM"
+                        class=" rounded-full h-7 w-8 mt-1"></span>
+                    <span>   <img src="https://thumbnail.imgbin.com/9/1/13/imgbin-tether-united-states-dollar-cryptocurrency-fiat-money-bitfinex-others-43SNp6PdtPb8gSbc1wqv2yebf_t.jpg" alt="PM" 
+                        class="h-7 w-7 rounded-full  mt-1"> </span>
+                    <span> <img src="https://e7.pngegg.com/pngimages/214/412/png-clipart-logo-circle-graphics-sign-food-network-circle-food-text.png" alt="PM"
+                        class=" rounded-full h-7 w-8 mt-1"></span>
+               
+            </h2>
+            <hr class="border border-gray-100 mb-4">
+            
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <p class="text-lg font-medium"> <span class="text-rose-900">PM USD</span> Available:</p>
+                        <p class="text-lg font-medium text-red-500"> More than $10,000</p>
+                </div>
+                <div class="">
+                    <p class="text-lg font-medium">We get</p>
+                </div>
+                <hr class="border border-gray-100 mb-4">
+
+                <div class="flex justify-between">
+                    <p class="text-lg font-medium flex space-x-3"> $ 0 <ion-icon name="arrow-forward" class=" text-xl mx-1 mt-1"></ion-icon> 5000</p>
+                        <p class="text-lg font-medium text-red-500">22,950</p>
+                </div>
+                <div class="">
+                    <p class="text-lg font-medium">We Send</p>
+                </div>
+                <hr class="border border-gray-100 mb-4">
+
+                <div class="flex justify-between">
+                    <p class="text-lg font-medium flex space-x-3"> $ 0 <ion-icon name="arrow-forward" class=" text-xl mx-1 mt-1"></ion-icon> 5000</p>
+                        <p class="text-lg font-medium text-red-500">23,450</p>
+                </div>
+                
+            </div>
+        </div>
+
+
+        <div class="bg-indigo-950 p-4 mt-10 rounded-md shadow-md">
+
+            <div class="text-white">
+                <h3 class="font-bold mb-2 text-xl ">% OTHER EXCHANGE SERVICES</h3>
+                <hr class="border border-gray-100 mb-4">
+                <div class="flex justify-between mb-2">
+                    <p class="font-medium text-lg">1 PM = 1 USDT-ERC20 (-5%)</p>
+                    <p class="text-red-500 text-lg font-medium">0.95</p>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <p class="font-medium text-lg">1 USDT-ERC20 = 1 PM (0%)</p>
+                    <p class="text-red-500 text-lg font-medium">1.00</p>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <p class="font-medium text-lg">Others (1.5%)</p>
+                    <p class="text-red-500 text-lg font-medium">0.985</p>
+                </div>
+            </div>
+        </div>
+
+
+
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="mt-4 grid grid-cols-2 lg:grid-cols-3 sm:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-md shadow-md">
+            <div class="mb-5">
+                <h1>Minimum : 18.5397</h1>
+                <h1>Maximum : 12977.7958</h1>
+            </div>
+            <label class="block font-bold mb-2">Details sender:</label>
+            <input type="email" class="w-full p-2 border rounded bg-gray-200 my-1" placeholder="Your email">
+            <input type="text" class="w-full p-2 border rounded bg-gray-200 my-1" maxlength="10" placeholder="Phone number" oninput="validateNumberInput(this)">
+
+        </div>
+        <div class="bg-white p-4 rounded-md shadow-md">
+            <label class="block font-bold mb-2">Details recipient:</label>
+            <input type="text" class="w-full p-2 border rounded bg-gray-200" placeholder="Recipient address">
+            <label class="block font-bold mt-4 mb-2">Have promo code?</label>
+            <input type="text" class="w-full p-2 border rounded bg-gray-200" placeholder="Promo code">
+        </div>
+        <div class=" bg-white rounded-md border border-white p-4 shadow-md flex items-center justify-center col-span-2 md:col-span-1 ">
+           <div class="text-center" >
+            <p class="my-3 font-medium ">Make Exchange Perfect money to Bitcoin</p>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded-md " data-modal-target="default-modal" data-modal-toggle="default-modal" >Confirm</button>
+           </div>
+            
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+  
+  <!-- Main modal -->
+  <div id="default-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-autod overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+      <div class="relative p-4 md:w-1/2 w-full max-w-2xl max-h-full">
+          <!-- Modal content -->
+          <div class="relative bg-gray-100  rounded-md pb-2">
+              <!-- Modal header -->
+              <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                  <h3 class="text-xl font-medium text-black  mx-10">
+                      EXCHANGE PERFECT MONEY USDT TO BITCOIN 
+                  </h3>
+                  <button type="button" class="text-red-600  rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center " data-modal-hide="default-modal">
+                      <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                      </svg>
+                  </button>
+              </div>
+              <!-- Modal body -->
+              <div class="bg-white mx-4 mt-2 p-3 rounded-md ">
+                <div>
+                <table>
+                    <tr>
+                        <td> <p>Exchange rate</p></td>
+                        <td class="ps-5"><span class="font-semibold">  : 37651.194 PM USD = 1.000 BTC - 0.00016 BTC</span></td>
+                    </tr>
+                    <tr>
+                        <td><p>Your discount</p></td>
+                        <td class="ps-5"><span class="font-semibold"> : 0% <a href="#" class="text-blue-500">details</a> </span> </td>
+                    </tr>
+                    <tr>
+                        <td><p>Your rate </p></td>
+                        <td class="ps-5"><span class="font-semibold"> : 37651.194 PM USD = 1.000 BTC - 0.00016 BTC</span></td>
+                    </tr>
+                    <tr>
+                        <td> <p>Reserve </p> </td>
+                        <td class="ps-5"><span class="font-semibold"> : 19.22 BTC</span> <a href="#" class="text-blue-500">not enough reserve?</a></td>
+                    </tr>
+                    <tr>
+                        <td><p>Min/Max </p></td>
+                        <td class="ps-5"> <span class="font-semibold"> : 40 PM USD / 723655.94 PM USD</span></p></td>
+                    </tr>
+                </table>
+                   
+                     
+                </div>
+                <div class="mb-4 flex items-center ">
+                    
+                         
+                </div>
+
+                
+            
+
+                
+            <!-- Bank and Account Number -->
+            <form action="">
+            <div class="form-group mb-4">
+                <label for="bankType" class="block font-semibold">Select Bank type and Enter your account number</label>
+                <div class="flex items-center justify-centr space-x-3">
+                    <select id="bankType" class="border border-gray-300 p-1 rounded-md px-2 w-1/3">
+                        <option value="PG Bank">PG Bank</option>
+                        <option value="PG Bank">PA Bank</option>
+                        <option value="PG Bank">VT Bank</option>
+                        <!-- Add more options as needed -->
+                    </select>
+                    <input type="text" id="accountNumber" class="border rouned border-red-500 p-1 rounded-md px-2 w-2/3 ml-2" placeholder="Enter your bank account number...">
+                    <section>
+                        <span class="text-red-500 text-xs">Account number is incorrect, please try again</span>
+                    </section>
+                </div>
+                
+            </div>
+
+            <div>
+                <!-- Form Fields -->
+        
+ <!--flex one  -->
+                <div class="flex justify-between space-x-5">
+                    <div class="form-group mb-2 w-full">
+                        <label for="youGive" class="block font-semibold">You give:</label>
+                        <input type="text" id="youGive" class="border border-gray-300 p-1 rounded-md px-5 w-full" placeholder="You give *">
+                    </div>
+                    <div class="form-group mb-2 w-full">
+                        <label for="youReceive" class="block font-semibold">Receive:</label>
+                        <input type="text" id="youReceive" class="border border-gray-300 p-1 rounded-md px-5 w-full" value="-0.00016000" readonly>
+                    </div>
+                </div>
+          
+            <div class="form-group mb-2 bg-blue-100 p-2 rounded">
+                <p>I want give 0 PerfectMoney USD</p>
+                <p>The rate will be fixed for 30 minutes.</p>
+            </div>
+            <div class="form-group mb-2">
+                <label for="bitcoinAddress" class="block font-semibold">Bitcoin Address:</label>
+                <input type="text" id="bitcoinAddress" class="border border-gray-300 p-1 rounded-md px-2 w-full" placeholder="e.g. 1LP6jo9zYBw4KzsNQjKbo8FhmrphaPds">
+            </div>
+
+  <!-- flex two -->
+            <div class="flex justify-between space-x-5">
+            <div class="form-group mb-2 w-full">
+                <label for="email" class="block font-semibold">Your E-Mail:</label>
+                <input type="email" id="email" class="border border-gray-300 p-1 rounded-md px-2 w-full" placeholder="Email">
+            </div>
+            <div class="form-group mb-2 w-full">
+                <label for="captcha" class="block font-semibold">Character:</label>
+                <input type="text" id="captcha" class="border border-gray-300 p-1 rounded-md px-2 w-full mb-2" placeholder="Captcha">
+            </div>
+           </div>
+           
+            <div class="text-center">
+                <button class="bg-red-500 text-white px-4 py-2 rounded">EXCHANGE</button>
+            </div>
+        </form>
+        </div>
+    
+              </div>
+        
+          </div>
+      </div>
+  </div>
+
+
+
+  
+
+  <script src="drop.js"></script>
+
+      <!-- JavaScript for toggling the mobile menu -->
+  <script>
+    document.getElementById('menu-button').onclick = function() {
+      var menu = document.getElementById('mobile-menu');
+      if (menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+      } else {
+        menu.classList.add('hidden');
+      }
+    }
+    
+ 
+              function validateNumberInput(input) {
+                input.value = input.value.replace(/[^0-9]/g, '');
+              }
+            
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+  <!-- icons -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+</body>
+</html>
