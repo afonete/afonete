@@ -28,6 +28,7 @@ use App\Models\adventures;
 use App\Models\Transaction;
 use App\Models\DailyIncome;
 use App\Models\FCpackage;
+use App\Models\TokenSetting;
 use App\Models\ChartAccount;
 
 class PaymentController extends Controller
@@ -181,50 +182,52 @@ class PaymentController extends Controller
 
   }
 
-  public function SaveDeposits(Request $request){
-    $user = Auth::user();
+  public function SaveDeposits(Request $request)
+  {
+    $request->validate([
+        'amount'      => 'required|numeric|min:1',
+        'paymentMethod' => 'required|string',
+        'proof_of_payment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+    ]);
+
+    $user   = Auth::user();
     $userId = $user->id;
-    $email =$user->email;
     $transactionId = Deposits::generateTransactionNo();
     $have_any_recent_deposits = $user->deposits->count();
-    //  dd($request);
-    
 
-    Deposits::create([
-        "user_id"=>Auth::user()->id,
-        'amount_deposited'=>$request->amount,
-        'amount_removed'=>0,
-        'currency_type'=>"USD",
-        'deposit_method'=>$request->paymentMethod,
-        "transaction_id"=>$transactionId,
-        "network"=>$request->network,
-        "user_wallet_address"=>$request->paymentaccount,
-         ]);
-
-     if($user->have_activation_code){
-        
-        return redirect()->route('user.dashboard')->with('message', 'You have deposited '.$request->expectedAmount.' on your Account.
-        Please Wait For Admin Approval.');
-     }
-     else{
-
-   $user = User::find($userId);
-   $user->has_paid_package = 'Standard';
-   $user->contract='Signed';
-   $package='standard';
-   $name=$user->user;
-   $user->has_free_package = ($have_any_recent_deposits == 0)?"yes":"no";
-
-   if ($user->save() ) {
-     return redirect()->route('user.dashboard')->with('message', 'You have deposited '.$request->expectedAmount.' on your Account.
-     Please Wait For Admin Approval.');;
-   }
-    else {
-     return redirect()->route('user.package')->with('message', 'error while savig');
+    // Handle proof-of-payment upload
+    $proofPath = null;
+    if ($request->hasFile('proof_of_payment')) {
+        $proofPath = $request->file('proof_of_payment')
+                             ->store('deposits/proofs', 'public');
     }
 
+    Deposits::create([
+        'user_id'            => $userId,
+        'amount_deposited'   => $request->amount,
+        'amount_removed'     => 0,
+        'currency_type'      => 'USD',
+        'deposit_method'     => $request->paymentMethod,
+        'transaction_id'     => $transactionId,
+        'network'            => $request->network,
+        'user_wallet_address'=> $request->paymentaccount,
+        'proof_of_payment'   => $proofPath,
+        'status'             => 'pending',
+    ]);
 
-     }
+    if ($user->have_activation_code) {
+        return redirect()->route('user.dashboard')
+            ->with('message', 'Deposit of $'.$request->amount.' submitted. Awaiting admin approval.');
+    }
+
+    $user = User::find($userId);
+    $user->has_paid_package = 'Standard';
+    $user->contract = 'Signed';
+    $user->has_free_package = ($have_any_recent_deposits == 0) ? 'yes' : 'no';
+    $user->save();
+
+    return redirect()->route('user.dashboard')
+        ->with('message', 'Deposit of $'.$request->amount.' submitted. Awaiting admin approval.');
 
 
 
@@ -249,14 +252,17 @@ protected function commissionsTrx($userId,$sourceId,$earnings,$trxId,$name){
     );
 
 
-    // Update or create for ChartAccount model
+    // Accumulate into ChartAccount (fetch existing balance first, then add)
+    $existingCommission = ChartAccount::where('user_id', $userId)
+                            ->where('acc_type', 'COMMISSION')
+                            ->sum('amount');
     ChartAccount::updateOrCreate(
         [
             'user_id' => $userId,
             'acc_type' => 'COMMISSION',
         ],
         [
-            'amount' => $earnings
+            'amount' => $existingCommission + $earnings
         ]
     );
 
@@ -299,11 +305,11 @@ protected function calculateEarnings($payment)
     $data = array();
     $level = 0;
     // Define the default percentage earnings
-     $tenPercent = $amount * 10 / 100;
-
-    $directReferralPercentage = $tenPercent;
-    $indirectReferralPercentage = $tenPercent * 10/100;
-    $earnings = $amount * $directReferralPercentage;
+    // Direct referrer gets 10% of the package amount
+    // Indirect referrer (level 2) gets 1% of the package amount
+    $directReferralPercentage   = $amount * 10 / 100;
+    $indirectReferralPercentage = $amount * 1 / 100;
+    $earnings = $directReferralPercentage; // will be overridden per level below
     $ac = 0;
 
     $team = Teams::where("team_user_id",$currentUser->id)->first();
@@ -358,69 +364,61 @@ protected function calculateEarnings($payment)
                 ]
             );
 
-            // Update or create for ChartAccount model
+            // Accumulate commission (never overwrite)
+            $existingL0 = ChartAccount::where('user_id', $currentUser->referrer->id)
+                            ->where('acc_type', 'COMMISSION')->sum('amount');
             ChartAccount::updateOrCreate(
                 [
                     'user_id' => $currentUser->referrer->id,
                     'acc_type' => 'COMMISSION',
                 ],
                 [
-                    'amount' => $earnings
+                    'amount' => $existingL0 + $earnings
                 ]
-                );
+            );
 
-            $transaction =  Transaction::create([
-                'user_id'=>$currentUser->referrer->id,//JYEWE
-                'transaction_no'=> $trxId,
-                'transaction_type'=> 'COMMISSION', // or any other type you define
-                'receiver_id'=>0,//
+            $transaction = Transaction::create([
+                'user_id'             => $currentUser->referrer->id,
+                'transaction_no'      => $trxId,
+                'transaction_type'    => 'COMMISSION',
+                'receiver_id'         => 0,
                 'transaction_details' => json_encode([
-                    "amount"=>$earnings,
-                    'daily'=>0,
-                    'fomo'=>0,
-                    "stacking"=>0,
-                    "directAds"=>0,
-                    "volume_bonus"=>0,
-                    "sales_bonus"=>0,
-                    "leadership_bonus"=>0,
-                    "royal_fc"=>0,
-                    "stream_bonus"=>0,
-                    "direct_bonus"=>0,
-                    "fomo_bonus"=>0,
-                    "residual"=>0,
-                    "team_build"=>0,
-                    "opportunity"=>0,
-                    'username'=>$currentUser->referrer->name,
-                    "eshop"=>0,
-                    "incetives"=>0
+                    'amount'           => $earnings,
+                    'description'      => 'Direct Referral Commission (10%)',
+                    'daily'            => 0, 'fomo' => 0, 'stacking' => 0,
+                    'directAds'        => 0, 'volume_bonus' => 0, 'sales_bonus' => 0,
+                    'leadership_bonus' => 0, 'royal_fc' => 0, 'stream_bonus' => 0,
+                    'direct_bonus'     => $earnings, 'fomo_bonus' => 0,
+                    'residual'         => 0, 'team_build' => 0, 'opportunity' => 0,
+                    'username'         => $currentUser->referrer->name, 'eshop' => 0, 'incetives' => 0,
                 ])
             ]);
 
 
-        }else if($level == 1){
-            $earnings =  $indirectReferralPercentage;
+        } else if ($level == 1) {
+            $earnings = $indirectReferralPercentage;
 
             Earnings::updateOrCreate(
                 [
-                    'user_id' => $currentUser->referrer->id,
-                    'source_id' => $payment->id,
+                    'user_id'     => $currentUser->referrer->id,
+                    'source_id'   => $payment->id,
                     'source_type' => Paymodel::class,
                 ],
-                [
-                    'amount' => $earnings
-                ]
+                ['amount' => $earnings]
             );
 
-            // Update or create for ChartAccount model
+            // Accumulate commission (never overwrite)
+            $existingL1 = ChartAccount::where('user_id', $currentUser->referrer->id)
+                            ->where('acc_type', 'COMMISSION')->sum('amount');
             ChartAccount::updateOrCreate(
                 [
                     'user_id' => $currentUser->referrer->id,
                     'acc_type' => 'COMMISSION',
                 ],
                 [
-                    'amount' => $earnings
+                    'amount' => $existingL1 + $earnings
                 ]
-                );
+            );
 
 
             $transaction =  Transaction::create([
@@ -531,9 +529,7 @@ $user = Auth::User();
 
 
 
-    if($mostRecentPayment){
-        $amount = $amount + $mostRecentPayment->amount;
-    }
+    // Each investment is independent — don't accumulate into the existing amount.
 
 
     $p = adventures::where('id',$request->uvp_id)->first(); // find a range of bought venture
@@ -560,24 +556,34 @@ $user = Auth::User();
             'network' => $lastDeposit->network
         ]);
 
-        $tkn = $user->ChartAccount()->where("acc_type","LOCKED_TOKEN")->first();
+        // ── Token crediting on package purchase ──
+        // Uses uvp_price from token_settings (admin-set)
+        $uvpPrice         = \App\Models\TokenSetting::uvpPrice();
+        $investmentAmount = (float) $request->amount;
 
-        if(!$tkn){
-            ChartAccount::create(
-                [
-                "user_id"=>Auth::User()->id,
-                "acc_type"=>"LOCKED_TOKEN",
-                "amount"=>$request->amount / 0.0025,
-                ]
-            );
-        }
-        else{
-            $tkn->update(
-                [
-                "amount"=>$tkn->amount + ($request->amount / 0.0025),
-                ]
-            );
-        }
+        // LOCKED_TOKEN = full investment / uvp_price
+        // Locked for 100 days, then auto-transferred to AVAILABLE_TOKEN by CheckPackages.
+        // This is the token balance shown to the user on their dashboard.
+        $lockedTokens = $uvpPrice > 0 ? round($investmentAmount / $uvpPrice, 4) : 0;
+
+        // GAS_FEE = 20% of investment / uvp_price
+        // Internal accounting only. Shown to admin only — never to the user.
+        $gasAmount    = $investmentAmount * 20 / 100;
+        $gasFeeTokens = $uvpPrice > 0 ? round($gasAmount / $uvpPrice, 4) : 0;
+
+        // Credit LOCKED_TOKEN (full investment tokens locked for 100 days)
+        $existingLocked = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+        ChartAccount::updateOrCreate(
+            ['user_id' => Auth::User()->id, 'acc_type' => 'LOCKED_TOKEN'],
+            ['amount'  => $existingLocked + $lockedTokens]
+        );
+
+        // Credit GAS_FEE (20% charges — admin-only)
+        $existingGas = $user->ChartAccount()->where('acc_type', 'GAS_FEE')->sum('amount');
+        ChartAccount::updateOrCreate(
+            ['user_id' => Auth::User()->id, 'acc_type' => 'GAS_FEE'],
+            ['amount'  => $existingGas + $gasFeeTokens]
+        );
 
         $transaction =  Transaction::create([
             'user_id'=>$user->id,
@@ -608,43 +614,29 @@ $user = Auth::User();
             ])
         ]);
 
-        if(!$mostRecentPayment){
-            $create_payable = new Paymodel([
-                'user' => $username,
-                'package' => $p->plan,
-                'amount' => $request->amount,
-                'paid' => $request->amount,
-                'over_paid' => 0,
-                'status' => 1,
-                'expiration_date' => $expDate,
-                "duration" => $exp,
-                "category" => "VENTURE",
-                "category_id" => 1
-            ]);
+        // ── Always create a NEW investment record — never overwrite an existing one.
+        // Each investment is independent: its own expiration, its own renewal cycle,
+        // its own daily income calculation, its own token grant.
+        $create_payable = new Paymodel([
+            'user'            => $username,
+            'package'         => $p->plan,
+            'amount'          => $request->amount,
+            'paid'            => $request->amount,
+            'over_paid'       => 0,
+            'status'          => 1,
+            'expiration_date' => $expDate,
+            'duration'        => $exp,
+            'category'        => 'VENTURE',
+            'category_id'     => 1,
+        ]);
 
-            $pay =  $p->payments()->save($create_payable);
-            $this->calculateEarnings($pay);
-            $this->calculatePackageMetrics($pay);
+        $pay = $p->payments()->save($create_payable);
+        $this->calculateEarnings($pay);
+        $this->calculatePackageMetrics($pay);
 
-        }else{
-
-            $newAmount = $mostRecentPayment->amount + $request->amount + $totally;
-            $mostRecentPayment->update([
-                'package' => $p->plan,
-                'amount' => $newAmount,
-                'paid' => $newAmount,
-            ]);
-
-            $this->calculateEarnings($mostRecentPayment);
-            $this->calculatePackageMetrics($mostRecentPayment);
-
-        }
-
-        $muser->update(["has_paid_package"=>$p->name,"has_free_package"=>"no"]);
-        return redirect()->route('user.dashboard');
-
-
-
+        $muser->update(["has_paid_package" => $p->name, "has_free_package" => "no"]);
+        return redirect()->route('user.dashboard')
+            ->with('message', 'Investment of $'.number_format($request->amount, 2).' activated successfully.');
   }
 
 }
@@ -685,10 +677,7 @@ public function blockpayventure(Request $request)
 
 
 
-    if($mostRecentPayment){
-        $amount = $amount + $mostRecentPayment->amount;
-    }
-
+    // Each investment is independent — don't accumulate into the existing amount.
     // $p = adventures::where("id",$request->package)->first();
     $p = adventures::where('min_amount', '<=', $amount)
                     ->where('max_amount', '>=', $amount)
@@ -737,46 +726,27 @@ public function blockpayventure(Request $request)
             ])
         ]);
 
-        if(!$mostRecentPayment){
-            $create_payable = new Paymodel([
-                'user' => $username,
-                'package' => $p->plan,
-                'amount' => $request->amount,
-                'paid' => $request->amount,
-                'over_paid' => 0,
-                'status' => 1,
-                'expiration_date' => $expDate,
-                "duration" => $exp,
-                "category" => "VENTURE",
-                "category_id" => 1
-            ]);
+        // ── Always create a NEW investment record — never overwrite an existing one.
+        $create_payable = new Paymodel([
+            'user'            => $username,
+            'package'         => $p->plan,
+            'amount'          => $request->amount,
+            'paid'            => $request->amount,
+            'over_paid'       => 0,
+            'status'          => 1,
+            'expiration_date' => $expDate,
+            'duration'        => $exp,
+            'category'        => 'VENTURE',
+            'category_id'     => 1,
+        ]);
 
-            $pay =  $p->payments()->save($create_payable);
-            $this->calculateEarnings($pay);
-            $this->calculatePackageMetrics($pay);
+        $pay = $p->payments()->save($create_payable);
+        $this->calculateEarnings($pay);
+        $this->calculatePackageMetrics($pay);
 
-        }else{
-
-            $newAmount = $mostRecentPayment->amount + $request->amount + $totally;
-            $mostRecentPayment->update([
-                'package' => $p->plan,
-                'amount' => $newAmount,
-                'paid' => $newAmount,
-            ]);
-
-            $this->calculateEarnings($mostRecentPayment);
-            $this->calculatePackageMetrics($mostRecentPayment);
-
-        }
-
-        $muser->update(["has_paid_package"=>$p->name,"has_free_package"=>"no"]);
-
-        if($muser->contract == "not"){
-            return redirect()->route('user.dashboard');
-        }
-        else{
-            return redirect()->route('user.dashboard');
-        }
+        $muser->update(["has_paid_package" => $p->name, "has_free_package" => "no"]);
+        return redirect()->route('user.dashboard')
+            ->with('message', 'Investment of $'.number_format($request->amount, 2).' activated successfully.');
 
 
   }

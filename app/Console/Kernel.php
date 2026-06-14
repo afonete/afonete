@@ -15,9 +15,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->command('packages:check')->daily();
+        // Mark expired packages and send reminder emails — runs at midnight
+        $schedule->command('packages:check')->dailyAt('00:00');
 
+        // Calculate and credit daily income for all active VENTURE packages — runs 5 min after midnight
+        // Running slightly after packages:check ensures expired packages are already flagged first
+        $schedule->command('income:calculate')->dailyAt('00:05');
     }
 
 
@@ -37,6 +40,6 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\ClearAllStorage::class,
         \App\Console\Commands\CheckPackages::class,
-
+        \App\Console\Commands\CalculateDailyIncome::class,
     ];
 }

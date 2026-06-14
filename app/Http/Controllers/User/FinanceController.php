@@ -372,28 +372,78 @@ class FinanceController extends Controller
     public function commission()
     {
         $user = Auth::User();
-        $chartAc = $user->ChartAccount()->where("acc_type","COMMISSION")->get();
-        $trx = $user->ChartAccount()
-                    ->where("acc_type","COMMISSION")
-                    ->get()
-                    ->groupBy(function($date) {
-                        return Carbon::parse($date->created_at)->startOfWeek()->format('Y-m-d');
-                    });
 
-        $previousWeekStart = Carbon::now()->subWeek()->startOfWeek()->format('Y-m-d');
-        $previousWeekEnd = Carbon::now()->subWeek()->endOfWeek()->format('Y-m-d');
+        // ── Total commission balance ──
+        $totalCommission = $user->ChartAccount()->where('acc_type', 'COMMISSION')->sum('amount');
 
-        $previousWeekTransactions = $user->ChartAccount()
-            ->where("acc_type","COMMISSION")
+        // ── All commission transactions ──
+        $commissionTrx = \App\Models\Transaction::where('user_id', $user->id)
+            ->where('transaction_type', 'COMMISSION')
+            ->latest()
+            ->get()
+            ->map(function ($t) {
+                $details = json_decode($t->transaction_details, true) ?? [];
+                $t->parsed_amount      = $details['amount'] ?? 0;
+                $t->parsed_description = $details['description'] ?? ($details['trx_type'] ?? 'Referral Bonus');
+                $t->from_user          = $details['username'] ?? '—';
+                $t->direct_bonus       = $details['direct_bonus'] ?? 0;
+                return $t;
+            });
+
+        // ── Direct referrals with their bonus amounts ──
+        $directReferrals = $user->referrals()
+            ->with(['investments' => function ($q) {
+                $q->where('status', 1)->where('category', 'VENTURE');
+            }])
+            ->get()
+            ->map(function ($ref) use ($user) {
+                $totalInvested = $ref->investments->sum('amount');
+                $bonusEarned   = $totalInvested * 10 / 100;
+                $ref->total_invested = $totalInvested;
+                $ref->bonus_earned   = $bonusEarned;
+                $ref->is_active      = $ref->investments->isNotEmpty();
+                return $ref;
+            });
+
+        // ── Indirect referrals (level 2) ──
+        $indirectReferrals = collect();
+        foreach ($user->referrals as $direct) {
+            foreach ($direct->referrals as $indirect) {
+                $totalInvested = $indirect->investments()
+                    ->where('status', 1)->where('category', 'VENTURE')->sum('amount');
+                $indirect->total_invested   = $totalInvested;
+                $indirect->bonus_earned     = $totalInvested * 1 / 100;
+                $indirect->referred_through = $direct->name;
+                $indirect->is_active        = $totalInvested > 0;
+                $indirectReferrals->push($indirect);
+            }
+        }
+
+        // ── Summary stats ──
+        $directBonusTotal   = $directReferrals->sum('bonus_earned');
+        $indirectBonusTotal = $indirectReferrals->sum('bonus_earned');
+        $totalDirectCount   = $directReferrals->count();
+        $activeDirectCount  = $directReferrals->where('is_active', true)->count();
+
+        // ── Previous week total ──
+        $previousWeekStart = Carbon::now()->subWeek()->startOfWeek();
+        $previousWeekEnd   = Carbon::now()->subWeek()->endOfWeek();
+        $previousWeekTotal = \App\Models\Transaction::where('user_id', $user->id)
+            ->where('transaction_type', 'COMMISSION')
             ->whereBetween('created_at', [$previousWeekStart, $previousWeekEnd])
-            ->get();
+            ->get()
+            ->sum(function ($t) {
+                $d = json_decode($t->transaction_details, true);
+                return $d['amount'] ?? 0;
+            });
 
-        $previousWeekTotal = $previousWeekTransactions->sum('amount');
-
-        // $commissions =
-        $balance = $chartAc->sum("amount");
-        // dd($balance);
-        return view('user.commission',["balance"=>$balance,"trx"=>$trx,"chartAc"=>$chartAc,"previousWeekTotal"=> $previousWeekTotal]); // Adjust the view path as needed
+        return view('user.commission', compact(
+            'totalCommission', 'commissionTrx',
+            'directReferrals', 'indirectReferrals',
+            'directBonusTotal', 'indirectBonusTotal',
+            'totalDirectCount', 'activeDirectCount',
+            'previousWeekTotal'
+        ));
     }
 
     public function downline()
@@ -579,54 +629,523 @@ public function getTeamTree(Request $request,$id){
     }
 
 
-    // GET PAGE TO PAY/RENEW THE PACKAGE
+    // ─────────────────────────────────────────────────────────────────────────
+    //  PACKAGE RENEWAL  (every 30 days within the 100-day package window)
+    // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Show the renewal details page.
+     * The user sees:
+     *  - Their current Trading Voucher balance (deducted from)
+     *  - The renewal fee (= the original package amount)
+     *  - The current token price (set by admin via token_settings table)
+     *  - How many tokens they will receive
+     *  - Which renewal cycle this is (1 / 3)
+     */
+    public function packageRenewPage()
+    {
+        $user = Auth::user();
 
+        // Active paid package
+        $activePayment = \App\Models\Payment::where('user', $user->id)
+            ->where('is_expired', false)
+            ->where('status', '1')
+            ->orderBy('created_at', 'desc')
+            ->first();
 
-    //  PAY PACKAGE RENEW AFTER 30 DAYS
-    public function packageRenewPay (Request $request){
-        $user = Auth::User();
-        $validatedData = $request->validate([
-            'amount' => 'required|max:25',
-        ]);
-
-        $amount = $request->amount;
-        $remaining = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount") - $amount;
-        $balance = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount") + $amount;
-
-        // dd($remaining);
-        if($remaining < 0){
-            return back()->with('error-tr' , "Insufficient Funds.");
+        if (!$activePayment) {
+            return redirect()->route('user.dashboard')
+                ->with('error', 'You have no active package to renew.');
         }
-        // dd($remaining);
-        $user->ChartAccount()->where("acc_type","CASHOUT")->update(['amount' => $remaining]);
-        $user->ChartAccount()->where("acc_type","TRADING")->update(['amount' => $balance]);
 
-        $details = 0;
+        // Trading Voucher balance  (acc_type = TRADING in ChartAccount)
+        $tradingVoucherBalance = $user->ChartAccount()
+            ->where('acc_type', 'TRADING')
+            ->sum('amount');
+
+        // How many renewals has this user already done for this payment?
+        $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
+            ->where('payment_id', $activePayment->id)
+            ->count();
+
+        // Package runs 100 days → renewals at day 30, 60, 90  (max 3)
+        // max_renewals derived from adventure package duration
+        $activePkg2  = \App\Models\adventures::find($activePayment->payable_id);
+        $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
+        $maxRenewals = (int) floor(($pkgDuration - 1) / 30);
+
+        $renewalNumber = $renewalsDone + 1;
+
+        if ($renewalNumber > $maxRenewals) {
+            return redirect()->route('user.dashboard')
+                ->with('info', 'You have completed all renewals for this package cycle.');
+        }
+
+        // Renewal fee = original package amount
+        $renewalFee = (float) $activePayment->amount;
+
+        // Token price from token_settings table (admin-managed)
+        $tokenPrice = \App\Models\TokenSetting::renewalPrice();
+
+        $tokensToReceive = $tokenPrice > 0
+            ? round($renewalFee / $tokenPrice, 4)
+            : 0;
+
+        // Is renewal due? (every 30 days from package purchase)
+        $packageStart   = Carbon::parse($activePayment->created_at);
+        $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
+        $isDue          = Carbon::now()->gte($renewalDueDate->copy()->subDays(1)); // allow 1 day early
+
+        return view('user.package-renew', [
+            'activePayment'        => $activePayment,
+            'tradingVoucherBalance'=> $tradingVoucherBalance,
+            'renewalFee'           => $renewalFee,
+            'tokenPrice'           => $tokenPrice,
+            'tokensToReceive'      => $tokensToReceive,
+            'renewalNumber'        => $renewalNumber,
+            'maxRenewals'          => $maxRenewals,  // dynamic from adventures.duration
+            'renewalDueDate'       => $renewalDueDate,
+            'isDue'                => $isDue,
+            // token price now from TokenSetting, not FCpackage
+        ]);
+    }
+
+    /**
+     * Process the Trading Voucher renewal payment.
+     *
+     * Flow:
+     *  1. Validate user has enough Trading Voucher balance
+     *  2. Deduct renewal fee from TRADING ChartAccount
+     *  3. Record a PackageRenewal row
+     *  4. Log a Transaction
+     *  5. Extend payment expiration by 30 days
+     */
+    public function packageRenewPay(Request $request)
+    {
+        $user = Auth::user();
+
+        // Active package
+        $activePayment = \App\Models\Payment::where('user', $user->id)
+            ->where('is_expired', false)
+            ->where('status', '1')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$activePayment) {
+            return redirect()->route('user.dashboard')
+                ->with('error', 'No active package found.');
+        }
+
+        // How many renewals done already?
+        $renewalsDone  = \App\Models\PackageRenewal::where('user_id', $user->id)
+            ->where('payment_id', $activePayment->id)
+            ->count();
+        $renewalNumber = $renewalsDone + 1;
+
+        // Calculate maxRenewals from package duration
+        $activePkg2ForPay = \App\Models\adventures::find($activePayment->payable_id);
+        $pkgDurationPay   = $activePkg2ForPay ? (int) $activePkg2ForPay->duration : 100;
+        $maxRenewals      = (int) floor(($pkgDurationPay - 1) / 30);
+
+        if ($renewalNumber > $maxRenewals) {
+            return redirect()->route('user.dashboard')
+                ->with('info', 'All renewals for this package cycle are complete.');
+        }
+
+        $renewalFee = (float) $activePayment->amount;
+
+        // Current Trading Voucher balance
+        $currentBalance = $user->ChartAccount()
+            ->where('acc_type', 'TRADING')
+            ->sum('amount');
+
+        if ($currentBalance < $renewalFee) {
+            return redirect()->route('packageRenew')
+                ->with('error', 'Insufficient Trading Voucher balance. You need $' . number_format($renewalFee, 2) . ' but have $' . number_format($currentBalance, 2) . '.');
+        }
+
+        // Token price from token_settings table (admin-managed)
+        $tokenPrice = \App\Models\TokenSetting::renewalPrice();
+
+        $tokensReceived = $tokenPrice > 0
+            ? round($renewalFee / $tokenPrice, 4)
+            : 0;
+
+        // 1. Deduct from TRADING ChartAccount
+        $newBalance = $currentBalance - $renewalFee;
+        $user->ChartAccount()
+            ->where('acc_type', 'TRADING')
+            ->update(['amount' => $newBalance]);
+
+        // 2. Award tokens to AVAILABLE_TOKEN account
+        // Renewal tokens go to AVAILABLE_TOKEN (earned via Trading Voucher), not LOCKED_TOKEN.
+        // Formula: trading_voucher_used / token_price  → available tokens
+        $currentAvailable = $user->ChartAccount()
+            ->where('acc_type', 'AVAILABLE_TOKEN')
+            ->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+            ['amount'  => $currentAvailable + $tokensReceived]
+        );
+
+        // 3. Record the renewal
+        $renewedAt      = Carbon::now();
+        // next_renewal_due: null if this was the last renewal for this package duration
+        $nextRenewalDue = $renewalNumber < $maxRenewals
+            ? $renewedAt->copy()->addDays(30)
+            : null;
+
         $trxNo = Transaction::generateTransactionNo();
-        $transaction =  Transaction::create([
-            'user_id'=>$user->id,
-            'transaction_no' => $trxNo,
-            'transaction_type' => 'TRANSFER',
-            "receiver_id"=>0,
-            'transaction_details' => json_encode([
-                'week' => Carbon::now(),
-                'daily_vup' => 0,
-                'direct_bonus' => 0.00,
-                'volume_bonus' => 0.00,
-                'leader_bonus' => 0.00,
-                'amount' => $request->amount,
-                'total' => 0.00,
-                'cash' => 0.00,
-                'trx_voucher' => $trxNo,
-                'trx_type' => 'Transfer To Trading Account',
-                'revenue_type'=>'soon',
-                'status'=>'success',
-                'date'=>Carbon::now(),
-                'status'=>'success'
-            ])
+
+        \App\Models\PackageRenewal::create([
+            'user_id'               => $user->id,
+            'payment_id'            => $activePayment->id,
+            'fcpackage_id'          => null, // token price now from token_settings table
+            'amount_paid'           => $renewalFee,
+            'token_price_at_renewal'=> $tokenPrice,
+            'tokens_received'       => $tokensReceived,
+            'renewal_number'        => $renewalNumber,
+            'renewed_at'            => $renewedAt,
+            'next_renewal_due'      => $nextRenewalDue,
+            'transaction_no'        => $trxNo,
+            'status'                => 'completed',
         ]);
 
-        return back()->with("success-tr","You Have Successfull Transferred ".$request->amount."$ To Trading Account");
+        // 4. Log a Transaction
+        Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'PACKAGE_RENEWAL',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'date'             => $renewedAt->toDateTimeString(),
+                'trx_type'         => 'Package Renewal #' . $renewalNumber,
+                'amount'           => $renewalFee,
+                'token_price'      => $tokenPrice,
+                'tokens_received'  => $tokensReceived,
+                'renewal_number'   => $renewalNumber,
+                'next_renewal_due' => $nextRenewalDue?->toDateString(),
+                'status'           => 'success',
+            ]),
+        ]);
+
+        // 5. Extend package expiration by 30 days
+        $currentExpiry  = Carbon::parse($activePayment->expiration_date);
+        $newExpiry      = $currentExpiry->addDays(30);
+        $activePayment->update(['expiration_date' => $newExpiry]);
+
+        $msg = "Package renewed successfully! You received " . number_format($tokensReceived, 4) . " tokens.";
+        if ($nextRenewalDue) {
+            $msg .= " Next renewal due: " . $nextRenewalDue->format('d M Y') . ".";
+        } else {
+            $msg .= " This was your final renewal for this package cycle.";
+        }
+
+        return redirect()->route('user.dashboard')->with('message', $msg);
+    // ═══════════════════════════════════════════════════════════════════════
+    //  TOKEN TRANSFER — user sends LOCKED tokens to another user
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function tokenTransferPage()
+    {
+        $user    = Auth::user();
+        $freeBal = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        $symbol  = \App\Models\TokenSetting::currentSymbol();
+        $history = \App\Models\Transaction::where('user_id', $user->id)
+                    ->where('transaction_type', 'TOKEN_TRANSFER')
+                    ->latest()->take(20)->get()
+                    ->map(function ($t) {
+                        $d = json_decode($t->transaction_details, true) ?? [];
+                        $t->to_name   = $d['to_name'] ?? ($d['to_user'] ?? '—');
+                        $t->to_email  = $d['to_email'] ?? '—';
+                        $t->tok_amt   = $d['token_amount'] ?? 0;
+                        return $t;
+                    });
+
+        return view('user.token.transfer', compact('freeBal', 'symbol', 'history'));
     }
-}
+
+    /** AJAX: look up recipient by email, return name for confirmation */
+    public function tokenTransferLookup(Request $request)
+    {
+        $recipient = \App\Models\User::where('email', $request->email)
+                        ->where('id', '!=', Auth::id())
+                        ->select('id','name','email')
+                        ->first();
+
+        if (!$recipient) {
+            return response()->json(['found' => false, 'message' => 'No user found with that email.']);
+        }
+        return response()->json(['found' => true, 'name' => $recipient->name, 'email' => $recipient->email]);
+    }
+
+    public function tokenTransfer(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'recipient_email' => 'required|email|exists:users,email',
+            'token_amount'    => 'required|numeric|min:1',
+        ]);
+
+        $tokenAmount = (float) $request->token_amount;
+        $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+
+        if ($freeBal < $tokenAmount) {
+            return back()->with('error', 'Insufficient Free Token balance. You have ' . number_format($freeBal, 0) . ' tokens.');
+        }
+
+        $recipient = \App\Models\User::where('email', $request->recipient_email)->first();
+
+        if ($recipient->id === $user->id) {
+            return back()->with('error', 'You cannot transfer tokens to yourself.');
+        }
+
+        // Deduct from sender FREE_TOKEN
+        $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')
+             ->update(['amount' => $freeBal - $tokenAmount]);
+
+        // Add to recipient FREE_TOKEN
+        $recipientBal = $recipient->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $recipient->id, 'acc_type' => 'FREE_TOKEN'],
+            ['amount'  => $recipientBal + $tokenAmount]
+        );
+
+        $trxNo = \App\Models\Transaction::generateTransactionNo();
+        \App\Models\Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'TOKEN_TRANSFER',
+            'receiver_id'         => $recipient->id,
+            'transaction_details' => json_encode([
+                'token_amount' => $tokenAmount,
+                'to_name'      => $recipient->name,
+                'to_email'     => $recipient->email,
+                'to_user'      => $recipient->name,
+                'from_user'    => $user->name,
+                'from_email'   => $user->email,
+                'date'         => now()->toDateTimeString(),
+                'status'       => 'completed',
+            ]),
+        ]);
+
+        return back()->with('success', number_format($tokenAmount, 0) . ' ' .
+            \App\Models\TokenSetting::currentSymbol() . ' transferred to ' . $recipient->name . ' (' . $recipient->email . ').');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  TOKEN SWAP — LOCKED tokens → CASHOUT (internal)
+    //  Formula: cashout_received = token_amount × coin_value
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function tokenSwapPage()
+    {
+        $user      = Auth::user();
+        $freeBal   = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        $coinValue = \App\Models\TokenSetting::coinValue();
+        $symbol    = \App\Models\TokenSetting::currentSymbol();
+
+        return view('user.token.swap', compact('freeBal', 'coinValue', 'symbol'));
+    }
+
+    public function tokenSwap(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'token_amount' => 'required|numeric|min:1',
+        ]);
+
+        $tokenAmount = (float) $request->token_amount;
+        $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+
+        if ($freeBal < $tokenAmount) {
+            return back()->with('error', 'Insufficient Free Token balance.');
+        }
+
+        $coinValue    = \App\Models\TokenSetting::coinValue();
+        $cashReceived = round($tokenAmount * $coinValue, 2);
+
+        // Deduct from FREE_TOKEN
+        $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')
+             ->update(['amount' => $freeBal - $tokenAmount]);
+
+        // Credit CASHOUT
+        $cashBal = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
+            ['amount'  => $cashBal + $cashReceived]
+        );
+
+        $trxNo = \App\Models\Transaction::generateTransactionNo();
+        \App\Models\Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'TOKEN_SWAP',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'token_amount'  => $tokenAmount,
+                'coin_value'    => $coinValue,
+                'cash_received' => $cashReceived,
+                'symbol'        => \App\Models\TokenSetting::currentSymbol(),
+                'date'          => now()->toDateTimeString(),
+                'status'        => 'completed',
+            ]),
+        ]);
+
+        return back()->with('success', number_format($tokenAmount, 0) . ' tokens swapped for $' .
+            number_format($cashReceived, 2) . ' in your Cashout account.');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  TOKEN WITHDRAWAL — user requests withdrawal to FONE wallet
+    //  Admin must approve. Tokens are held (deducted on request).
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function tokenWithdrawPage()
+    {
+        $user      = Auth::user();
+        $freeBal   = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        $coinValue = \App\Models\TokenSetting::coinValue();
+        $symbol    = \App\Models\TokenSetting::currentSymbol();
+        $history   = \App\Models\TokenWithdrawal::where('user_id', $user->id)->latest()->get();
+
+        return view('user.token.withdraw', compact('freeBal', 'coinValue', 'symbol', 'history'));
+    }
+
+    public function tokenWithdrawRequest(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'token_amount'   => 'required|numeric|min:1',
+            'wallet_address' => 'required|string',
+        ]);
+
+        $tokenAmount = (float) $request->token_amount;
+        $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+
+        if ($freeBal < $tokenAmount) {
+            return back()->with('error', 'Insufficient Free Token balance.');
+        }
+
+        // Hold the tokens immediately (deducted from FREE_TOKEN; refunded if rejected)
+        $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')
+             ->update(['amount' => $freeBal - $tokenAmount]);
+
+        $trxNo = \App\Models\Transaction::generateTransactionNo();
+
+        \App\Models\TokenWithdrawal::create([
+            'user_id'                => $user->id,
+            'token_amount'           => $tokenAmount,
+            'coin_value_at_request'  => \App\Models\TokenSetting::coinValue(),
+            'wallet_address'         => $request->wallet_address,
+            'transaction_no'         => $trxNo,
+            'status'                 => 'pending',
+        ]);
+
+        \App\Models\Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'TOKEN_WITHDRAWAL_REQUEST',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'token_amount'   => $tokenAmount,
+                'wallet_address' => $request->wallet_address,
+                'coin_value'     => \App\Models\TokenSetting::coinValue(),
+                'date'           => now()->toDateTimeString(),
+                'status'         => 'pending',
+            ]),
+        ]);
+
+        return back()->with('success', 'Token withdrawal request of ' . number_format($tokenAmount, 0) .
+            ' ' . \App\Models\TokenSetting::currentSymbol() . ' submitted. Reference: ' . $trxNo . '. Awaiting admin approval.');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  AVAILABLE → FREE TOKEN TRANSFER
+    //  User manually moves tokens from Available Token to Free Token wallet.
+    //  Only from Free Token can they transfer/swap/withdraw.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function availableTokenPage()
+    {
+        $user         = Auth::user();
+        $availableBal = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+        $freeBal      = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        $symbol       = \App\Models\TokenSetting::currentSymbol();
+        $history      = \App\Models\Transaction::where('user_id', $user->id)
+                         ->where('transaction_type', 'AVAILABLE_TO_FREE')
+                         ->latest()->take(20)->get()
+                         ->map(function ($t) {
+                             $d = json_decode($t->transaction_details, true) ?? [];
+                             $t->tok_amt = $d['token_amount'] ?? 0;
+                             return $t;
+                         });
+
+        return view('user.token.available', compact('availableBal', 'freeBal', 'symbol', 'history'));
+    }
+
+    public function availableToFree(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate(['token_amount' => 'required|numeric|min:1']);
+
+        $tokenAmount  = (float) $request->token_amount;
+        $availableBal = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+
+        if ($availableBal < $tokenAmount) {
+            return back()->with('error', 'Insufficient Available Token balance. You have ' . number_format($availableBal, 0) . ' tokens.');
+        }
+
+        // Deduct from AVAILABLE_TOKEN
+        $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')
+             ->update(['amount' => $availableBal - $tokenAmount]);
+
+        // Credit FREE_TOKEN
+        $freeBal = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'FREE_TOKEN'],
+            ['amount'  => $freeBal + $tokenAmount]
+        );
+
+        $trxNo = \App\Models\Transaction::generateTransactionNo();
+        \App\Models\Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'AVAILABLE_TO_FREE',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'token_amount' => $tokenAmount,
+                'from'         => 'AVAILABLE_TOKEN',
+                'to'           => 'FREE_TOKEN',
+                'date'         => now()->toDateTimeString(),
+                'status'       => 'completed',
+            ]),
+        ]);
+
+        return back()->with('success', number_format($tokenAmount, 0) . ' ' .
+            \App\Models\TokenSetting::currentSymbol() . ' moved to your Free Token wallet.');
+    }
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  LOCKED TOKEN INFO PAGE (read-only — no withdrawal from here)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public function lockedTokenPage()
+    {
+        $user      = Auth::user();
+        $lockedBal = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+        $symbol    = \App\Models\TokenSetting::currentSymbol();
+
+        // Active package for this user (to show release date)
+        $package = \App\Models\Payment::where('user', $user->id)
+                    ->where('is_expired', false)
+                    ->where('status', 1)
+                    ->where('category', 'VENTURE')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+        return view('user.token.locked-withdraw', compact('lockedBal', 'symbol', 'package'));
+    }
+
+    }

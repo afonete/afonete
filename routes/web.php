@@ -244,6 +244,8 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get('user/dashboard/withdraw/user', [Balance::class, 'UserWithdrawal'])->name('user.dashboard.userwithdraw');
 
     Route::post('user/dashboard/withdraw-status/', [Balance::class, 'withdraw_money'])->name('user.withdraw');
+    Route::post('user/dashboard/withdraw-manual', [Balance::class, 'requestManualWithdrawal'])->name('user.withdraw.manual');
+    Route::get('user/dashboard/withdraw', [Balance::class, 'withdrawalHistory'])->name('user.dashboard.withdraw');
     Route::post('user/dashboard/apply', [Position::class, 'apply'])->name('user.position.apply');
 
 
@@ -316,6 +318,28 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
 
 
     Route::get('admin/withdrawal', [AdminController::class, 'Withdrawal'])->name('admin.withdrawal');
+
+    // Token Price Settings
+    Route::get('admin/token-settings', [\App\Http\Controllers\Admin\TokenSettingController::class, 'index'])->name('admin.token-settings');
+    Route::put('admin/token-settings', [\App\Http\Controllers\Admin\TokenSettingController::class, 'update'])->name('admin.token-settings.update');
+    Route::post('admin/withdrawal/approve', [AdminController::class, 'approveWithdrawal'])->name('admin.withdrawal.approve');
+    Route::post('admin/withdrawal/reject', [AdminController::class, 'rejectWithdrawal'])->name('admin.withdrawal.reject');
+    Route::get('admin/referral-bonuses', [AdminController::class, 'referralBonuses'])->name('admin.referral-bonuses');
+    Route::get('admin/referral-bonuses/{userId}', [AdminController::class, 'referralBonusDetail'])->name('admin.referral-bonus-detail');
+    Route::get('admin/token-withdrawals', [AdminController::class, 'tokenWithdrawals'])->name('admin.token-withdrawals');
+    Route::post('admin/token-withdrawals/approve', [AdminController::class, 'approveTokenWithdrawal'])->name('admin.token-withdrawals.approve');
+    Route::post('admin/token-withdrawals/reject', [AdminController::class, 'rejectTokenWithdrawal'])->name('admin.token-withdrawals.reject');
+    // User token actions
+    Route::get('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferPage'])->name('user.token.transfer');
+    Route::post('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransfer'])->name('user.token.transfer.post');
+    Route::get('user/token/transfer/lookup', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferLookup'])->name('user.token.transfer.lookup');
+    Route::get('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwapPage'])->name('user.token.swap');
+    Route::post('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwap'])->name('user.token.swap.post');
+    Route::get('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawPage'])->name('user.token.withdraw');
+    Route::post('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawRequest'])->name('user.token.withdraw.post');
+    Route::get('user/token/locked', [\App\Http\Controllers\User\FinanceController::class, 'lockedTokenPage'])->name('user.token.locked');
+    Route::get('user/token/available', [\App\Http\Controllers\User\FinanceController::class, 'availableTokenPage'])->name('user.token.available');
+    Route::post('user/token/available-to-free', [\App\Http\Controllers\User\FinanceController::class, 'availableToFree'])->name('user.token.available-to-free');
     Route::get('admin/users/list', [AdminController::class, 'users'])->name('users.list');
     Route::get('admin/memberships-plan', [AdminController::class, 'plans'])->name('membership.plans');
 

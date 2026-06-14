@@ -35,4 +35,8 @@ return [
         'inbox_id' => env('MAILTRAP_INBOX_ID'),
     ],
 
+    'plisio' => [
+        'api_key' => env('PLISIO_API_KEY'),
+    ],
+
 ];

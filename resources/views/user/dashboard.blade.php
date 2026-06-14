@@ -498,13 +498,13 @@ img{ max-width:100%;}
 
 
 
-                            <div class="ad-box bg-info" id="not"> <a class="nav-icon fas fa-window-restore" href="#">
-                                <br>FOCOIN<br />
-                                <b>
-                                    {{  $fcoin }}
-                                </b>
-                            </a>
-                        </div>
+                            {{-- LOCKED TOKEN: investment / uvp_price, locked during package duration --}}
+                            <div class="ad-box bg-secondary" id="not">
+                                <a class="nav-icon fas fa-lock" href="#">
+                                    <br><small>Locked Token</small>
+                                    <b>{{ number_format($locked, 0) }}</b>
+                                </a>
+                            </div>
 
 
 
@@ -572,15 +572,61 @@ img{ max-width:100%;}
                 </div>
 
                 @if ($user->has_free_package == 'no')
-                    <div  class="sub-box-1 px-2">
-                        <div class="ad-box bg-warning mr-2 ml-1"><a class="nav-icon fas fa-money" href="#"> <br>Daily Income <br /> {{ $dailyIncome }} </a></div>
-                        <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href='#'>
-                            <span>Trading Voucher </span>
-                            <span class="py-2">{{ $shooping  }}</span>
-                                @if($show_timer)
-                                <span id="countdown" class="bg-dark badge badge-dark"></span>
+
+                    {{-- ════════════════════════════════════════════════════
+                         PACKAGE EXPIRED BANNER
+                         Shown when the 100-day package has fully expired.
+                         User must purchase a new package to continue.
+                    ════════════════════════════════════════════════════ --}}
+                    @if($package_expired)
+                    <div class="alert alert-danger mx-2 mb-2 text-center" role="alert"
+                         style="border-radius:8px; font-size:0.95rem;">
+                        <i class="fas fa-times-circle mr-1"></i>
+                        <strong>Your package has expired.</strong>
+                        Daily income has stopped. Purchase a new package to continue earning.
+                        <div class="mt-2">
+                            <a href="{{ route('user.buypackage') }}"
+                               class="btn btn-danger btn-sm font-weight-bold">
+                                <i class="fas fa-shopping-cart mr-1"></i> Buy New Package
+                            </a>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="sub-box-1 px-2">
+                        {{-- Daily Income box --}}
+                        <div class="ad-box bg-warning mr-2 ml-1">
+                            <a class="nav-icon fas fa-money" href="#">
+                                <br>Daily Income <br />
+                                @if($package_expired)
+                                    <span style="font-size:11px;opacity:0.7;">Expired</span>
+                                @else
+                                    {{ $dailyIncome }}
                                 @endif
                             </a>
+                        </div>
+
+                        {{-- Trading Voucher box --}}
+                        <div class="ad-box bg-info mr-2 ml-1">
+                            <a class="nav-icon fas fa-gift" href='#'>
+                                <span>Trading Voucher</span>
+                                <span class="py-2">{{ $shooping }}</span>
+                                @if($show_timer && !$package_expired)
+                                    <span id="countdown" class="bg-dark badge badge-dark"></span>
+                                @endif
+                            </a>
+
+                            {{-- ── Renewal due: show renew button ── --}}
+                            @if($renewal_due && !$package_expired)
+                            <div class="mt-1 text-center">
+                                <a href="{{ route('packageRenew') }}"
+                                   class="btn btn-sm btn-warning font-weight-bold text-dark"
+                                   style="font-size:11px; padding:3px 8px; border-radius:4px;">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Renew Package (#{{ $renewal_number }}/3)
+                                </a>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -633,8 +679,38 @@ img{ max-width:100%;}
                 <div  class="sub-box-1">
                     <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Total <br> Balance</a></div>
                     @if ($user->has_free_package == 'no')
-                    <div class="ad-box bg-success mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#">
-                        <br> Locked Token <br>{{$locked}} </a>
+                    {{-- LOCKED TOKEN: investment tokens, locked during package period --}}
+                    <div class="ad-box bg-secondary mr-2 ml-1">
+                        <a class="nav-icon fas fa-lock" href="{{ route('user.token.locked') }}">
+                            <br><small>Locked Token</small>
+                            <b>{{ number_format($locked, 0) }}</b>
+                        </a>
+                    </div>
+                    {{-- FREE TOKEN: released after package duration — transfer, swap, or withdraw --}}
+                    <div class="ad-box bg-warning mr-2 ml-1">
+                        <a class="nav-icon fas fa-coins" href="{{ route('user.token.transfer') }}">
+                            <br><small>Free Token</small>
+                            <b>{{ number_format($free_token, 0) }}</b>
+                        </a>
+                        @if($free_token > 0)
+                        <div class="mt-1 text-center" style="font-size:10px;">
+                            <a href="{{ route('user.token.transfer') }}" class="btn btn-xs btn-dark mr-1" style="font-size:9px;padding:2px 4px;">Transfer</a>
+                            <a href="{{ route('user.token.swap') }}" class="btn btn-xs btn-success mr-1" style="font-size:9px;padding:2px 4px;">Swap</a>
+                            <a href="{{ route('user.token.withdraw') }}" class="btn btn-xs btn-danger" style="font-size:9px;padding:2px 4px;">Withdraw</a>
+                        </div>
+                        @endif
+                    </div>
+                    {{-- AVAILABLE TOKEN: renewal tokens + locked tokens after expiry --}}
+                    <div class="ad-box bg-success mr-2 ml-1">
+                        <a class="nav-icon fas fa-check-circle" href="{{ route('user.token.available') }}">
+                            <br><small>Available Token</small>
+                            <b>{{ number_format($available_token, 0) }}</b>
+                        </a>
+                        @if($available_token > 0)
+                        <div class="mt-1 text-center">
+                            <a href="{{ route('user.token.available') }}" class="btn btn-xs btn-light" style="font-size:9px;padding:2px 5px;">→ Free Token</a>
+                        </div>
+                        @endif
                     </div>
                     @endif
                 </div>
@@ -1576,10 +1652,18 @@ $user=db::SELECT("SELECT * from users");
 
 
                                         <div class="col ">
-                                            <div class="card  bg-white  rounded  d-flex justify-content-center align-items-center py-2">
-                                                <i class=" fas fa-wallet text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(238, 193, 71);font-size:2em !important"></i>
-                                                <h2 class="text-lg text-dark fw-bold py-2">{{$commission}} $</h2>
-                                                <p class="py-2 px-2 text-center">Total Commission Earn</p>
+                                            <div class="card bg-white rounded d-flex justify-content-center align-items-center py-2">
+                                                <i class="fas fa-wallet text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(238, 193, 71);font-size:2em !important"></i>
+                                                <h2 class="text-lg text-dark fw-bold py-2">${{ number_format($commission, 2) }}</h2>
+                                                <p class="py-1 px-2 text-center mb-0">Total Commission</p>
+                                                <small class="text-muted text-center px-2">
+                                                    {{ $direct_referral_count }} referrals
+                                                    ({{ $active_referral_count }} active)
+                                                </small>
+                                                <small class="text-success font-weight-bold">${{ number_format($direct_bonus_earned, 2) }} direct bonus</small>
+                                                <a href="{{ route('commission') }}" class="btn btn-xs btn-outline-warning mt-1" style="font-size:11px;">
+                                                    View Details
+                                                </a>
                                             </div>
                                         </div>
 

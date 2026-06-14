@@ -14,7 +14,8 @@ class FCpackage extends Model
     protected $fillable = [
         "name",
         "price",
-        "default_token"
+        "default_token",
+        "token_price",  // Admin-set price per token, used for Trading Voucher renewals
     ];
 
 

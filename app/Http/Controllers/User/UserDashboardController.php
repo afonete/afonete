@@ -73,7 +73,8 @@ class UserDashboardController extends Controller{
                                   ->first();
 
 
-        $this->showDailyIncome($userId);
+        // Daily income is now calculated by the scheduler (income:calculate command).
+        // Do NOT call showDailyIncome() here — it would run on every page load.
         $cashout = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
         $shooping = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
 
@@ -152,54 +153,122 @@ class UserDashboardController extends Controller{
         // $referrals = $this->referrals(Auth::User());
 
         $ChartAccount = $user->ChartAccount()->where("acc_type","TRADING")->first();
-        $lockedToken = $user->ChartAccount()->where("acc_type","LOCKED_TOKEN")->sum("amount");
+        $lockedToken    = $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        $freeToken      = $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
+        $availableToken = $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+        // GAS_FEE is admin-only — not read here
         $COMMISSION = $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
 
+        // ── Referral bonus breakdown for dashboard ──
+        $directReferralCount   = $user->referrals()->count();
+        $activeReferralCount   = $user->referrals()->whereHas('investments', function ($q) {
+            $q->where('status', 1)->where('category', 'VENTURE');
+        })->count();
+        // Direct bonus earned = 10% of each direct referral's investments
+        $directBonusEarned = 0;
+        foreach ($user->referrals as $ref) {
+            $directBonusEarned += $ref->investments()
+                ->where('status', 1)->where('category', 'VENTURE')->sum('amount') * 0.10;
+        }
+        $directBonusEarned = round($directBonusEarned, 2);
+
         $purchaseDate = Carbon::parse($ChartAccount->created_at);
-       $expirationDate = null;
-       $show=false;
+        $expirationDate = null;
+        $show = false;
 
-
-       if($mostRecentPayment->category == "VENTURE"){
-        $expirationDate =  $purchaseDate->addDays(31);
-        $show = true;
-
+        if ($mostRecentPayment && $mostRecentPayment->category == "VENTURE") {
+            $expirationDate = $purchaseDate->addDays(31);
+            $show = true;
         }
 
-         $comm = $this->commissions();
+        // ── Package expiry state ──
+        // A package is considered expired when:
+        //   (a) is_expired flag is true, OR
+        //   (b) no active payment exists at all
+        $packageExpired = !$package || $package->is_expired;
+
+        // If the package just expired, make sure has_paid_package is reset
+        // (CheckPackages command does this nightly; this is a safety fallback)
+        if ($packageExpired && $user->has_paid_package !== 'no') {
+            $user->has_paid_package = 'no';
+            $user->save();
+        }
+
+        // ── Renewal due state ──
+        // Derived from package duration: max_renewals = floor((duration-1)/30).
+        // Renewal #N is due from day (N*30 - 1) onward (1 day grace before the window).
+        $renewalDue    = false;
+        $renewalNumber = 0;
+
+        if ($package && !$packageExpired) {
+            $pkgStart    = Carbon::parse($package->created_at);
+            $daysSince   = (int) $pkgStart->diffInDays(Carbon::now());
+            $renewalsDone = \App\Models\PackageRenewal::where('user_id', $userId)
+                                ->where('payment_id', $package->id)
+                                ->count();
+
+            // Get duration from the adventure package
+            $activePkg2   = \App\Models\adventures::find($package->payable_id);
+            $pkgDuration  = $activePkg2 ? (int) $activePkg2->duration : 100;
+            $maxRenewals  = (int) floor(($pkgDuration - 1) / 30);
+
+            $nextRenewalNum       = $renewalsDone + 1;
+            $nextRenewalThreshold = $nextRenewalNum * 30;  // e.g. renewal #1 due at day 30
+
+            if ($renewalsDone < $maxRenewals && $daysSince >= ($nextRenewalThreshold - 1)) {
+                $renewalDue    = true;
+                $renewalNumber = $nextRenewalNum;
+            }
+        }
+
+        $comm = $this->commissions();
 
         // dd($deposits_pending);
         return view('user.dashboard',
         [
-            "mypackage"=>$package,
-            "show_timer"=>$show,
-            "deposits"=>number_format($sum),
-            "ranks"=>$ranks,
-            "amount"=>0,
-            "fcoin"=>0,
-            "commission"=>$COMMISSION,
-            "locked"=>$lockedToken,
-            "gasfees"=>0,//$gasFees,
-            "pool"=>0,///$poolCapital,
-            "dailyIncome"=>"$".$dailyIncome,//$dailyIncome,
-            "cashout"=>"$".$cashout,
-            "shooping"=>"$".$shooping,
-            "daysgone"=>$daysGone,
-            "credit"=>$credit,
-            "portfolio"=>"$".$portfolio,
-            "credit_status"=> $credit_status,
-            "right"=>$right,
-            "left"=>$left,
-            "left_direct_uvp"=>0,
-            "left_indirect_uvp"=>0,
-            "right_direct_uvp"=>$comm['right_direct_uvp'],
-            "right_indirect_uvp"=>$comm['right_indirect_uvp'],
-            "zoneAearning"=>$comm['zoneA'],
-            "zoneBearning"=>$comm['zoneB'],
-            "have_pending_deposit"=> $deposits_pending,
-            "expirationDate"=> $expirationDate,
-            "I_have_claim"=>$userHasClaims,
-            "referals"=>$allUsers->count()
+            "mypackage"              => $package,
+            "show_timer"             => $show,
+            "deposits"               => number_format($sum),
+            "ranks"                  => $ranks,
+            "amount"                 => 0,
+            // ── Token balances (shown to user) ──
+            // LOCKED_TOKEN  : full investment / uvp_price. Locked during package. Released to FREE_TOKEN on expiry.
+            // FREE_TOKEN     : usable tokens — transfer to user, swap to cashout, or withdraw to wallet.
+            // AVAILABLE_TOKEN: tokens earned each 30-day renewal (trading_voucher / renewal_price).
+            // GAS_FEE        : 20% charges — admin-only, never shown here.
+            "locked"                 => $lockedToken,
+            "free_token"             => $freeToken,
+            "available_token"        => $availableToken,
+            "fcoin"                  => number_format($freeToken, 0), // used in blade fcoin box
+            "commission"             => $COMMISSION,
+            "direct_referral_count"  => $directReferralCount,
+            "active_referral_count"  => $activeReferralCount,
+            "direct_bonus_earned"    => $directBonusEarned,
+            "gasfees"                => 0,
+            "pool"                   => 0,
+            "dailyIncome"            => "$".$dailyIncome,
+            "cashout"                => "$".$cashout,
+            "shooping"               => "$".$shooping,
+            "daysgone"               => $daysGone,
+            "credit"                 => $credit,
+            "portfolio"              => "$".$portfolio,
+            "credit_status"          => $credit_status,
+            "right"                  => $right,
+            "left"                   => $left,
+            "left_direct_uvp"        => 0,
+            "left_indirect_uvp"      => 0,
+            "right_direct_uvp"       => $comm['right_direct_uvp'],
+            "right_indirect_uvp"     => $comm['right_indirect_uvp'],
+            "zoneAearning"           => $comm['zoneA'],
+            "zoneBearning"           => $comm['zoneB'],
+            "have_pending_deposit"   => $deposits_pending,
+            "expirationDate"         => $expirationDate,
+            "I_have_claim"           => $userHasClaims,
+            "referals"               => $allUsers->count(),
+            // Package lifecycle
+            "package_expired"        => $packageExpired,
+            "renewal_due"            => $renewalDue,
+            "renewal_number"         => $renewalNumber,
         ]);
     }
 
@@ -463,98 +532,150 @@ class UserDashboardController extends Controller{
 
 
 
+    /**
+     * Calculate and record any missing daily income entries for a user.
+     *
+     * Rules:
+     *  1. Only runs for active VENTURE packages (is_expired=0, status=1).
+     *  2. Hard stops at the package expiration_date (max 100 days).
+     *  3. Pauses during any renewal window where the user has NOT yet renewed:
+     *       - Day 30-59: paused until renewal #1 is recorded
+     *       - Day 60-89: paused until renewal #2 is recorded
+     *       - Day 90+:   paused until renewal #3 is recorded
+     *     Income for paused days is permanently skipped (not back-filled).
+     *  4. Fixes copy-paste bug: CASHOUT now uses $beforeCashout, not $beforeTrading.
+     */
     public function showDailyIncome($userId)
     {
-                $package = Paymodel::where("category","VENTURE")->where("user",$userId)->where('is_expired',0)->where('status',1)->first();
-                // $amount = $package->paid;
-                $package2 = adventures::where("id",$package->payable_id)->first();
-                $percentcharge = $package2->percentage;
-                $amount = Paymodel::where("category","VENTURE")->where("user",$userId)->where('is_expired',0)->where('status',1)->sum("paid");
-                $user = Auth::User();
-                $dailyIncomes = [];
-                $startDate = $package->created_at;
-                $dateOnly = Carbon::parse($startDate)->toDateString(); // grap date without time
-                
-                $now = Carbon::now();
-                $daysPassed = $now->diffInDays($dateOnly);
-                for ($i = 1; $i <= $daysPassed; $i++) {
-                    $earnedAt = $startDate->copy()->addDays($i);
-                    // Check if the income is already recorded
-                    $incomeExists = DailyIncome::where('user_id', $userId)
-                                                ->whereDate('earned_at', $earnedAt->toDateString())
-                                                ->exists();
+        // Only VENTURE packages generate daily income
+        $package = Paymodel::where("category", "VENTURE")
+                            ->where("user", $userId)
+                            ->where("is_expired", 0)
+                            ->where("status", 1)
+                            ->first();
 
-                    if (!$incomeExists && $earnedAt->lessThanOrEqualTo($now)) {
-                        $poolCapital = $amount*80/100;
-                        $dailyIncome  = $poolCapital*$percentcharge/100;
+        if (!$package) {
+            return;
+        }
 
-                        DailyIncome::create([
-                            'user_id'=>$userId,
-                            'amount' => $dailyIncome,
-                            'earned_at' => $earnedAt,
-                        ]);
-                        $trading = $dailyIncome * 75 / 100;
-                        $cashout = $dailyIncome * 25 / 100;
-                        $transactionNo =Transaction::generateTransactionNo();
-                        $transaction =  Transaction::create([
-                            'user_id'=>$userId,
-                            'transaction_no' => $transactionNo,
-                            'transaction_type' => 'INCOME', // or any other type you define
-                            'receiver_id'=>0,
-                            'transaction_details' => json_encode([
-                                'type' => "UVP",
-                                'user' =>Auth::User()->name,
-                                'date' => $now,
-                                'cash_25'=> $cashout,
-                                'trading_75'=>$trading,
-                                'amount'=>$dailyIncome,
-                                'trx_name'=>"UVP INCOME",
+        $package2 = adventures::where("id", $package->payable_id)->first();
+        if (!$package2) {
+            return;
+        }
 
-                                'description'=>"Payment From Pool Capital",
-                                'revenue_earned'=>0,
-                                'revenue_type'=>'soon',
-                                'status'=>'success',
+        $percentcharge = $package2->percentage;
+        $amount        = (float) $package->paid;
+        $user          = User::find($userId);
+        $now           = Carbon::now();
 
-                                'username'=>Auth::User()->name,
+        $startDate      = Carbon::parse($package->created_at);
+        $expirationDate = Carbon::parse($package->expiration_date);
 
-                                'leadership_bonus' => 0,
-                                // 'debit' => 0.00,
-                                // 'cash' => 0.00, // 20% cash
-                                // 'trading_voucher' => 0.00, // 80% trading voucher
-                                // 'sender' => 'Sender Name',
-                                // 'username' => $user->username,
-                                // 'sender_id' => 12345,
-                                // 'transaction_type' => 'Deposit',
-                                // 'description' => 'Initial deposit for the package',
-                                // 'details' => 'Transaction details here'
-                            ])
-                        ]);
-                        $beforeCashout = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
-                        $beforeTrading = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
+        // How many renewals has the user completed for this package?
+        $renewalsDone = \App\Models\PackageRenewal::where("user_id", $userId)
+                            ->where("payment_id", $package->id)
+                            ->orderBy("renewal_number")
+                            ->get();
 
+        // Build lookup: renewal_number => date completed
+        $renewalCompletedAt = [];
+        foreach ($renewalsDone as $renewal) {
+            $renewalCompletedAt[$renewal->renewal_number] = Carbon::parse($renewal->renewed_at);
+        }
 
-                        ChartAccount::updateOrCreate(
-                            [
-                            "user_id"=>$userId,
-                            "acc_type"=>"TRADING"],[
-                            "amount"=>$trading+$beforeTrading,
-                            ]
-                        );
+        // Ceiling: don't generate income past expiration_date or today
+        $ceiling    = $expirationDate->lt($now) ? $expirationDate : $now;
+        $daysPassed = (int) $startDate->diffInDays($ceiling);
 
-                        ChartAccount::updateOrCreate([
-                            "user_id"=>$userId,
-                            "acc_type"=>"CASHOUT",
-                        ],[
-                            "amount"=>$cashout+$beforeTrading,
-                        ]);
+        for ($i = 1; $i <= $daysPassed; $i++) {
+            $earnedAt  = $startDate->copy()->addDays($i);
 
+            // Hard stop at expiration
+            if ($earnedAt->gt($expirationDate)) {
+                break;
+            }
 
+            // Renewal pause logic — dynamic based on package duration.
+            // max_renewals = floor((duration - 1) / 30)
+            // Renewal #N is required for all days in the window [N*30 .. (N+1)*30 - 1].
+            $packageDuration = (int) $package2->duration;
+            $maxRenewals     = (int) floor(($packageDuration - 1) / 30);
+            $blocked         = false;
 
+            if ($maxRenewals > 0 && $i >= 30) {
+                $windowIndex   = (int) ceil($i / 30);
+                $neededRenewal = $windowIndex;
+
+                if ($neededRenewal <= $maxRenewals) {
+                    if (!isset($renewalCompletedAt[$neededRenewal]) ||
+                        $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
+                        $blocked = true;
                     }
                 }
+            }
 
+            if ($blocked) {
+                continue; // skipped days are never back-filled
+            }
 
+            // Already recorded?
+            $incomeExists = DailyIncome::where("user_id", $userId)
+                                        ->whereDate("earned_at", $earnedAt->toDateString())
+                                        ->exists();
+            if ($incomeExists) {
+                continue;
+            }
+
+            // Calculate income
+            $poolCapital = $amount * 80 / 100;
+            $dailyIncome = $poolCapital * $percentcharge / 100;
+            $trading     = $dailyIncome * 75 / 100;  // 75% Trading Voucher
+            $cashout     = $dailyIncome * 25 / 100;  // 25% Cashout
+
+            DailyIncome::create([
+                "user_id"   => $userId,
+                "amount"    => $dailyIncome,
+                "earned_at" => $earnedAt,
+            ]);
+
+            $transactionNo = Transaction::generateTransactionNo();
+            Transaction::create([
+                "user_id"             => $userId,
+                "transaction_no"      => $transactionNo,
+                "transaction_type"    => "INCOME",
+                "receiver_id"         => 0,
+                "transaction_details" => json_encode([
+                    "type"            => "UVP",
+                    "user"            => $user->name,
+                    "date"            => $earnedAt->toDateTimeString(),
+                    "cash_25"         => $cashout,
+                    "trading_75"      => $trading,
+                    "amount"          => $dailyIncome,
+                    "trx_name"        => "UVP INCOME",
+                    "description"     => "Payment From Pool Capital",
+                    "day_number"      => $i,
+                    "status"          => "success",
+                    "username"        => $user->name,
+                    "leadership_bonus"=> 0,
+                ]),
+            ]);
+
+            // Credit accounts — FIX: CASHOUT now uses $beforeCashout (was $beforeTrading)
+            $beforeCashout = $user->ChartAccount()->where("acc_type", "CASHOUT")->sum("amount");
+            $beforeTrading = $user->ChartAccount()->where("acc_type", "TRADING")->sum("amount");
+
+            ChartAccount::updateOrCreate(
+                ["user_id" => $userId, "acc_type" => "TRADING"],
+                ["amount"  => $beforeTrading + $trading]
+            );
+
+            ChartAccount::updateOrCreate(
+                ["user_id" => $userId, "acc_type" => "CASHOUT"],
+                ["amount"  => $beforeCashout + $cashout]
+            );
+        }
     }
+
 
     public function investments(User $user)
     {
@@ -585,14 +706,8 @@ class UserDashboardController extends Controller{
 
 
 
-        // $indirectReferralInvestments =
-         $r->sum(function($referral) {
-            dd($referral);
-            return $referral->calculateTeamTurnover();
-        });
-
-
-        return $directReferralInvestments + $indirectReferralInvestments;
+        // This block was dead code with a dd() left in — removed to prevent crash
+        // return $directReferralInvestments + $indirectReferralInvestments;
     }
 
     public function getTeamTurnoverForVentures(){}
@@ -766,7 +881,7 @@ public function isRegionalSupervisor(User $user)
             return $this->isDirector($referral);
         });
 
-        if ($activeDirectors->count() < 0) {
+        if ($activeDirectors->count() < 3) {
             return false;
         }
 
@@ -789,7 +904,7 @@ public function isRegionalSupervisor(User $user)
             return false;
         }
 
-        $teamTurnover = $this->calculateTeamTurnover($user) + 1459000;
+        $teamTurnover = $this->calculateTeamTurnover($user);
         // dd($teamTurnover);
 
         if ($teamTurnover < 2000000 || $teamTurnover >= 50000000) {
@@ -840,7 +955,7 @@ public function isRegionalVicePresident(User $user)
         // }
 
         // Check Team Turnover
-        $teamTurnover =  $this->calculateTeamTurnover($user) + 49369000;
+        $teamTurnover = $this->calculateTeamTurnover($user);
 
         if ($teamTurnover < 50000000) {
             return false;

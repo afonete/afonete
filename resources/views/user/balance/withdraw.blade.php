@@ -1,212 +1,192 @@
-
 <?php
-Use App\Models\Balance;
-Use App\Models\User;
-Use App\Models\Wallet as wallet;
+use App\Models\Wallet;
+use App\Models\withdrawals as WithdrawalModel;
 use Illuminate\Support\Facades\Auth;
-
-$user=Auth::User();
-$username=$user->user;
-$wallet=wallet::where('user',$username)->first();
-
-// $depositedMoneySum = Balance::where('user', $username)->sum('deposit');
-// $usedMoneySum = Balance::where('user', $username)->sum('used');
-
-// $availlableBalance=$depositedMoneySum-$usedMoneySum;
-
+$user    = Auth::user();
+$wallet  = Wallet::where('user', $user->user)->first();
+$history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get();
 ?>
-<style>
-    body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+@include('user.user-dashboard-base')
 
-}
+<div class="content-wrapper text-white" style="background:#1c1d20;">
 
-header {
-  background-color: #333;
-    color:white;
-  text-align: center;
-  padding: 10px;
-  font-weight:bold;
-}
-
-main {
-  padding: 20px;
-}
-
-.deposit-form {
-  border-radius: 4px;
-  padding: 20px;
-}
-
-.deposit-form h2 {
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-input[type="number"] {
-  width: 100%;
-  border: none;
-  padding: 10px;
-  color:white;
-  border-bottom: 1px solid gray;
-  background-color: black;
-}
-
-button {
-  background-color: #333;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #555;
-}
-
-footer {
-  background-color: #f2f2f2;
-  text-align: center;
-  padding: 10px;
-    color:white;
-}
-.main_head{
-  width: 90%;
-  margin: 0 auto;
-  font-size: 30px;
-  /* border-bottom: 2px solid darkred; */
-  padding: 15px 0;
-  /* text-align: center; */
-  color:white;
-  font-weight:bold;
-  padding: 15px 0;
-}
-.main_head::after{
-  content: "";
-  width: 200px;
-  height: 5px;
-  background: darkred;
-  display:block;
-  margin-top: 10px;
-  border-radius: 20px;
-}
-.dep_hist_head{
-  border-bottom: 1px solid gray;
-}
-h3{
-  font-size: 20px;
-  font-weight:bold;
-  margin: 10px 0;
-    color:white;
-}
-.small_text{
-  font-size: 14px;
-    color:white;
-}
-.convert{
-      color:white;
-  background-color: inherit;
-  width: 100%;
-  border: 2px solid red;
-  padding: 7px 20px;
-  border-radius: 0;
-  color:  red;
-  font-weight:bold;
-}
-.convert:hover{
-  background-color: #111;
-}
-
-</style>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-</head>
-<body class="hold-transition sidebar-mini">
-  <div class="wrapper">
-     @include('user.user-dashboard-base')
-  <div class="content-wrapper text-white" style="background:#1c1d20;">
-
-    <div class="tabs tab_links my-2" style="border-bottom: 1px solid white">
-      <span class="links_tabs d-flex ">
-        <a  href="{{route('user.dashboard.deposit')}}"  class="fomoLink text-white" id="tabs"> <i class="fa-regular fa-address-card"></i> Deposite</a>
-        <a href="{{route('user.dashboard.withdraw')}}" class="fomoLink text-white"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw </a>
-      </span>
+    <div class="tabs tab_links my-2" style="border-bottom:1px solid white">
+        <span class="links_tabs d-flex">
+            <a href="{{ route('user.dashboard.deposit') }}" class="fomoLink text-white">
+                <i class="fa-regular fa-address-card"></i> Deposit
+            </a>
+            <a href="{{ route('user.dashboard.withdraw') }}" class="fomoLink text-white" id="tabs">
+                <i class="fa-solid fa-money-bill-transfer"></i> Withdraw
+            </a>
+        </span>
     </div>
 
-  <div  >
-    <h1 class="main_head">Withdraw money From Your Account </h1>
+    <div class="container-fluid py-3">
+        <h1 class="main_head">Withdraw from Your Account</h1>
 
-   <main>
-    <div class="row">
-        <div class="deposit-form col-md mx-md-2 px-lg-3 px-xl-5" style="background: #000;border-radius: 6px; ">
-          <h3 class="">Withdraw Operation</h3>
+        @if(session('success'))
+            <div class="alert alert-success mx-3">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger mx-3">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="alert alert-danger mx-3">{{ $errors->first() }}</div>
+        @endif
 
-          <div class="d-flex justify-content-between" style="border-bottom: 1px solid gray">
-            <div>Avalable balance: </div>
-            <div>{{$availlableBalance}}</div>
-          </div>
+        <div class="row px-3">
 
-          <div class="mt-3">
-            <form method="post" action="{{route('user.withdraw')}}">
-                @csrf
-                <div class="row my-2">
-                  <label for="" class="ml-2">  @if(!$wallet)  No wallet adress found, go in <a  href="{{route('profile.edit')}}" style="color:blue">Profile</a> to set it @else Wallet Address <small>
-                     Do you want to change wallet address? back to <a  href="{{route('profile.edit')}}" style="color:blue">Profile</a>. </small></label>
-                    <div class="col-md-10">
-                      <input type="text"  id="amount" name="address" readonly class="form-control" value="{{$wallet->wallet}}">
+            {{-- ═══════════════════════════════════════════════════
+                 MANUAL WITHDRAWAL (pending admin approval)
+            ═══════════════════════════════════════════════════ --}}
+            <div class="col-md-6">
+                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-hand-holding-usd mr-2 text-warning"></i>Manual Withdrawal Request
+                        </h4>
+                        <small class="text-muted">Request reviewed and processed by admin within 24–48 hrs.</small>
                     </div>
-                    <!--<div class="col-md-2">-->
-                    <!--    <input type="submit" name="" class="btn btn-primary" value="change">-->
-                    <!--</div>-->
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 p-2" style="background:#0d0d0d; border-radius:4px;">
+                            <span class="text-muted">Available Balance (CASHOUT):</span>
+                            <span class="font-weight-bold text-success">${{ number_format($availlableBalance, 2) }}</span>
+                        </div>
 
-                </div>
+                        <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                            @csrf
 
-                <div class="my-2">
-                   <div class="form-group">
-                      <label for="amount" style=" color:white;">Amount: minimal amount is: 12$</label>
-                      <input type="number"  id="amount" name="amount" min="12" required  class="amountInput" placeholder="Enter Withdraw amount">
+                            <div class="form-group">
+                                <label class="text-white">Wallet Address (USDT TRC-20)
+                                    @if(!$wallet)
+                                        — <a href="{{ route('profile.edit') }}" style="color:#3490dc">set in Profile</a>
+                                    @else
+                                        <small class="text-muted">(from profile — <a href="{{ route('profile.edit') }}" style="color:#3490dc">change</a>)</small>
+                                    @endif
+                                </label>
+                                <input type="text" name="address"
+                                       value="{{ $wallet->wallet ?? '' }}"
+                                       class="form-control" style="background:#222; color:white; border-color:#555;"
+                                       placeholder="Your USDT wallet address" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="text-white">Amount <small class="text-muted">(min $12)</small></label>
+                                <input type="number" name="amount" min="12" step="0.01" required
+                                       max="{{ $availlableBalance }}"
+                                       class="form-control" style="background:#222; color:white; border-color:#555;"
+                                       placeholder="Amount to withdraw">
+                            </div>
+
+                            <button type="submit" class="btn btn-warning btn-block font-weight-bold mt-2"
+                                {{ $availlableBalance < 12 ? 'disabled' : '' }}>
+                                <i class="fas fa-paper-plane mr-1"></i> Submit Withdrawal Request
+                            </button>
+                            @if($availlableBalance < 12)
+                                <small class="text-danger d-block mt-1">Minimum withdrawal is $12.</small>
+                            @endif
+                        </form>
                     </div>
                 </div>
+            </div>
 
-                 <div class="form-group my-2">
-                    <button type="submit">Withdraw</button>
-                  </div>
-                  @endif
-            </form>
-          </div>
+            {{-- ═══════════════════════════════════════════════════
+                 INSTANT WITHDRAWAL (Plisio automatic)
+            ═══════════════════════════════════════════════════ --}}
+            <div class="col-md-6 mt-3 mt-md-0">
+                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-bolt mr-2 text-info"></i>Instant Withdrawal (Plisio)
+                        </h4>
+                        <small class="text-muted">Sent directly via Plisio API — no admin review needed.</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 p-2" style="background:#0d0d0d; border-radius:4px;">
+                            <span class="text-muted">Available Balance (CASHOUT):</span>
+                            <span class="font-weight-bold text-success">${{ number_format($availlableBalance, 2) }}</span>
+                        </div>
 
-
+                        <form method="POST" action="{{ route('user.withdraw') }}">
+                            @csrf
+                            <div class="form-group">
+                                <label class="text-white">Wallet Address
+                                    @if(!$wallet)
+                                        — <a href="{{ route('profile.edit') }}" style="color:#3490dc">set in Profile</a>
+                                    @else
+                                        <small class="text-muted">(<a href="{{ route('profile.edit') }}" style="color:#3490dc">change</a>)</small>
+                                    @endif
+                                </label>
+                                <input type="text" name="address"
+                                       value="{{ $wallet->wallet ?? '' }}"
+                                       class="form-control" style="background:#222; color:white; border-color:#555;"
+                                       required>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-white">Amount <small class="text-muted">(min $12)</small></label>
+                                <input type="number" name="amount" min="12" step="0.01" required
+                                       max="{{ $availlableBalance }}"
+                                       class="form-control" style="background:#222; color:white; border-color:#555;"
+                                       placeholder="Amount to withdraw">
+                            </div>
+                            <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2"
+                                {{ $availlableBalance < 12 ? 'disabled' : '' }}>
+                                <i class="fas fa-bolt mr-1"></i> Withdraw Now
+                            </button>
+                        </form>
+                    </div>
                 </div>
-
-        <div class="col-md px-md-2 px-lg-3 px-xl-5">
+            </div>
 
         </div>
+
+        {{-- ═══════════════════════════════════════════════════
+             WITHDRAWAL HISTORY
+        ═══════════════════════════════════════════════════ --}}
+        <div class="mt-4 px-3">
+            <h4 class="text-white mb-3"><i class="fas fa-history mr-2"></i>Your Withdrawal History</h4>
+            @if($history->isEmpty())
+                <p class="text-muted">No withdrawals yet.</p>
+            @else
+            <div class="table-responsive">
+                <table class="table table-dark table-bordered table-sm">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Reference</th>
+                            <th>Amount</th>
+                            <th>Wallet</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Admin Note</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($history as $i => $w)
+                        <tr>
+                            <td>{{ $i + 1 }}</td>
+                            <td><small>{{ $w->transaction_no }}</small></td>
+                            <td>${{ number_format($w->amount, 2) }}</td>
+                            <td><small>{{ Str::limit($w->wallet_address, 20) }}</small></td>
+                            <td><small>{{ $w->plisio_txn_id ? 'Instant' : 'Manual' }}</small></td>
+                            <td>
+                                @php
+                                    $sc = ['pending'=>'warning','processing'=>'info','completed'=>'success','failed'=>'danger'];
+                                    $badge = $sc[$w->status] ?? 'secondary';
+                                @endphp
+                                <span class="badge badge-{{ $badge }}">{{ ucfirst($w->status) }}</span>
+                            </td>
+                            <td><small class="text-muted">{{ $w->admin_note ?? '—' }}</small></td>
+                            <td><small>{{ $w->created_at->format('d M Y') }}</small></td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
     </div>
-
-    </main>
-  </div>
-
-
-
-
-
-  </div>
-      @include('user.footer')
 </div>
-</body>
-</html>
+
+@include('user.footer')

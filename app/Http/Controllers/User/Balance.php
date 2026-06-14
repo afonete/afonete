@@ -22,6 +22,8 @@ use Illuminate\Support\Str;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use App\Models\withdrawals as WithdrawalModel;
+use App\Models\Transaction;
 
 
 class Balance extends Controller{
@@ -84,57 +86,94 @@ class Balance extends Controller{
     }
 
 
-public function withdraw_money(Request $request){
+public function withdraw_money(Request $request)
+    {
+        $user = Auth::User();
 
-$amount=$request->amount;
-$address=$request->address;
-// dd($request);
-// $address='0x620ff5ddd33d48fcc77565251cb722e6891d92db';
-// Your Plisio API endpoint
+        // ── Validate input ──
+        $request->validate([
+            'amount'  => 'required|numeric|min:12',
+            'address' => 'required|string',
+        ]);
 
-$length = 8;
-        $orderNumber = Str::random($length);
-        $client = new Client();
+        $amount  = (float) $request->amount;
+        $address = $request->address;
 
-$apiUrl = 'https://plisio.net/api/v1/operations/withdraw';
+        // ── Check CASHOUT balance ──
+        $cashoutBalance = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
 
-// // Parameters for the withdrawal
-$params = [
-    'currency' => 'USDT',
-    'type' => 'cash_out',
-    'to' => $address,
-    'amount' => $amount,
-    'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual API key
-];
+        if ($cashoutBalance < $amount) {
+            return redirect()->route('user.dashboard.withdraw')
+                ->with('error', 'Insufficient balance. You have $' . number_format($cashoutBalance, 2) . ' available.');
+        }
 
-// // Send the GET request
-$response = $client->get($apiUrl,[
-    "query"=> [
-        'currency' => 'USDT',
-        'type' => 'cash_out',
-        'to' => $address,
-        'amount' => $amount,
-        'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual API key
-    ]
-]);
+        $trxNo  = Transaction::generateTransactionNo();
+        $apiKey = config('services.plisio.api_key');
 
+        // ── Call Plisio API ──
+        $client   = new Client();
+        $apiUrl   = 'https://plisio.net/api/v1/operations/withdraw';
+        $plisioId = null;
 
-// Check the response
-if ($response->successful()) {
-    // Request was successful, you can access the response data
-    $responseData = $response->json();
-    // Handle the Plisio API response data as needed
-    return response()->json(["data"=>$responseData,"status"=>200]);
+        try {
+            $response = $client->get($apiUrl, [
+                'query' => [
+                    'currency' => 'USDT',
+                    'type'     => 'cash_out',
+                    'to'       => $address,
+                    'amount'   => $amount,
+                    'api_key'  => $apiKey,
+                ],
+            ]);
 
-} else {
-    // Request failed, handle the error message
+            $responseData = json_decode($response->getBody()->getContents(), true);
 
+            if (($responseData['status'] ?? '') !== 'success') {
+                $errMsg = $responseData['data']['message'] ?? 'Plisio withdrawal failed.';
+                return redirect()->route('user.dashboard.withdraw')->with('error', $errMsg);
+            }
 
-    $errorResponse = $response->json();
-    $errorMessage = $errorResponse['message'];
-    return response()->json(['message' => $errorMessage,"status"=>404]);
-}
+            $plisioId = $responseData['data']['txn_id'] ?? null;
 
+        } catch (\Exception $e) {
+            return redirect()->route('user.dashboard.withdraw')
+                ->with('error', 'Withdrawal could not be processed: ' . $e->getMessage());
+        }
+
+        // ── Deduct from CASHOUT balance ──
+        $newBalance = $cashoutBalance - $amount;
+        $user->ChartAccount()->where('acc_type', 'CASHOUT')->update(['amount' => $newBalance]);
+
+        // ── Record withdrawal ──
+        WithdrawalModel::create([
+            'user_id'        => $user->id,
+            'amount'         => $amount,
+            'wallet_address' => $address,
+            'currency'       => 'USDT',
+            'transaction_no' => $trxNo,
+            'plisio_txn_id'  => $plisioId,
+            'status'         => 'completed',
+        ]);
+
+        // ── Record transaction log ──
+        Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'WITHDRAWAL',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'amount'         => $amount,
+                'currency'       => 'USDT',
+                'wallet_address' => $address,
+                'plisio_txn_id'  => $plisioId,
+                'date'           => now()->toDateTimeString(),
+                'status'         => 'completed',
+                'username'       => $user->name,
+            ]),
+        ]);
+
+        return redirect()->route('user.dashboard.withdraw')
+            ->with('success', 'Withdrawal of $' . number_format($amount, 2) . ' USDT submitted successfully. Transaction: ' . $trxNo);
     }
      public function withdraw (){
         $user = Auth::User();
@@ -243,4 +282,79 @@ if ($response->successful()) {
     return view('user.balance.deposit')->with('p_failed','Payment failed, Retry again');
 }
 
+    /**
+     * User submits a manual withdrawal request.
+     * Balance is held (deducted immediately), status = pending.
+     * Admin approves → completed, or rejects → balance refunded.
+     */
+    public function requestManualWithdrawal(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'amount'  => 'required|numeric|min:12',
+            'address' => 'required|string',
+        ]);
+
+        $amount  = (float) $request->amount;
+        $address = $request->address;
+
+        // ── Check CASHOUT balance ──
+        $cashoutBalance = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+
+        if ($cashoutBalance < $amount) {
+            return redirect()->route('user.dashboard.withdraw')
+                ->with('error', 'Insufficient balance. You have $' . number_format($cashoutBalance, 2) . ' available.');
+        }
+
+        // ── Hold the amount (deduct now, refund if rejected) ──
+        $user->ChartAccount()->where('acc_type', 'CASHOUT')
+             ->update(['amount' => $cashoutBalance - $amount]);
+
+        $trxNo = Transaction::generateTransactionNo();
+
+        // ── Create pending withdrawal record ──
+        WithdrawalModel::create([
+            'user_id'        => $user->id,
+            'amount'         => $amount,
+            'wallet_address' => $address,
+            'currency'       => 'USDT',
+            'transaction_no' => $trxNo,
+            'status'         => 'pending',
+        ]);
+
+        Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $trxNo,
+            'transaction_type'    => 'WITHDRAWAL_REQUEST',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'amount'         => $amount,
+                'currency'       => 'USDT',
+                'wallet_address' => $address,
+                'date'           => now()->toDateTimeString(),
+                'status'         => 'pending',
+                'username'       => $user->name,
+                'note'           => 'Awaiting admin approval',
+            ]),
+        ]);
+
+        return redirect()->route('user.dashboard.withdraw')
+            ->with('success', 'Withdrawal request of $' . number_format($amount, 2) . ' submitted. Reference: ' . $trxNo . '. Awaiting admin approval.');
+    }
+
+    /**
+     * Show the user their own withdrawal history
+     */
+    public function withdrawalHistory()
+    {
+        $user        = Auth::user();
+        $withdrawals = WithdrawalModel::where('user_id', $user->id)->latest()->paginate(20);
+        $cashout     = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+
+        return view('user.balance.withdraw', [
+            'availlableBalance' => $cashout,
+            'withdrawals'       => $withdrawals,
+        ]);
+    }
 }

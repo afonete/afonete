@@ -1,142 +1,189 @@
-
-
-
-
 <div class="wrapper">
     @include('user.user-dashboard-base')
     <div class="content-wrapper">
-        <title>Commissions</title>
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-        <script src="https://cdn.tailwindcss.com"></script>
+    <div class="w-full p-4">
 
-    </head>
-    <body class="bg-gray-100">
-        <div class="w-full p-4">
+        {{-- Nav --}}
+        <div class="mb-3 mx-2">
+            <ul class="flex flex-col md:flex-row md:space-x-5">
+                <li><a href="{{route('overview')}}" class="font-medium text-lg hover:text-orange-600">Overview</a></li>
+                <li><a href="{{route('commission')}}" class="font-medium text-lg text-blue-900 border-b-2 border-blue-900">Referral Bonuses</a></li>
+                <li><a href="{{route('transaction')}}" class="font-medium text-lg hover:text-orange-600">Transactions</a></li>
+                <li><a href="{{route('subscription')}}" class="font-medium text-lg hover:text-orange-600">My Subscriptions</a></li>
+            </ul>
+        </div>
 
-            <div class="mb-2 mx-2">
-                <ul class="flex flex-col md:flex-row md:space-x-5">
-                    <li>
-                        <a href="{{route('overview')}}" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Overview</a>
-                    </li>
-                    <li>
-                        <a href="" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Focoin</a>
-                    </li>
-                    <li>
-                        <a href="" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Commissions</a>
-                    </li>
-                    <li>
-                        <a href="" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Purchase code</a>
-                    </li>
-                    <li>
-                        <a href="{{route('transaction')}}" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600"><i class="fa-solid fa-right-left"></i> Transaction</a>
-                    </li>
-                    <li>
-                        <a href="{{route('subscription')}}" class="font-medium text-lg text-blue-900 hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Mysubscriptions</a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="w-full bg-slate-100 rounded-xl p-4 my-4 shadow">
-                <div>
-                    <h2 class="font-bold text-md">Commissions</h2>
-                    <h2 class="text-orange-600 font-medium text-sm">Commissions History</h2>
-                </div>
-                <div class="border flex justify-evenly p-3 mt-2 rounded-xl">
-                    <div>
-                        <p class="flex items-baseline space-x-1"> <span class="text-lg font-medium">{{$previousWeekTotal}}</span> <span class="text-xs font-medium text-orange-600">EUR</span> </p>
-                        <p class="text-gray-500 text-sm font-medium">Previous Week</p>
-                    </div>
-                    <div>
-                        <p class="flex items-baseline space-x-1"> <span class="text-lg font-medium">{{$balance}}</span>
-                            <span class="text-xs font-medium text-orange-600">$</span> </p>
-                        <p class="text-gray-500 text-sm font-medium">Total Earnings</p>
-                    </div>
+        {{-- Summary Cards --}}
+        <div class="row px-2 mb-3">
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <i class="fas fa-wallet fa-2x text-warning mb-2"></i>
+                    <h4 class="font-weight-bold">${{ number_format($totalCommission, 2) }}</h4>
+                    <p class="text-muted small mb-0">Total Commission Balance</p>
                 </div>
             </div>
-
-            <div class="bg-white p-3 my-5 rounded shadow-md">
-                <h2 class="text-lg font-medium">History</h2>
-                <div class="overflow-x-auto ">
-
-                <table class=" bg-white">
-                        <thead>
-                            <tr>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Week</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Daily Vup</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">FOMO</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Staking Income</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Direct Ads</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Volume Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Retail Sale Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Incentives Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Leadership Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Royal FC Leader</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Streamline Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Direct Upgrade</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Fomo Bonus</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Residual Income</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Team Building</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Travels Residual Opportunity</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Affiliate E-Shop Commissions</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Total</th>
-                                <th class="py-2 px-4 bg-gray-50 border-b border-gray-200  text-blue-900 font-medium">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                                @php
-                                  use Carbon\Carbon;
-                                @endphp
-                            @foreach ($trx as $weekStart => $transactions)
-                                @php
-                                    $weekEnd = Carbon::parse($weekStart)->endOfWeek()->format('Y-m-d');
-                                $amountTotal = $transactions->sum('amount');
-
-                                // echo $weekStart . " - " . $weekEnd . " | " . $amountTotal . "\n";
-
-                                @endphp
-
-                            <tr class="hover:bg-gray-100  hover:cursor-pointer">
-                                <td class="p-1 border-b border-gray-200">
-                                    <p class="badge badge-light">{{$weekStart}} - {{$weekEnd}}</p>
-                                </td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">{{$amountTotal}} $</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">0.00$</td>
-                                <td class="p-1 border-b border-gray-200">
-                                    <form action="{{route('commission.details')}}" method="GET">
-                                        @method("GET")
-                                        <input type="hidden" name="startDate" value="{{$weekStart}}"/>
-                                        <input type="hidden" name="endDate" value="{{$weekEnd}}"/>
-
-                                        <button class="bg-orange-600 text-white px-3 py-2 rounded" type="submit">Details</button>
-                                    </form>
-                                </td>
-                            </tr>
-
-                            @endforeach
-
-
-                            <!-- Additional rows would go here -->
-                        </tbody>
-                    </table>
-
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <i class="fas fa-user-plus fa-2x text-success mb-2"></i>
+                    <h4 class="font-weight-bold">{{ $totalDirectCount }}</h4>
+                    <p class="text-muted small mb-0">Direct Referrals</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+                    <h4 class="font-weight-bold">{{ $activeDirectCount }}</h4>
+                    <p class="text-muted small mb-0">Active Investors</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <div class="card border-0 shadow-sm text-center py-3">
+                    <i class="fas fa-clock fa-2x text-secondary mb-2"></i>
+                    <h4 class="font-weight-bold">${{ number_format($previousWeekTotal, 2) }}</h4>
+                    <p class="text-muted small mb-0">Previous Week</p>
                 </div>
             </div>
         </div>
-    </body>
-</html>
+
+        {{-- Bonus Breakdown --}}
+        <div class="row px-2 mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-success text-white font-weight-bold">
+                        <i class="fas fa-user-check mr-1"></i> Direct Referral Bonus (10%)
+                        <span class="float-right badge badge-light text-success">${{ number_format($directBonusTotal, 2) }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        @if($directReferrals->isEmpty())
+                            <p class="text-muted p-3 mb-0">No direct referrals yet.</p>
+                        @else
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Invested</th>
+                                        <th>Bonus (10%)</th>
+                                        <th>Status</th>
+                                        <th>Since</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($directReferrals as $ref)
+                                    <tr>
+                                        <td>
+                                            <strong>{{ $ref->name }}</strong>
+                                            <small class="d-block text-muted">{{ $ref->email }}</small>
+                                        </td>
+                                        <td>${{ number_format($ref->total_invested, 2) }}</td>
+                                        <td class="font-weight-bold text-success">
+                                            ${{ number_format($ref->bonus_earned, 2) }}
+                                        </td>
+                                        <td>
+                                            @if($ref->is_active)
+                                                <span class="badge badge-success">Active</span>
+                                            @else
+                                                <span class="badge badge-secondary">No Investment</span>
+                                            @endif
+                                        </td>
+                                        <td><small>{{ $ref->created_at->format('d M Y') }}</small></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-info text-white font-weight-bold">
+                        <i class="fas fa-users mr-1"></i> Indirect Referral Bonus (1%)
+                        <span class="float-right badge badge-light text-info">${{ number_format($indirectBonusTotal, 2) }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        @if($indirectReferrals->isEmpty())
+                            <p class="text-muted p-3 mb-0">No indirect referrals yet.</p>
+                        @else
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Via</th>
+                                        <th>Invested</th>
+                                        <th>Bonus (1%)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($indirectReferrals as $ref)
+                                    <tr>
+                                        <td><strong>{{ $ref->name }}</strong></td>
+                                        <td><small class="text-muted">{{ $ref->referred_through }}</small></td>
+                                        <td>${{ number_format($ref->total_invested, 2) }}</td>
+                                        <td class="font-weight-bold text-info">
+                                            ${{ number_format($ref->bonus_earned, 2) }}
+                                        </td>
+                                        <td>
+                                            @if($ref->is_active)
+                                                <span class="badge badge-success">Active</span>
+                                            @else
+                                                <span class="badge badge-secondary">No Investment</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Transaction History --}}
+        <div class="px-2 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark font-weight-bold">
+                    <i class="fas fa-history mr-1"></i> Commission Transaction History
+                </div>
+                <div class="card-body p-0">
+                    @if($commissionTrx->isEmpty())
+                        <p class="text-muted p-3 mb-0">No commission transactions yet.</p>
+                    @else
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>From</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($commissionTrx as $t)
+                                <tr>
+                                    <td><small class="text-muted">{{ $t->transaction_no }}</small></td>
+                                    <td>{{ $t->from_user }}</td>
+                                    <td><small>{{ $t->parsed_description }}</small></td>
+                                    <td class="font-weight-bold text-success">${{ number_format($t->parsed_amount, 2) }}</td>
+                                    <td><small>{{ $t->created_at->format('d M Y H:i') }}</small></td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+</div>
