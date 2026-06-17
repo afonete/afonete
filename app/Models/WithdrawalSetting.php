@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class WithdrawalSetting extends Model
+{
+    use HasFactory;
+
+    protected $table = 'withdrawal_settings';
+
+    protected $fillable = [
+        'min_amount','max_per_transaction','daily_limit','monthly_limit',
+        'require_admin_approval','default_trc20_min_length',
+        'validate_trc20_format','notes','updated_by',
+    ];
+
+    public static function current(): self
+    {
+        static $cached = null;
+        if ($cached === null) {
+            $cached = self::first() ?? new self([
+                'min_amount'               => 10,
+                'max_per_transaction'      => 10000,
+                'daily_limit'              => 20000,
+                'monthly_limit'            => 100000,
+                'require_admin_approval'   => true,
+                'default_trc20_min_length' => 34,
+                'validate_trc20_format'    => true,
+            ]);
+        }
+        return $cached;
+    }
+
+    /** Sum of completed withdrawals today for a user */
+    public static function withdrawnToday(int $userId): float
+    {
+        return (float) withdrawals::where('user_id', $userId)
+            ->whereIn('status', ['completed','processing'])
+            ->whereDate('created_at', today())
+            ->sum('amount');
+    }
+
+    /** Sum of completed withdrawals this calendar month for a user */
+    public static function withdrawnThisMonth(int $userId): float
+    {
+        return (float) withdrawals::where('user_id', $userId)
+            ->whereIn('status', ['completed','processing'])
+            ->whereYear('created_at', date('Y'))
+            ->whereMonth('created_at', date('m'))
+            ->sum('amount');
+    }
+}

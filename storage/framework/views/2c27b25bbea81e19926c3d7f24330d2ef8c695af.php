@@ -337,7 +337,13 @@ ul li a{
                 <li>
                     <a href="<?php echo e(route('admin.token-settings')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-coins"></i>
-                       <span class="flex-1 ms-3 whitespace-nowrap">Token Price</span>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Token Prices</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo e(route('admin.token-withdrawals')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                      <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
                     </a>
                 </li>
                 <li>

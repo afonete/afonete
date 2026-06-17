@@ -2,6 +2,13 @@
 <div class="content-wrapper">
 <div class="container-fluid py-4">
 
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="font-weight-bold mb-0"><i class="fas fa-check-circle text-success mr-2"></i> Available Token Wallet</h3>
+        <a href="{{ route('user.investments') }}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-box-open mr-1"></i> My Investments
+        </a>
+    </div>
+
     @include('user.token._nav', ['active' => 'available'])
 
     @if(session('success'))<div class="alert alert-success mt-2">{{ session('success') }}</div>@endif
@@ -29,10 +36,10 @@
 
                     <div class="alert alert-info small mb-3">
                         <i class="fas fa-info-circle mr-1"></i>
-                        Available Token contains:<br>
-                        &bull; Tokens earned from each <strong>30-day renewal</strong><br>
-                        &bull; <strong>Locked tokens released</strong> when your package expires<br><br>
-                        To use them (transfer/swap/withdraw), first move them to <strong>Free Token</strong>.
+                        <strong>Spec:</strong> Available Token contains:<br>
+                        &bull; Tokens earned from each <strong>30-day renewal</strong> (formula: <code>trading_voucher ÷ renewal_price</code>)<br>
+                        &bull; <strong>Locked tokens released</strong> when your package expires (auto by system)<br><br>
+                        To use them (transfer / swap / withdraw), first move them to <strong>Free Token</strong>.
                     </div>
 
                     <form method="POST" action="{{ route('user.token.available-to-free') }}">

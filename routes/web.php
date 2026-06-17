@@ -37,6 +37,7 @@ use App\Http\Controllers\User\FinanceController;
 use App\Http\Controllers\Admin\ClaimController;
 
 
+
 Route::get('/', function () {
     return view('home.welcome');
 })->name('front');
@@ -94,7 +95,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::post('user/tranfer/account', [FinanceController::class, 'transferToAccount'])->name('transferToAccount');
     Route::get('user/commission', [FinanceController::class, 'commission'])->name('commission');
-    Route::get('user/subscription', [FinanceController::class, 'subscription'])->name('subscription');
+    Route::get("user/subscription", [FinanceController::class, 'subscription'])->name('subscription');
 
     // ventures  
 
@@ -181,9 +182,40 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get('user/dashboard/balance/', [Balance::class, 'index'])->name('user.dashboard.balance');
     Route::get('user/dashboard/deposit/', [Balance::class, 'deposit'])->name('user.dashboard.deposit');
     Route::post('user/dashboard/deposit/', [Balance::class, 'api'])->name('user.deposit');
+
+    // ── Plisio deposit callback routes (used in Balance.php callbacks) ──
+    Route::get('user/dashboard/deposit/status',  [Balance::class, 'status'])->name('user.deposit.status');
+    Route::get('user/dashboard/deposit/success', [Balance::class, 'success'])->name('user.deposit.success');
+    Route::get('user/dashboard/deposit/fail',    [Balance::class, 'error'])->name('user.deposit.fail');
+
+    // ── User deposit history ──────────────────────────────────────────────
+    Route::get('user/deposits',                   [\App\Http\Controllers\User\Balance::class, 'depositHistory'])->name('user.deposits.history');
     Route::post('user/dashboard/wallet/', [Balance::class, 'wallet'])->name('user.wallet');
     Route::get('user/dashboard/wallet/receive', [Balance::class, 'Receive'])->name('user.receive');
     Route::get('user/dashboard/wallet-address/', [Profilecontroller::class, 'wallet'])->name('wallet');
+
+    // User token actions
+    Route::get('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferPage'])->name('user.token.transfer');
+    Route::post('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransfer'])->name('user.token.transfer.post');
+    Route::get('user/token/transfer/lookup', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferLookup'])->name('user.token.transfer.lookup');
+    Route::get('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwapPage'])->name('user.token.swap');
+    Route::post('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwap'])->name('user.token.swap.post');
+    Route::get('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawPage'])->name('user.token.withdraw');
+    Route::post('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawRequest'])->name('user.token.withdraw.post');
+    Route::get('user/token/locked', [\App\Http\Controllers\User\FinanceController::class, 'lockedTokenPage'])->name('user.token.locked');
+    Route::get('user/token/available', [\App\Http\Controllers\User\FinanceController::class, 'availableTokenPage'])->name('user.token.available');
+    Route::post('user/token/available-to-free', [\App\Http\Controllers\User\FinanceController::class, 'availableToFree'])->name('user.token.available-to-free');
+
+    // ── REFERRAL (user) ─────────────────────────────────────────────────
+    Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
+    Route::post('user/referral/withdraw',       [\App\Http\Controllers\User\ReferralController::class, 'withdraw'])->name('user.referral.withdraw');
+    Route::get ('user/referral/downline',       [\App\Http\Controllers\User\ReferralController::class, 'downline'])->name('user.referral.downline');
+    Route::get ('user/referral/rank',           [\App\Http\Controllers\User\ReferralController::class, 'rank'])->name('user.referral.rank');
+
+    // ── MY INVESTMENTS (user) ───────────────────────────────────────────
+    Route::get('user/investments',                [\App\Http\Controllers\User\InvestmentController::class, 'index'])->name('user.investments');
+    Route::get('user/investments/{id}',           [\App\Http\Controllers\User\InvestmentController::class, 'show'])->name('user.investments.show');
+
 
     // create function that will return the page called kyc
     Route::get('user/kyc', function () {
@@ -329,17 +361,28 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/token-withdrawals', [AdminController::class, 'tokenWithdrawals'])->name('admin.token-withdrawals');
     Route::post('admin/token-withdrawals/approve', [AdminController::class, 'approveTokenWithdrawal'])->name('admin.token-withdrawals.approve');
     Route::post('admin/token-withdrawals/reject', [AdminController::class, 'rejectTokenWithdrawal'])->name('admin.token-withdrawals.reject');
-    // User token actions
-    Route::get('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferPage'])->name('user.token.transfer');
-    Route::post('user/token/transfer', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransfer'])->name('user.token.transfer.post');
-    Route::get('user/token/transfer/lookup', [\App\Http\Controllers\User\FinanceController::class, 'tokenTransferLookup'])->name('user.token.transfer.lookup');
-    Route::get('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwapPage'])->name('user.token.swap');
-    Route::post('user/token/swap', [\App\Http\Controllers\User\FinanceController::class, 'tokenSwap'])->name('user.token.swap.post');
-    Route::get('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawPage'])->name('user.token.withdraw');
-    Route::post('user/token/withdraw', [\App\Http\Controllers\User\FinanceController::class, 'tokenWithdrawRequest'])->name('user.token.withdraw.post');
-    Route::get('user/token/locked', [\App\Http\Controllers\User\FinanceController::class, 'lockedTokenPage'])->name('user.token.locked');
-    Route::get('user/token/available', [\App\Http\Controllers\User\FinanceController::class, 'availableTokenPage'])->name('user.token.available');
-    Route::post('user/token/available-to-free', [\App\Http\Controllers\User\FinanceController::class, 'availableToFree'])->name('user.token.available-to-free');
+
+    // ── REFERRAL BONUSES (admin) ────────────────────────────────────────
+    Route::get  ('admin/referral/bonuses',                [\App\Http\Controllers\Admin\ReferralAdminController::class, 'bonuses'])->name('admin.referral.bonuses');
+    Route::get  ('admin/referral/bonuses/user/{id}',      [\App\Http\Controllers\Admin\ReferralAdminController::class, 'userDetail'])->name('admin.referral.bonuses.user');
+    Route::get  ('admin/referral/withdrawals',            [\App\Http\Controllers\Admin\ReferralAdminController::class, 'withdrawals'])->name('admin.referral.withdrawals');
+    Route::post ('admin/referral/withdrawals/{id}/approve',[\App\Http\Controllers\Admin\ReferralAdminController::class, 'approveWithdrawal'])->name('admin.referral.withdrawals.approve');
+    Route::post ('admin/referral/withdrawals/{id}/reject', [\App\Http\Controllers\Admin\ReferralAdminController::class, 'rejectWithdrawal'])->name('admin.referral.withdrawals.reject');
+
+    // ── RANK APPLICATIONS (admin) ───────────────────────────────────────
+    Route::get  ('admin/rank/applications',   [\App\Http\Controllers\Admin\ReferralAdminController::class, 'rankApplications'])->name('admin.rank.applications');
+
+    // ── DEPOSIT / WITHDRAWAL SETTINGS (admin) ───────────────────────────
+    Route::get ('admin/settings/deposit-wallets',     [\App\Http\Controllers\Admin\SettingsController::class, 'depositWallets'])->name('admin.settings.deposit-wallets');
+    Route::put ('admin/settings/deposit-wallets',     [\App\Http\Controllers\Admin\SettingsController::class, 'updateDepositWallets'])->name('admin.settings.deposit-wallets.update');
+    Route::get ('admin/settings/withdrawal-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'withdrawalSettings'])->name('admin.settings.withdrawal-settings');
+    Route::put ('admin/settings/withdrawal-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'updateWithdrawalSettings'])->name('admin.settings.withdrawal-settings.update');
+    Route::post ('admin/rank/{id}/approve',   [\App\Http\Controllers\Admin\ReferralAdminController::class, 'approveRank'])->name('admin.rank.approve');
+    Route::post ('admin/rank/{id}/reject',    [\App\Http\Controllers\Admin\ReferralAdminController::class, 'rejectRank'])->name('admin.rank.reject');
+    Route::get  ('admin/rank/eligible',       [\App\Http\Controllers\Admin\ReferralAdminController::class, 'eligible'])->name('admin.rank.eligible');
+    Route::get  ('admin/rank/settings',       [\App\Http\Controllers\Admin\ReferralAdminController::class, 'rankSettings'])->name('admin.rank.settings');
+    Route::put  ('admin/rank/settings',       [\App\Http\Controllers\Admin\ReferralAdminController::class, 'updateRankSettings'])->name('admin.rank.settings.update');
+    
     Route::get('admin/users/list', [AdminController::class, 'users'])->name('users.list');
     Route::get('admin/memberships-plan', [AdminController::class, 'plans'])->name('membership.plans');
 

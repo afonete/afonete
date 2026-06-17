@@ -159,18 +159,26 @@ class UserDashboardController extends Controller{
         // GAS_FEE is admin-only — not read here
         $COMMISSION = $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
 
-        // ── Referral bonus breakdown for dashboard ──
+        // ── Referral bonus breakdown for dashboard (live, from referral_bonuses table) ──
+        $referralBonusTotals = \App\Models\ReferralBonus::totalsForUser($user->id);
         $directReferralCount   = $user->referrals()->count();
         $activeReferralCount   = $user->referrals()->whereHas('investments', function ($q) {
             $q->where('status', 1)->where('category', 'VENTURE');
         })->count();
-        // Direct bonus earned = 10% of each direct referral's investments
-        $directBonusEarned = 0;
-        foreach ($user->referrals as $ref) {
-            $directBonusEarned += $ref->investments()
-                ->where('status', 1)->where('category', 'VENTURE')->sum('amount') * 0.10;
-        }
+        // Direct bonus earned = sum of all L1 referral_bonus rows
+        $directBonusEarned = (float) \App\Models\ReferralBonus::where('user_id', $user->id)
+            ->where('level', 1)
+            ->where('status', '!=', 'reversed')
+            ->sum('bonus_amount');
         $directBonusEarned = round($directBonusEarned, 2);
+
+        // ── Current rank + next rank progress ──
+        $currentRank    = $user->currentRank();
+        $nextRankInfo   = null;
+        foreach (\App\Models\RankSetting::orderedList() as $r) {
+            if ($currentRank && $r->level <= $currentRank->rank_level) continue;
+            $nextRankInfo = $r; break;
+        }
 
         $purchaseDate = Carbon::parse($ChartAccount->created_at);
         $expirationDate = null;
@@ -232,15 +240,18 @@ class UserDashboardController extends Controller{
             "ranks"                  => $ranks,
             "amount"                 => 0,
             // ── Token balances (shown to user) ──
-            // LOCKED_TOKEN  : full investment / uvp_price. Locked during package. Released to FREE_TOKEN on expiry.
+            // LOCKED_TOKEN   : full investment / uvp_price. Locked during package. Released to AVAILABLE_TOKEN on expiry (per spec).
+            // AVAILABLE_TOKEN: receives (a) locked tokens released at package expiry, and (b) tokens earned each 30-day renewal (trading_voucher / renewal_price). Must be moved to FREE_TOKEN before use.
             // FREE_TOKEN     : usable tokens — transfer to user, swap to cashout, or withdraw to wallet.
-            // AVAILABLE_TOKEN: tokens earned each 30-day renewal (trading_voucher / renewal_price).
             // GAS_FEE        : 20% charges — admin-only, never shown here.
             "locked"                 => $lockedToken,
             "free_token"             => $freeToken,
             "available_token"        => $availableToken,
             "fcoin"                  => number_format($freeToken, 0), // used in blade fcoin box
             "commission"             => $COMMISSION,
+            "referral_bonus_totals"  => $referralBonusTotals,
+            "current_rank"           => $currentRank,
+            "next_rank"              => $nextRankInfo,
             "direct_referral_count"  => $directReferralCount,
             "active_referral_count"  => $activeReferralCount,
             "direct_bonus_earned"    => $directBonusEarned,
@@ -489,8 +500,9 @@ class UserDashboardController extends Controller{
             // The amount paid for the package
             $amount = $package->paid;
 
-            // Calculate Fcoin
-            $fcoin = $amount / 0.0025;
+            // Calculate Fcoin (uses admin-configurable UVP price from token_settings)
+            $uvpPrice = \App\Models\TokenSetting::uvpPrice();
+            $fcoin = $uvpPrice > 0 ? round($amount / $uvpPrice, 4) : 0;
             // Calculate percentages of the amount
             $percent20 = ($amount * 20 / 100); 
             $percent80 = ($amount * 80 / 100);

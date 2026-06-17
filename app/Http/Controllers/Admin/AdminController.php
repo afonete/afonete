@@ -42,10 +42,24 @@ class AdminController extends Controller
             return redirect()->route('admin.withdrawal')->with('error', 'This withdrawal has already been processed.');
         }
 
+        // FIX (W8): Record the on-chain txn_hash that admin provides
         $withdrawal->update([
             'status'     => 'completed',
             'admin_note' => $request->admin_note,
+            'txn_hash'   => $request->txn_hash,
         ]);
+
+        // FIX (W6): Email user about approval
+        $user = User::find($withdrawal->user_id);
+        if ($user) {
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\WithdrawalApproved(
+                    $user, $withdrawal->amount, $withdrawal->transaction_no, $request->txn_hash
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Withdrawal approval email failed: ' . $e->getMessage());
+            }
+        }
 
         return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal approved and marked completed.');
     }
@@ -88,6 +102,17 @@ class AdminController extends Controller
             'status'     => 'failed',
             'admin_note' => $request->admin_note ?? 'Rejected by admin',
         ]);
+
+        // FIX (W6): Email user about rejection
+        if ($user) {
+            try {
+                \Mail::to($user->email)->send(new \App\Mail\WithdrawalRejected(
+                    $user, $withdrawal->amount, $withdrawal->transaction_no, $request->admin_note ?? 'No reason provided'
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Withdrawal rejection email failed: ' . $e->getMessage());
+            }
+        }
 
         return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal rejected and balance refunded to user.');
     }

@@ -43,10 +43,41 @@ $ftt = User::where('utype', '!=', 'ADM')
 
 
 <?php $__env->startSection('contents'); ?>
+<?php
+    // Live referral-bonus platform totals for the admin dashboard
+    $refTotals = \App\Services\ReferralService::platformTotals();
+    $pendingWithdrawals = \App\Models\WeeklyWithdrawal::where('status','pending')->count();
+    $pendingRanks       = \App\Models\UserRank::where('status','pending')->count();
+?>
 <section>
 <div class="px-2">
-          <div class="grid grid-cols-2 sm:grid-cols-7 gap-3
-        mt-[5rem] container  mx-auto ">
+
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        <div class="py-4 card border-l-[4px] border-yellow-400 bg-white rounded shadow-sm px-3">
+            <small class="text-muted text-xs uppercase">All-Time Referral Bonus</small>
+            <h2 class="font-bold text-2xl text-primary">$<?php echo e(number_format($refTotals['all_time'], 2)); ?></h2>
+            <a href="<?php echo e(route('admin.referral.bonuses')); ?>" class="small text-primary">View breakdown →</a>
+        </div>
+        <div class="py-4 card border-l-[4px] border-green-400 bg-white rounded shadow-sm px-3">
+            <small class="text-muted text-xs uppercase">Withdrawable Now</small>
+            <h2 class="font-bold text-2xl text-success">$<?php echo e(number_format($refTotals['withdrawable'], 2)); ?></h2>
+            <small class="text-muted">across all users</small>
+        </div>
+        <div class="py-4 card border-l-[4px] border-orange-400 bg-white rounded shadow-sm px-3">
+            <small class="text-muted text-xs uppercase">Pending Withdrawals</small>
+            <h2 class="font-bold text-2xl text-warning"><?php echo e($pendingWithdrawals); ?></h2>
+            <a href="<?php echo e(route('admin.referral.withdrawals')); ?>" class="small text-warning">Process →</a>
+        </div>
+        <div class="py-4 card border-l-[4px] border-purple-400 bg-white rounded shadow-sm px-3">
+            <small class="text-muted text-xs uppercase">Pending Rank Apps</small>
+            <h2 class="font-bold text-2xl text-purple-700"><?php echo e($pendingRanks); ?></h2>
+            <a href="<?php echo e(route('admin.rank.applications')); ?>" class="small text-purple-700">Review →</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-7 gap-3
+        mt-[1rem] container  mx-auto ">
             <div class="py-5 card  border-l-[4px] border-blue-400 bg-white flex  items-center  rounded shadow-sm px-2 justify-between">
 
                 <div>

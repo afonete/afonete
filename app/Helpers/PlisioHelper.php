@@ -1,6 +1,9 @@
 <?php
 
 // app/Helpers/PlisioHelper.php
+//
+// SECURITY: Uses config('services.plisio.api_key') instead of a hardcoded
+// key. Make sure PLISIO_API_KEY is set in your .env file.
 
 function verifyCallbackData()
 {
@@ -22,11 +25,8 @@ function verifyCallbackData()
     }
 
     $postString = serialize($post);
-    $checkKey = hash_hmac('sha1', $postString, 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95');
+    $apiKey     = config('services.plisio.api_key', env('PLISIO_API_KEY'));
+    $checkKey   = hash_hmac('sha1', $postString, $apiKey);
 
-    if ($checkKey != $verifyHash) {
-        return false;
-    }
-
-    return true;
+    return hash_equals($checkKey, $verifyHash);
 }

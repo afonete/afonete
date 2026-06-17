@@ -185,7 +185,7 @@ class PaymentController extends Controller
   public function SaveDeposits(Request $request)
   {
     $request->validate([
-        'amount'      => 'required|numeric|min:1',
+        'amount'      => 'required|numeric|min:10',
         'paymentMethod' => 'required|string',
         'proof_of_payment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
     ]);
@@ -215,16 +215,14 @@ class PaymentController extends Controller
         'status'             => 'pending',
     ]);
 
-    if ($user->have_activation_code) {
-        return redirect()->route('user.dashboard')
-            ->with('message', 'Deposit of $'.$request->amount.' submitted. Awaiting admin approval.');
-    }
+    // FIX (D3): A deposit alone should NOT mark the user as "paid" —
+    // they still need to actually buy a package. We only set the
+    // first-deposit free-package flag if they have no activation yet.
 
-    $user = User::find($userId);
-    $user->has_paid_package = 'Standard';
-    $user->contract = 'Signed';
-    $user->has_free_package = ($have_any_recent_deposits == 0) ? 'yes' : 'no';
-    $user->save();
+    if ($user->have_activation_code == null && $have_any_recent_deposits == 0) {
+        $user->has_free_package = 'yes';
+        $user->save();
+    }
 
     return redirect()->route('user.dashboard')
         ->with('message', 'Deposit of $'.$request->amount.' submitted. Awaiting admin approval.');
@@ -296,169 +294,73 @@ protected function commissionsTrx($userId,$sourceId,$earnings,$trxId,$name){
 
 protected function calculateEarnings($payment)
 {
-    // dd($payment);
+    /*
+     * REFERRAL ENGINE — 3-level system per spec:
+     *   L1 (direct)   : 10.00 % of package amount
+     *   L2 (indirect) :  1.00 %
+     *   L3 (3rd)      :  0.50 %
+     *
+     * This method now delegates to ReferralService::creditForPayment(),
+     * which writes a row per level into `referral_bonuses` (with the
+     * Monday withdrawable date). It ALSO updates the legacy `Earnings`
+     * table + `ChartAccount` COMMISSION bucket for backward compatibility
+     * with existing dashboards.
+     */
+    $bonusRows = \App\Services\ReferralService::creditForPayment($payment);
 
-    $currentUser = Auth::User();
-    $amount = $payment->amount;
+    foreach ($bonusRows as $row) {
+        $referrer = User::find($row->user_id);
+        if (!$referrer) continue;
 
-    // Direct referrer
-    $data = array();
-    $level = 0;
-    // Define the default percentage earnings
-    // Direct referrer gets 10% of the package amount
-    // Indirect referrer (level 2) gets 1% of the package amount
-    $directReferralPercentage   = $amount * 10 / 100;
-    $indirectReferralPercentage = $amount * 1 / 100;
-    $earnings = $directReferralPercentage; // will be overridden per level below
-    $ac = 0;
+        // Legacy: keep `earnings` table in sync (one row per source, per level)
+        Earnings::updateOrCreate(
+            [
+                'user_id'     => $referrer->id,
+                'source_id'   => $payment->id,
+                'source_type' => Paymodel::class,
+            ],
+            [
+                'amount' => (float) $row->bonus_amount,
+            ]
+        );
 
-    $team = Teams::where("team_user_id",$currentUser->id)->first();
+        // Legacy: keep ChartAccount COMMISSION bucket growing
+        $existingL = ChartAccount::where('user_id', $referrer->id)
+                        ->where('acc_type', 'COMMISSION')->sum('amount');
+        ChartAccount::updateOrCreate(
+            [
+                'user_id' => $referrer->id,
+                'acc_type' => 'COMMISSION',
+            ],
+            [
+                'amount' => $existingL + $row->bonus_amount,
+            ]
+        );
 
-    if($team){
-        $whoBroughtMe = $team->owner;
-        $whoBroughtWhoBroughtMeConnect =  Teams::where("team_user_id",$whoBroughtMe->id)->first();
-        $whoBroughtWhoBroughtMe = $whoBroughtWhoBroughtMeConnect->owner;
-
-        if($whoBroughtMe){
-            $trxId =Transaction::generateTransactionNo();
-            $this->commissionsTrx(
-                    $whoBroughtMe->id,
-                    $payment->id,
-                    $directReferralPercentage,
-                    $trxId,
-                    $whoBroughtMe->name
-                );
-        }
-
-        if($whoBroughtWhoBroughtMe){
-            $trxId =Transaction::generateTransactionNo();
-            $this->commissionsTrx(
-                    $whoBroughtWhoBroughtMe->id,
-                    $payment->id,
-                    $indirectReferralPercentage,
-                    $trxId,
-                    $whoBroughtWhoBroughtMe->name
-                );
-
-
-        }
-
-
+        // Mirror transaction log (one entry per level, for user history)
+        $trxId = Transaction::generateTransactionNo();
+        $description = match ($row->level) {
+            1       => 'Direct Referral Commission (10%)',
+            2       => 'Indirect Referral Commission (1%)',
+            3       => '3rd-Level Referral Commission (0.5%)',
+            default => 'Referral Commission L' . $row->level,
+        };
+        Transaction::create([
+            'user_id'             => $referrer->id,
+            'transaction_no'      => $trxId,
+            'transaction_type'    => 'COMMISSION',
+            'receiver_id'         => 0,
+            'transaction_details' => json_encode([
+                'amount'      => (float) $row->bonus_amount,
+                'description' => $description,
+                'level'       => $row->level,
+                'percentage'  => (float) $row->percentage,
+                'source'      => $payment->user,
+                'week_start'  => $row->week_start->toDateString(),
+                'username'    => $referrer->name,
+            ]),
+        ]);
     }
-    else{
-
-    while ($currentUser->referrer) {
-        $trxId =Transaction::generateTransactionNo();
-        if ($level == 0) {
-            // Direct referral earnings
-            $earnings = $directReferralPercentage;
-            // $ac =  $earnings;
-            Earnings::updateOrCreate(
-                [
-                    'user_id' => $currentUser->referrer->id,
-                    'source_id' => $payment->id,
-                    'source_type' => Paymodel::class,
-                ],
-                [
-                    'amount' => $earnings
-                ]
-            );
-
-            // Accumulate commission (never overwrite)
-            $existingL0 = ChartAccount::where('user_id', $currentUser->referrer->id)
-                            ->where('acc_type', 'COMMISSION')->sum('amount');
-            ChartAccount::updateOrCreate(
-                [
-                    'user_id' => $currentUser->referrer->id,
-                    'acc_type' => 'COMMISSION',
-                ],
-                [
-                    'amount' => $existingL0 + $earnings
-                ]
-            );
-
-            $transaction = Transaction::create([
-                'user_id'             => $currentUser->referrer->id,
-                'transaction_no'      => $trxId,
-                'transaction_type'    => 'COMMISSION',
-                'receiver_id'         => 0,
-                'transaction_details' => json_encode([
-                    'amount'           => $earnings,
-                    'description'      => 'Direct Referral Commission (10%)',
-                    'daily'            => 0, 'fomo' => 0, 'stacking' => 0,
-                    'directAds'        => 0, 'volume_bonus' => 0, 'sales_bonus' => 0,
-                    'leadership_bonus' => 0, 'royal_fc' => 0, 'stream_bonus' => 0,
-                    'direct_bonus'     => $earnings, 'fomo_bonus' => 0,
-                    'residual'         => 0, 'team_build' => 0, 'opportunity' => 0,
-                    'username'         => $currentUser->referrer->name, 'eshop' => 0, 'incetives' => 0,
-                ])
-            ]);
-
-
-        } else if ($level == 1) {
-            $earnings = $indirectReferralPercentage;
-
-            Earnings::updateOrCreate(
-                [
-                    'user_id'     => $currentUser->referrer->id,
-                    'source_id'   => $payment->id,
-                    'source_type' => Paymodel::class,
-                ],
-                ['amount' => $earnings]
-            );
-
-            // Accumulate commission (never overwrite)
-            $existingL1 = ChartAccount::where('user_id', $currentUser->referrer->id)
-                            ->where('acc_type', 'COMMISSION')->sum('amount');
-            ChartAccount::updateOrCreate(
-                [
-                    'user_id' => $currentUser->referrer->id,
-                    'acc_type' => 'COMMISSION',
-                ],
-                [
-                    'amount' => $existingL1 + $earnings
-                ]
-            );
-
-
-            $transaction =  Transaction::create([
-                'user_id'=>$currentUser->referrer->id,//JYEWE
-                'transaction_no'=> $trxId,
-                'transaction_type'=> 'COMMISSION', // or any other type you define
-                'receiver_id'=>0,//
-                'transaction_details' => json_encode([
-                    "amount"=>$earnings,
-                    'daily'=>0,
-                    'fomo'=>0,
-                    "stacking"=>0,
-                    "directAds"=>0,
-                    "volume_bonus"=>0,
-                    "sales_bonus"=>0,
-                    "leadership_bonus"=>0,
-                    "royal_fc"=>0,
-                    "stream_bonus"=>0,
-                    "direct_bonus"=>0,
-                    "fomo_bonus"=>0,
-                    "residual"=>0,
-                    "team_build"=>0,
-                    "opportunity"=>0,
-                    'username'=>$currentUser->referrer->name,
-                    "eshop"=>0,
-                    "incetives"=>0,
-                    "description"=>"From Indirect Refferal"
-                ])
-            ]);
-        }
-
-
-        // Move to the next referrer up the chain
-        $currentUser = $currentUser->referrer;
-        $level++;
-    }
-
-}
-
-
 }
 
 
@@ -599,8 +501,8 @@ $user = Auth::User();
                 'package'=>$p->plan,
                 'price'=>$purchased,
                 'current_price'=>$amount,
-                'token'=>$purchased/0.0025,
-                'current_token'=>$amount/0.0025,
+                'token'=>$uvpPrice > 0 ? round($purchased / $uvpPrice, 4) : 0,
+                'current_token'=>$uvpPrice > 0 ? round($amount / $uvpPrice, 4) : 0,
                 'poolcapital'=>$purchased*80/100,
                 'current_poolcapital'=>$amount*80/100,
                 'LP'=>$purchased*20/100,

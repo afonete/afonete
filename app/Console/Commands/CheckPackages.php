@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ReminderEmail;
 use App\Mail\ExpirationEmail;
 use App\Models\ChartAccount;
-use App\Models\ChartAccount;
+
 
 class CheckPackages extends Command
 {

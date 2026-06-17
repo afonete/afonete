@@ -52,11 +52,14 @@
                             <td><small class="text-muted">{{ $w->transaction_no }}</small></td>
                             <td><small>{{ $w->created_at->format('d M Y H:i') }}</small></td>
                             <td>
-                                {{-- Approve --}}
-                                <form method="POST" action="{{ route('admin.withdrawal.approve') }}" class="d-inline">
+                                {{-- Approve (with on-chain hash field — FIX W8) --}}
+                                <form method="POST" action="{{ route('admin.withdrawal.approve') }}" class="d-inline-block">
                                     @csrf
                                     <input type="hidden" name="withdrawal_id" value="{{ $w->id }}">
-                                    <input type="hidden" name="admin_note" value="Approved by admin">
+                                    <input type="text" name="txn_hash" placeholder="on-chain hash (optional)"
+                                           class="form-control form-control-sm mb-1" style="width:220px">
+                                    <input type="text" name="admin_note" placeholder="note (optional)"
+                                           class="form-control form-control-sm mb-1" style="width:220px">
                                     <button type="submit" class="btn btn-success btn-sm"
                                             onclick="return confirm('Approve withdrawal of ${{ number_format($w->amount,2) }} for {{ $w->user->name ?? '' }}?')">
                                         <i class="fas fa-check"></i> Approve

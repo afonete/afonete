@@ -28,8 +28,8 @@
                         <tr><td class="text-muted">UVP Purchase</td><td class="font-weight-bold">${{ number_format($s->uvp_price,6) }}</td></tr>
                         <tr><td class="text-muted">Renewal (30-day)</td><td class="font-weight-bold">${{ number_format($s->renewal_price,6) }}</td></tr>
                         <tr><td class="text-muted">Swap</td><td class="font-weight-bold">${{ number_format($s->swap_price,6) }}</td></tr>
-                        <tr><td class="text-muted">Trading <small class="text-muted">(future)</small></td><td class="font-weight-bold">${{ number_format($s->trading_price,6) }}</td></tr>
-                        <tr><td class="text-muted">Package <small class="text-muted">(future)</small></td><td class="font-weight-bold">${{ number_format($s->package_price,6) }}</td></tr>
+                        <tr><td class="text-muted">Trading <small class="text-muted">(reserved)</small></td><td class="font-weight-bold">${{ number_format($s->trading_price,6) }}</td></tr>
+                        <tr><td class="text-muted">Package <small class="text-muted">(reserved)</small></td><td class="font-weight-bold">${{ number_format($s->package_price,6) }}</td></tr>
                         <tr class="border-top"><td class="text-muted">Coin Value</td><td class="font-weight-bold text-success">${{ number_format($s->coin_value,6) }}</td></tr>
                     </table>
                     <hr>
@@ -92,21 +92,26 @@
                                     <label class="font-weight-bold">Swap Price <span class="text-danger">*</span></label>
                                     <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">$</span></div>
                                     <input type="number" name="swap_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('swap_price', $setting->swap_price ?? '0.002500') }}" required></div>
-                                    <small class="text-muted">Price reference during internal token swap</small>
+                                    <small class="text-muted">
+                                        <strong>Used by /user/token/swap</strong> — tokens × this = USD credited to user's Cashout.
+                                        Example: 100,000 tokens × $0.0025 = $250.00 cashout.
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="font-weight-bold text-muted">Trading Price <small>(not in use)</small></label>
+                                    <label class="font-weight-bold text-muted">Trading Price <small>(reserved — not in use)</small></label>
                                     <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                                    <input type="number" name="trading_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('trading_price', $setting->trading_price ?? '0.002500') }}" required></div>
+                                    <input type="number" name="trading_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('trading_price', $setting->trading_price ?? '0.002500') }}"></div>
+                                    <small class="text-muted"><i class="fas fa-clock mr-1"></i>Reserved for the future token buy/sell trading module.</small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label class="font-weight-bold text-muted">Package Price <small>(not in use)</small></label>
+                                    <label class="font-weight-bold text-muted">Package Price <small>(reserved — not in use)</small></label>
                                     <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                                    <input type="number" name="package_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('package_price', $setting->package_price ?? '0.002500') }}" required></div>
+                                    <input type="number" name="package_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('package_price', $setting->package_price ?? '0.002500') }}"></div>
+                                    <small class="text-muted"><i class="fas fa-clock mr-1"></i>Reserved for the future referral-package purchase flow.</small>
                                 </div>
                             </div>
                         </div>

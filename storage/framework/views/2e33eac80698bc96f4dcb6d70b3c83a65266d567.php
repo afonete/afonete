@@ -499,10 +499,10 @@ img{ max-width:100%;}
 
 
                             
-                            <div class="ad-box bg-info" id="not">
-                                <a class="nav-icon fas fa-coins" href="#">
-                                    <br><small>Free Token</small>
-                                    <b><?php echo e(number_format($free_token, 0)); ?></b>
+                            <div class="ad-box bg-secondary" id="not">
+                                <a class="nav-icon fas fa-lock" href="#">
+                                    <br><small>Locked Token</small>
+                                    <b><?php echo e(number_format($locked, 0)); ?></b>
                                 </a>
                             </div>
 
@@ -663,8 +663,8 @@ img{ max-width:100%;}
              <div class="ad-sub-box1 ">
 
                     <div class="sub-box-1">
-                         <div class=" ad-box bg-success "><a class="nav-icon fas fa-gear" href="<?php echo e(route('user.package.history')); ?>"><br>My package</a></div>
-                        <div class="ad-box bg-primary"><a class="nav-icon fas fa-user" href="#"><br>My invetees</a></div>
+                         <div class=" ad-box bg-success "><a class="nav-icon fas fa-gear" href="<?php echo e(route('user.investments')); ?>"><br>My Investments</a></div>
+                        <div class="ad-box bg-primary"><a class="nav-icon fas fa-user" href="<?php echo e(route('user.referral.downline')); ?>"><br>My referrals</a></div>
                     </div>
                     <div class="sub-box-1">
                         <div class="ad-box bg-danger"><a class="nav-icon fas fa-users" href="#"><br>My Team</a></div>
@@ -678,18 +678,37 @@ img{ max-width:100%;}
                     <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Total <br> Balance</a></div>
                     <?php if($user->has_free_package == 'no'): ?>
                     
-                    <div class="ad-box bg-danger mr-2 ml-1">
-                        <a class="nav-icon fas fa-lock" href="#">
+                    <div class="ad-box bg-secondary mr-2 ml-1">
+                        <a class="nav-icon fas fa-lock" href="<?php echo e(route('user.token.locked')); ?>">
                             <br><small>Locked Token</small>
                             <b><?php echo e(number_format($locked, 0)); ?></b>
                         </a>
                     </div>
                     
+                    <div class="ad-box bg-warning mr-2 ml-1">
+                        <a class="nav-icon fas fa-coins" href="<?php echo e(route('user.token.transfer')); ?>">
+                            <br><small>Free Token</small>
+                            <b><?php echo e(number_format($free_token, 0)); ?></b>
+                        </a>
+                        <?php if($free_token > 0): ?>
+                        <div class="mt-1 text-center" style="font-size:10px;">
+                            <a href="<?php echo e(route('user.token.transfer')); ?>" class="btn btn-xs btn-dark mr-1" style="font-size:9px;padding:2px 4px;">Transfer</a>
+                            <a href="<?php echo e(route('user.token.swap')); ?>" class="btn btn-xs btn-success mr-1" style="font-size:9px;padding:2px 4px;">Swap</a>
+                            <a href="<?php echo e(route('user.token.withdraw')); ?>" class="btn btn-xs btn-danger" style="font-size:9px;padding:2px 4px;">Withdraw</a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    
                     <div class="ad-box bg-success mr-2 ml-1">
-                        <a class="nav-icon fas fa-check-circle" href="#">
+                        <a class="nav-icon fas fa-check-circle" href="<?php echo e(route('user.token.available')); ?>">
                             <br><small>Available Token</small>
                             <b><?php echo e(number_format($available_token, 0)); ?></b>
                         </a>
+                        <?php if($available_token > 0): ?>
+                        <div class="mt-1 text-center">
+                            <a href="<?php echo e(route('user.token.available')); ?>" class="btn btn-xs btn-light" style="font-size:9px;padding:2px 5px;">→ Free Token</a>
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -1637,15 +1656,47 @@ $user=db::SELECT("SELECT * from users");
                                         <div class="col ">
                                             <div class="card bg-white rounded d-flex justify-content-center align-items-center py-2">
                                                 <i class="fas fa-wallet text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(238, 193, 71);font-size:2em !important"></i>
-                                                <h2 class="text-lg text-dark fw-bold py-2">$<?php echo e(number_format($commission, 2)); ?></h2>
-                                                <p class="py-1 px-2 text-center mb-0">Total Commission</p>
+                                                <h2 class="text-lg text-dark fw-bold py-2">$<?php echo e(number_format($referral_bonus_totals['total'] ?? 0, 2)); ?></h2>
+                                                <p class="py-1 px-2 text-center mb-0">Total Referral Bonus</p>
                                                 <small class="text-muted text-center px-2">
-                                                    <?php echo e($direct_referral_count); ?> referrals
-                                                    (<?php echo e($active_referral_count); ?> active)
+                                                    <?php echo e($direct_referral_count); ?> referrals (<?php echo e($active_referral_count); ?> active)
                                                 </small>
-                                                <small class="text-success font-weight-bold">$<?php echo e(number_format($direct_bonus_earned, 2)); ?> direct bonus</small>
-                                                <a href="<?php echo e(route('commission')); ?>" class="btn btn-xs btn-outline-warning mt-1" style="font-size:11px;">
-                                                    View Details
+                                                <small class="text-success font-weight-bold">
+                                                    $<?php echo e(number_format($referral_bonus_totals['withdrawable'] ?? 0, 2)); ?> withdrawable
+                                                </small>
+                                                <small class="text-warning">
+                                                    $<?php echo e(number_format($referral_bonus_totals['pending'] ?? 0, 2)); ?> pending (next Monday)
+                                                </small>
+                                                <div class="d-flex gap-1 mt-1">
+                                                    <a href="<?php echo e(route('user.referral.bonus')); ?>" class="btn btn-xs btn-outline-warning" style="font-size:11px;">
+                                                        Bonus & Withdraw
+                                                    </a>
+                                                    <a href="<?php echo e(route('user.referral.downline')); ?>" class="btn btn-xs btn-outline-info" style="font-size:11px;">
+                                                        Downline
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        
+                                        <div class="col mt-3 mt-md-0">
+                                            <div class="card bg-white rounded d-flex justify-content-center align-items-center py-2">
+                                                <i class="fas fa-trophy text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(167, 139, 250);font-size:2em !important"></i>
+                                                <?php if($current_rank): ?>
+                                                    <h2 class="text-lg text-dark fw-bold py-2">🏆 <?php echo e($current_rank->rank_name); ?></h2>
+                                                    <p class="py-1 px-2 text-center mb-0">Current Rank</p>
+                                                    <?php if($current_rank->congratulation_image): ?>
+                                                        <small class="text-success">Picture available</small>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <h2 class="text-lg text-dark fw-bold py-2">🎯 No rank yet</h2>
+                                                    <p class="py-1 px-2 text-center mb-0">Build your network</p>
+                                                <?php endif; ?>
+                                                <?php if($next_rank): ?>
+                                                    <small class="text-muted">Next: <strong><?php echo e($next_rank->name); ?></strong> · <?php echo e($next_rank->rewardLabel()); ?></small>
+                                                <?php endif; ?>
+                                                <a href="<?php echo e(route('user.referral.rank')); ?>" class="btn btn-xs btn-outline-primary mt-1" style="font-size:11px;">
+                                                    View Ranks
                                                 </a>
                                             </div>
                                         </div>

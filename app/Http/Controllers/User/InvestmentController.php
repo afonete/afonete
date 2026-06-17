@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Http\Controllers\User;
+
+use App\Http\Controllers\Controller;
+use App\Models\adventures;
+use App\Models\FCpackage;
+use App\Models\PackageRenewal;
+use App\Models\Payment as Paymodel;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Models\DailyIncome;
+use App\Services\ReferralService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * InvestmentController
+ *
+ * Lets the user see ALL their packages (UVP + FC), with per-investment detail
+ * (locked tokens granted, renewals done, daily income, expiration, etc).
+ */
+class InvestmentController extends Controller
+{
+    /**
+     * List all of the user's investments (packages they have bought).
+     */
+    public function index()
+    {
+        $user = Auth::user();
+
+        // Pull every Payment row belonging to this user, newest first
+        $investments = Paymodel::where('user', $user->id)
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        // Aggregate counts
+        $totals = [
+            'total_count'   => (int) Paymodel::where('user', $user->id)->count(),
+            'active_count'  => (int) Paymodel::where('user', $user->id)
+                                  ->where('is_expired', false)
+                                  ->where('status', 1)
+                                  ->count(),
+            'total_invested' => (float) Paymodel::where('user', $user->id)
+                                  ->where('status', 1)
+                                  ->sum('amount'),
+            'active_amount'  => (float) Paymodel::where('user', $user->id)
+                                  ->where('is_expired', false)
+                                  ->where('status', 1)
+                                  ->sum('amount'),
+        ];
+
+        return view('user.investments.index', compact('investments','totals'));
+    }
+
+    /**
+     * Per-investment detail page.
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        $payment = Paymodel::where('user', $user->id)->where('id', $id)->firstOrFail();
+
+        // Resolve the package model (Adventures or FCpackage) via the morph
+        $package = null;
+        if ($payment->payable_type && $payment->payable_id) {
+            $package = $payment->payable_type::find($payment->payable_id);
+        }
+        // Fallback: look up by name
+        if (!$package && $payment->category === 'VENTURE') {
+            $package = adventures::where('name', $payment->package)->first();
+        }
+        if (!$package && $payment->category === 'FC') {
+            $package = FCpackage::where('name', $payment->package)->first();
+        }
+
+        $uvpPrice = \App\Models\TokenSetting::uvpPrice();
+        $renewalPrice = \App\Models\TokenSetting::renewalPrice();
+
+        // Locked tokens this investment granted
+        $lockedTokens = $uvpPrice > 0 ? round($payment->amount / $uvpPrice, 4) : 0;
+
+        // Renewals for this investment
+        $renewals = PackageRenewal::where('payment_id', $payment->id)
+            ->orderBy('renewal_number')
+            ->get();
+        $renewalsCount = $renewals->count();
+
+        // Daily income history for this investment
+        // The daily_incomes table has: user_id, amount, earned_at, is_redeemed
+        // (no payment_id column in the existing schema). To filter to a specific
+        // investment, we pull the most recent 30 rows around the investment's
+        // active window (created_at → expiration_date).
+        $dailyIncomesQuery = DailyIncome::where('user_id', $user->id);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('daily_incomes', 'payment_id')) {
+            $dailyIncomesQuery->where('payment_id', $payment->id);
+        } else {
+            $dailyIncomesQuery->whereBetween('earned_at', [
+                Carbon::parse($payment->created_at)->toDateString(),
+                $payment->expiration_date
+                    ? Carbon::parse($payment->expiration_date)->toDateString()
+                    : Carbon::now()->addDays(365)->toDateString(),
+            ]);
+        }
+        $dailyIncomes = $dailyIncomesQuery->orderByDesc('earned_at')->limit(30)->get();
+
+        // Transactions tied to this investment (commissions, swap, renewals)
+        // The transactions table uses JSON `transaction_details` — try multiple keys.
+        $transactions = Transaction::where('user_id', $user->id)
+            ->where(function ($q) use ($payment) {
+                $q->whereJsonContains('transaction_details->source_payment_id', $payment->id)
+                  ->orWhereJsonContains('transaction_details->payment_id', $payment->id)
+                  ->orWhereJsonContains('transaction_details->package_id', $payment->id)
+                  ->orWhere('transaction_no', (string) $payment->id);
+            })
+            ->orderByDesc('created_at')
+            ->limit(30)
+            ->get();
+
+        // Time-to-expiry + days elapsed
+        $now = Carbon::now();
+        $createdAt = Carbon::parse($payment->created_at);
+        $expiresAt = $payment->expiration_date ? Carbon::parse($payment->expiration_date) : null;
+        $daysElapsed = (int) $createdAt->diffInDays($now);
+        $daysRemaining = $expiresAt ? max(0, (int) $now->diffInDays($expiresAt, false)) : null;
+
+        // Compute max renewals
+        $maxRenewals = $package && $package->duration ? (int) floor(($package->duration - 1) / 30) : 0;
+
+        return view('user.investments.show', compact(
+            'payment','package','uvpPrice','renewalPrice','lockedTokens',
+            'renewals','renewalsCount','dailyIncomes','transactions',
+            'daysElapsed','daysRemaining','maxRenewals'
+        ));
+    }
+}

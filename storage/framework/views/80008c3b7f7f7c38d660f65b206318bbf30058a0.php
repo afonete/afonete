@@ -1,8 +1,9 @@
 <?php
 use App\Models\Deposits;
 use Illuminate\Support\Facades\Auth;
-$user = Auth::user();
+$user     = Auth::user();
 $deposits = $user->deposits()->latest()->take(10)->get();
+$wallets  = $wallets ?? \App\Models\DepositWallet::active()->get();
 ?>
 <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
@@ -19,8 +20,13 @@ $deposits = $user->deposits()->latest()->take(10)->get();
         </span>
     </div>
 
-    <div class="container-fluid py-3">
-        <h1 class="main_head">Deposit to Your Account</h1>
+        <div class="container-fluid py-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="main_head mb-0">Deposit to Your Account</h1>
+            <a href="<?php echo e(route('user.deposits.history')); ?>" class="btn btn-sm btn-outline-light">
+                <i class="fas fa-list mr-1"></i> Full Deposit History
+            </a>
+        </div>
 
         <?php if(session('message')): ?>
             <div class="alert alert-success mx-3"><?php echo e(session('message')); ?></div>
@@ -38,19 +44,49 @@ $deposits = $user->deposits()->latest()->take(10)->get();
             <div class="col-md-6">
                 <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
                     <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                        <h4 class="text-white mb-0"><i class="fas fa-hand-holding-usd mr-2 text-warning"></i>Manual Deposit (USDT TRC-20)</h4>
+                        <h4 class="text-white mb-0"><i class="fas fa-hand-holding-usd mr-2 text-warning"></i>Manual Deposit (USDT)</h4>
                         <small class="text-muted">Send USDT to the address below, then submit proof here.</small>
                     </div>
                     <div class="card-body">
 
                         
-                        <div class="mb-3 p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:6px;">
-                            <small class="text-muted d-block mb-1">Send USDT TRC-20 to:</small>
-                            <code class="text-warning" style="word-break:break-all; font-size:13px;">
-                                TYourCompanyWalletAddressHere
-                            </code>
-                            <small class="text-danger d-block mt-1">⚠ Only USDT TRC-20 supported. Wrong network = lost funds.</small>
+                        <?php if($wallets->isEmpty()): ?>
+                            <div class="alert alert-warning">No deposit wallets configured yet. Contact admin.</div>
+                        <?php else: ?>
+                        <div class="mb-3">
+                            <ul class="nav nav-pills mb-2" role="tablist">
+                                <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li class="nav-item">
+                                        <a class="nav-link <?php echo e($i === 0 ? 'active' : ''); ?> text-white"
+                                           data-toggle="pill" href="#wallet-<?php echo e($w->network); ?>">
+                                            <?php echo e($w->network); ?>
+
+                                        </a>
+                                    </li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </ul>
+                            <div class="tab-content">
+                                <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="tab-pane fade <?php echo e($i === 0 ? 'show active' : ''); ?>" id="wallet-<?php echo e($w->network); ?>">
+                                        <div class="p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:6px;">
+                                            <small class="text-muted d-block mb-1"><?php echo e($w->label); ?>:</small>
+                                            <code class="text-warning" style="word-break:break-all; font-size:13px;">
+                                                <?php echo e($w->wallet_address); ?>
+
+                                            </code>
+                                            <small class="d-block mt-1">
+                                                <span class="text-muted">Min: $<?php echo e(number_format($w->min_amount, 0)); ?></span>
+                                                <?php if($w->max_amount): ?>
+                                                    <span class="text-muted">· Max: $<?php echo e(number_format($w->max_amount, 0)); ?></span>
+                                                <?php endif; ?>
+                                            </small>
+                                            <small class="text-danger d-block mt-1">⚠ Only send USDT on <?php echo e($w->network); ?>. Wrong network = lost funds.</small>
+                                        </div>
+                                    </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </div>
                         </div>
+                        <?php endif; ?>
 
                         <form method="POST" action="<?php echo e(route('user.payment.savedeposits')); ?>" enctype="multipart/form-data">
                             <?php echo csrf_field(); ?>
@@ -58,9 +94,9 @@ $deposits = $user->deposits()->latest()->take(10)->get();
 
                             <div class="form-group">
                                 <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
-                                <input type="number" name="amount" min="1" step="0.01" required
+                                <input type="number" name="amount" min="10" step="0.01" required
                                        class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Enter amount you sent">
+                                       placeholder="Enter amount you sent (min $10)">
                             </div>
 
                             <div class="form-group">
@@ -73,9 +109,9 @@ $deposits = $user->deposits()->latest()->take(10)->get();
                             <div class="form-group">
                                 <label class="text-white">Network</label>
                                 <select name="network" class="form-control" style="background:#222; color:white; border-color:#555;">
-                                    <option value="TRC-20">USDT TRC-20 (Tron)</option>
-                                    <option value="ERC-20">USDT ERC-20 (Ethereum)</option>
-                                    <option value="BEP-20">USDT BEP-20 (BSC)</option>
+                                    <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($w->network); ?>"><?php echo e($w->label); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
 

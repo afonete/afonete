@@ -43,19 +43,23 @@
             </h1>
 
             <h1 class="text-3xl font-bold my-3 text-blue-900">
-                WORLD'S BEST UNIQUE REFERRAL PROGRAM FOR LEADERS
+                Join a Global Community Driven by Innovation and Opportunity
             </h1>
 
-            <p class="text-gray-950 text-md">
-                Join our unique Referral Program innovation community and make more money!
+            <h5 class="text-2xl font-bold my-3 text-blue-900">
+                Grow Together. Earn Together.
+            </h5>
+
+             <p class="text-gray-950 text-md">
+                Join the Bifonex Referral Program and earn rewards for every successful referral. Share innovative opportunities with your network, expand your community, and unlock new ways to grow with the future of digital technology.
             </p>
 
             <p class="text-gray-950 text-md">
-                Earn more when you help others earn with you. Help people to achieve their goals and give everyone financial freedom for innovative technology-friendly users to spend time. Full access to the platform.
+                Bifonex brings together a global community of users passionate about AI, Web3, blockchain technology, and digital innovation. Our platform is designed to help members connect, explore opportunities, and participate in a growing technology-driven ecosystem.
             </p>
 
             <p class="text-gray-950 text-md">
-                Afonete has created a unique affiliate platform solution for the global community of people who love innovative technologies, AI, web3, blockchain technologies, and opened access for all people to benefit from a system we can implement future innovations today.
+                Start referring today and turn every connection into an opportunity.
             </p>
 
                <!-- Button to trigger modal -->
@@ -71,13 +75,13 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
             <p class="text-center text-zinc-900 font-bold text-xl">UP TO</p>
-            <h1 class="text-center md:text-3xl text-2xl text-yellow-500 font-bold">8 LEVELS</h1>
+            <h1 class="text-center md:text-3xl text-2xl text-yellow-500 font-bold">10 LEVELS</h1>
         </div>
 
 
         <div>
             <p class="text-center text-zinc-900 font-bold text-xl">REWARDS</p>
-            <h1 class="text-center md:text-3xl text-2xl text-yellow-500 font-bold">5% - 90%</h1>
+            <h1 class="text-center md:text-3xl text-2xl text-yellow-500 font-bold">10% - 30%</h1>
         </div>
 
 
@@ -104,8 +108,8 @@
             <h1 class="text-2xl text-blue-950 font-medium my-1">The {{ env('APP_NAME') }} Leader Program  </h1>
 
             <p class="">
-                Leaders with  a large network of referrals and investors  will benefit from a special 
-                agreement with  {{ env('APP_NAME') }}.
+                The Bifonex Team Leader Program is designed for individuals with strong communities and a proven ability to connect and engage people.
+                 As a Team Leader, you gain access to exclusive rewards, special benefits, and unique opportunities through a dedicated partnership with {{ env('APP_NAME') }}.
             </p>
             </div>
             </div>   
@@ -116,19 +120,29 @@
     <!-- Section 1 -->
     <div class="">
         <div class="flex justify-between items-center cursor-pointer collapsible-header">
-            <h1 class="text-2xl text-blue-950 font-medium">You are a Leader ?</h1>
+            <h1 class="text-2xl text-blue-950 font-medium">Choose Your Leadership Level ?</h1>
             <i class="fa fa-plus font-bold transform transition-transform duration-200"></i>
         </div>
         <div class="content hidden mt-4">
-            <p>
-        {{ env('APP_NAME') }} Ambassadors Program is created for our community members, who are willing to 
-        enhance the presence and image of the project on social media. This includes tweeting - commenting 
-        - making Telegram groups - making 4chan threads - Reddit threads - memes - logos - YouTube videos - Meetings etc.... <br>
-        Ambassadors should constantly be looking for ways to increase engagement on social channels
-        Every action an ambassador makes needs to be logged so the team can verify it. All ambassador 
-        actions will be assessed on Tier (in range of 1 to 3 Tier, based on interactions, number of tweet
-        impressions, likes, etc) and another 3 Levels of quality, feedback, and engagement. The status will
-        be assigned by the {{ env('APP_NAME') }} Team every month.
+            <>
+        {{ env('APP_NAME') }}
+        
+       <p>  <h1> Super Leader </h1> 
+
+<p> If you are a Super Leader with a large community of leaders, you can create a unique referral link that enables your community members to register and participate in the Bifonex Referral Program.
+The Bifonex Referral Program is designed to provide exceptional earning opportunities. As a Super Leader, you can:</p>
+
+<p> • Earn rewards across unlimited lines, stages, and levels within your referral structure. </p> 
+<p> • Receive dedicated support from a personal account manager available 24/7.</p>
+
+<h1>Team Leader </h1>
+
+<p> If you are a Team Leader with a strong community of members and investors, you can benefit from a special partnership program with Bifonex, providing enhanced rewards beyond the standard referral system.
+The Bifonex Referral Program offers valuable opportunities to grow your earnings. As a Team Leader, you can:</p> 
+
+ <p> • Earn rewards across unlimited stages and levels within your referral structure.</p>
+ <p> • Receive dedicated support from a personal account manager available 24/7. </p>
+        
             </p>
         </div>
     </div>

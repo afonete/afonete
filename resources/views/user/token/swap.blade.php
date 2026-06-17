@@ -21,12 +21,16 @@
                             <td class="font-weight-bold">{{ number_format($freeBal, 0) }} {{ $symbol }}</td>
                         </tr>
                         <tr>
-                            <td class="text-muted">Token value:</td>
-                            <td class="font-weight-bold">1 {{ $symbol }} = ${{ number_format($coinValue, 4) }}</td>
+                            <td class="text-muted">Swap rate (per spec):</td>
+                            <td class="font-weight-bold text-warning">1 {{ $symbol }} = ${{ number_format($swapPrice, 4) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Token display value:</td>
+                            <td>1 {{ $symbol }} = ${{ number_format($coinValue, 4) }}</td>
                         </tr>
                         <tr>
                             <td class="text-muted">Example:</td>
-                            <td class="text-success">200,000 {{ $symbol }} → ${{ number_format(200000 * $coinValue, 2) }}</td>
+                            <td class="text-success">200,000 {{ $symbol }} → ${{ number_format(200000 * $swapPrice, 2) }}</td>
                         </tr>
                     </table>
 
@@ -42,7 +46,12 @@
                         <div class="p-3 mb-3 text-center" style="background:#f8f9fa; border-radius:6px; border:1px solid #dee2e6;">
                             <span class="text-muted">You will receive in Cashout:</span>
                             <div class="font-weight-bold text-success" style="font-size:1.5rem;" id="swapResult">$0.00</div>
-                            <small class="text-muted">Cashout is withdrawable anytime (min $10)</small>
+                            <small class="text-muted">Cashout is withdrawable anytime (min <strong>$10</strong> per spec)</small>
+                        </div>
+
+                        <div class="alert alert-warning small py-2 d-none" id="minCashoutWarn">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            After swap, your Cashout balance must reach at least <strong>$10</strong> before you can withdraw it.
                         </div>
 
                         <div class="alert alert-warning small py-2">
@@ -63,7 +72,15 @@
 </div>
 <script>
 document.getElementById('swapInput').addEventListener('input', function () {
-    const v = (parseFloat(this.value) || 0) * {{ $coinValue }};
+    // Use swap_price (per spec) for the conversion, not coin_value
+    const v = (parseFloat(this.value) || 0) * {{ $swapPrice }};
     document.getElementById('swapResult').textContent = '$' + v.toFixed(2);
+    // Warn if total cashout would be below the $10 withdrawable minimum (per spec)
+    const warnBox = document.getElementById('minCashoutWarn');
+    if (v > 0 && v < 10) {
+        warnBox.classList.remove('d-none');
+    } else {
+        warnBox.classList.add('d-none');
+    }
 });
 </script>

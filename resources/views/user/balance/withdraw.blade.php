@@ -71,19 +71,19 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                             </div>
 
                             <div class="form-group">
-                                <label class="text-white">Amount <small class="text-muted">(min $12)</small></label>
-                                <input type="number" name="amount" min="12" step="0.01" required
+                                <label class="text-white">Amount <small class="text-muted">(min ${{ \App\Models\WithdrawalSetting::current()->min_amount }})</small></label>
+                                <input type="number" name="amount" min="{{ \App\Models\WithdrawalSetting::current()->min_amount }}" step="0.01" required
                                        max="{{ $availlableBalance }}"
                                        class="form-control" style="background:#222; color:white; border-color:#555;"
                                        placeholder="Amount to withdraw">
                             </div>
 
                             <button type="submit" class="btn btn-warning btn-block font-weight-bold mt-2"
-                                {{ $availlableBalance < 12 ? 'disabled' : '' }}>
+                                {{ $availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount ? 'disabled' : '' }}>
                                 <i class="fas fa-paper-plane mr-1"></i> Submit Withdrawal Request
                             </button>
-                            @if($availlableBalance < 12)
-                                <small class="text-danger d-block mt-1">Minimum withdrawal is $12.</small>
+                            @if($availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount)
+                                <small class="text-danger d-block mt-1">Minimum withdrawal is ${{ \App\Models\WithdrawalSetting::current()->min_amount }}.</small>
                             @endif
                         </form>
                     </div>
@@ -123,14 +123,14 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                        required>
                             </div>
                             <div class="form-group">
-                                <label class="text-white">Amount <small class="text-muted">(min $12)</small></label>
-                                <input type="number" name="amount" min="12" step="0.01" required
+                                <label class="text-white">Amount <small class="text-muted">(min ${{ \App\Models\WithdrawalSetting::current()->min_amount }})</small></label>
+                                <input type="number" name="amount" min="{{ \App\Models\WithdrawalSetting::current()->min_amount }}" step="0.01" required
                                        max="{{ $availlableBalance }}"
                                        class="form-control" style="background:#222; color:white; border-color:#555;"
                                        placeholder="Amount to withdraw">
                             </div>
                             <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2"
-                                {{ $availlableBalance < 12 ? 'disabled' : '' }}>
+                                {{ $availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount ? 'disabled' : '' }}>
                                 <i class="fas fa-bolt mr-1"></i> Withdraw Now
                             </button>
                         </form>

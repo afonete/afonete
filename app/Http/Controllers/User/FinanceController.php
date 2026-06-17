@@ -842,6 +842,9 @@ public function getTeamTree(Request $request,$id){
         }
 
         return redirect()->route('user.dashboard')->with('message', $msg);
+
+    }
+    
     // ═══════════════════════════════════════════════════════════════════════
     //  TOKEN TRANSFER — user sends LOCKED tokens to another user
     // ═══════════════════════════════════════════════════════════════════════
@@ -942,10 +945,13 @@ public function getTeamTree(Request $request,$id){
     {
         $user      = Auth::user();
         $freeBal   = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        // ── Swap uses `swap_price` (admin-controlled rate for token→cashout conversion) ──
+        $swapPrice = \App\Models\TokenSetting::swapPrice();
+        // `coin_value` is also shown for reference (display value per token)
         $coinValue = \App\Models\TokenSetting::coinValue();
         $symbol    = \App\Models\TokenSetting::currentSymbol();
 
-        return view('user.token.swap', compact('freeBal', 'coinValue', 'symbol'));
+        return view('user.token.swap', compact('freeBal', 'swapPrice', 'coinValue', 'symbol'));
     }
 
     public function tokenSwap(Request $request)
@@ -962,8 +968,10 @@ public function getTeamTree(Request $request,$id){
             return back()->with('error', 'Insufficient Free Token balance.');
         }
 
-        $coinValue    = \App\Models\TokenSetting::coinValue();
-        $cashReceived = round($tokenAmount * $coinValue, 2);
+        // ── Use `swap_price` for the conversion rate (per spec) ──
+        $swapPrice   = \App\Models\TokenSetting::swapPrice();
+        $coinValue   = \App\Models\TokenSetting::coinValue();
+        $cashReceived = round($tokenAmount * $swapPrice, 2);
 
         // Deduct from FREE_TOKEN
         $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')
@@ -984,6 +992,7 @@ public function getTeamTree(Request $request,$id){
             'receiver_id'         => 0,
             'transaction_details' => json_encode([
                 'token_amount'  => $tokenAmount,
+                'swap_price'    => $swapPrice,
                 'coin_value'    => $coinValue,
                 'cash_received' => $cashReceived,
                 'symbol'        => \App\Models\TokenSetting::currentSymbol(),
@@ -1136,16 +1145,22 @@ public function getTeamTree(Request $request,$id){
         $user      = Auth::user();
         $lockedBal = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
         $symbol    = \App\Models\TokenSetting::currentSymbol();
+        $uvpPrice  = \App\Models\TokenSetting::uvpPrice();
 
-        // Active package for this user (to show release date)
+        // Active package for this user (any category that credits LOCKED_TOKEN)
+        // Per spec: locked tokens are released to Available after package duration ends.
         $package = \App\Models\Payment::where('user', $user->id)
                     ->where('is_expired', false)
                     ->where('status', 1)
-                    ->where('category', 'VENTURE')
+                    ->whereIn('category', ['VENTURE', 'FC'])
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-        return view('user.token.locked-withdraw', compact('lockedBal', 'symbol', 'package'));
+        // Total package amount for the lock-amount example
+        $packageAmount = $package ? (float) $package->amount : 0;
+        $exampleTokens = $uvpPrice > 0 ? round($packageAmount / $uvpPrice, 0) : 0;
+
+        return view('user.token.locked-withdraw', compact('lockedBal', 'symbol', 'package', 'packageAmount', 'exampleTokens', 'uvpPrice'));
     }
 
-    }
+}
