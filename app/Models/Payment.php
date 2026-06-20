@@ -14,19 +14,20 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable =[
-'user',
-'package',
-'category',
-'category_id',
-'amount',
-'status',
-'paid',
-'over_paid',
-'expiration_date',
-'is_expired',
-'payable_id',
-'payable_type',
-];
+    'user',
+    'package',
+    'category',
+    'category_id',
+    'amount',
+    'status',
+    'paid',
+    'over_paid',
+    'expiration_date',
+    'is_expired',
+    'duration',
+    'payable_id',
+    'payable_type',
+    ];
 
 public function VenturePayable()
 {

@@ -134,7 +134,7 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
 						class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
 						<td class="w-4 p-4">
 							
-                            <?php echo e($loop->iteration); ?>
+                            <?php echo e(($deposits->currentPage() - 1) * $deposits->perPage() + $loop->iteration); ?>
 
 						</td>
 
@@ -192,6 +192,11 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
                                 <div class="dropdown-menu z-40 hidden origin-top-right absolute -left-[10.3rem] -top-4 mt-2
                                 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none ">
                                     <div class="flex flex-col uppercase text-left p-1">
+                                      <a href="<?php echo e(route('admin.payments.show', $deposit->id)); ?>"
+                                         class="text-sm py-2 text-indigo-600 hover:bg-indigo-100 rounded hover:shadow flex gap-2 px-2 items-center w-full">
+                                        <i class="fa fa-eye"></i> <span>View Details</span>
+                                      </a>
+
                                       <?php if($deposit->status != 'approved'): ?>
                                       <form action="<?php echo e(route('admin.approve-deposit')); ?>" method="POST">
                                           <?php echo csrf_field(); ?>
@@ -239,9 +244,28 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
-				</tbody>
-			</table>
-		</div>
+			</tbody>
+		</table>
+
+		
+		<?php if($deposits->hasPages()): ?>
+			<div class="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+				<div class="text-xs text-gray-500">
+					Showing
+					<span class="font-semibold text-gray-700"><?php echo e($deposits->firstItem() ?? 0); ?></span>
+					to
+					<span class="font-semibold text-gray-700"><?php echo e($deposits->lastItem() ?? 0); ?></span>
+					of
+					<span class="font-semibold text-gray-700"><?php echo e($deposits->total()); ?></span>
+					deposits
+				</div>
+				<div>
+					<?php echo e($deposits->links()); ?>
+
+				</div>
+			</div>
+		<?php endif; ?>
+	</div>
 
 
 		

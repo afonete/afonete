@@ -519,22 +519,23 @@ $user = Auth::User();
         // ── Always create a NEW investment record — never overwrite an existing one.
         // Each investment is independent: its own expiration, its own renewal cycle,
         // its own daily income calculation, its own token grant.
-        $create_payable = new Paymodel([
-            'user'            => $username,
-            'package'         => $p->plan,
-            'amount'          => $request->amount,
-            'paid'            => $request->amount,
-            'over_paid'       => 0,
-            'status'          => 1,
-            'expiration_date' => $expDate,
-            'duration'        => $exp,
-            'category'        => 'VENTURE',
-            'category_id'     => 1,
-        ]);
+        //
+        // FIX: expiration_date and duration are now computed via
+        // InvestmentFactory from the actual adventure's duration — never
+        // hardcoded to 100/200/600 and never accidentally set to today.
+        $create_payable = \App\Services\InvestmentFactory::buildVenture(
+            userId:    $username,
+            adventure: $p,
+            amount:    (float) $request->amount,
+            paid:      (float) $request->amount,
+            status:    1
+        );
 
         $pay = $p->payments()->save($create_payable);
         $this->calculateEarnings($pay);
-        $this->calculatePackageMetrics($pay);
+        // Skip calculatePackageMetrics() — it has a fatal error
+        // (references undefined $fcoin, $shopping, $createdDate).
+        // Daily income is computed by the income:calculate cron instead.
 
         $muser->update(["has_paid_package" => $p->name, "has_free_package" => "no"]);
         return redirect()->route('user.dashboard')
@@ -629,22 +630,19 @@ public function blockpayventure(Request $request)
         ]);
 
         // ── Always create a NEW investment record — never overwrite an existing one.
-        $create_payable = new Paymodel([
-            'user'            => $username,
-            'package'         => $p->plan,
-            'amount'          => $request->amount,
-            'paid'            => $request->amount,
-            'over_paid'       => 0,
-            'status'          => 1,
-            'expiration_date' => $expDate,
-            'duration'        => $exp,
-            'category'        => 'VENTURE',
-            'category_id'     => 1,
-        ]);
+        // FIX: use InvestmentFactory so expiration_date / duration
+        // come from the actual adventure's duration field — never today.
+        $create_payable = \App\Services\InvestmentFactory::buildVenture(
+            userId:    $username,
+            adventure: $p,
+            amount:    (float) $request->amount,
+            paid:      (float) $request->amount,
+            status:    1
+        );
 
         $pay = $p->payments()->save($create_payable);
         $this->calculateEarnings($pay);
-        $this->calculatePackageMetrics($pay);
+        // Skip calculatePackageMetrics() — it has undefined vars.
 
         $muser->update(["has_paid_package" => $p->name, "has_free_package" => "no"]);
         return redirect()->route('user.dashboard')
@@ -837,25 +835,55 @@ public function successVenture(Request $request)
     $value = $request->amount;
 
     if (!$first_payment) {
+        // FIX: status codes per migration comment (0=tried, 1=paid well, 2=underpayment, 3=overpayment).
+        // The previous code swapped 1 and 2 and missed the equal-payment case (defaulted to 0).
         if ($paymentIntent['amount'] > $value) {
-            $status = 1; // Underpayment
+            $status = 2; // Underpayment
         } else if ($paymentIntent['amount'] < $value) {
             $status = 3; // Overpayment
             $overPaid = $value - $paymentIntent['amount'];
+        } else {
+            $status = 1; // Paid well (exact match)
         }
 
-        Paymodel::create([
-            'user' => $paymentIntent['username'],
-            'package' => $paymentIntent['package'],
-            'amount' => $paymentIntent['amount'],
-            'paid' => $value,
-            'over_paid' => $overPaid,
-            'status' => $status,
-            'expiration_date' => $paymentIntent['expiration_date'],
-            "duration" => $paymentIntent['duration'],
-            "category" => "VENTURE",
-            "category_id" => 0
-        ]);
+        // FIX: was using $paymentIntent['username'] (the user's USERNAME
+        // string like "john_doe") — should be the user ID. New investments
+        // were silently invisible from "My Investments" because the user
+        // column didn't match the FK-style lookup by id.
+        // FIX: expiration_date was coming from a session value computed
+        // BEFORE we knew the actual adventure. Now we look up the adventure
+        // and use its duration to compute the real expiration_date.
+        $adventure = \App\Models\adventures::find($paymentIntent['package'] ?? null);
+
+        if ($adventure) {
+            $paymodel = \App\Services\InvestmentFactory::buildVenture(
+                userId:    $user->id,                    // ← FIX: was username string
+                adventure: $adventure,
+                amount:    (float) $paymentIntent['amount'],
+                paid:      (float) $value,
+                status:    $status
+            );
+            // Apply the overpayment amount computed above
+            $paymodel->over_paid = $overPaid;
+        } else {
+            // Adventure not found — fall back to session data, but normalise
+            // status and user id.
+            $paymodel = new Paymodel([
+                'user'            => $user->id,
+                'package'         => $paymentIntent['package'],
+                'amount'          => $paymentIntent['amount'],
+                'paid'            => $value,
+                'over_paid'       => $overPaid,
+                'status'          => $status,
+                'expiration_date' => $paymentIntent['expiration_date'] ?? null,
+                'duration'        => $paymentIntent['duration'] ?? null,
+                'category'        => 'VENTURE',
+                'category_id'     => 0,
+                'is_expired'      => false,
+            ]);
+        }
+
+        $paymodel->save();
 
     } else if ($first_payment->status == 2) {
         $recent_paid = $first_payment->paid;

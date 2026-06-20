@@ -8,7 +8,23 @@
             <h1 class="m-0 text-dark">
                 <i class="fas fa-sync-alt mr-2 text-info"></i> Renew Package
             </h1>
-            <small class="text-muted">Renewal <?php echo e($renewalNumber); ?> of <?php echo e($maxRenewals); ?> &mdash; Package runs 100 days, renewed every 30 days</small>
+            <small class="text-muted">
+                Renewal <?php echo e($renewalNumber); ?> of <?php echo e($maxRenewals); ?> &mdash;
+                Package runs <?php echo e($pkgDuration); ?> days, renewed every 30 days
+                <?php if($isPartialFee): ?>
+                    &mdash; <strong>Final renewal covers <?php echo e($leftoverDays); ?> leftover days</strong>
+                <?php endif; ?>
+            </small>
+        </div>
+
+        
+        <div class="alert alert-info py-2 mb-3" style="font-size:13px;">
+            <i class="fas fa-calculator mr-1"></i>
+            <strong>How renewal works:</strong>
+            Your daily Trading Voucher (75% of daily ROI) is added every day.
+            After every 30 days you have enough to renew this package.
+            The renewal fee is pro-rated for the final partial window
+            (only <?php echo e($leftoverDays); ?> day<?php echo e($leftoverDays > 1 ? 's' : ''); ?> left if applicable).
         </div>
 
         
@@ -60,9 +76,78 @@
                                 <div class="progress-bar bg-info" style="width: <?php echo e($progress); ?>%"></div>
                             </div>
                             <small class="text-muted d-block mt-1">
-                                Day 30 &bull; Day 60 &bull; Day 90 &mdash; Package expires at Day 100
+                                Day 30 &bull; Day 60 &bull; Day 90 &mdash; Package expires at Day <?php echo e($pkgDuration); ?>
+
+                                <?php if($leftoverDays > 0 && $isPartialFee): ?>
+                                    &mdash; Final renewal covers Day <?php echo e($pkgDuration - $leftoverDays + 1); ?>–<?php echo e($pkgDuration); ?> (<?php echo e($leftoverDays); ?> days)
+                                <?php endif; ?>
                             </small>
                         </div>
+
+                        
+                        <?php if(isset($schedule) && count($schedule) > 0): ?>
+                        <div class="mb-3">
+                            <h6 class="mb-2 text-muted">
+                                <i class="fas fa-calendar-alt mr-1"></i> Full Renewal Schedule
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:13px;">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Due</th>
+                                            <th class="text-right">Days covered</th>
+                                            <th class="text-right">Fee</th>
+                                            <th class="text-right">Tokens</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $__currentLoopData = $schedule; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
+                                            $isPast       = $row['renewal_number'] <  $renewalNumber;
+                                            $isCurrent    = $row['renewal_number'] == $renewalNumber;
+                                            $rowBg        = $isCurrent ? 'table-warning' : ($isPast ? 'table-success' : '');
+                                            $statusBadge  = $isPast
+                                                ? '<span class="badge badge-success"><i class="fa fa-check"></i> Done</span>'
+                                                : ($isCurrent
+                                                    ? '<span class="badge badge-warning"><i class="fa fa-arrow-right"></i> Now</span>'
+                                                    : '<span class="badge badge-secondary">Upcoming</span>');
+                                        ?>
+                                        <tr class="<?php echo e($rowBg); ?>">
+                                            <td><strong><?php echo e($row['renewal_number']); ?></strong></td>
+                                            <td>
+                                                <small>Day <?php echo e($row['due_at_day']); ?></small><br>
+                                                <small class="text-muted"><?php echo e($row['due_at_date']); ?></small>
+                                            </td>
+                                            <td class="text-right">
+                                                <?php echo e($row['days_covered']); ?>
+
+                                                <?php if($row['is_partial']): ?>
+                                                    <br><small class="text-warning">(partial)</small>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="text-right">
+                                                $<?php echo e(number_format($row['fee'], 2)); ?>
+
+                                            </td>
+                                            <td class="text-right">
+                                                <?php echo e(number_format($row['tokens'], 0)); ?>
+
+                                            </td>
+                                            <td><?php echo $statusBadge; ?></td>
+                                        </tr>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                Each renewal unlocks 30 days of income (or the leftover days for the final one).
+                                If you miss a renewal, those days' cashout <strong>and</strong> trading voucher are skipped.
+                            </small>
+                        </div>
+                        <?php endif; ?>
 
                         <hr>
 
@@ -81,7 +166,15 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted pl-0">
-                                        <i class="fas fa-minus-circle mr-1 text-danger"></i> Renewal Fee (Amount)
+                                        <i class="fas fa-minus-circle mr-1 text-danger"></i> Renewal Fee
+                                        <small class="d-block text-muted">
+                                            <?php if($isPartialFee): ?>
+                                                Pro-rated for <?php echo e($daysCovered); ?> days &divide; 30
+                                                (monthly: $<?php echo e(number_format($monthlyFee, 2)); ?>)
+                                            <?php else: ?>
+                                                Standard monthly fee (30 days)
+                                            <?php endif; ?>
+                                        </small>
                                     </td>
                                     <td class="text-right font-weight-bold text-danger">
                                         &minus; $<?php echo e(number_format($renewalFee, 2)); ?>
@@ -131,7 +224,12 @@
                                 <tr>
                                     <td colspan="2" class="text-center text-muted">
                                         <i class="fas fa-flag-checkered mr-1"></i>
-                                        This is your <strong>final renewal</strong> for this package cycle.
+                                        <?php if($isPartialFee): ?>
+                                            This is your <strong>final renewal</strong> for this package cycle
+                                            &mdash; covers <?php echo e($leftoverDays); ?> leftover days.
+                                        <?php else: ?>
+                                            This is your <strong>final renewal</strong> for this package cycle.
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endif; ?>

@@ -87,6 +87,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('user/overview', [FinanceController::class, 'overview'])->name('overview');
     Route::get('user/transaction', [FinanceController::class, 'transaction'])->name('transaction');
     Route::post('user/tranfer', [FinanceController::class, 'transfer'])->name('transfer');
+    Route::get('user/tranfer/lookup', [FinanceController::class, 'cashoutTransferLookup'])->name('transfer-touser.lookup');
     Route::post('user/tranfer/user', [FinanceController::class, 'transferToUser'])->name('transfer-touser');
 
     Route::post('user/tranfer/trading', [FinanceController::class, 'transferToTradingAccount'])->name('transfer-totrading');
@@ -400,6 +401,7 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/adventures/{adventure}/investors', [AdventureController::class, 'investors'])->name('admin.adventures.investors');
     Route::delete('admin/adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.adventures.destroy');
     Route::get("admin/payments/deposited",[AdminController::class,'depositedPayment'])->name("admin.payments");
+    Route::get("admin/payments/deposited/{id}",[AdminController::class,'depositDetail'])->name("admin.payments.show");
     Route::get('admin/dashboard/contacted', [AdminController::class, 'contacted'])->name('admin.contacted');
     Route::post('admin/admin-login', [AdminController::class, 'logout'])->name('admin.logout');
     Route::get('admin/manage-ads', [manage::class, 'ads'])->name('admin.ads');

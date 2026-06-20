@@ -23,7 +23,17 @@ class TokenSetting extends Model
         'updated_by',
     ];
 
-    /** Helper: get the one settings row, or a default object */
+    /**
+     * Helper: get the one settings row, or a default object.
+     *
+     * Defaults per spec:
+     *   uvp_price      = 0.0025 USD/token (package purchase rate)
+     *   renewal_price  = 0.0025 USD/token (30-day renewal rate)
+     *   swap_price     = 0.002  USD/token (FREE_TOKEN → CASHOUT conversion)
+     *   trading_price  = 0.0025 USD/token (reserved for buy/sell module)
+     *   package_price  = 0.0025 USD/token (reserved for referral package)
+     *   coin_value     = 0.002  USD/token (display value; not used in swap math)
+     */
     public static function settings(): self
     {
         static $cached = null;
@@ -31,7 +41,7 @@ class TokenSetting extends Model
             $cached = self::first() ?? new self([
                 'uvp_price'     => 0.0025,
                 'renewal_price' => 0.0025,
-                'swap_price'    => 0.0025,
+                'swap_price'    => 0.002,
                 'trading_price' => 0.0025,
                 'package_price' => 0.0025,
                 'coin_value'    => 0.002,

@@ -595,11 +595,10 @@ img{ max-width:100%;}
                         <div class="ad-box bg-warning mr-2 ml-1">
                             <a class="nav-icon fas fa-money" href="#">
                                 <br>Daily Income <br />
+                                <b>$<?php echo e($daily_income_per_day); ?></b>
+                                <small style="font-size:10px;opacity:0.7;">/ day</small>
                                 <?php if($package_expired): ?>
-                                    <span style="font-size:11px;opacity:0.7;">Expired</span>
-                                <?php else: ?>
-                                    <?php echo e($dailyIncome); ?>
-
+                                    <br><span style="font-size:11px;opacity:0.7;">Expired</span>
                                 <?php endif; ?>
                             </a>
                         </div>
@@ -608,7 +607,15 @@ img{ max-width:100%;}
                         <div class="ad-box bg-info mr-2 ml-1">
                             <a class="nav-icon fas fa-gift" href='#'>
                                 <span>Trading Voucher</span>
-                                <span class="py-2"><?php echo e($shooping); ?></span>
+                                <span class="py-2">
+                                    <b>$<?php echo e($daily_trading); ?></b>
+                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
+                                </span>
+                                <br>
+                                <small style="font-size:10px;opacity:0.8;">
+                                    Accumulated: <?php echo e($shooping); ?>
+
+                                </small>
                                 <?php if($show_timer && !$package_expired): ?>
                                     <span id="countdown" class="bg-dark badge badge-dark"></span>
                                 <?php endif; ?>
@@ -621,10 +628,26 @@ img{ max-width:100%;}
                                    class="btn btn-sm btn-warning font-weight-bold text-dark"
                                    style="font-size:11px; padding:3px 8px; border-radius:4px;">
                                     <i class="fas fa-sync-alt"></i>
-                                    Renew Package (#<?php echo e($renewal_number); ?>/3)
+                                    Renew Package (#<?php echo e($renewal_number); ?>/<?php echo e($max_renewals ?? 3); ?>)
                                 </a>
                             </div>
                             <?php endif; ?>
+                        </div>
+
+                        
+                        <div class="ad-box bg-success mr-2 ml-1">
+                            <a class="nav-icon fas fa-wallet" href="#">
+                                <span>Cashout (25%)</span>
+                                <span class="py-2">
+                                    <b>$<?php echo e($daily_cashout); ?></b>
+                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
+                                </span>
+                                <br>
+                                <small style="font-size:10px;opacity:0.8;">
+                                    Accumulated: <?php echo e($cashout); ?>
+
+                                </small>
+                            </a>
                         </div>
                     </div>
                 <?php endif; ?>

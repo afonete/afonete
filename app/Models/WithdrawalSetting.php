@@ -12,7 +12,7 @@ class WithdrawalSetting extends Model
     protected $table = 'withdrawal_settings';
 
     protected $fillable = [
-        'min_amount','max_per_transaction','daily_limit','monthly_limit',
+        'min_amount','min_deposit_amount','max_per_transaction','daily_limit','monthly_limit',
         'require_admin_approval','default_trc20_min_length',
         'validate_trc20_format','notes','updated_by',
     ];
@@ -23,6 +23,7 @@ class WithdrawalSetting extends Model
         if ($cached === null) {
             $cached = self::first() ?? new self([
                 'min_amount'               => 10,
+                'min_deposit_amount'       => 10,
                 'max_per_transaction'      => 10000,
                 'daily_limit'              => 20000,
                 'monthly_limit'            => 100000,

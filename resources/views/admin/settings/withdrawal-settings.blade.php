@@ -6,8 +6,8 @@
         <i class="fas fa-arrow-left mr-1"></i> Back
     </a>
 
-    <h3 class="font-weight-bold mb-3"><i class="fas fa-money-bill-wave text-warning mr-2"></i> Withdrawal Settings</h3>
-    <p class="text-muted">Set limits and validation rules applied to all user withdrawals.</p>
+    <h3 class="font-weight-bold mb-3"><i class="fas fa-money-bill-wave text-warning mr-2"></i> Withdrawal & Deposit Settings</h3>
+    <p class="text-muted">Set limits and validation rules applied to all user withdrawals and deposits.</p>
 
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
@@ -19,10 +19,16 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3">
-                        <label class="small text-muted">Minimum amount ($) <span class="text-danger">*</span></label>
+                        <label class="small text-muted">Minimum withdrawal amount ($) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" min="0" name="min_amount" class="form-control"
                                value="{{ $settings->min_amount }}" required>
                         <small class="text-muted">Per spec: $10</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Minimum deposit amount ($) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" name="min_deposit_amount" class="form-control"
+                               value="{{ $settings->min_deposit_amount ?? 10 }}" required>
+                        <small class="text-muted">Used by both manual deposit &amp; Plisio auto deposit</small>
                     </div>
                     <div class="col-md-3">
                         <label class="small text-muted">Max per transaction ($) <span class="text-danger">*</span></label>

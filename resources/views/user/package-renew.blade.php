@@ -8,7 +8,23 @@
             <h1 class="m-0 text-dark">
                 <i class="fas fa-sync-alt mr-2 text-info"></i> Renew Package
             </h1>
-            <small class="text-muted">Renewal {{ $renewalNumber }} of {{ $maxRenewals }} &mdash; Package runs 100 days, renewed every 30 days</small>
+            <small class="text-muted">
+                Renewal {{ $renewalNumber }} of {{ $maxRenewals }} &mdash;
+                Package runs {{ $pkgDuration }} days, renewed every 30 days
+                @if($isPartialFee)
+                    &mdash; <strong>Final renewal covers {{ $leftoverDays }} leftover days</strong>
+                @endif
+            </small>
+        </div>
+
+        {{-- How the renewal math works — Issue 2 spec --}}
+        <div class="alert alert-info py-2 mb-3" style="font-size:13px;">
+            <i class="fas fa-calculator mr-1"></i>
+            <strong>How renewal works:</strong>
+            Your daily Trading Voucher (75% of daily ROI) is added every day.
+            After every 30 days you have enough to renew this package.
+            The renewal fee is pro-rated for the final partial window
+            (only {{ $leftoverDays }} day{{ $leftoverDays > 1 ? 's' : '' }} left if applicable).
         </div>
 
         {{-- Session messages --}}
@@ -58,9 +74,74 @@
                                 <div class="progress-bar bg-info" style="width: {{ $progress }}%"></div>
                             </div>
                             <small class="text-muted d-block mt-1">
-                                Day 30 &bull; Day 60 &bull; Day 90 &mdash; Package expires at Day 100
+                                Day 30 &bull; Day 60 &bull; Day 90 &mdash; Package expires at Day {{ $pkgDuration }}
+                                @if($leftoverDays > 0 && $isPartialFee)
+                                    &mdash; Final renewal covers Day {{ $pkgDuration - $leftoverDays + 1 }}–{{ $pkgDuration }} ({{ $leftoverDays }} days)
+                                @endif
                             </small>
                         </div>
+
+                        {{-- ─── Full Renewal Schedule (Issue 2 / 6) ─── --}}
+                        @if(isset($schedule) && count($schedule) > 0)
+                        <div class="mb-3">
+                            <h6 class="mb-2 text-muted">
+                                <i class="fas fa-calendar-alt mr-1"></i> Full Renewal Schedule
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0" style="font-size:13px;">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Due</th>
+                                            <th class="text-right">Days covered</th>
+                                            <th class="text-right">Fee</th>
+                                            <th class="text-right">Tokens</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($schedule as $row)
+                                        @php
+                                            $isPast       = $row['renewal_number'] <  $renewalNumber;
+                                            $isCurrent    = $row['renewal_number'] == $renewalNumber;
+                                            $rowBg        = $isCurrent ? 'table-warning' : ($isPast ? 'table-success' : '');
+                                            $statusBadge  = $isPast
+                                                ? '<span class="badge badge-success"><i class="fa fa-check"></i> Done</span>'
+                                                : ($isCurrent
+                                                    ? '<span class="badge badge-warning"><i class="fa fa-arrow-right"></i> Now</span>'
+                                                    : '<span class="badge badge-secondary">Upcoming</span>');
+                                        @endphp
+                                        <tr class="{{ $rowBg }}">
+                                            <td><strong>{{ $row['renewal_number'] }}</strong></td>
+                                            <td>
+                                                <small>Day {{ $row['due_at_day'] }}</small><br>
+                                                <small class="text-muted">{{ $row['due_at_date'] }}</small>
+                                            </td>
+                                            <td class="text-right">
+                                                {{ $row['days_covered'] }}
+                                                @if($row['is_partial'])
+                                                    <br><small class="text-warning">(partial)</small>
+                                                @endif
+                                            </td>
+                                            <td class="text-right">
+                                                ${{ number_format($row['fee'], 2) }}
+                                            </td>
+                                            <td class="text-right">
+                                                {{ number_format($row['tokens'], 0) }}
+                                            </td>
+                                            <td>{!! $statusBadge !!}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                Each renewal unlocks 30 days of income (or the leftover days for the final one).
+                                If you miss a renewal, those days' cashout <strong>and</strong> trading voucher are skipped.
+                            </small>
+                        </div>
+                        @endif
 
                         <hr>
 
@@ -78,7 +159,15 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted pl-0">
-                                        <i class="fas fa-minus-circle mr-1 text-danger"></i> Renewal Fee (Amount)
+                                        <i class="fas fa-minus-circle mr-1 text-danger"></i> Renewal Fee
+                                        <small class="d-block text-muted">
+                                            @if($isPartialFee)
+                                                Pro-rated for {{ $daysCovered }} days &divide; 30
+                                                (monthly: ${{ number_format($monthlyFee, 2) }})
+                                            @else
+                                                Standard monthly fee (30 days)
+                                            @endif
+                                        </small>
                                     </td>
                                     <td class="text-right font-weight-bold text-danger">
                                         &minus; ${{ number_format($renewalFee, 2) }}
@@ -125,7 +214,12 @@
                                 <tr>
                                     <td colspan="2" class="text-center text-muted">
                                         <i class="fas fa-flag-checkered mr-1"></i>
-                                        This is your <strong>final renewal</strong> for this package cycle.
+                                        @if($isPartialFee)
+                                            This is your <strong>final renewal</strong> for this package cycle
+                                            &mdash; covers {{ $leftoverDays }} leftover days.
+                                        @else
+                                            This is your <strong>final renewal</strong> for this package cycle.
+                                        @endif
                                     </td>
                                 </tr>
                                 @endif

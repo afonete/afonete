@@ -93,7 +93,7 @@
                     @csrf
 
                         <input type="hidden" name="amount" id="amount_to_invest" value="{{$amount}}">
-                        <input type='hidden' name='package'  value='FC'>
+                        <input type='hidden' name='package'  value='{{$venture->id}}'>
                         <input type='hidden' name='pack'  value='{{$name}}'>
                         <input type="hidden" name="package_type" value="VENTURE">
                         <input type='hidden' name='payment_method'  value='FROM_DEPOSITS'>

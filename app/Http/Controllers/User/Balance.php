@@ -222,11 +222,27 @@ public function withdraw_money(Request $request)
 
         return redirect()->route('user.dashboard.withdraw')->with('success', $msg);
     }
-     public function withdraw (){
-        $user = Auth::User();
+    
+    // ════════════════════════════════════════════════════════════
+    // METHOD 1: withdraw()  (line 225)
+    // ════════════════════════════════════════════════════════════
+    public function withdraw ()
+    {
+        $user   = Auth::User();
         $CASHOUT = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
+        $settings = \App\Models\WithdrawalSetting::current();
 
-        return view('user.balance.withdraw',["availlableBalance"=>$CASHOUT]);
+        // Pre-group active crypto wallets by currency for the picker
+        $cryptoByCurrency = \App\Models\DepositWallet::activeOfType('crypto')
+            ->groupBy('currency');
+
+        return view('user.balance.withdraw', [
+            'availlableBalance' => $CASHOUT,
+            'settings'          => $settings,
+            'cryptoByCurrency'  => $cryptoByCurrency,
+            'advcashActive'     => \App\Models\DepositWallet::activeOfType('advcash'),
+            'perfectMoneyActive'=> \App\Models\DepositWallet::activeOfType('perfect_money'),
+        ]);
     }
 
      public function deposit(){
@@ -234,7 +250,8 @@ public function withdraw_money(Request $request)
         $wallets = \App\Models\DepositWallet::active()->get();
         $deposits = $user->deposits()->latest()->take(10)->get();
         $cashout  = $user->ChartAccount()->where('acc_type','CASHOUT')->sum('amount');
-        return view('user.balance.deposit', compact('wallets','deposits','cashout'));
+        $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
+        return view('user.balance.deposit', compact('wallets','deposits','cashout','minDeposit'));
     }
 
     /**
@@ -283,10 +300,16 @@ public function withdraw_money(Request $request)
       $user = Auth::user();
     $userId = $user->id;
     $email =$user->email;
-    if($request->amount<10)
-    {
-        return view('user.balance.deposit')->with('ammount','less amount!! minimum ammount is $10');
-    }
+
+        // Issue 5 — read min from WithdrawalSetting (admin-configurable)
+        $settings = \App\Models\WithdrawalSetting::current();
+        $minDeposit = (float) ($settings->min_deposit_amount ?? 10);
+
+        $request->validate([
+            'amount' => 'required|numeric|min:' . $minDeposit,
+        ], [
+            'amount.min' => 'Minimum deposit amount is $' . number_format($minDeposit, 2) . '.',
+        ]);
 
         $length = 8;
         $orderNumber = Str::random($length);
@@ -455,39 +478,58 @@ public function withdraw_money(Request $request)
     return redirect()->route('user.dashboard.deposit')
         ->with('message', 'Thank you! Your deposit of $' . number_format($amount, 2) . ' has been credited.');
   }
- public function error()
-{
-    return view('user.balance.deposit')->with('p_failed','Payment failed, Retry again');
-}
+    public function error()
+    {
+        return view('user.balance.deposit')->with('p_failed','Payment failed, Retry again');
+    }
 
-    /**
-     * User submits a manual withdrawal request.
-     * Balance is held (deducted immediately), status = pending.
-     * Admin approves → completed, or rejects → balance refunded.
-     */
+    // ════════════════════════════════════════════════════════════
+    // METHOD 2: requestManualWithdrawal()  (line 486)
+    // ════════════════════════════════════════════════════════════
     public function requestManualWithdrawal(Request $request)
     {
         $user = Auth::user();
         $settings = \App\Models\WithdrawalSetting::current();
+        $minAmount = (float) $settings->min_amount;
 
+        // ── Validate request ──
         $request->validate([
-            'amount'  => 'required|numeric|min:' . $settings->min_amount,
-            'address' => [
-                'required','string',
-                function ($attr, $value, $fail) use ($settings) {
-                    if (!$settings->validate_trc20_format) return;
-                    $addr = trim($value);
-                    if (!preg_match('/^T[a-zA-Z0-9]{' . ((int)$settings->default_trc20_min_length - 1) . ',}$/', $addr)) {
-                        $fail("Invalid USDT TRC-20 wallet address format. Should start with 'T' and be ~" . $settings->default_trc20_min_length . " chars.");
-                    }
-                },
-            ],
+            'amount'  => "required|numeric|min:{$minAmount}|max:" . (float) $settings->max_per_transaction,
+            'method'  => 'required|string|in:crypto,advcash,perfect_money',
+            'network' => 'nullable|string|max:30',
+            'currency'=> 'required|string|max:10',
+            'address' => 'required|string|max:255',
+        ], [
+            'amount.min'  => "Minimum withdrawal is \$" . number_format($minAmount, 2) . ".",
+            'amount.max'  => "Per-transaction maximum is \$" . number_format((float) $settings->max_per_transaction, 2) . ".",
+            'method.in'   => 'Invalid withdrawal method.',
+            'currency.required' => 'Please select a currency.',
+            'address.required'  => 'Please enter your destination wallet address / account number.',
         ]);
 
-        $amount  = (float) $request->amount;
-        $address = $request->address;
+        $amount    = (float) $request->amount;
+        $method    = $request->method;
+        $network   = $request->network;
+        $currency  = $request->currency;
+        $address   = trim($request->address);
+        $notes     = $request->notes ?? null;
 
-        // ── FIX (W4): Enforce limits ──
+        // ── Light address validation per method ──
+        if ($method === 'crypto') {
+            $w = new \App\Models\withdrawals();
+            $w->network = $network;
+            $w->wallet_address = $address;
+            if (!$w->addressLooksValid()) {
+                return back()->with('error', 'Invalid wallet address for ' . $network . '. Please double-check.');
+            }
+        } elseif ($method === 'advcash' || $method === 'perfect_money') {
+            // Sanity: at least 8 chars and not a blockchain address.
+            if (strlen($address) < 6) {
+                return back()->with('error', 'Please enter a valid ' . ucfirst(str_replace('_', ' ', $method)) . ' account number.');
+            }
+        }
+
+        // ── FIX (W4): Enforce per-transaction + daily + monthly limits ──
         if ($amount > (float) $settings->max_per_transaction) {
             return back()->with('error', 'Per-transaction maximum is $' . number_format($settings->max_per_transaction, 2));
         }
@@ -510,18 +552,28 @@ public function withdraw_money(Request $request)
 
         // ── Hold the amount (deduct now, refund if rejected) ──
         $user->ChartAccount()->where('acc_type', 'CASHOUT')
-             ->update(['amount' => $cashoutBalance - $amount]);
+            ->update(['amount' => $cashoutBalance - $amount]);
 
         $trxNo = Transaction::generateTransactionNo();
 
+        // ── Friendly deposit method label shown on the admin queue ──
+        $methodLabel = match ($method) {
+            'advcash'       => 'Advcash '        . $currency,
+            'perfect_money' => 'Perfect Money '  . $currency,
+            default         => trim($currency . ' ' . ($network ?? '')),
+        };
+
         // ── Create pending withdrawal record ──
-        WithdrawalModel::create([
+        \App\Models\withdrawals::create([
             'user_id'        => $user->id,
+            'method'         => $method,
+            'network'        => $network,
             'amount'         => $amount,
+            'currency'       => $currency,
             'wallet_address' => $address,
-            'currency'       => 'USDT',
             'transaction_no' => $trxNo,
             'status'         => 'pending',
+            'notes'          => $notes,
         ]);
 
         Transaction::create([
@@ -531,10 +583,13 @@ public function withdraw_money(Request $request)
             'receiver_id'         => 0,
             'transaction_details' => json_encode([
                 'amount'         => $amount,
-                'currency'       => 'USDT',
+                'method'         => $method,
+                'currency'       => $currency,
+                'network'        => $network,
                 'wallet_address' => $address,
                 'date'           => now()->toDateTimeString(),
                 'status'         => 'pending',
+                'method_label'   => $methodLabel,
                 'username'       => $user->name,
                 'note'           => 'Awaiting admin approval',
             ]),
@@ -551,21 +606,31 @@ public function withdraw_money(Request $request)
         }
 
         return redirect()->route('user.dashboard.withdraw')
-            ->with('success', 'Withdrawal request of $' . number_format($amount, 2) . ' submitted. Reference: ' . $trxNo . '. Awaiting admin approval.');
+            ->with('success', 'Withdrawal request of $' . number_format($amount, 2) . ' (' . $methodLabel . ') submitted. Reference: ' . $trxNo . '. Awaiting admin approval.');
     }
 
     /**
      * Show the user their own withdrawal history
      */
+    // ════════════════════════════════════════════════════════════
+    // METHOD 3: withdrawalHistory()  (line 615)
+    // ════════════════════════════════════════════════════════════
     public function withdrawalHistory()
     {
         $user        = Auth::user();
-        $withdrawals = WithdrawalModel::where('user_id', $user->id)->latest()->paginate(20);
         $cashout     = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        $settings    = \App\Models\WithdrawalSetting::current();
+        $history     = WithdrawalModel::where('user_id', $user->id)->latest()->paginate(20);
+
+        $cryptoByCurrency = \App\Models\DepositWallet::activeOfType('crypto')->groupBy('currency');
 
         return view('user.balance.withdraw', [
             'availlableBalance' => $cashout,
-            'withdrawals'       => $withdrawals,
+            'settings'          => $settings,
+            'cryptoByCurrency'  => $cryptoByCurrency,
+            'advcashActive'     => \App\Models\DepositWallet::activeOfType('advcash'),
+            'perfectMoneyActive'=> \App\Models\DepositWallet::activeOfType('perfect_money'),
+            'history'           => $history,
         ]);
     }
 }

@@ -24,120 +24,307 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
     <div class="container-fluid py-3">
         <h1 class="main_head">Withdraw from Your Account</h1>
 
-        @if(session('success'))
-            <div class="alert alert-success mx-3">{{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger mx-3">{{ session('error') }}</div>
-        @endif
-        @if($errors->any())
-            <div class="alert alert-danger mx-3">{{ $errors->first() }}</div>
+        @if(session('success'))<div class="alert alert-success mx-3">{{ session('success') }}</div>@endif
+        @if(session('error'))<div class="alert alert-danger mx-3">{{ session('error') }}</div>@endif
+        @if($errors->any())<div class="alert alert-danger mx-3">{{ $errors->first() }}</div>@endif
+
+        {{-- ─── Available balance strip (always shown) ─── --}}
+        <div class="d-flex justify-content-between mb-3 p-3" style="background:#0d0d0d; border-radius:8px;">
+            <span class="text-muted">Available Balance (CASHOUT):</span>
+            <span class="font-weight-bold text-success" style="font-size:1.2rem;">${{ number_format($availlableBalance, 2) }}</span>
+        </div>
+
+        @if($availlableBalance < $settings->min_amount)
+            <div class="alert alert-warning mx-3">
+                <i class="fas fa-info-circle"></i>
+                Minimum withdrawal is ${{ number_format($settings->min_amount, 2) }}.
+                Per-transaction max ${{ number_format($settings->max_per_transaction, 2) }}.
+                @if($settings->daily_limit)   · Daily limit ${{ number_format($settings->daily_limit, 2) }} @endif
+                @if($settings->monthly_limit) · Monthly limit ${{ number_format($settings->monthly_limit, 2) }} @endif
+            </div>
         @endif
 
-        <div class="row px-3">
+        {{-- ═══════════════════════════════════════════════════
+             WITHDRAWAL METHOD TABS (Crypto / Advcash / Perfect Money / Instant)
+        ═══════════════════════════════════════════════════ --}}
+        <div class="px-3">
+            <ul class="nav nav-pills mb-3" role="tablist" id="withdrawTabs">
+                <li class="nav-item">
+                    <a class="nav-link active text-white" data-toggle="pill" href="#tab-wcrypto">
+                        <i class="fab fa-bitcoin mr-1"></i>Crypto
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-wadvcash">
+                        <i class="fas fa-money-bill-wave mr-1"></i>Advcash
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-wperfectmoney">
+                        <i class="fas fa-coins mr-1"></i>Perfect Money
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-winstant">
+                        <i class="fas fa-bolt mr-1"></i>Instant (Plisio)
+                    </a>
+                </li>
+            </ul>
 
-            {{-- ═══════════════════════════════════════════════════
-                 MANUAL WITHDRAWAL (pending admin approval)
-            ═══════════════════════════════════════════════════ --}}
-            <div class="col-md-6">
-                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
-                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                        <h4 class="text-white mb-0">
-                            <i class="fas fa-hand-holding-usd mr-2 text-warning"></i>Manual Withdrawal Request
-                        </h4>
-                        <small class="text-muted">Request reviewed and processed by admin within 24–48 hrs.</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3 p-2" style="background:#0d0d0d; border-radius:4px;">
-                            <span class="text-muted">Available Balance (CASHOUT):</span>
-                            <span class="font-weight-bold text-success">${{ number_format($availlableBalance, 2) }}</span>
+            <div class="tab-content">
+
+                {{-- ───────────────── CRYPTO TAB ───────────────── --}}
+                <div class="tab-pane fade show active" id="tab-wcrypto">
+                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                            <h4 class="text-white mb-0">
+                                <i class="fab fa-bitcoin mr-2 text-warning"></i>Crypto Withdrawal
+                                <small class="text-muted">— processed by admin within 24–48 hrs</small>
+                            </h4>
                         </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                                @csrf
+                                <input type="hidden" name="method" value="crypto">
 
-                        <form method="POST" action="{{ route('user.withdraw.manual') }}">
-                            @csrf
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="text-white font-weight-bold">1. Pick your crypto &amp; network</label>
+                                        <select id="wCryptoPicker" name="currency" class="form-control" required
+                                                style="background:#222; color:white; border-color:#555;">
+                                            @foreach($cryptoByCurrency as $currency => $rows)
+                                                <optgroup label="{{ $currency }} ({{ $rows->count() }} network{{ $rows->count() > 1 ? 's' : '' }})">
+                                                    @foreach($rows as $w)
+                                                        <option value="{{ $currency }}" data-network="{{ $w->network }}">
+                                                            {{ $currency }} — {{ $w->network }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" name="network" id="wCryptoNetworkInput" value="{{ optional($cryptoByCurrency->first())->first()?->network }}">
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="fas fa-info-circle"></i>
+                                            Pick the network your receiving wallet supports.
+                                        </small>
+                                    </div>
 
-                            <div class="form-group">
-                                <label class="text-white">Wallet Address (USDT TRC-20)
-                                    @if(!$wallet)
-                                        — <a href="{{ route('profile.edit') }}" style="color:#3490dc">set in Profile</a>
-                                    @else
-                                        <small class="text-muted">(from profile — <a href="{{ route('profile.edit') }}" style="color:#3490dc">change</a>)</small>
-                                    @endif
-                                </label>
-                                <input type="text" name="address"
-                                       value="{{ $wallet->wallet ?? '' }}"
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Your USDT wallet address" required>
-                            </div>
+                                    <div class="col-md-6">
+                                        <label class="text-white font-weight-bold">2. Destination wallet address</label>
+                                        <input type="text" name="address" required
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               value="{{ $wallet->wallet ?? '' }}"
+                                               placeholder="Your wallet address on the chosen network">
+                                        <small class="text-muted">Must match the network you selected above.</small>
+                                    </div>
 
-                            <div class="form-group">
-                                <label class="text-white">Amount <small class="text-muted">(min ${{ \App\Models\WithdrawalSetting::current()->min_amount }})</small></label>
-                                <input type="number" name="amount" min="{{ \App\Models\WithdrawalSetting::current()->min_amount }}" step="0.01" required
-                                       max="{{ $availlableBalance }}"
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Amount to withdraw">
-                            </div>
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                        <input type="number" name="amount" required step="0.01"
+                                               min="{{ $settings->min_amount }}"
+                                               max="{{ $settings->max_per_transaction }}"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="Min ${{ number_format($settings->min_amount, 2) }} · Max ${{ number_format($settings->max_per_transaction, 2) }}">
+                                    </div>
 
-                            <button type="submit" class="btn btn-warning btn-block font-weight-bold mt-2"
-                                {{ $availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount ? 'disabled' : '' }}>
-                                <i class="fas fa-paper-plane mr-1"></i> Submit Withdrawal Request
-                            </button>
-                            @if($availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount)
-                                <small class="text-danger d-block mt-1">Minimum withdrawal is ${{ \App\Models\WithdrawalSetting::current()->min_amount }}.</small>
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Notes for admin <small class="text-muted">(optional)</small></label>
+                                        <input type="text" name="notes" maxlength="255"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="e.g. please send before Friday">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
+                                        <button type="submit" class="btn btn-warning btn-block font-weight-bold"
+                                                {{ $availlableBalance < $settings->min_amount ? 'disabled' : '' }}>
+                                            <i class="fas fa-paper-plane mr-1"></i> Submit Crypto Withdrawal Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ───────────────── ADVCASH TAB ───────────────── --}}
+                <div class="tab-pane fade" id="tab-wadvcash">
+                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                            <h4 class="text-white mb-0">
+                                <i class="fas fa-money-bill-wave mr-2 text-warning"></i>Advcash Withdrawal
+                                <small class="text-muted">— processed by admin within 24–48 hrs</small>
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            @if($advcashActive->isEmpty())
+                                <div class="alert alert-warning">Advcash withdrawals are not currently configured.</div>
+                            @else
+                            <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                                @csrf
+                                <input type="hidden" name="method" value="advcash">
+                                <input type="hidden" name="network" value="ADVCASH">
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="text-white">Currency</label>
+                                        <select name="currency" class="form-control" required style="background:#222; color:white; border-color:#555;">
+                                            @foreach($advcashActive as $w)
+                                                <option value="{{ $w->currency }}">{{ $w->currency }} — {{ $w->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="text-white">Your Advcash Account Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="address" required
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="Your Advcash account (so admin can send funds to you)">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            We'll send your withdrawal to this account number. Make sure it's correct.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                        <input type="number" name="amount" required step="0.01"
+                                               min="{{ $settings->min_amount }}"
+                                               max="{{ $settings->max_per_transaction }}"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;">
+                                    </div>
+
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Notes for admin <small class="text-muted">(optional)</small></label>
+                                        <input type="text" name="notes" maxlength="255"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="e.g. please use USD wallet">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
+                                        <button type="submit" class="btn btn-warning btn-block font-weight-bold"
+                                                {{ $availlableBalance < $settings->min_amount ? 'disabled' : '' }}>
+                                            <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Withdrawal Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                             @endif
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            {{-- ═══════════════════════════════════════════════════
-                 INSTANT WITHDRAWAL (Plisio automatic)
-            ═══════════════════════════════════════════════════ --}}
-            <div class="col-md-6 mt-3 mt-md-0">
-                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
-                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                        <h4 class="text-white mb-0">
-                            <i class="fas fa-bolt mr-2 text-info"></i>Instant Withdrawal (Plisio)
-                        </h4>
-                        <small class="text-muted">Sent directly via Plisio API — no admin review needed.</small>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-3 p-2" style="background:#0d0d0d; border-radius:4px;">
-                            <span class="text-muted">Available Balance (CASHOUT):</span>
-                            <span class="font-weight-bold text-success">${{ number_format($availlableBalance, 2) }}</span>
                         </div>
-
-                        <form method="POST" action="{{ route('user.withdraw') }}">
-                            @csrf
-                            <div class="form-group">
-                                <label class="text-white">Wallet Address
-                                    @if(!$wallet)
-                                        — <a href="{{ route('profile.edit') }}" style="color:#3490dc">set in Profile</a>
-                                    @else
-                                        <small class="text-muted">(<a href="{{ route('profile.edit') }}" style="color:#3490dc">change</a>)</small>
-                                    @endif
-                                </label>
-                                <input type="text" name="address"
-                                       value="{{ $wallet->wallet ?? '' }}"
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       required>
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Amount <small class="text-muted">(min ${{ \App\Models\WithdrawalSetting::current()->min_amount }})</small></label>
-                                <input type="number" name="amount" min="{{ \App\Models\WithdrawalSetting::current()->min_amount }}" step="0.01" required
-                                       max="{{ $availlableBalance }}"
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Amount to withdraw">
-                            </div>
-                            <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2"
-                                {{ $availlableBalance < \App\Models\WithdrawalSetting::current()->min_amount ? 'disabled' : '' }}>
-                                <i class="fas fa-bolt mr-1"></i> Withdraw Now
-                            </button>
-                        </form>
                     </div>
                 </div>
-            </div>
 
+                {{-- ───────────────── PERFECT MONEY TAB ───────────────── --}}
+                <div class="tab-pane fade" id="tab-wperfectmoney">
+                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                            <h4 class="text-white mb-0">
+                                <i class="fas fa-coins mr-2 text-warning"></i>Perfect Money Withdrawal
+                                <small class="text-muted">— processed by admin within 24–48 hrs</small>
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            @if($perfectMoneyActive->isEmpty())
+                                <div class="alert alert-warning">Perfect Money withdrawals are not currently configured.</div>
+                            @else
+                            <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                                @csrf
+                                <input type="hidden" name="method" value="perfect_money">
+                                <input type="hidden" name="network" value="PERFECT_MONEY">
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="text-white">Currency</label>
+                                        <select name="currency" class="form-control" required style="background:#222; color:white; border-color:#555;">
+                                            @foreach($perfectMoneyActive as $w)
+                                                <option value="{{ $w->currency }}">{{ $w->currency }} — {{ $w->label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="text-white">Your Perfect Money Account Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="address" required
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="Your Perfect Money account number">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            We'll send your withdrawal to this account number. Make sure it's correct.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                        <input type="number" name="amount" required step="0.01"
+                                               min="{{ $settings->min_amount }}"
+                                               max="{{ $settings->max_per_transaction }}"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;">
+                                    </div>
+
+                                    <div class="col-md-6 mt-3">
+                                        <label class="text-white">Notes for admin <small class="text-muted">(optional)</small></label>
+                                        <input type="text" name="notes" maxlength="255"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
+                                        <button type="submit" class="btn btn-warning btn-block font-weight-bold"
+                                                {{ $availlableBalance < $settings->min_amount ? 'disabled' : '' }}>
+                                            <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Withdrawal Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ───────────────── INSTANT (Plisio) TAB ───────────────── --}}
+                <div class="tab-pane fade" id="tab-winstant">
+                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                            <h4 class="text-white mb-0">
+                                <i class="fas fa-bolt mr-2 text-info"></i>Instant Withdrawal (Plisio)
+                                <small class="text-muted">— USDT sent directly via Plisio API, no admin review</small>
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('user.withdraw') }}">
+                                @csrf
+                                <input type="hidden" name="method" value="crypto">
+                                <input type="hidden" name="network" value="TRC-20">
+                                <input type="hidden" name="currency" value="USDT">
+
+                                <div class="form-group">
+                                    <label class="text-white">Wallet Address (USDT TRC-20)
+                                        @if(!$wallet)
+                                            — <a href="{{ route('profile.edit') }}" style="color:#3490dc">set in Profile</a>
+                                        @else
+                                            <small class="text-muted">(<a href="{{ route('profile.edit') }}" style="color:#3490dc">change</a>)</small>
+                                        @endif
+                                    </label>
+                                    <input type="text" name="address"
+                                           value="{{ $wallet->wallet ?? '' }}"
+                                           class="form-control" style="background:#222; color:white; border-color:#555;"
+                                           required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="text-white">Amount (USDT)</label>
+                                    <input type="number" name="amount" min="{{ $settings->min_amount }}" step="0.01" required
+                                           max="{{ $availlableBalance }}"
+                                           class="form-control" style="background:#222; color:white; border-color:#555;"
+                                           placeholder="Min ${{ number_format($settings->min_amount, 2) }}">
+                                </div>
+                                <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2"
+                                        {{ $availlableBalance < $settings->min_amount ? 'disabled' : '' }}>
+                                    <i class="fas fa-bolt mr-1"></i> Withdraw Now (Instant)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
         {{-- ═══════════════════════════════════════════════════
@@ -154,8 +341,9 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                         <tr>
                             <th>#</th>
                             <th>Reference</th>
+                            <th>Method</th>
                             <th>Amount</th>
-                            <th>Wallet</th>
+                            <th>Destination</th>
                             <th>Type</th>
                             <th>Status</th>
                             <th>Admin Note</th>
@@ -167,15 +355,34 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                         <tr>
                             <td>{{ $i + 1 }}</td>
                             <td><small>{{ $w->transaction_no }}</small></td>
+                            <td>
+                                <span class="badge badge-{{ $w->method === 'crypto' ? 'primary' : ($w->method === 'advcash' ? 'warning' : 'info') }}">
+                                    {{ $w->methodLabel() }}
+                                </span>
+                            </td>
                             <td>${{ number_format($w->amount, 2) }}</td>
-                            <td><small>{{ Str::limit($w->wallet_address, 20) }}</small></td>
-                            <td><small>{{ $w->plisio_txn_id ? 'Instant' : 'Manual' }}</small></td>
+                            <td>
+                                <small>
+                                    {{ $w->currency }}{{ $w->network ? ' · ' . $w->network : '' }}<br>
+                                    <code style="word-break:break-all;">{{ Str::limit($w->wallet_address, 22) }}</code>
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ $w->plisio_txn_id ? 'success' : 'secondary' }}">
+                                    {{ $w->typeLabel() }}
+                                </span>
+                            </td>
                             <td>
                                 @php
                                     $sc = ['pending'=>'warning','processing'=>'info','completed'=>'success','failed'=>'danger'];
                                     $badge = $sc[$w->status] ?? 'secondary';
                                 @endphp
                                 <span class="badge badge-{{ $badge }}">{{ ucfirst($w->status) }}</span>
+                                @if($w->txn_hash)
+                                    <small class="text-muted d-block" title="{{ $w->txn_hash }}">
+                                        <i class="fas fa-link"></i> {{ Str::limit($w->txn_hash, 16) }}
+                                    </small>
+                                @endif
                             </td>
                             <td><small class="text-muted">{{ $w->admin_note ?? '—' }}</small></td>
                             <td><small>{{ $w->created_at->format('d M Y') }}</small></td>
@@ -188,5 +395,20 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    // Crypto picker — sync the hidden network input when the user picks a different option
+    const picker = document.getElementById('wCryptoPicker');
+    if (picker) {
+        picker.addEventListener('change', function () {
+            const opt = picker.options[picker.selectedIndex];
+            const network = opt ? opt.getAttribute('data-network') : '';
+            const inp = document.getElementById('wCryptoNetworkInput');
+            if (inp && network) inp.value = network;
+        });
+    }
+})();
+</script>
 
 @include('user.footer')

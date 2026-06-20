@@ -52,5 +52,6 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\CalculateDailyIncome::class,
         \App\Console\Commands\ProcessReferralWeekly::class,
         \App\Console\Commands\CheckRankEligibility::class,
+        \App\Console\Commands\FixPaymentExpirationDates::class,
     ];
 }

@@ -33,7 +33,7 @@ class RebuildTokenSystem extends Migration
             }
             if (!Schema::hasColumn('token_settings', 'coin_value')) {
                 $table->decimal('coin_value', 12, 6)->default(0.002000)
-                      ->comment('Value per token in USD for swap/withdrawal calculations. 1 token = coin_value $');
+                      ->comment('Display value per token in USD. NOT used in swap math — swap uses swap_price. Shown on the dashboard so users understand what their tokens are "worth".');
             }
         });
 

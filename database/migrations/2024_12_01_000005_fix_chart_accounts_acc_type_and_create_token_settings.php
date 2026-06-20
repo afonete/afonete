@@ -29,12 +29,13 @@ class FixChartAccountsAccTypeAndCreateTokenSettings extends Migration
                 $table->timestamps();
             });
 
-            // Seed the default row so the system always has one row to read
+            // Seed the default row so the system always has one row to read.
+            // swap_price defaults to 0.002 per spec; uvp/renewal/trading/package to 0.0025.
             DB::table('token_settings')->insert([
                 'token_price'  => 0.002500,
                 'currency'     => 'USD',
                 'token_symbol' => 'FONE',
-                'notes'        => 'Initial default token price',
+                'notes'        => 'Initial default token price. swap_price=0.002 (FREE→CASHOUT); coin_value=0.002 (display only).',
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ]);

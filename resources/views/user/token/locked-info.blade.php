@@ -9,9 +9,12 @@
 
             {{-- Balance card --}}
             <div class="card shadow-sm border-0 mb-3">
-                <div class="card-header bg-secondary text-white font-weight-bold">
-                    <i class="fas fa-lock mr-1"></i> Locked Token Wallet
-                </div>
+                    <div class="card-header bg-secondary text-white font-weight-bold">
+                        <i class="fas fa-lock mr-1"></i> Locked Token Wallet
+                        <small class="float-right mt-1 text-white-50" style="font-weight:normal; font-size:0.75rem;">
+                            <i class="fas fa-info-circle"></i> Read-only — released to Available Token at expiry
+                        </small>
+                    </div>
                 <div class="card-body text-center py-4">
                     <div class="mb-2" style="font-size:2.5rem; font-weight:bold; color:#495057;">
                         {{ number_format($lockedBal, 0) }}

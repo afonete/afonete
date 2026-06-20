@@ -25,15 +25,35 @@ class AdminController extends Controller
 {
 
 
-    public function Withdrawal()
+    // ════════════════════════════════════════════════════════════
+    // METHOD 1: Withdrawal()  (line 28) — with ?method= filter
+    // ════════════════════════════════════════════════════════════
+    public function Withdrawal(Request $request)
     {
-        $pending    = WithdrawalModel::where('status', 'pending')->with('user')->latest()->get();
-        $processing = WithdrawalModel::where('status', 'processing')->with('user')->latest()->get();
-        $completed  = WithdrawalModel::where('status', 'completed')->with('user')->latest()->paginate(20);
+        // Optional ?method=crypto|advcash|perfect_money filter for the admin queue.
+        $methodFilter = $request->query('method');
 
-        return view('admin.Withdrawal', compact('pending', 'processing', 'completed'));
+        $pendingQ    = WithdrawalModel::where('status', 'pending')->with('user')->latest();
+        $processingQ = WithdrawalModel::where('status', 'processing')->with('user')->latest();
+        $completedQ  = WithdrawalModel::where('status', 'completed')->with('user')->latest();
+
+        if ($methodFilter && in_array($methodFilter, ['crypto', 'advcash', 'perfect_money'], true)) {
+            $pendingQ    = $pendingQ->where('method', $methodFilter);
+            $processingQ = $processingQ->where('method', $methodFilter);
+            $completedQ  = $completedQ->where('method', $methodFilter);
+        }
+
+        return view('admin.Withdrawal', [
+            'pending'      => $pendingQ->get(),
+            'processing'   => $processingQ->get(),
+            'completed'    => $completedQ->paginate(20)->withQueryString(),
+            'methodFilter' => $methodFilter,
+        ]);
     }
 
+    // ════════════════════════════════════════════════════════════
+    // METHOD 2: approveWithdrawal()  (line 51) — stamps processed_by/at
+    // ════════════════════════════════════════════════════════════
     public function approveWithdrawal(Request $request)
     {
         $withdrawal = WithdrawalModel::findOrFail($request->withdrawal_id);
@@ -42,11 +62,14 @@ class AdminController extends Controller
             return redirect()->route('admin.withdrawal')->with('error', 'This withdrawal has already been processed.');
         }
 
-        // FIX (W8): Record the on-chain txn_hash that admin provides
+        // FIX (W8): Record the on-chain txn_hash that admin provides.
+        // Also stamp processed_by + processed_at so the audit trail is clear.
         $withdrawal->update([
-            'status'     => 'completed',
-            'admin_note' => $request->admin_note,
-            'txn_hash'   => $request->txn_hash,
+            'status'       => 'completed',
+            'admin_note'   => $request->admin_note,
+            'txn_hash'     => $request->txn_hash,
+            'processed_by' => Auth::id(),
+            'processed_at' => now(),
         ]);
 
         // FIX (W6): Email user about approval
@@ -64,6 +87,9 @@ class AdminController extends Controller
         return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal approved and marked completed.');
     }
 
+    // ════════════════════════════════════════════════════════════
+    // METHOD 3: rejectWithdrawal()  (line 84) — stamps processed_by/at + refunds
+    // ════════════════════════════════════════════════════════════
     public function rejectWithdrawal(Request $request)
     {
         $withdrawal = WithdrawalModel::findOrFail($request->withdrawal_id);
@@ -99,8 +125,10 @@ class AdminController extends Controller
         }
 
         $withdrawal->update([
-            'status'     => 'failed',
-            'admin_note' => $request->admin_note ?? 'Rejected by admin',
+            'status'       => 'failed',
+            'admin_note'   => $request->admin_note ?? 'Rejected by admin',
+            'processed_by' => Auth::id(),
+            'processed_at' => now(),
         ]);
 
         // FIX (W6): Email user about rejection
@@ -123,8 +151,32 @@ class AdminController extends Controller
     }
 
     public function depositedPayment(){
+        // Paginate 10 per page, newest first. Eager-load user to avoid N+1 queries.
+        $deposits = Deposits::with('user')
+            ->where('status', '!=', 'used')
+            ->latest('created_at')
+            ->paginate(10);
 
-        return view('admin.payments',["deposits"=>Deposits::where('status', '!=', 'used')->get()]);
+        return view('admin.payments', compact('deposits'));
+    }
+
+    /**
+     * Show full details of a single deposit before any admin action is taken.
+     * URL: GET /admin/payments/deposited/{id}
+     */
+    public function depositDetail($id)
+    {
+        $deposit = Deposits::with('user')->findOrFail($id);
+
+        // Keep the same filter as the list view (exclude 'used')
+        // so we don't expose something that shouldn't be reviewed.
+        if ($deposit->status === 'used') {
+            return redirect()
+                ->route('admin.payments')
+                ->with('error', 'This deposit has already been consumed and cannot be reviewed.');
+        }
+
+        return view('admin.deposit-detail', compact('deposit'));
     }
     public function ApproveDeposit(Request $request)
     {
@@ -494,4 +546,4 @@ public function check(Request $request) {
         return redirect()->route('admin.token-withdrawals')->with('message', 'Token withdrawal rejected and tokens refunded.');
     }
 
-    }
+}

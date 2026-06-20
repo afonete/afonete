@@ -36,7 +36,9 @@
                     <p class="text-muted small mb-1">Example — $1,000 investment at UVP price:</p>
                     @php $ex = $s->uvp_price > 0 ? 1000/$s->uvp_price : 0; @endphp
                     <p class="mb-0"><strong>{{ number_format($ex,0) }}</strong> {{ $s->token_symbol }} locked tokens</p>
-                    <p class="text-muted small">Swap 1,000 tokens → ${{ number_format(1000*$s->coin_value,2) }} cashout</p>
+                    <p class="text-muted small">Swap 1,000 tokens → ${{ number_format(1000*$s->swap_price,2) }} cashout
+                        <small class="text-muted">(uses <code>swap_price</code>; <code>coin_value</code> is display-only)</small>
+                    </p>
                     <p class="text-muted small mb-0">Last updated: {{ $s->updated_at->format('d M Y H:i') }}</p>
                     @endif
                 </div>
@@ -91,7 +93,7 @@
                                 <div class="form-group">
                                     <label class="font-weight-bold">Swap Price <span class="text-danger">*</span></label>
                                     <div class="input-group"><div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                                    <input type="number" name="swap_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('swap_price', $setting->swap_price ?? '0.002500') }}" required></div>
+                                    <input type="number" name="swap_price" class="form-control" step="0.000001" min="0.000001" value="{{ old('swap_price', $setting->swap_price ?? '0.002000') }}" required></div>
                                     <small class="text-muted">
                                         <strong>Used by /user/token/swap</strong> — tokens × this = USD credited to user's Cashout.
                                         Example: 100,000 tokens × $0.0025 = $250.00 cashout.

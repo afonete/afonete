@@ -84,7 +84,8 @@ $ftt = User::where('utype', '!=', 'ADM')
                 <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                     Private Pre-Sale
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$ 400,000</h1>
+                <h1 class="text-slate-500 font-bold pt-2"> 1 000 000 000 Token  </h1>
+                
                 </div>
 
             <div class="card-body flex items-center px-2">
@@ -99,7 +100,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                 <h1 class="text-green-500 uppercase text-sm  text-center font-semibold">
                 Pre-Sale
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$ 403,000</h1>
+                <h1 class="text-slate-500 font-bold pt-2"> 2 600 000 000 Token </h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -112,9 +113,9 @@ $ftt = User::where('utype', '!=', 'ADM')
 
             <div>
                 <h1 class="text-teal-500 uppercase text-sm  text-center font-semibold">
-                Sales Package
+                Sales Package investment
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$ 9,000</h1>
+                <h1 class="text-slate-500 font-bold pt-2"> 30 000 000,000 Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -127,9 +128,9 @@ $ftt = User::where('utype', '!=', 'ADM')
 
             <div>
                 <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
-                Liquidity Pool
+                Liquidity Pool(UVP)
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$ 400,000</h1>
+                <h1 class="text-slate-500 font-bold pt-2"> 40 000 000 000 Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -144,7 +145,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Staking Pool
             </h1>
-            <h1 class="text-slate-500 font-bold pt-2">$ 407,000</h1>
+            <h1 class="text-slate-500 font-bold pt-2"> 20 000 000 000 Token</h1>
             </div>
 
         <div class="card-body flex items-center px-2">
@@ -161,7 +162,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Total Coin Sales
             </h1>
-            <h1 class="text-slate-500 font-bold pt-2">$ 5400,000</h1>
+            <h1 class="text-slate-500 font-bold pt-2">$ 00,000</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -176,7 +177,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                 <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Total Supply
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$12 400,000</h1>
+                <h1 class="text-slate-500 font-bold pt-2">$120 000 000 000 Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -232,7 +233,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                       <i class="fa-solid fa-user-check"></i>
                       <span>Balance</span>
                   </div>
-                  <h3 class="text-center py-2">$ 362,029,36</h3>
+                  <h3 class="text-center py-2">$ 0,000</h3>
                   <button class="text-xs bg-blue-400  rounded-2xl px-2 py-1">1,774,15% Increase</button>
               </div>
               </li>
@@ -243,7 +244,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                       <i class="fa-solid fa-user-gear"></i>
                       <span>All Actions</span>
                   </div>
-                  <h3 class="text-center p-2">14/$12</h3>
+                  <h3 class="text-center p-2">14/$00</h3>
                   <button class="text-xs bg-blue-400  rounded-2xl px-2 py-1">
                     100% Increase</button>
               </div>
@@ -256,7 +257,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                     <i class="fa-solid fa-bullseye"></i>
                       <span>All Clicks</span>
                   </div>
-                  <h3 class="text-center py-2">549/$169,55</h3>
+                  <h3 class="text-center py-2">1/$00,00</h3>
                   <button class=" bg-blue-400  rounded-2xl p-1">
                     160,010,0 % Income</button>
               </div>
@@ -268,7 +269,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                     <i class="fa-solid fa-chart-line"></i>
                       <span>Admin Sales</span>
                   </div>
-                  <h3 class="text-center py-2">$169,55</h3>
+                  <h3 class="text-center py-2">$0,000</h3>
                   <button class=" bg-blue-400  rounded-2xl px-2 py-1">
                     100 % Income</button>
               </div>
@@ -280,7 +281,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                     <i class="fa-solid fa-chart-line"></i>
                       <span>Vendors Sales</span>
                   </div>
-                  <h3 class="text-center py-2">$25,483.14</h3>
+                  <h3 class="text-center py-2">$0,00.00</h3>
                   <button class=" bg-blue-400  rounded-2xl px-2 py-1">
                     100 % Income</button>
               </div>
@@ -330,7 +331,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                       <h3 class="font-bold uppercase">Total Deposit</h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">49,595.34 USD</h2>
+                    <h2 class="text-lg">0,000.00 USD</h2>
                       <div class="indicator flex gap-1 text-green-500 font-bold">
                         <p>
                           <i class="fa-solid fa-arrow-up text-xs "></i>
@@ -342,11 +343,11 @@ $ftt = User::where('utype', '!=', 'ADM')
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
                         <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">2,940.59 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div>
                         <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">1,259.28 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-1"></div>
@@ -358,10 +359,10 @@ $ftt = User::where('utype', '!=', 'ADM')
               <li class="  bg-white py-5 px-2  text-xs my-2 lg:my-auto">
                 <div class="cards">
                   <div class="header flex gap-2 pb-2">
-                      <h3 class="font-bold">Total Deposit</h3>
+                      <h3 class="font-bold">Total Withdraw </h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">49,595.34 USD</h2>
+                    <h2 class="text-lg">00,000.00 USD</h2>
                       <div class="indicator flex gap-1 text-green-500 font-bold">
                         <p>
                           <i class="fa-solid fa-arrow-up text-xs "></i>
@@ -373,11 +374,11 @@ $ftt = User::where('utype', '!=', 'ADM')
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
                         <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">2,940.59 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div>
                         <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">1,259.28 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-2"></div>
@@ -390,10 +391,10 @@ $ftt = User::where('utype', '!=', 'ADM')
               <li class="  bg-white py-5 px-2  text-xs">
                 <div class="cards">
                   <div class="header flex gap-2 pb-2">
-                      <h3 class="font-bold">Total Deposit</h3>
+                      <h3 class="font-bold">Total available Balance</h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">49,595.34 USD</h2>
+                    <h2 class="text-lg">00,000.00 USD</h2>
                       <div class="indicator flex gap-1 text-red-500 font-bold">
                         <p>
                           <i class="fa-solid fa-arrow-down text-xs "></i>
@@ -405,11 +406,11 @@ $ftt = User::where('utype', '!=', 'ADM')
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
                         <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">2,940.59 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div>
                         <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">1,259.28 USD</p>
+                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-3"></div>
@@ -439,7 +440,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-4">
               <div>
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">2 400 000 000 Token </p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -455,7 +456,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-4">
               <div>
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$36000.00</p>
+              <p class="text-gray-300">6 000 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -473,7 +474,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex flex-col gap-2 py-2">
               <div>
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-                <p class="text-gray-300">$3600000</p>
+                <p class="text-gray-300">1 600 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -489,7 +490,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex flex-col  gap-2 py-2 col-span-3">
               <div>
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-                <p class="text-gray-300">$3600000</p>
+                <p class="text-gray-300">2 000 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -509,7 +510,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-2">
               <div>
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">1 000 00 0000 Token</p>
               </div>
               <div class="py-2">
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -525,7 +526,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-2">
               <div class="py-2">
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">800 000 000 Token</p>
               </div>
               <div class="py-2">
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -541,7 +542,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-2">
               <div class="py-2">
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">3 600 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -557,7 +558,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-2">
               <div class="py-2">
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">8 400 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -573,7 +574,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <div class="card-body px-2 flex gap-2 justify-between items-center py-2">
               <div class="py-2">
                 <h3 class="text-red-500 uppercase ">Balance</h3>
-              <p class="text-gray-300">$3600000</p>
+              <p class="text-gray-300">600 000 000 Token</p>
               </div>
               <div>
                 <p class="text-yellow-400">Sold: <span>000</span></p>
@@ -1523,4 +1524,4 @@ $ftt = User::where('utype', '!=', 'ADM')
 </section>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('admin.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/admin-dashboard.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('admin.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/admin-dashboard.blade.php ENDPATH**/ ?><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/admin-dashboard.blade.php ENDPATH**/ ?>

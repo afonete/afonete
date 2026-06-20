@@ -1,9 +1,17 @@
 <?php
 use App\Models\Deposits;
 use Illuminate\Support\Facades\Auth;
+use App\Models\DepositWallet;
+
 $user     = Auth::user();
 $deposits = $user->deposits()->latest()->take(10)->get();
-$wallets  = $wallets ?? \App\Models\DepositWallet::active()->get();
+
+// Three separate collections so each tab renders its own list.
+$cryptoWallets      = DepositWallet::activeOfType('crypto');
+$advcashWallets     = DepositWallet::activeOfType('advcash');
+$perfectMoneyWallets = DepositWallet::activeOfType('perfect_money');
+
+$minDeposit = $minDeposit ?? (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
 ?>
 <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
@@ -28,146 +36,372 @@ $wallets  = $wallets ?? \App\Models\DepositWallet::active()->get();
             </a>
         </div>
 
-        <?php if(session('message')): ?>
-            <div class="alert alert-success mx-3"><?php echo e(session('message')); ?></div>
-        <?php endif; ?>
-        <?php if(session('error')): ?>
-            <div class="alert alert-danger mx-3"><?php echo e(session('error')); ?></div>
-        <?php endif; ?>
-        <?php if($errors->any()): ?>
-            <div class="alert alert-danger mx-3"><?php echo e($errors->first()); ?></div>
-        <?php endif; ?>
+        <?php if(session('message')): ?><div class="alert alert-success mx-3"><?php echo e(session('message')); ?></div><?php endif; ?>
+        <?php if(session('error')): ?><div class="alert alert-danger mx-3"><?php echo e(session('error')); ?></div><?php endif; ?>
+        <?php if($errors->any()): ?><div class="alert alert-danger mx-3"><?php echo e($errors->first()); ?></div><?php endif; ?>
 
-        <div class="row px-3">
+        
+        <div class="px-3">
+            <ul class="nav nav-pills mb-3" role="tablist" id="depositTabs">
+                <li class="nav-item">
+                    <a class="nav-link active text-white" data-toggle="pill" href="#tab-crypto">
+                        <i class="fab fa-bitcoin mr-1"></i>Crypto <small class="text-muted">(<?php echo e($cryptoWallets->count()); ?>)</small>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-advcash">
+                        <i class="fas fa-money-bill-wave mr-1"></i>Advcash <small class="text-muted">(<?php echo e($advcashWallets->count()); ?>)</small>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-perfect-money">
+                        <i class="fas fa-coins mr-1"></i>Perfect Money <small class="text-muted">(<?php echo e($perfectMoneyWallets->count()); ?>)</small>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" data-toggle="pill" href="#tab-auto">
+                        <i class="fas fa-bolt mr-1"></i>Auto (Plisio)
+                    </a>
+                </li>
+            </ul>
 
-            
-            <div class="col-md-6">
-                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
-                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                        <h4 class="text-white mb-0"><i class="fas fa-hand-holding-usd mr-2 text-warning"></i>Manual Deposit (USDT)</h4>
-                        <small class="text-muted">Send USDT to the address below, then submit proof here.</small>
-                    </div>
-                    <div class="card-body">
-
-                        
-                        <?php if($wallets->isEmpty()): ?>
-                            <div class="alert alert-warning">No deposit wallets configured yet. Contact admin.</div>
-                        <?php else: ?>
-                        <div class="mb-3">
-                            <ul class="nav nav-pills mb-2" role="tablist">
-                                <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <li class="nav-item">
-                                        <a class="nav-link <?php echo e($i === 0 ? 'active' : ''); ?> text-white"
-                                           data-toggle="pill" href="#wallet-<?php echo e($w->network); ?>">
-                                            <?php echo e($w->network); ?>
-
-                                        </a>
-                                    </li>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </ul>
-                            <div class="tab-content">
-                                <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="tab-pane fade <?php echo e($i === 0 ? 'show active' : ''); ?>" id="wallet-<?php echo e($w->network); ?>">
-                                        <div class="p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:6px;">
-                                            <small class="text-muted d-block mb-1"><?php echo e($w->label); ?>:</small>
-                                            <code class="text-warning" style="word-break:break-all; font-size:13px;">
-                                                <?php echo e($w->wallet_address); ?>
-
-                                            </code>
-                                            <small class="d-block mt-1">
-                                                <span class="text-muted">Min: $<?php echo e(number_format($w->min_amount, 0)); ?></span>
-                                                <?php if($w->max_amount): ?>
-                                                    <span class="text-muted">· Max: $<?php echo e(number_format($w->max_amount, 0)); ?></span>
-                                                <?php endif; ?>
-                                            </small>
-                                            <small class="text-danger d-block mt-1">⚠ Only send USDT on <?php echo e($w->network); ?>. Wrong network = lost funds.</small>
-                                        </div>
-                                    </div>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-
-                        <form method="POST" action="<?php echo e(route('user.payment.savedeposits')); ?>" enctype="multipart/form-data">
-                            <?php echo csrf_field(); ?>
-                            <input type="hidden" name="paymentMethod" value="MANUAL_USDT">
-
-                            <div class="form-group">
-                                <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
-                                <input type="number" name="amount" min="10" step="0.01" required
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Enter amount you sent (min $10)">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="text-white">Your Wallet Address (you sent from) <span class="text-danger">*</span></label>
-                                <input type="text" name="paymentaccount" required
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Your USDT wallet address">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="text-white">Network</label>
-                                <select name="network" class="form-control" style="background:#222; color:white; border-color:#555;">
-                                    <?php $__currentLoopData = $wallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <option value="<?php echo e($w->network); ?>"><?php echo e($w->label); ?></option>
+            <div class="tab-content">
+                
+                <div class="tab-pane fade show active" id="tab-crypto">
+                    <?php if($cryptoWallets->isEmpty()): ?>
+                        <div class="alert alert-warning">No crypto deposit wallets configured yet. Contact admin.</div>
+                    <?php else: ?>
+                        <div class="row">
+                            
+                            <div class="col-md-5 mb-3">
+                                <label class="text-white font-weight-bold">1. Pick your crypto &amp; network</label>
+                                <select id="cryptoPicker" class="form-control" style="background:#222; color:white; border-color:#555;">
+                                    <?php $__currentLoopData = $cryptoWallets->groupBy('currency'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $currency => $rows): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <optgroup label="<?php echo e($currency); ?> (<?php echo e($rows->count()); ?> network<?php echo e($rows->count() > 1 ? 's' : ''); ?>)">
+                                            <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($w->id); ?>"
+                                                        data-address="<?php echo e($w->wallet_address); ?>"
+                                                        data-network="<?php echo e($w->network); ?>"
+                                                        data-currency="<?php echo e($w->currency); ?>"
+                                                        data-qr="<?php echo e($w->qrImageUrl()); ?>"
+                                                        data-min="<?php echo e($w->min_amount); ?>">
+                                                    <?php echo e($currency); ?> — <?php echo e($w->network); ?> <?php if(!$w->is_active): ?> (inactive) <?php endif; ?>
+                                                </option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </optgroup>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-info-circle"></i>
+                                    Each crypto supports one or more networks. Pick the one your wallet supports.
+                                </small>
                             </div>
 
-                            <div class="form-group">
-                                <label class="text-white">Proof of Payment <small class="text-muted">(screenshot/PDF, max 4MB)</small></label>
-                                <input type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf"
-                                       class="form-control" style="background:#222; color:white; border-color:#555;">
-                                <small class="text-muted">Upload a screenshot of your transaction. Speeds up approval.</small>
-                            </div>
+                            
+                            <div class="col-md-7 mb-3">
+                                <label class="text-white font-weight-bold">2. Send to this address</label>
+                                <div class="p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        
+                                        <div class="mr-3 mb-2 text-center">
+                                            <img id="cryptoQrImg"
+                                                 src="<?php echo e($cryptoWallets->first()?->qrImageUrl()); ?>"
+                                                 alt="QR code"
+                                                 style="width:160px; height:160px; background:#fff; padding:6px; border-radius:6px;">
+                                            <div class="small text-muted mt-1" id="cryptoQrCaption">
+                                                Scan with your wallet app
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex-grow-1" style="min-width:240px;">
+                                            <div class="small text-muted">Address (<?php echo e($cryptoWallets->first()?->currency); ?> · <?php echo e($cryptoWallets->first()?->network); ?>)</div>
+                                            <div class="d-flex align-items-center mt-1">
+                                                <code id="cryptoAddressText"
+                                                      class="text-warning flex-grow-1"
+                                                      style="word-break:break-all; font-size:13px; background:#000; padding:6px 8px; border-radius:4px;">
+                                                    <?php echo e($cryptoWallets->first()?->wallet_address); ?>
 
-                            <button type="submit" class="btn btn-warning btn-block font-weight-bold mt-2">
-                                <i class="fas fa-paper-plane mr-1"></i> Submit Deposit Request
-                            </button>
-                        </form>
-                    </div>
+                                                </code>
+                                                <button type="button" id="copyCryptoAddressBtn"
+                                                        class="btn btn-sm btn-outline-warning ml-2"
+                                                        data-copy-target="#cryptoAddressText">
+                                                    <i class="fas fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                            <div class="small text-muted mt-2">
+                                                Min: $<span id="cryptoMinAmount"><?php echo e(number_format($cryptoWallets->first()?->min_amount ?? 10, 2)); ?></span>
+                                                <span id="cryptoMaxWrap" style="display:none"> · Max: $<span id="cryptoMaxAmount"></span></span>
+                                            </div>
+                                            <div class="small text-danger mt-1" id="cryptoWarning">
+                                                ⚠ Only send <?php echo e($cryptoWallets->first()?->currency ?? 'USDT'); ?> on
+                                                <strong id="cryptoNetworkName"><?php echo e($cryptoWallets->first()?->network ?? 'TRC-20'); ?></strong>.
+                                                Wrong network = lost funds.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                        <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                            <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                                <h5 class="text-white mb-0">3. Submit your deposit request</h5>
+                                <small class="text-muted">After sending, fill this form so admin can verify and credit your account.</small>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="<?php echo e(route('user.payment.savedeposits')); ?>" enctype="multipart/form-data">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="paymentMethod" value="MANUAL_CRYPTO">
+                                    <input type="hidden" name="wallet_id"   id="walletIdInput"   value="<?php echo e($cryptoWallets->first()?->id); ?>">
+                                    <input type="hidden" name="network"     id="networkInput"   value="<?php echo e($cryptoWallets->first()?->network); ?>">
+                                    <input type="hidden" name="currency"     id="currencyInput"  value="<?php echo e($cryptoWallets->first()?->currency); ?>">
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                            <input type="number" name="amount" min="<?php echo e($minDeposit); ?>" step="0.01" required
+                                                   class="form-control" style="background:#222; color:white; border-color:#555;"
+                                                   placeholder="Min $<?php echo e(number_format($minDeposit, 0)); ?>">
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="text-white">Your Sender Wallet Address <span class="text-danger">*</span></label>
+                                            <input type="text" name="paymentaccount" required
+                                                   class="form-control" style="background:#222; color:white; border-color:#555;"
+                                                   placeholder="The wallet address you sent FROM">
+                                        </div>
+
+                                        <div class="col-md-12 mt-2">
+                                            <label class="text-white">Proof of Payment <small class="text-muted">(screenshot / PDF, max 4MB)</small></label>
+                                            <input type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf"
+                                                   class="form-control" style="background:#222; color:white; border-color:#555;">
+                                            <small class="text-muted">Speeds up admin verification.</small>
+                                        </div>
+
+                                        <div class="col-md-12 mt-3">
+                                            <button type="submit" class="btn btn-warning btn-block font-weight-bold">
+                                                <i class="fas fa-paper-plane mr-1"></i> Submit Deposit Request
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            </div>
 
-            
-            <div class="col-md-6 mt-3 mt-md-0">
-                <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
-                    <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                        <h4 class="text-white mb-0"><i class="fas fa-bolt mr-2 text-info"></i>Automatic Deposit (Plisio)</h4>
-                        <small class="text-muted">Generate a crypto invoice — payment confirmed automatically.</small>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted">Creates a Plisio USDT invoice. You pay and it confirms automatically — no admin approval needed.</p>
+                
+                <div class="tab-pane fade" id="tab-advcash">
+                    <?php if($advcashWallets->isEmpty()): ?>
+                        <div class="alert alert-warning">Advcash deposits are not configured yet.</div>
+                    <?php else: ?>
+                        <?php $__currentLoopData = $advcashWallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="card mb-3" style="background:#111; border:1px solid #333; border-radius:8px;">
+                                <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                                    <h5 class="text-white mb-0">
+                                        <i class="fas fa-money-bill-wave mr-2 text-warning"></i>
+                                        Advcash — <?php echo e($w->currency); ?>
 
-                        <?php if(isset($ammount)): ?>
-                            <div class="alert alert-warning"><?php echo e($ammount); ?></div>
-                        <?php endif; ?>
-                        <?php if(isset($p_failed)): ?>
-                            <div class="alert alert-danger"><?php echo e($p_failed); ?></div>
-                        <?php endif; ?>
+                                        <?php if(!$w->is_active): ?>
+                                            <span class="badge badge-secondary ml-2">Inactive</span>
+                                        <?php endif; ?>
+                                    </h5>
+                                    <small class="text-muted"><?php echo e($w->label); ?></small>
+                                </div>
+                                <div class="card-body">
+                                    
+                                    <div class="p-3 mb-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                        <div class="small text-muted">Advcash Account Number (<?php echo e($w->currency); ?>)</div>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <code id="advcashAddr_<?php echo e($w->id); ?>"
+                                                  class="text-warning flex-grow-1"
+                                                  style="word-break:break-all; font-size:16px; background:#000; padding:8px 10px; border-radius:4px;">
+                                                <?php echo e($w->wallet_address ?: '(not set yet)'); ?>
 
-                        <form method="POST" action="<?php echo e(route('user.deposit')); ?>">
-                            <?php echo csrf_field(); ?>
-                            <div class="form-group">
-                                <label class="text-white">Currency: USD ($)</label>
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-warning ml-2"
+                                                    data-copy-target="#advcashAddr_<?php echo e($w->id); ?>"
+                                                    <?php echo e($w->wallet_address ? '' : 'disabled'); ?>>
+                                                <i class="fas fa-copy"></i> Copy
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    
+                                    <?php if($w->instructions): ?>
+                                        <div class="p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                            <strong class="text-white">Instructions:</strong>
+                                            <ol class="text-light mt-2 mb-0 pl-3" style="font-size:14px;">
+                                                <?php $__currentLoopData = preg_split('/\r?\n/', $w->instructions); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $line): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php if(trim($line) !== ''): ?>
+                                                        <li class="mb-1"><?php echo trim($line); ?></li>
+                                                    <?php endif; ?>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </ol>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if($w->is_active && $w->wallet_address): ?>
+                                        
+                                        <form method="POST" action="<?php echo e(route('user.payment.savedeposits')); ?>"
+                                              enctype="multipart/form-data" class="mt-3">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="paymentMethod" value="MANUAL_ADVCASH">
+                                            <input type="hidden" name="wallet_id"   value="<?php echo e($w->id); ?>">
+                                            <input type="hidden" name="currency"    value="<?php echo e($w->currency); ?>">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                                    <input type="number" name="amount" min="<?php echo e($minDeposit); ?>" step="0.01" required
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;">
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="text-white">Your Advcash Account Number <span class="text-danger">*</span></label>
+                                                    <input type="text" name="paymentaccount" required
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;"
+                                                           placeholder="Your Advcash account (so admin can verify)">
+                                                </div>
+                                                <div class="col-md-12 mt-2">
+                                                    <label class="text-white">Proof of Payment <small class="text-muted">(screenshot / PDF, max 4MB)</small></label>
+                                                    <input type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf"
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;">
+                                                </div>
+                                                <div class="col-md-12 mt-3">
+                                                    <button type="submit" class="btn btn-warning btn-block font-weight-bold">
+                                                        <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Deposit Request
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label class="text-white">Amount <span class="text-danger">*</span></label>
-                                <input type="number" name="amount" min="12" required
-                                       class="form-control" style="background:#222; color:white; border-color:#555;"
-                                       placeholder="Minimum $12">
-                            </div>
-                            <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2">
-                                <i class="fas fa-external-link-alt mr-1"></i> Generate Invoice
-                            </button>
-                        </form>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
+                </div>
 
-                        <div class="mt-3 p-2" style="border:1px solid #333; border-radius:4px; font-size:12px;">
-                            <p class="text-warning mb-1">⚠ Rules:</p>
-                            <p class="text-muted mb-1">Do not send USDT twice to the same invoice address.</p>
-                            <p class="text-muted mb-1">Only USDT TRC-20 is supported.</p>
-                            <p class="text-muted mb-0">Create a new invoice for each deposit.</p>
+                
+                <div class="tab-pane fade" id="tab-perfect-money">
+                    <?php if($perfectMoneyWallets->isEmpty()): ?>
+                        <div class="alert alert-warning">Perfect Money deposits are not configured yet.</div>
+                    <?php else: ?>
+                        <?php $__currentLoopData = $perfectMoneyWallets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <div class="card mb-3" style="background:#111; border:1px solid #333; border-radius:8px;">
+                                <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                                    <h5 class="text-white mb-0">
+                                        <i class="fas fa-coins mr-2 text-warning"></i>
+                                        Perfect Money — <?php echo e($w->currency); ?>
+
+                                        <?php if(!$w->is_active): ?>
+                                            <span class="badge badge-secondary ml-2">Inactive</span>
+                                        <?php endif; ?>
+                                    </h5>
+                                    <small class="text-muted"><?php echo e($w->label); ?></small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="p-3 mb-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                        <div class="small text-muted">Perfect Money Account Number (<?php echo e($w->currency); ?>)</div>
+                                        <div class="d-flex align-items-center mt-1">
+                                            <code id="pmAddr_<?php echo e($w->id); ?>"
+                                                  class="text-warning flex-grow-1"
+                                                  style="word-break:break-all; font-size:16px; background:#000; padding:8px 10px; border-radius:4px;">
+                                                <?php echo e($w->wallet_address ?: '(not set yet)'); ?>
+
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-warning ml-2"
+                                                    data-copy-target="#pmAddr_<?php echo e($w->id); ?>"
+                                                    <?php echo e($w->wallet_address ? '' : 'disabled'); ?>>
+                                                <i class="fas fa-copy"></i> Copy
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <?php if($w->instructions): ?>
+                                        <div class="p-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                            <strong class="text-white">Instructions:</strong>
+                                            <ol class="text-light mt-2 mb-0 pl-3" style="font-size:14px;">
+                                                <?php $__currentLoopData = preg_split('/\r?\n/', $w->instructions); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $line): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <?php if(trim($line) !== ''): ?>
+                                                        <li class="mb-1"><?php echo trim($line); ?></li>
+                                                    <?php endif; ?>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </ol>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if($w->is_active && $w->wallet_address): ?>
+                                        <form method="POST" action="<?php echo e(route('user.payment.savedeposits')); ?>"
+                                              enctype="multipart/form-data" class="mt-3">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="paymentMethod" value="MANUAL_PERFECT_MONEY">
+                                            <input type="hidden" name="wallet_id"   value="<?php echo e($w->id); ?>">
+                                            <input type="hidden" name="currency"    value="<?php echo e($w->currency); ?>">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label class="text-white">Amount (USD) <span class="text-danger">*</span></label>
+                                                    <input type="number" name="amount" min="<?php echo e($minDeposit); ?>" step="0.01" required
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;">
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="text-white">Your Perfect Money Account <span class="text-danger">*</span></label>
+                                                    <input type="text" name="paymentaccount" required
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;"
+                                                           placeholder="Your Perfect Money account number">
+                                                </div>
+                                                <div class="col-md-12 mt-2">
+                                                    <label class="text-white">Proof of Payment <small class="text-muted">(screenshot / PDF, max 4MB)</small></label>
+                                                    <input type="file" name="proof_of_payment" accept=".jpg,.jpeg,.png,.pdf"
+                                                           class="form-control" style="background:#222; color:white; border-color:#555;">
+                                                </div>
+                                                <div class="col-md-12 mt-3">
+                                                    <button type="submit" class="btn btn-warning btn-block font-weight-bold">
+                                                        <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Deposit Request
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php endif; ?>
+                </div>
+
+                
+                <div class="tab-pane fade" id="tab-auto">
+                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
+                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
+                            <h4 class="text-white mb-0"><i class="fas fa-bolt mr-2 text-info"></i>Automatic Deposit (Plisio)</h4>
+                            <small class="text-muted">Crypto invoice — payment confirmed automatically (USDT only).</small>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Creates a Plisio USDT invoice. You pay and it confirms automatically — no admin approval needed.</p>
+                            <?php if(isset($ammount)): ?><div class="alert alert-warning"><?php echo e($ammount); ?></div><?php endif; ?>
+                            <?php if(isset($p_failed)): ?><div class="alert alert-danger"><?php echo e($p_failed); ?></div><?php endif; ?>
+
+                            <form method="POST" action="<?php echo e(route('user.deposit')); ?>">
+                                <?php echo csrf_field(); ?>
+                                <div class="form-group">
+                                    <label class="text-white">Currency: USD ($)</label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="text-white">Amount <span class="text-danger">*</span></label>
+                                    <input type="number" name="amount" min="<?php echo e($minDeposit); ?>" required
+                                           class="form-control" style="background:#222; color:white; border-color:#555;"
+                                           placeholder="Minimum $<?php echo e(number_format($minDeposit, 0)); ?>">
+                                    <small class="text-muted">Minimum: $<?php echo e(number_format($minDeposit, 2)); ?> (set by admin)</small>
+                                </div>
+                                <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2">
+                                    <i class="fas fa-external-link-alt mr-1"></i> Generate Invoice
+                                </button>
+                            </form>
+
+                            <div class="mt-3 p-2" style="border:1px solid #333; border-radius:4px; font-size:12px;">
+                                <p class="text-warning mb-1">⚠ Rules:</p>
+                                <p class="text-muted mb-1">Do not send USDT twice to the same invoice address.</p>
+                                <p class="text-muted mb-1">Only USDT TRC-20 is supported.</p>
+                                <p class="text-muted mb-0">Create a new invoice for each deposit.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -229,6 +463,73 @@ $wallets  = $wallets ?? \App\Models\DepositWallet::active()->get();
         </div>
     </div>
 </div>
+
+
+<script>
+(function () {
+    // ── Copy to clipboard ──
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const sel = btn.getAttribute('data-copy-target');
+            const el = document.querySelector(sel);
+            if (!el) return;
+            const text = el.textContent.trim();
+            const fallback = function () {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta);
+            };
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).catch(fallback);
+            } else {
+                fallback();
+            }
+            // Visual feedback
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-outline-warning');
+            setTimeout(function () {
+                btn.innerHTML = original;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-warning');
+            }, 1400);
+        });
+    });
+
+    // ── Crypto picker — switch address + QR + network ──
+    const picker = document.getElementById('cryptoPicker');
+    if (picker) {
+        const update = function () {
+            const opt = picker.options[picker.selectedIndex];
+            if (!opt) return;
+            const address = opt.getAttribute('data-address') || '';
+            const network = opt.getAttribute('data-network') || '';
+            const currency = opt.getAttribute('data-currency') || '';
+            const qr      = opt.getAttribute('data-qr') || '';
+            const min     = opt.getAttribute('data-min') || '10';
+
+            document.getElementById('cryptoAddressText').textContent = address;
+            document.getElementById('cryptoQrImg').src = qr;
+            document.getElementById('cryptoQrImg').alt = currency + ' ' + network + ' QR';
+            document.getElementById('cryptoQrCaption').textContent =
+                'Scan with your ' + currency + ' wallet';
+            document.getElementById('cryptoMinAmount').textContent = parseFloat(min).toFixed(2);
+            document.getElementById('cryptoNetworkName').textContent = network;
+
+            // Sync hidden inputs in the deposit form
+            const wId = document.getElementById('walletIdInput'); if (wId) wId.value = opt.value;
+            const nIn = document.getElementById('networkInput');  if (nIn) nIn.value = network;
+            const cIn = document.getElementById('currencyInput'); if (cIn) cIn.value = currency;
+        };
+        picker.addEventListener('change', update);
+        update();
+    }
+})();
+</script>
 
 <?php echo $__env->make('user.footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/balance/deposit.blade.php ENDPATH**/ ?>

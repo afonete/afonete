@@ -10,7 +10,25 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    <h2 class="text-2xl font-bold mb-4 uppercase text-slate-700">Withdrawal Requests</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-2xl font-bold uppercase text-slate-700 mb-0">Withdrawal Requests</h2>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filter by method">
+            <a href="{{ route('admin.withdrawal') }}"
+               class="btn btn-{{ empty($methodFilter) ? 'primary' : 'outline-primary' }}">All</a>
+            <a href="{{ route('admin.withdrawal', ['method' => 'crypto']) }}"
+               class="btn btn-{{ ($methodFilter ?? '') === 'crypto' ? 'primary' : 'outline-primary' }}">
+                <i class="fab fa-bitcoin"></i> Crypto
+            </a>
+            <a href="{{ route('admin.withdrawal', ['method' => 'advcash']) }}"
+               class="btn btn-{{ ($methodFilter ?? '') === 'advcash' ? 'warning' : 'outline-warning' }}">
+                <i class="fas fa-money-bill-wave"></i> Advcash
+            </a>
+            <a href="{{ route('admin.withdrawal', ['method' => 'perfect_money']) }}"
+               class="btn btn-{{ ($methodFilter ?? '') === 'perfect_money' ? 'info' : 'outline-info' }}">
+                <i class="fas fa-coins"></i> Perfect Money
+            </a>
+        </div>
+    </div>
 
     {{-- ═══════════════════════════════════
          PENDING — needs action
@@ -31,8 +49,10 @@
                             <th>#</th>
                             <th>User</th>
                             <th>Amount</th>
-                            <th>Wallet Address</th>
+                            <th>Method</th>
                             <th>Currency</th>
+                            <th>Network</th>
+                            <th>Wallet Address</th>
                             <th>Reference</th>
                             <th>Requested</th>
                             <th>Actions</th>
@@ -47,8 +67,17 @@
                                 <small class="text-muted">{{ $w->user->email ?? '' }}</small>
                             </td>
                             <td class="font-weight-bold text-danger">${{ number_format($w->amount, 2) }}</td>
-                            <td><small>{{ $w->wallet_address }}</small></td>
-                            <td>{{ $w->currency }}</td>
+                            <td>
+                                @php
+                                    $mb = $w->method === 'crypto' ? 'primary'
+                                        : ($w->method === 'advcash' ? 'warning'
+                                        : ($w->method === 'perfect_money' ? 'info' : 'secondary'));
+                                @endphp
+                                <span class="badge badge-{{ $mb }}">{{ $w->methodLabel() }}</span>
+                            </td>
+                            <td><small>{{ $w->currency }}</small></td>
+                            <td><small class="text-muted">{{ $w->network ?? '—' }}</small></td>
+                            <td><small style="word-break:break-all;">{{ $w->wallet_address }}</small></td>
                             <td><small class="text-muted">{{ $w->transaction_no }}</small></td>
                             <td><small>{{ $w->created_at->format('d M Y H:i') }}</small></td>
                             <td>
@@ -97,6 +126,7 @@
                         <tr>
                             <th>User</th>
                             <th>Amount</th>
+                            <th>Method</th>
                             <th>Wallet</th>
                             <th>Reference</th>
                             <th>Type</th>
@@ -109,7 +139,16 @@
                         <tr>
                             <td>{{ $w->user->name ?? '—' }}<br><small class="text-muted">{{ $w->user->email ?? '' }}</small></td>
                             <td>${{ number_format($w->amount, 2) }}</td>
-                            <td><small>{{ Str::limit($w->wallet_address, 25) }}</small></td>
+                            <td>
+                                @php
+                                    $mb = $w->method === 'crypto' ? 'primary'
+                                        : ($w->method === 'advcash' ? 'warning'
+                                        : ($w->method === 'perfect_money' ? 'info' : 'secondary'));
+                                @endphp
+                                <span class="badge badge-{{ $mb }}">{{ $w->methodLabel() }}</span>
+                                <small class="text-muted d-block">{{ $w->currency }} {{ $w->network ? '· ' . $w->network : '' }}</small>
+                            </td>
+                            <td><small style="word-break:break-all;">{{ Str::limit($w->wallet_address, 25) }}</small></td>
                             <td><small class="text-muted">{{ $w->transaction_no }}</small></td>
                             <td><span class="badge badge-info">{{ $w->plisio_txn_id ? 'Instant' : 'Manual' }}</span></td>
                             <td><small>{{ $w->admin_note ?? '—' }}</small></td>

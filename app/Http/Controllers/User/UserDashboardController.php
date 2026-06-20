@@ -75,12 +75,29 @@ class UserDashboardController extends Controller{
 
         // Daily income is now calculated by the scheduler (income:calculate command).
         // Do NOT call showDailyIncome() here — it would run on every page load.
+        // $cashout and $shooping remain the CUMULATIVE totals (what the user can withdraw/spend).
         $cashout = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
         $shooping = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
 
-
-
+        // Legacy cumulative total (kept for compatibility with views that show it as a badge).
         $dailyIncome = $user->DailyIncomes()->sum("amount");
+
+        // ── Compute the PER-DAY breakdown for the active package ──
+        // Per spec: Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
+        //   → Cashout (25%): withdrawable anytime, min $10
+        //   → Trading Voucher (75%): accumulates, used every 30 days for renewal
+        $dailyIncomePerDay = 0.0;
+        $dailyCashout      = 0.0;
+        $dailyTrading      = 0.0;
+        if ($package) {
+            $adventureRow = \App\Models\adventures::find($package->payable_id);
+            if ($adventureRow) {
+                $poolCapital    = (float) $package->paid * 80 / 100;
+                $dailyIncomePerDay = $poolCapital * ((float) $adventureRow->percentage / 100);
+                $dailyCashout      = $dailyIncomePerDay * 25 / 100;
+                $dailyTrading      = $dailyIncomePerDay * 75 / 100;
+            }
+        }
 
         if(($user->has_paid_package=='yes' || $user->has_paid_package=='ft' || $user->has_paid_package=='tm') && $user->contract != 'Signed'){
             return redirect()->route("user.contract");
@@ -185,7 +202,11 @@ class UserDashboardController extends Controller{
         $show = false;
 
         if ($mostRecentPayment && $mostRecentPayment->category == "VENTURE") {
-            $expirationDate = $purchaseDate->addDays(31);
+            // Use the package's actual expiration_date (set at purchase based on adventure.duration),
+            // not a hardcoded 31 days. This works for 100, 200, 600-day packages etc.
+            $expirationDate = $package && $package->expiration_date
+                ? Carbon::parse($package->expiration_date)
+                : $purchaseDate->copy()->addDays(100); // safe fallback for legacy rows
             $show = true;
         }
 
@@ -218,7 +239,7 @@ class UserDashboardController extends Controller{
             // Get duration from the adventure package
             $activePkg2   = \App\Models\adventures::find($package->payable_id);
             $pkgDuration  = $activePkg2 ? (int) $activePkg2->duration : 100;
-            $maxRenewals  = (int) floor(($pkgDuration - 1) / 30);
+            $maxRenewals  = \App\Services\RenewalCalculator::maxRenewals($pkgDuration);
 
             $nextRenewalNum       = $renewalsDone + 1;
             $nextRenewalThreshold = $nextRenewalNum * 30;  // e.g. renewal #1 due at day 30
@@ -260,6 +281,12 @@ class UserDashboardController extends Controller{
             "dailyIncome"            => "$".$dailyIncome,
             "cashout"                => "$".$cashout,
             "shooping"               => "$".$shooping,
+            // ── Per-day breakdown (Issue 2 + 6) ──
+            "daily_income_per_day"   => number_format($dailyIncomePerDay, 2),
+            "daily_cashout"          => number_format($dailyCashout, 2),
+            "daily_trading"          => number_format($dailyTrading, 2),
+            "max_renewals"           => $maxRenewals,
+            "pkg_duration"           => $pkgDuration,
             "daysgone"               => $daysGone,
             "credit"                 => $credit,
             "portfolio"              => "$".$portfolio,
@@ -607,22 +634,17 @@ class UserDashboardController extends Controller{
                 break;
             }
 
-            // Renewal pause logic — dynamic based on package duration.
-            // max_renewals = floor((duration - 1) / 30)
-            // Renewal #N is required for all days in the window [N*30 .. (N+1)*30 - 1].
+            // Renewal pause logic — delegated to RenewalCalculator.
+            // See RenewalCalculator::renewalsRequiredForDay() for the formula.
             $packageDuration = (int) $package2->duration;
-            $maxRenewals     = (int) floor(($packageDuration - 1) / 30);
+            $maxRenewals     = \App\Services\RenewalCalculator::maxRenewals($packageDuration);
             $blocked         = false;
 
-            if ($maxRenewals > 0 && $i >= 30) {
-                $windowIndex   = (int) ceil($i / 30);
-                $neededRenewal = $windowIndex;
-
-                if ($neededRenewal <= $maxRenewals) {
-                    if (!isset($renewalCompletedAt[$neededRenewal]) ||
-                        $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
-                        $blocked = true;
-                    }
+            $neededRenewal = \App\Services\RenewalCalculator::renewalsRequiredForDay($i);
+            if ($neededRenewal > 0 && $neededRenewal <= $maxRenewals) {
+                if (!isset($renewalCompletedAt[$neededRenewal]) ||
+                    $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
+                    $blocked = true;
                 }
             }
 

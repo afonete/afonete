@@ -142,7 +142,7 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
 								<input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
 								<label for="checkbox-table-search-1" class="sr-only">checkbox</label>
 							</div> --}}
-                            {{ $loop->iteration }}
+                            {{ ($deposits->currentPage() - 1) * $deposits->perPage() + $loop->iteration }}
 						</td>
 
 						<th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
@@ -194,6 +194,11 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
                                 <div class="dropdown-menu z-40 hidden origin-top-right absolute -left-[10.3rem] -top-4 mt-2
                                 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none ">
                                     <div class="flex flex-col uppercase text-left p-1">
+                                      <a href="{{ route('admin.payments.show', $deposit->id) }}"
+                                         class="text-sm py-2 text-indigo-600 hover:bg-indigo-100 rounded hover:shadow flex gap-2 px-2 items-center w-full">
+                                        <i class="fa fa-eye"></i> <span>View Details</span>
+                                      </a>
+
                                       @if($deposit->status != 'approved')
                                       <form action="{{route('admin.approve-deposit')}}" method="POST">
                                           @csrf
@@ -241,9 +246,27 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
                 @endforeach
 
 
-				</tbody>
-			</table>
-		</div>
+			</tbody>
+		</table>
+
+		{{-- Pagination (10 per page, newest first) --}}
+		@if($deposits->hasPages())
+			<div class="p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+				<div class="text-xs text-gray-500">
+					Showing
+					<span class="font-semibold text-gray-700">{{ $deposits->firstItem() ?? 0 }}</span>
+					to
+					<span class="font-semibold text-gray-700">{{ $deposits->lastItem() ?? 0 }}</span>
+					of
+					<span class="font-semibold text-gray-700">{{ $deposits->total() }}</span>
+					deposits
+				</div>
+				<div>
+					{{ $deposits->links() }}
+				</div>
+			</div>
+		@endif
+	</div>
 
 
 		{{-- <script src="https://unpkg.com/flowbite@1.3.4/dist/flowbite.js"></scrip> --}}

@@ -9,7 +9,9 @@ use App\Models\Transaction;
 use App\Models\Teams;
 use App\Models\ChartAccount;
 use App\Models\user_transactions as UserTransactions;
+use App\Services\RenewalCalculator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
@@ -127,72 +129,117 @@ class FinanceController extends Controller
 
     }
 
+    /**
+     * Issue 3 (fix) — Transfer CASHOUT to another user.
+     *
+     * Spec (per user):
+     *   - User inputs recipient EMAIL
+     *   - Clicks "Find" → sees recipient's full name as confirmation
+     *   - Inputs amount
+     *   - Clicks Send → amount moves from sender's CASHOUT → recipient's CASHOUT
+     *
+     * Bugs fixed:
+     *   - Recipient was never credited (only sender was debited)
+     *   - Hard "same chain" restriction (user can transfer to any other user)
+     *   - Form used `name` (full name) as identifier — switched to email
+     */
     public function transferToUser(Request $request){
-        $user = Auth::User();
+        $user = Auth::user();
         $validatedData = $request->validate([
-            'amount' => 'required|max:25',
-            'name' => 'required|exists:users',
-        ],[
-            'name.exists'=>"Selected User Does not exist in our records"
+            'amount'          => 'required|numeric|min:0.01',
+            'recipient_email' => 'required|email|exists:users,email',
+        ], [
+            'recipient_email.exists' => "No user found with that email address.",
         ]);
-        $amount = $request->amount;
-        $receiver = User::where("name",$request->name)->first();
-        $remaining = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount") - $amount;
-        if($remaining < 0){
-            return back()->with('error' , "Insufficient Funds.");
+
+        $amount    = (float) $request->amount;
+        $recipient = User::where('email', $request->recipient_email)->first();
+
+        if (!$recipient) {
+            return back()->with('error', 'Recipient not found.');
         }
 
-        if($this->isUserInSameChain($user, $receiver)){
-        $trx = UserTransactions::create([
-            "sender_id"=>$user->id,
-            "receiver_id"=>$receiver->id,
-            'amount'=>$request->amount,
-            "transaction_type"=>"TRANSFER"
-        ]);
-        ChartAccount::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'acc_type' => 'CASHOUT',
-            ],
-            [
-                'amount' => $remaining
-            ]
+        if ($recipient->id === $user->id) {
+            return back()->with('error', 'You cannot transfer funds to yourself.');
+        }
+
+        $cashoutBal = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        if ($cashoutBal < $amount) {
+            return back()->with('error', 'Insufficient Funds. You have $' . number_format($cashoutBal, 2) . ' available.');
+        }
+
+        DB::transaction(function () use ($user, $recipient, $amount) {
+            // Debit sender's CASHOUT
+            $user->ChartAccount()->where('acc_type', 'CASHOUT')
+                 ->update(['amount' => $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount') - $amount]);
+
+            // Credit recipient's CASHOUT (FIX — was missing before)
+            $recipientBal = $recipient->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+            ChartAccount::updateOrCreate(
+                ['user_id' => $recipient->id, 'acc_type' => 'CASHOUT'],
+                ['amount'  => $recipientBal + $amount]
             );
 
-        $details = 0;
-        $trxNo = Transaction::generateTransactionNo();
+            $trxNo = Transaction::generateTransactionNo();
 
-        $transaction =  Transaction::create([
-            'user_id'=>$user->id,
-            'transaction_no' => $trxNo,
-            'transaction_type' => 'TRANSFER',
-            "receiver_id"=>$receiver->id,
-            'transaction_details' => json_encode([
-                'week' => Carbon::now(),
-                'daily_vup' => 0,
-                'direct_bonus' => 0.00,
-                'volume_bonus' => 0.00,
-                'leader_bonus' => 0.00,
-                'amount' => $request->amount,
-                'total' => 0.00,
-                'cash' => 0.00,
-                'trx_voucher' => 0.00,
-                'trx_type' => 'Member to Member Transfer',
-                'revenue_type'=>'soon',
-                'status'=>'success',
-                'date'=>Carbon::now(),
-                'receiver'=>$request->name,
-                'sender'=>$user->id,
-                'to_receiver'=>'You have received '.$request->amount.' From'.$request->name,
-                'to_sender'=>'You have sent '.$request->amount.' To '.$request->name,
-                'status'=>'success'
-            ])
-        ]);
+            // Sender-side transaction record
+            Transaction::create([
+                'user_id'             => $user->id,
+                'transaction_no'      => $trxNo,
+                'transaction_type'    => 'CASHOUT_TRANSFER_SENT',
+                'receiver_id'         => $recipient->id,
+                'transaction_details' => json_encode([
+                    'amount'         => $amount,
+                    'currency'       => 'USDT',
+                    'trx_type'       => 'Member to Member Cashout Transfer',
+                    'from_email'     => $user->email,
+                    'from_name'      => $user->name,
+                    'to_email'       => $recipient->email,
+                    'to_name'        => $recipient->name,
+                    'date'           => now()->toDateTimeString(),
+                    'status'         => 'completed',
+                ]),
+            ]);
 
+            // Mirror record on recipient's history
+            Transaction::create([
+                'user_id'             => $recipient->id,
+                'transaction_no'      => $trxNo,
+                'transaction_type'    => 'CASHOUT_TRANSFER_RECEIVED',
+                'receiver_id'         => $user->id,
+                'transaction_details' => json_encode([
+                    'amount'    => $amount,
+                    'currency'  => 'USDT',
+                    'trx_type'  => 'Member to Member Cashout Transfer',
+                    'from_email'=> $user->email,
+                    'from_name' => $user->name,
+                    'to_email'  => $recipient->email,
+                    'to_name'   => $recipient->name,
+                    'date'      => now()->toDateTimeString(),
+                    'status'    => 'completed',
+                ]),
+            ]);
+        });
 
-        return back()->with("success","You Have Successfull Transferred ".$request->amount."$ To ".$request->name);
+        return back()->with('success',
+            '$' . number_format($amount, 2) . ' successfully transferred to ' . $recipient->name . ' (' . $recipient->email . ').'
+        );
     }
-        return back()->with('error' , "You cannot transfer funds to a user who is not on the same team as yours.");
+
+    /**
+     * AJAX lookup for CASHOUT transfer: find user by email, return name for preview.
+     */
+    public function cashoutTransferLookup(Request $request)
+    {
+        $recipient = User::where('email', $request->email)
+                        ->where('id', '!=', Auth::id())
+                        ->select('id', 'name', 'email')
+                        ->first();
+
+        if (!$recipient) {
+            return response()->json(['found' => false, 'message' => 'No user found with that email.']);
+        }
+        return response()->json(['found' => true, 'name' => $recipient->name, 'email' => $recipient->email]);
     }
 
 
@@ -642,6 +689,19 @@ public function getTeamTree(Request $request,$id){
      *  - How many tokens they will receive
      *  - Which renewal cycle this is (1 / 3)
      */
+    /**
+     * Renewal page — shows Trading Voucher balance, renewal fee,
+     * tokens to receive, etc.
+     *
+     * Per spec (Issue 2):
+     *   • Package runs 100 days → 3 monthly renewals (day 30, 60, 90).
+     *     The 3rd renewal also covers the leftover 10 days (day 91-100)
+     *     so the user doesn't lose income on the partial month.
+     *   • Renewal fee = what 30 days of Trading Voucher income would
+     *     accumulate (= daily_income × 75% × 30).
+     *   • For the LAST renewal covering N leftover days (<30), the fee is
+     *     pro-rated: monthly_fee × (N / 30).
+     */
     public function packageRenewPage()
     {
         $user = Auth::user();
@@ -672,7 +732,7 @@ public function getTeamTree(Request $request,$id){
         // max_renewals derived from adventure package duration
         $activePkg2  = \App\Models\adventures::find($activePayment->payable_id);
         $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
-        $maxRenewals = (int) floor(($pkgDuration - 1) / 30);
+        $maxRenewals = RenewalCalculator::maxRenewals($pkgDuration);
 
         $renewalNumber = $renewalsDone + 1;
 
@@ -681,32 +741,56 @@ public function getTeamTree(Request $request,$id){
                 ->with('info', 'You have completed all renewals for this package cycle.');
         }
 
-        // Renewal fee = original package amount
-        $renewalFee = (float) $activePayment->amount;
+        // ── Renewal fee (Issue 2) ── delegated to RenewalCalculator
+        // Math is identical to what was inline before; centralised so it's testable.
+        $calc = RenewalCalculator::compute(
+            packageAmount:   (float) $activePayment->amount,
+            percentage:      (float) ($activePkg2->percentage ?? 0),
+            packageDuration: $pkgDuration,
+            renewalNumber:   $renewalNumber,
+            renewalsDone:    $renewalsDone,
+            renewalPrice:    \App\Models\TokenSetting::renewalPrice(),
+        );
 
-        // Token price from token_settings table (admin-managed)
-        $tokenPrice = \App\Models\TokenSetting::renewalPrice();
-
-        $tokensToReceive = $tokenPrice > 0
-            ? round($renewalFee / $tokenPrice, 4)
-            : 0;
+        $monthlyFee    = $calc['monthly_fee'];
+        $renewalFee    = $calc['renewal_fee'];
+        $daysCovered   = $calc['days_covered'];
+        $isPartialFee  = $calc['is_partial'];
+        $leftoverDays  = $calc['leftover_days'];
+        $tokenPrice    = \App\Models\TokenSetting::renewalPrice();
+        $tokensToReceive = $calc['tokens_received'];
 
         // Is renewal due? (every 30 days from package purchase)
         $packageStart   = Carbon::parse($activePayment->created_at);
         $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
-        $isDue          = Carbon::now()->gte($renewalDueDate->copy()->subDays(1)); // allow 1 day early
+        // No 1-day-early grace (Issue 6): renewal is due on the exact day or after.
+        $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
+
+        // Pre-computed schedule for the upcoming renewal display
+        $schedule = RenewalCalculator::schedule(
+            packageAmount:   (float) $activePayment->amount,
+            percentage:      (float) ($activePkg2->percentage ?? 0),
+            packageDuration: $pkgDuration,
+            renewalPrice:    $tokenPrice,
+            packageStart:    $packageStart,
+        );
 
         return view('user.package-renew', [
             'activePayment'        => $activePayment,
             'tradingVoucherBalance'=> $tradingVoucherBalance,
             'renewalFee'           => $renewalFee,
+            'monthlyFee'           => $monthlyFee,
+            'daysCovered'          => $daysCovered,
+            'isPartialFee'         => $isPartialFee,
+            'leftoverDays'         => $leftoverDays,
+            'pkgDuration'          => $pkgDuration,
             'tokenPrice'           => $tokenPrice,
             'tokensToReceive'      => $tokensToReceive,
             'renewalNumber'        => $renewalNumber,
-            'maxRenewals'          => $maxRenewals,  // dynamic from adventures.duration
+            'maxRenewals'          => $maxRenewals,
             'renewalDueDate'       => $renewalDueDate,
             'isDue'                => $isDue,
-            // token price now from TokenSetting, not FCpackage
+            'schedule'             => $schedule,
         ]);
     }
 
@@ -745,14 +829,27 @@ public function getTeamTree(Request $request,$id){
         // Calculate maxRenewals from package duration
         $activePkg2ForPay = \App\Models\adventures::find($activePayment->payable_id);
         $pkgDurationPay   = $activePkg2ForPay ? (int) $activePkg2ForPay->duration : 100;
-        $maxRenewals      = (int) floor(($pkgDurationPay - 1) / 30);
+        $maxRenewals      = RenewalCalculator::maxRenewals($pkgDurationPay);
 
         if ($renewalNumber > $maxRenewals) {
             return redirect()->route('user.dashboard')
                 ->with('info', 'All renewals for this package cycle are complete.');
         }
 
-        $renewalFee = (float) $activePayment->amount;
+        // ── Renewal fee (Issue 2) — delegated to RenewalCalculator ──
+        $calc = RenewalCalculator::compute(
+            packageAmount:   (float) $activePayment->amount,
+            percentage:      (float) ($activePkg2ForPay->percentage ?? 0),
+            packageDuration: $pkgDurationPay,
+            renewalNumber:   $renewalNumber,
+            renewalsDone:    $renewalsDone,
+            renewalPrice:    \App\Models\TokenSetting::renewalPrice(),
+        );
+
+        $renewalFee   = $calc['renewal_fee'];
+        $daysCovered  = $calc['days_covered'];
+        $isLastRenewal = $calc['is_last_renewal'];
+        $isPartialFee = $calc['is_partial'];
 
         // Current Trading Voucher balance
         $currentBalance = $user->ChartAccount()
@@ -764,12 +861,9 @@ public function getTeamTree(Request $request,$id){
                 ->with('error', 'Insufficient Trading Voucher balance. You need $' . number_format($renewalFee, 2) . ' but have $' . number_format($currentBalance, 2) . '.');
         }
 
-        // Token price from token_settings table (admin-managed)
-        $tokenPrice = \App\Models\TokenSetting::renewalPrice();
-
-        $tokensReceived = $tokenPrice > 0
-            ? round($renewalFee / $tokenPrice, 4)
-            : 0;
+        // Token price + tokens already computed via RenewalCalculator above
+        $tokenPrice    = \App\Models\TokenSetting::renewalPrice();
+        $tokensReceived = $calc['tokens_received'];
 
         // 1. Deduct from TRADING ChartAccount
         $newBalance = $currentBalance - $renewalFee;
@@ -824,15 +918,18 @@ public function getTeamTree(Request $request,$id){
                 'token_price'      => $tokenPrice,
                 'tokens_received'  => $tokensReceived,
                 'renewal_number'   => $renewalNumber,
+                'days_covered'     => $daysCovered,
+                'is_partial'       => $isLastRenewal,
                 'next_renewal_due' => $nextRenewalDue?->toDateString(),
                 'status'           => 'success',
             ]),
         ]);
 
-        // 5. Extend package expiration by 30 days
-        $currentExpiry  = Carbon::parse($activePayment->expiration_date);
-        $newExpiry      = $currentExpiry->addDays(30);
-        $activePayment->update(['expiration_date' => $newExpiry]);
+        // 5. DO NOT extend the package expiration date.
+        // Per spec: the package has a fixed duration (set at purchase) and expires
+        // at that fixed date regardless of renewals. Renewals just unlock the
+        // income for the next window(s); the package itself ends at the original
+        // duration (100, 200, 600, etc.) — see CalculateDailyIncome::handle().
 
         $msg = "Package renewed successfully! You received " . number_format($tokensReceived, 4) . " tokens.";
         if ($nextRenewalDue) {
@@ -1160,7 +1257,7 @@ public function getTeamTree(Request $request,$id){
         $packageAmount = $package ? (float) $package->amount : 0;
         $exampleTokens = $uvpPrice > 0 ? round($packageAmount / $uvpPrice, 0) : 0;
 
-        return view('user.token.locked-withdraw', compact('lockedBal', 'symbol', 'package', 'packageAmount', 'exampleTokens', 'uvpPrice'));
+        return view('user.token.locked-info', compact('lockedBal', 'symbol', 'package', 'packageAmount', 'exampleTokens', 'uvpPrice'));
     }
 
 }

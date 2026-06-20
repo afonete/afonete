@@ -125,11 +125,12 @@
             <i class="fa fa-plus font-bold transform transition-transform duration-200"></i>
         </div>
         <div class="content hidden mt-4">
-            <>
-        <?php echo e(env('APP_NAME')); ?>
-
         
-       <p>  <h1> Super Leader </h1> 
+       <p> 
+
+        <h1 class="text-1xl font-bold my-1 text-blue-900">
+                 SUPER LEADER
+            </h1>
 
 <p> If you are a Super Leader with a large community of leaders, you can create a unique referral link that enables your community members to register and participate in the Bifonex Referral Program.
 The Bifonex Referral Program is designed to provide exceptional earning opportunities. As a Super Leader, you can:</p>
@@ -137,7 +138,10 @@ The Bifonex Referral Program is designed to provide exceptional earning opportun
 <p> • Earn rewards across unlimited lines, stages, and levels within your referral structure. </p> 
 <p> • Receive dedicated support from a personal account manager available 24/7.</p>
 
-<h1>Team Leader </h1>
+
+<h1 class="text-1xl font-bold my-1 text-blue-900">
+                 TEAM LEADER
+            </h1>
 
 <p> If you are a Team Leader with a strong community of members and investors, you can benefit from a special partnership program with Bifonex, providing enhanced rewards beyond the standard referral system.
 The Bifonex Referral Program offers valuable opportunities to grow your earnings. As a Team Leader, you can:</p> 
@@ -152,14 +156,22 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
     <!-- Section 2 -->
     <div class="">
         <div class="flex justify-between items-center cursor-pointer collapsible-header">
-            <h1 class="text-2xl text-blue-950 font-medium">Profile of Application ?</h1>
+            <h1 class="text-2xl text-blue-950 font-medium">Applicant Profile?</h1>
             <i class="fa fa-plus font-bold transform transition-transform duration-200"></i>
         </div>
         <div class="content hidden mt-4">
             <p>
-            <?php echo e(env('APP_NAME')); ?> Ambassadors are passionate members of our community that support the platform in various ways, 
-            such as promoting <?php echo e(env('APP_NAME')); ?> on social media and motivating others to engage, providing feedback to improve offerings, 
-            and assisting users with questions and concerns and everything in accordance with the specifications and guidelines of <?php echo e(env('APP_NAME')); ?> .
+            <?php echo e(env('APP_NAME')); ?> is looking for motivated and community-driven individuals who are passionate about leadership, communication, and platform growth. 
+            The Team Leader role is ideal for applicants who are committed to supporting the Bifonex community and helping others engage with the platform.
+ A strong applicant should demonstrate:
+<p>• Interest in leadership, teamwork, and community building.</p>
+<p>• Good communication and interpersonal skills.</p>
+<p>• Motivation to support and promote Bifonex.</p>
+<p>• An active presence in online communities or social media platforms is an advantage.</p>
+<p>• A positive attitude, reliability, and willingness to guide others.</p>
+
+<p>No specific academic or professional background is required, but applicants should show commitment,
+ enthusiasm, and a strong desire to contribute to the success of the Bifonex community.</p>
             </p>
         </div>
     </div>
@@ -167,15 +179,43 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
     <!-- Section 3 -->
     <div class="">
         <div class="flex justify-between items-center cursor-pointer collapsible-header">
-            <h1 class="text-2xl text-blue-950 font-medium">Requirement to be an  Leader</h1>
+            <h1 class="text-2xl text-blue-950 font-medium">Team Leader Requirements and Responsibilities</h1>
             <i class="fa fa-plus font-bold transform transition-transform duration-200"></i>
         </div>
         <div class="content hidden mt-4">
             <p>
-            Anyone who is interested in providing content - no specific background required.
-            You provide at least three previously published pieces of content and to apply for an Ambassadorship and qualify for rewards, 
-            simply submit published pieces through the Ambassador nomination form for
-            the formal review of the type and quality of content and to provide feedback.
+<h1 class="text-1xl font-bold my-1 text-blue-900">
+                 Primary responsibilities may include:
+            </h1>
+<p> • Hosting training sessions, webinars, and community meetings. </p>
+<p> • Guiding and supporting new and existing members. </p>
+<p> • Promoting Bifonex through social media and community channels. </p>
+<p> • Sharing educational content, updates, and testimonials. </p>
+<P> • Encouraging teamwork, engagement, and community growth.</P>
+<p> • Organizing online sessions or local community activities where applicable. </p>
+
+All Team Leaders are expected to act in line with the values, policies, and standards of Bifonex.
+<h1 class="text-1xl font-bold my-1 text-blue-900">
+                 Team Leader – Tasks and Requirements
+            </h1>
+<p> • Represent Bifonex professionally and uphold its values. </p>
+<p> • Support, guide, and motivate team members. </p>
+<p> • Manage Telegram, WhatsApp, and social media community channels. </p>
+<p> • Recruit and onboard new users to the platform. </p>
+<p> • Host webinars, Zoom sessions, and online training activities. </p>
+<p> • Provide social media support and promotional content. </p>
+<p> • Meet the minimum requirements for direct referrals and turnover. </p>
+<h1 class="text-1xl font-bold my-1 text-blue-900">
+                 Super Leader – Tasks and Requirements
+            </h1>
+<p> • Represent Bifonex professionally and uphold its values. </p>
+<p> • Lead, mentor, and support Team Leaders within the community. </p>
+<p> • Manage community channels and drive engagement across teams. </p>
+<p> • Recruit and onboard new users to the platform. </p>
+<p> • Host webinars, Zoom sessions, and leadership training activities. </p>
+<p> • Provide social media support and promotional content.</p>
+<p> • Meet the minimum requirements for direct referrals and turnover. </p>
+<p> • Support leader development and assist with local events and training initiatives. </p>
             </p>
         </div>
     </div>
@@ -183,15 +223,40 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
 
     <div class="">
         <div class="flex justify-between items-center cursor-pointer collapsible-header">
-            <h1 class="text-2xl text-blue-950 font-medium">Rewards</h1>
+            <h1 class="text-2xl text-blue-950 font-medium">Team Leader Rewards and Benefits</h1>
             <i class="fa fa-plus font-bold transform transition-transform duration-200"></i>
         </div>
         <div class="content hidden mt-4">
-            <p>
-            Anyone who is interested in providing content - no specific background required.
-            You provide at least three previously published pieces of content and to apply for an Ambassadorship and qualify for rewards, 
-            simply submit published pieces through the Ambassador nomination form for
-            the formal review of the type and quality of content and to provide feedback.
+           
+          <h1 class="text-1xl font-bold my-1 text-blue-900">
+                Team Leader Rewards
+            </h1>
+            <p>As a Team Leader, you may benefit from: </p>
+            <p> • An Activation Package valued at $2,000. </p>
+            <p> • The opportunity to earn across 15 referral lines. </p>
+            <p> • Access to loan opportunities ranging from $1,000 to $50,000. </p>
+            <p> • Access to educational courses and learning resources. </p>
+            <p> • VIP Dashboard access for advanced account and referral management. </p>
+            <p> • Invitations to official Bifonex events and community activities. </p>
+            <p> • Free chat support for guidance and assistance. </p>
+
+            <h1 class="text-1xl font-bold my-1 text-blue-900">
+               Super Leader Rewards
+            </h1>
+            <p> As a Super Leader, you may receive expanded rewards and exclusive benefits, including: </p>
+            <p> • An Activation Package valued at $2,000. </p>
+            <p> • Credit rewards ranging from $1000 to $5,000. </p>
+            <p> • Access to loan opportunities ranging from $2,000 to $5,000,000. </p>
+            <p> • Support for office tools and operational setup. </p>
+            <p> • Access to educational courses and advanced learning opportunities. </p>
+            <p> • Opportunities to participate as a public event speaker. </p>
+            <p> • Invitations to all official Bifonex events and leadership activities. </p>
+            <p> • The opportunity to earn across 15 referral lines. </p>
+            <p> • VIP Dashboard access for advanced account and referral management. </p>
+            <p> • Free chat support for ongoing assistance. </p>
+
+            Rewards and benefits may vary based on leadership level, performance, and participation within the Bifonex ecosystem.
+            
             </p>
         </div>
     </div>
@@ -210,12 +275,12 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
                         <div class="p-8 benefit-card rounded-2xl" data-aos="fade-right">
                             <h3 class="text-3xl font-bold mb-4 text-blue-600">Leader Program</h3>
-                            <p class="text-gray-700 text-lg">Join an elite network of leaders and unlock exclusive benefits, special agreements, and unprecedented earning potential.</p>
+                            <p class="text-gray-700 text-lg">Become part of an exclusive leadership network and gain access to premium benefits, unique opportunities, and greater earning potential.</p>
                         </div>
 
                         <div class="p-8 benefit-card rounded-2xl" data-aos="fade-left">
                             <h3 class="text-3xl font-bold mb-4 text-blue-600">Referral Bonuses</h3>
-                            <p class="text-gray-700 text-lg">Earn substantial rewards for growing our community. Transform your network into a powerful income stream with our industry-leading commission structure.</p>
+                            <p class="text-gray-700 text-lg">Unlock additional rewards by expanding the Bifonex community and turning your connections into long-term earning opportunities.</p>
                         </div>
                     </div>
 
@@ -236,7 +301,7 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
                             <div class="p-8 benefit-card rounded-2xl text-center" data-aos="fade-up" data-aos-delay="200">
                                 <i class="fas fa-trophy text-4xl text-yellow-500 mb-4"></i>
                                 <h4 class="text-xl font-bold mb-3">Prize Reward</h4>
-                                <p class="text-lg">$10,000 in Focoin</p>
+                                <p class="text-lg">$100,000 in Focoin</p>
                             </div>
                         </div>
                     </div>
@@ -251,11 +316,11 @@ The Bifonex Referral Program offers valuable opportunities to grow your earnings
                                 </div>
                                 <div class="flex items-center space-x-3 p-4 benefit-card rounded-xl">
                                     <i class="fas fa-coins text-yellow-500 text-xl"></i>
-                                    <span class="text-lg">Token 60000 Focoin</span>
+                                    <span class="text-lg">Token 60000+ Focoin</span>
                                 </div>
                                 <div class="flex items-center space-x-3 p-4 benefit-card rounded-xl">
                                     <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
-                                    <span class="text-lg">Allowed loan $1000-$500000</span>
+                                    <span class="text-lg">Allowed loan $1000-$5 000 000</span>
                                 </div>
                                 <div class="flex items-center space-x-3 p-4 benefit-card rounded-xl">
                                     <i class="fas fa-ad text-purple-500 text-xl"></i>

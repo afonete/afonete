@@ -594,39 +594,61 @@ img{ max-width:100%;}
                     @endif
 
                     <div class="sub-box-1 px-2">
-                        {{-- Daily Income box --}}
+                        {{-- Daily Income box — shows per-day amount ($16 for $1000 @ 2%) --}}
                         <div class="ad-box bg-warning mr-2 ml-1">
                             <a class="nav-icon fas fa-money" href="#">
                                 <br>Daily Income <br />
+                                <b>${{ $daily_income_per_day }}</b>
+                                <small style="font-size:10px;opacity:0.7;">/ day</small>
                                 @if($package_expired)
-                                    <span style="font-size:11px;opacity:0.7;">Expired</span>
-                                @else
-                                    {{ $dailyIncome }}
+                                    <br><span style="font-size:11px;opacity:0.7;">Expired</span>
                                 @endif
                             </a>
                         </div>
 
-                        {{-- Trading Voucher box --}}
+                        {{-- Trading Voucher box — shows DAILY accrual ($12/day for $1000 @ 2%) --}}
                         <div class="ad-box bg-info mr-2 ml-1">
                             <a class="nav-icon fas fa-gift" href='#'>
                                 <span>Trading Voucher</span>
-                                <span class="py-2">{{ $shooping }}</span>
+                                <span class="py-2">
+                                    <b>${{ $daily_trading }}</b>
+                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
+                                </span>
+                                <br>
+                                <small style="font-size:10px;opacity:0.8;">
+                                    Accumulated: {{ $shooping }}
+                                </small>
                                 @if($show_timer && !$package_expired)
                                     <span id="countdown" class="bg-dark badge badge-dark"></span>
                                 @endif
                             </a>
 
-                            {{-- ── Renewal due: show renew button ── --}}
+                            {{-- ── Renewal due: show renew button (dynamic #/#) ── --}}
                             @if($renewal_due && !$package_expired)
                             <div class="mt-1 text-center">
                                 <a href="{{ route('packageRenew') }}"
                                    class="btn btn-sm btn-warning font-weight-bold text-dark"
                                    style="font-size:11px; padding:3px 8px; border-radius:4px;">
                                     <i class="fas fa-sync-alt"></i>
-                                    Renew Package (#{{ $renewal_number }}/3)
+                                    Renew Package (#{{ $renewal_number }}/{{ $max_renewals ?? 3 }})
                                 </a>
                             </div>
                             @endif
+                        </div>
+
+                        {{-- Cashout box — shows DAILY accrual ($4/day for $1000 @ 2%) --}}
+                        <div class="ad-box bg-success mr-2 ml-1">
+                            <a class="nav-icon fas fa-wallet" href="#">
+                                <span>Cashout (25%)</span>
+                                <span class="py-2">
+                                    <b>${{ $daily_cashout }}</b>
+                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
+                                </span>
+                                <br>
+                                <small style="font-size:10px;opacity:0.8;">
+                                    Accumulated: {{ $cashout }}
+                                </small>
+                            </a>
                         </div>
                     </div>
                 @endif

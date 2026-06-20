@@ -136,30 +136,113 @@
                     @endif
 
                     <hr/>
-                    <form class="flex flex-wrap sm:flex-nowrap gap-2" method="POST" action="{{route('transfer-touser')}}" >
+                    {{-- Issue 3 fix: CASHOUT transfer now uses email lookup → name preview --}}
+                    <form class="flex flex-col gap-2" method="POST" action="{{route('transfer-touser')}}" id="cashoutTransferForm">
                         @csrf
-                        @method('POST')
                         <input type="hidden" name="from_account" value="CASHOUT">
-                        <div class="border  flex justify-center  rounded-lg p-0">
-                            <input type="number" name="amount" placeholder="Amount.." class="px-2 py-2 "
-                            max="{{$cashout}}" min="1.00" step="0.01"
-                            />
-                            <div class="bg-gray-800  px-2 flex  items-center text-white">$</div>
-                        </div>
-                        @error('amount')
-                            <div class="text-red-600 py-1">{{ $message }}</div>
-                        @enderror
 
-                        <div class="border  flex justify-center items-center rounded ">
-                            <input type="text" placeholder="username" class="px-2 py-2" name="name"/>
+                        <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                            <div class="border flex justify-center rounded-lg p-0 flex-1">
+                                <input type="email" name="recipient_email" id="recipientEmail"
+                                       placeholder="Recipient email"
+                                       value="{{ old('recipient_email') }}"
+                                       class="px-2 py-2 w-full" required>
+                                <button type="button" id="lookupBtn"
+                                        class="bg-gray-800 px-3 flex items-center text-white text-sm">
+                                    <i class="fa fa-search"></i>&nbsp;Find
+                                </button>
+                            </div>
+                            @error('recipient_email')
+                                <div class="text-red-600 font-semibold py-1">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('name')
-                            <div class="text-red-600 font-semibold py-1">{{ $message }}</div>
-                        @enderror
-                        <div>
-                            <button class="bg-yellow-500">Send</button>
+
+                        {{-- Name preview (shown after AJAX lookup) --}}
+                        <div id="recipientPreview" class="hidden bg-green-100 border border-green-300 text-green-800 px-3 py-2 rounded text-sm">
+                            <i class="fa fa-user-check"></i>
+                            Sending to: <strong id="recipientName"></strong>
+                            (<span id="recipientEmailShown"></span>)
                         </div>
+                        <div id="recipientError" class="hidden bg-red-100 border border-red-300 text-red-800 px-3 py-2 rounded text-sm">
+                            <i class="fa fa-times-circle"></i> <span id="recipientErrorMsg"></span>
+                        </div>
+
+                        <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                            <div class="border flex justify-center rounded-lg p-0">
+                                <input type="number" name="amount" placeholder="Amount.."
+                                       class="px-2 py-2"
+                                       max="{{$cashout}}" min="1.00" step="0.01" required>
+                                <div class="bg-gray-800 px-2 flex items-center text-white">$</div>
+                            </div>
+                            @error('amount')
+                                <div class="text-red-600 py-1">{{ $message }}</div>
+                            @enderror
+                            <div>
+                                <button type="submit" id="sendBtn"
+                                        class="bg-yellow-500 px-4 py-2 rounded text-white font-semibold"
+                                        disabled>
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+
+                        <small class="text-gray-500">
+                            Available CASHOUT: ${{ number_format($cashout, 2) }}
+                        </small>
                     </form>
+
+                    <script>
+                    (function () {
+                        const lookupBtn    = document.getElementById('lookupBtn');
+                        const emailInput   = document.getElementById('recipientEmail');
+                        const preview      = document.getElementById('recipientPreview');
+                        const errorBox     = document.getElementById('recipientError');
+                        const errorMsg     = document.getElementById('recipientErrorMsg');
+                        const nameEl       = document.getElementById('recipientName');
+                        const emailShown   = document.getElementById('recipientEmailShown');
+                        const sendBtn      = document.getElementById('sendBtn');
+
+                        function hideBoth() {
+                            preview.classList.add('hidden');
+                            errorBox.classList.add('hidden');
+                            sendBtn.disabled = true;
+                        }
+
+                        lookupBtn.addEventListener('click', function () {
+                            const email = emailInput.value.trim();
+                            if (!email) {
+                                errorMsg.textContent = 'Please enter an email first.';
+                                errorBox.classList.remove('hidden');
+                                preview.classList.add('hidden');
+                                return;
+                            }
+                            fetch('{{ route("transfer-touser.lookup") }}?email=' + encodeURIComponent(email))
+                                .then(r => r.json())
+                                .then(data => {
+                                    if (data.found) {
+                                        nameEl.textContent     = data.name;
+                                        emailShown.textContent = data.email;
+                                        preview.classList.remove('hidden');
+                                        errorBox.classList.add('hidden');
+                                        sendBtn.disabled = false;
+                                    } else {
+                                        errorMsg.textContent = data.message || 'No user found.';
+                                        errorBox.classList.remove('hidden');
+                                        preview.classList.add('hidden');
+                                        sendBtn.disabled = true;
+                                    }
+                                })
+                                .catch(() => {
+                                    errorMsg.textContent = 'Lookup failed. Please try again.';
+                                    errorBox.classList.remove('hidden');
+                                    preview.classList.add('hidden');
+                                    sendBtn.disabled = true;
+                                });
+                        });
+
+                        emailInput.addEventListener('input', hideBoth);
+                    })();
+                    </script>
 
             </div>
 

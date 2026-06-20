@@ -73,6 +73,12 @@ class CalculateDailyIncome extends Command
                 $renewalCompletedAt[$renewal->renewal_number] = Carbon::parse($renewal->renewed_at);
             }
 
+            $packageDuration = (int) $package2->duration;
+            // max_renewals = ceil(duration/30) - 1, equivalent to floor((duration-1)/30).
+            // For a 100-day package: floor(99/30) = 3.
+            // The 3rd renewal covers the leftover days (e.g. 91–100, i.e. 10 days).
+            $maxRenewals = (int) floor(($packageDuration - 1) / 30);
+
             for ($i = 1; $i <= $daysPassed; $i++) {
                 $earnedAt = $startDate->copy()->addDays($i);
 
@@ -81,28 +87,23 @@ class CalculateDailyIncome extends Command
                     break;
                 }
 
-                // Renewal pause windows — dynamic based on package duration.
-                // max_renewals = floor((duration - 1) / 30)
-                // Renewal #N is required before day N*30 through day (N+1)*30 - 1.
-                $packageDuration = (int) $package2->duration;
-                $maxRenewals     = (int) floor(($packageDuration - 1) / 30);
-                $blocked         = false;
+                // Renewal pause check (Issue 6 fix) — delegated to RenewalCalculator.
+                //
+                // Formula: $neededRenewal = floor((i - 1) / 30)
+                //   day 1–30   → 0  (no renewal needed)
+                //   day 31–60  → 1  (renewal #1 must be done at or before day i)
+                //   day 61–90  → 2  (renewal #2 must be done at or before day i)
+                //   day 91–100 → 3  (renewal #3 must be done at or before day i)
+                //
+                // If the needed renewal hasn't been completed yet, that day's
+                // income is skipped (the days are "lost in his income" per spec).
+                $neededRenewal = \App\Services\RenewalCalculator::renewalsRequiredForDay($i);
 
-                if ($maxRenewals > 0 && $i >= 30) {
-                    // Which renewal window are we in? (1-indexed)
-                    $windowIndex = (int) ceil($i / 30); // e.g. day 30-59 → 1, day 60-89 → 2 …
-                    $neededRenewal = $windowIndex;      // renewal #neededRenewal must be done
-
-                    if ($neededRenewal <= $maxRenewals) {
-                        if (!isset($renewalCompletedAt[$neededRenewal]) ||
-                            $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
-                            $blocked = true;
-                        }
+                if ($neededRenewal > 0 && $neededRenewal <= $maxRenewals) {
+                    if (!isset($renewalCompletedAt[$neededRenewal]) ||
+                        $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
+                        continue; // skip this day's income — renewal was missed or not yet done
                     }
-                }
-
-                if ($blocked) {
-                    continue;
                 }
 
                 // Skip if already recorded
