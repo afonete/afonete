@@ -24,9 +24,8 @@ class TronBlockchainService
     public function __construct()
     {
         $this->apiKey = config('services.tron.api_key') ?: env('TRONGRID_API_KEY');
-        // $this->baseUrl = 'https://api.trongrid.io'; // Use https://api.shasta.trongrid.io for testnet
-        $this->baseUrl = 'https://api.shasta.trongrid.io'; // Use https://api.shasta.trongrid.io for testnet
-        $this->usdtContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'; // Mainnet USDT TRC20
+        $this->baseUrl = 'https://api.trongrid.io'; // Use https://api.shasta.trongrid.io for testnet
+        $this->usdtContract = 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w'; // Mainnet USDT TRC20
         $this->hotWalletAddress = env('TRON_HOT_WALLET_ADDRESS');
         $this->hotWalletPrivateKey = env('TRON_HOT_WALLET_PRIVATE_KEY');
     }
