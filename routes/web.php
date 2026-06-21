@@ -278,6 +278,11 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     Route::post('user/dashboard/withdraw-status/', [Balance::class, 'withdraw_money'])->name('user.withdraw');
     Route::post('user/dashboard/withdraw-manual', [Balance::class, 'requestManualWithdrawal'])->name('user.withdraw.manual');
+
+    // Direct blockchain (TRON USDT TRC20) automatic withdrawal — no Plisio
+    Route::post('user/dashboard/withdraw/direct-blockchain', [Balance::class, 'directBlockchainWithdraw'])
+          ->name('user.withdraw.direct_blockchain');
+
     Route::get('user/dashboard/withdraw', [Balance::class, 'withdrawalHistory'])->name('user.dashboard.withdraw');
     Route::post('user/dashboard/apply', [Position::class, 'apply'])->name('user.position.apply');
 

@@ -30,7 +30,11 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
 
         
         <div class="d-flex justify-content-between mb-3 p-3" style="background:#0d0d0d; border-radius:8px;">
-            <span class="text-muted">Available Balance (CASHOUT):</span>
+            <span class="text-muted">Available Balance (Payout Wallet - Withdrawable):</span>
+        <div class="alert alert-info mx-3" style="font-size: 0.9rem;">
+            <strong>Important:</strong> Only money in your <strong>Payout Wallet</strong> can be withdrawn. 
+            Deposits are never withdrawable. Your daily 25% income is automatically moved here.
+        </div>
             <span class="font-weight-bold text-success" style="font-size:1.2rem;">$<?php echo e(number_format($availlableBalance, 2)); ?></span>
         </div>
 
@@ -64,7 +68,7 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-white" data-toggle="pill" href="#tab-winstant">
-                        <i class="fas fa-bolt mr-1"></i>Instant (Plisio)
+                        <i class="fas fa-link mr-1"></i>Instant (Direct Blockchain)
                     </a>
                 </li>
             </ul>
@@ -283,42 +287,58 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                     <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
                         <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
                             <h4 class="text-white mb-0">
-                                <i class="fas fa-bolt mr-2 text-info"></i>Instant Withdrawal (Plisio)
-                                <small class="text-muted">— USDT sent directly via Plisio API, no admin review</small>
+                                <i class="fas fa-link mr-2 text-success"></i>Instant Withdrawal (Direct Blockchain)
                             </h4>
+                            <small class="text-muted">USDT TRC-20 sent directly on-chain from our hot wallet — no gateway</small>
                         </div>
                         <div class="card-body">
-                            <form method="POST" action="<?php echo e(route('user.withdraw')); ?>">
+                            <div class="alert alert-success py-2 small mb-3">
+                                <strong>Direct TRON blockchain.</strong> Funds sent immediately when you click withdraw.
+                            </div>
+
+                            <form method="POST" action="<?php echo e(route('user.withdraw.direct_blockchain')); ?>">
                                 <?php echo csrf_field(); ?>
-                                <input type="hidden" name="method" value="crypto">
-                                <input type="hidden" name="network" value="TRC-20">
-                                <input type="hidden" name="currency" value="USDT">
 
                                 <div class="form-group">
-                                    <label class="text-white">Wallet Address (USDT TRC-20)
-                                        <?php if(!$wallet): ?>
-                                            — <a href="<?php echo e(route('profile.edit')); ?>" style="color:#3490dc">set in Profile</a>
-                                        <?php else: ?>
-                                            <small class="text-muted">(<a href="<?php echo e(route('profile.edit')); ?>" style="color:#3490dc">change</a>)</small>
-                                        <?php endif; ?>
-                                    </label>
-                                    <input type="text" name="address"
-                                           value="<?php echo e($wallet->wallet ?? ''); ?>"
+                                    <label class="text-white font-weight-bold">Destination USDT TRC-20 Address <span class="text-danger">*</span></label>
+                                    <input type="text" name="address" required
                                            class="form-control" style="background:#222; color:white; border-color:#555;"
-                                           required>
+                                           value="<?php echo e(old('address', $wallet->wallet ?? '')); ?>"
+                                           placeholder="T... (TRON address)">
+                                    <small class="text-muted">Must be a valid TRON (TRC-20) address</small>
                                 </div>
-                                <div class="form-group">
-                                    <label class="text-white">Amount (USDT)</label>
-                                    <input type="number" name="amount" min="<?php echo e($settings->min_amount); ?>" step="0.01" required
-                                           max="<?php echo e($availlableBalance); ?>"
-                                           class="form-control" style="background:#222; color:white; border-color:#555;"
-                                           placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="text-white">Amount (USDT) <span class="text-danger">*</span></label>
+                                        <input type="number" name="amount" step="0.01" min="<?php echo e($settings->min_amount); ?>" required
+                                               max="<?php echo e($availlableBalance); ?>"
+                                               class="form-control" style="background:#222; color:white; border-color:#555;"
+                                               placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="text-white">Network</label>
+                                        <input type="text" value="TRON (TRC-20)" class="form-control" disabled
+                                               style="background:#222; color:white; border-color:#555;">
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2"
-                                        <?php echo e($availlableBalance < $settings->min_amount ? 'disabled' : ''); ?>>
-                                    <i class="fas fa-bolt mr-1"></i> Withdraw Now (Instant)
-                                </button>
+
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-success btn-block font-weight-bold"
+                                            <?php echo e($availlableBalance < $settings->min_amount ? 'disabled' : ''); ?>>
+                                        <i class="fas fa-paper-plane mr-1"></i> Send USDT Directly on Blockchain
+                                    </button>
+                                </div>
                             </form>
+
+                            <div class="mt-3 p-2" style="border:1px solid #444; border-radius:4px; font-size:12px; background:#0a0a0a;">
+                                <p class="text-warning mb-1">⚠ Important:</p>
+                                <ul class="text-muted mb-0 pl-3 small">
+                                    <li>Transaction is irreversible once broadcast.</li>
+                                    <li>Only send to TRC-20 compatible addresses.</li>
+                                    <li>You will receive the on-chain TX hash in the success message.</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>

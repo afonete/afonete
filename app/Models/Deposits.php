@@ -23,6 +23,7 @@ class Deposits extends Model
         'network',
         'comment',
         'proof_of_payment',
+        'blockchain_tx_hash',   // new for direct blockchain
     ];
 
     public function user(): BelongsTo

@@ -39,4 +39,16 @@ return [
         'api_key' => env('PLISIO_API_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Direct Blockchain - Tron (TRC20 USDT)
+    |--------------------------------------------------------------------------
+    */
+    'tron' => [
+        'api_key' => env('TRONGRID_API_KEY'),
+        'network' => env('TRON_NETWORK', 'mainnet'), // mainnet or testnet
+        'hot_wallet' => env('TRON_HOT_WALLET_ADDRESS'),
+        'usdt_contract' => env('TRON_USDT_CONTRACT', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'),
+    ],
+
 ];

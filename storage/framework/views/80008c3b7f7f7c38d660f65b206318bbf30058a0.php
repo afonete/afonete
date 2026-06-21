@@ -371,36 +371,65 @@ $minDeposit = $minDeposit ?? (float) (\App\Models\WithdrawalSetting::current()->
                 <div class="tab-pane fade" id="tab-auto">
                     <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
                         <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                            <h4 class="text-white mb-0"><i class="fas fa-bolt mr-2 text-info"></i>Automatic Deposit (Plisio)</h4>
-                            <small class="text-muted">Crypto invoice — payment confirmed automatically (USDT only).</small>
+                            <h4 class="text-white mb-0">
+                                <i class="fas fa-link mr-2 text-success"></i>Automatic Deposit (Direct TRON)
+                            </h4>
+                            <small class="text-muted">Send USDT TRC-20 directly to our wallet — confirmed on-chain automatically.</small>
                         </div>
                         <div class="card-body">
-                            <p class="text-muted">Creates a Plisio USDT invoice. You pay and it confirms automatically — no admin approval needed.</p>
-                            <?php if(isset($ammount)): ?><div class="alert alert-warning"><?php echo e($ammount); ?></div><?php endif; ?>
-                            <?php if(isset($p_failed)): ?><div class="alert alert-danger"><?php echo e($p_failed); ?></div><?php endif; ?>
+                            <div class="alert alert-success">
+                                <strong>No third-party gateway.</strong> 100% direct blockchain.
+                            </div>
 
-                            <form method="POST" action="<?php echo e(route('user.deposit')); ?>">
-                                <?php echo csrf_field(); ?>
-                                <div class="form-group">
-                                    <label class="text-white">Currency: USD ($)</label>
-                                </div>
-                                <div class="form-group">
-                                    <label class="text-white">Amount <span class="text-danger">*</span></label>
-                                    <input type="number" name="amount" min="<?php echo e($minDeposit); ?>" required
-                                           class="form-control" style="background:#222; color:white; border-color:#555;"
-                                           placeholder="Minimum $<?php echo e(number_format($minDeposit, 0)); ?>">
-                                    <small class="text-muted">Minimum: $<?php echo e(number_format($minDeposit, 2)); ?> (set by admin)</small>
-                                </div>
-                                <button type="submit" class="btn btn-info btn-block font-weight-bold mt-2">
-                                    <i class="fas fa-external-link-alt mr-1"></i> Generate Invoice
-                                </button>
-                            </form>
+                            <?php
+                                $hotWallet = env('TRON_HOT_WALLET_ADDRESS', 'TYourCompanyHotWalletAddressHere');
+                            ?>
 
-                            <div class="mt-3 p-2" style="border:1px solid #333; border-radius:4px; font-size:12px;">
-                                <p class="text-warning mb-1">⚠ Rules:</p>
-                                <p class="text-muted mb-1">Do not send USDT twice to the same invoice address.</p>
-                                <p class="text-muted mb-1">Only USDT TRC-20 is supported.</p>
-                                <p class="text-muted mb-0">Create a new invoice for each deposit.</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="p-3 mb-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
+                                        <div class="small text-muted mb-1">Send USDT (TRC-20) to this address</div>
+                                        <div class="d-flex align-items-center">
+                                            <code id="hotWalletAddr" class="text-success flex-grow-1" style="word-break:break-all; font-size:15px; background:#000; padding:8px; border-radius:4px;">
+                                                <?php echo e($hotWallet); ?>
+
+                                            </code>
+                                            <button type="button" class="btn btn-sm btn-outline-success ml-2"
+                                                    data-copy-target="#hotWalletAddr">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                        <div class="small text-muted mt-2">Network: <strong>TRON (TRC-20)</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="text-center">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=tron:<?php echo e($hotWallet); ?>" 
+                                             alt="QR Code" style="width:160px;height:160px;background:#fff;padding:6px;border-radius:6px;">
+                                        <div class="small text-muted mt-1">Scan with your wallet</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <h6 class="text-white">How it works:</h6>
+                                <ol class="text-light small mb-3">
+                                    <li>Send any amount of <strong>USDT TRC-20</strong> to the address above.</li>
+                                    <li>Our system polls the blockchain every 2 minutes.</li>
+                                    <li>Once confirmed on-chain, your deposit is automatically marked <strong>approved</strong>.</li>
+                                    <li>No manual submission or proof needed for automatic deposits.</li>
+                                </ol>
+
+                                <div class="alert alert-warning py-2 small">
+                                    <strong>Important:</strong> Only send USDT on the <strong>TRON (TRC-20)</strong> network. 
+                                    Wrong network = funds lost.
+                                </div>
+
+                                <div class="small text-muted">
+                                    Minimum deposit: <strong>$<?php echo e(number_format($minDeposit, 2)); ?></strong><br>
+                                    Deposits are credited after blockchain confirmation.
+                                </div>
                             </div>
                         </div>
                     </div>

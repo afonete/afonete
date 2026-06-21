@@ -30,6 +30,12 @@ class Kernel extends ConsoleKernel
         //   - Compute and credit Associate Manager weekly 20% bonus
         $schedule->command('referrals:process-weekly')
                  ->weeklyOn(1, '00:15'); // 1 = Monday
+
+        // === DIRECT BLOCKCHAIN (TRON USDT TRC20) ===
+        // Poll TronGrid for incoming deposits every 2 minutes
+        $schedule->command('blockchain:check-deposits')
+                 ->everyTwoMinutes()
+                 ->withoutOverlapping();
     }
 
 

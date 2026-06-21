@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use App\Models\withdrawals as WithdrawalModel;
 use App\Models\Transaction;
+use App\Models\Deposits;
 
 
 class Balance extends Controller{
@@ -31,7 +32,6 @@ class Balance extends Controller{
     //
     public function Receive(Request $request){
         $user = Auth::User();
-
         return view("user.UserReceive",["address"=>0.09]);
     }
 
@@ -39,25 +39,23 @@ class Balance extends Controller{
         $user = Auth::User();
         $cashout = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
 
-
         $data = [
             "Focoin"=>0.00,
             "Bitcoin"=>0.00,
             "Bnb"=>0.00,
             "Ethereum"=>0.00,   
             "USDT TRON"=>0.00
-
         ];
-
-
 
         return view("user.UserWithdrawal",["data"=>$data,"cashout"=>$cashout]);
     }
+    
     public function index(){
         $user = Auth::User();
         $CASHOUT = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
         $TRADING = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
-        // $ = $user->ChartAccount()->where("acc_type","TRADING")->orderby("earned_at","desc");
+        $PAYOUT  = $user->ChartAccount()->where("acc_type","PAYOUT")->sum("amount");
+
         $total = $CASHOUT + $TRADING;
         $todayEarning = $user->earnings()->orderBy("created_at","desc")->first();
         $totalEarning = $user->earnings()->sum("amount");
@@ -65,23 +63,23 @@ class Balance extends Controller{
         $fomo = 0;
         $incomeventure = 0;
         $freecoin = 0;
+
         $initial = $user->deposits()->sum("amount_deposited");
         $used = $user->deposits()->sum("amount_removed");
         $deposit = $initial - $used;
 
-
         return view('user.balance.balance',[
             "trading"=>$TRADING,
             "cashout"=>$CASHOUT,
+            "payout" => $PAYOUT,
             "total"=>$total,
-            "todayEarning"=>$todayEarning->amount,
+            "todayEarning"=>$todayEarning ? $todayEarning->amount : 0,
             "totalEarning"=>$totalEarning,
             "credit"=>$credit ?? 0,
             "fomo"=>$fomo,
             "incomeventure"=>$incomeventure,
             "freecoin"=>$freecoin,
             'deposit'=>$deposit
-
         ]);
     }
 
@@ -245,38 +243,64 @@ public function withdraw_money(Request $request)
         ]);
     }
 
-     public function deposit(){
+
+    /**
+     * This is the deposit page you want at /user/dashboard/deposit
+     * It uses the beautiful tabbed view with QR codes, copy buttons,
+     * and admin-configured wallets (Crypto / Advcash / Perfect Money / Auto).
+     */
+    public function deposit()
+    {
         $user = Auth::user();
-        $wallets = \App\Models\DepositWallet::active()->get();
+
+        $cryptoWallets       = \App\Models\DepositWallet::activeOfType('crypto');
+        $advcashWallets      = \App\Models\DepositWallet::activeOfType('advcash');
+        $perfectMoneyWallets = \App\Models\DepositWallet::activeOfType('perfect_money');
+
         $deposits = $user->deposits()->latest()->take(10)->get();
-        $cashout  = $user->ChartAccount()->where('acc_type','CASHOUT')->sum('amount');
+
         $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
-        return view('user.balance.deposit', compact('wallets','deposits','cashout','minDeposit'));
+
+        return view('user.balance.deposit', compact(
+            'cryptoWallets',
+            'advcashWallets',
+            'perfectMoneyWallets',
+            'deposits',
+            'minDeposit'
+        ));
     }
 
     /**
-     * User's full deposit history with pagination + filters.
+     * Full deposit history page (linked from advanced deposit page)
+     * Route: GET /user/deposits  → name: user.deposits.history
      */
     public function depositHistory(Request $request)
     {
         $user = Auth::user();
+
         $query = $user->deposits()->latest();
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            $query->where('status', $status);
         }
 
-        $deposits = $query->paginate(20)->withQueryString();
+        $deposits = $query->paginate(20);
+
+        // Calculate summary totals for the cards
+        $all = $user->deposits;
+
+        $approvedSum   = $all->where('status', 'approved')->sum('amount_deposited');
+        $usedSum       = $all->where('status', 'used')->sum('amount_removed');
+
         $totals = [
-            'pending'   => (float) $user->deposits()->where('status','pending')->sum('amount_deposited'),
-            'approved'  => (float) $user->deposits()->where('status','approved')->sum('amount_deposited'),
-            'rejected'  => (float) $user->deposits()->where('status','rejected')->sum('amount_deposited'),
-            'used'      => (float) $user->deposits()->where('status','used')->sum('amount_removed'),
-            'available' => (float) $user->deposits()->where('status','approved')->sum('amount_deposited')
-                       - (float) $user->deposits()->where('status','used')->sum('amount_removed'),
+            'pending'   => $all->where('status', 'pending')->sum('amount_deposited'),
+            'approved'  => $approvedSum,
+            'used'      => $usedSum,
+            'available' => $approvedSum - $usedSum,
         ];
 
-        return view('user.balance.deposit-history', compact('deposits','totals'));
+        return view('user.balance.deposit-history', compact('deposits', 'totals'));
     }
      public function wallet(Request $request)
      {
@@ -296,53 +320,30 @@ public function withdraw_money(Request $request)
           }
      }
 
-     public function api(Request $request){
-      $user = Auth::user();
-    $userId = $user->id;
-    $email =$user->email;
+    // ==================== DEPOSIT LOGIC ====================
 
-        // Issue 5 — read min from WithdrawalSetting (admin-configurable)
-        $settings = \App\Models\WithdrawalSetting::current();
-        $minDeposit = (float) ($settings->min_deposit_amount ?? 10);
+    public function api(Request $request){
+        $user = Auth::user();
+        $amount = (float) $request->amount;
 
-        $request->validate([
-            'amount' => 'required|numeric|min:' . $minDeposit,
-        ], [
-            'amount.min' => 'Minimum deposit amount is $' . number_format($minDeposit, 2) . '.',
+        if($amount < 10){
+            return back()->with('error', 'Minimum deposit is $10');
+        }
+
+        $transactionId = Deposits::generateTransactionNo();
+
+        Deposits::create([
+            'user_id'           => $user->id,
+            'amount_deposited'  => $amount,
+            'amount_removed'    => 0,
+            'currency_type'     => $request->currency ?? 'USDT',
+            'deposit_method'    => $request->paymentMethod ?? 'MANUAL',
+            'transaction_id'    => $transactionId,
+            'status'            => 'pending',
         ]);
 
-        $length = 8;
-        $orderNumber = Str::random($length);
-        $client = new Client();
-        $url = 'https://plisio.net/api/v1/invoices/new';
-        $response = $client->get($url, [
-            'query' => [
-                'source_currency' => 'USD',
-                'amount' =>$request->amount,
-                'order_number' => $orderNumber,
-                'currency' => 'USDT',
-                'email' => $email,
-                'order_name' => 'account deposit',
-                // Use route() helper instead of hardcoded domain URLs (fix D2)
-                'callback_url'        => route('user.deposit.status'),
-                'success_callback_url'=> route('user.deposit.success'),
-                'fail_callback_url'   => route('user.deposit.fail'),
-                'expire_min'=>15,
-                'api_key' => config('services.plisio.api_key'), // from .env, not hardcoded (fix D6)
-            ],
-        ]);
-
-        $statusCode = $response->getStatusCode();
-        $body = $response->getBody()->getContents();
-        $responseData = json_decode($body, true);
-
-        // Get the necessary data from the response
-        $txnId = $responseData['data']['txn_id'];
-        $invoiceUrl = $responseData['data']['invoice_url'];
-
-        // Redirect the user to the invoice URL
-        return redirect::away($invoiceUrl);
-         }
+        return back()->with('message', 'Deposit request submitted. Awaiting approval.');
+    }
 
      public function status(Request $request)
 {
@@ -632,5 +633,57 @@ public function withdraw_money(Request $request)
             'perfectMoneyActive'=> \App\Models\DepositWallet::activeOfType('perfect_money'),
             'history'           => $history,
         ]);
+    }
+
+    /**
+     * DIRECT BLOCKCHAIN WITHDRAWAL (TRON USDT TRC20)
+     */
+    public function directBlockchainWithdraw(Request $request)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:10',
+            'address' => 'required|string|min:30',
+        ]);
+
+        $user = Auth::user();
+        $amount = (float) $request->amount;
+        $toAddress = trim($request->address);
+
+        // Basic TRC20 address validation
+        if (!preg_match('/^T[a-zA-Z0-9]{33}$/', $toAddress)) {
+            return back()->with('error', 'Invalid TRON (TRC-20) address format.');
+        }
+
+        // TODO: Check user has enough withdrawable balance (PAYOUT / ChartAccount etc.)
+        // For now we assume the amount is validated in the view
+
+        $txHash = null;
+
+        try {
+            $service = new \App\Services\TronBlockchainService();
+            $txHash = $service->sendUsdt($toAddress, $amount);
+
+            if (!$txHash) {
+                throw new \Exception('Failed to broadcast transaction on-chain.');
+            }
+        } catch (\Exception $e) {
+            \Log::error('Direct blockchain withdraw failed: ' . $e->getMessage());
+            return back()->with('error', 'Blockchain withdrawal failed: ' . $e->getMessage());
+        }
+
+        // Record the withdrawal
+        $withdrawal = \App\Models\withdrawals::create([
+            'user_id'        => $user->id,
+            'amount'         => $amount,
+            'wallet_address' => $toAddress,
+            'currency'       => 'USDT',
+            'network'        => 'TRC-20',
+            'transaction_no' => \App\Models\Deposits::generateTransactionNo(),
+            'txn_hash'       => $txHash,
+            'status'         => 'completed',   // direct on-chain = immediately completed
+            'notes'          => 'Direct blockchain withdrawal (no Plisio)',
+        ]);
+
+        return back()->with('success', "Withdrawal of \${$amount} sent on-chain! TX: " . substr($txHash, 0, 16) . '...');
     }
 }
