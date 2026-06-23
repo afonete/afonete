@@ -62,14 +62,60 @@ class AdminController extends Controller
             return redirect()->route('admin.withdrawal')->with('error', 'This withdrawal has already been processed.');
         }
 
-        // FIX (W8): Record the on-chain txn_hash that admin provides.
-        // Also stamp processed_by + processed_at so the audit trail is clear.
+        $txnHash = trim((string) $request->txn_hash);
+        $canAutoSend = $withdrawal->method === WithdrawalModel::METHOD_CRYPTO
+            && strtoupper((string) $withdrawal->currency) === 'USDT'
+            && strtoupper((string) $withdrawal->network) === 'TRC-20'
+            && $txnHash === ''
+            && (bool) env('DIRECT_BLOCKCHAIN_WITHDRAWALS', true);
+
+        if ($canAutoSend) {
+            // Admin approval releases the held withdrawal into the blockchain queue.
+            $withdrawal->update([
+                'status'            => WithdrawalModel::STATUS_PROCESSING,
+                'approval_required' => false,
+                'admin_note'        => $request->admin_note ?: 'Approved by admin for automatic TRON payout.',
+                'processed_by'      => Auth::id(),
+                'processed_at'      => now(),
+            ]);
+
+            \App\Models\BlockchainAuditLog::record('withdrawal.admin_approved_queued', [
+                'user_id'        => $withdrawal->user_id,
+                'auditable_type' => WithdrawalModel::class,
+                'auditable_id'   => $withdrawal->id,
+                'address'        => $withdrawal->wallet_address,
+                'amount'         => $withdrawal->amount,
+                'currency'       => $withdrawal->currency,
+                'network'        => $withdrawal->network,
+                'request_id'     => $withdrawal->transaction_no,
+                'message'        => 'Admin approved withdrawal and queued automatic blockchain payout.',
+            ]);
+
+            \App\Jobs\ProcessBlockchainWithdrawal::dispatch($withdrawal->id);
+            return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal approved and queued for automatic TRON payout.');
+        }
+
+        // Manual approval path: admin has already sent funds externally and provides tx hash/reference.
         $withdrawal->update([
-            'status'       => 'completed',
-            'admin_note'   => $request->admin_note,
-            'txn_hash'     => $request->txn_hash,
-            'processed_by' => Auth::id(),
-            'processed_at' => now(),
+            'status'             => 'completed',
+            'admin_note'         => $request->admin_note,
+            'txn_hash'           => $txnHash ?: null,
+            'blockchain_tx_hash' => $txnHash ?: $withdrawal->blockchain_tx_hash,
+            'processed_by'       => Auth::id(),
+            'processed_at'       => now(),
+        ]);
+
+        \App\Models\BlockchainAuditLog::record('withdrawal.admin_marked_completed', [
+            'user_id'        => $withdrawal->user_id,
+            'auditable_type' => WithdrawalModel::class,
+            'auditable_id'   => $withdrawal->id,
+            'tx_hash'        => $txnHash ?: null,
+            'address'        => $withdrawal->wallet_address,
+            'amount'         => $withdrawal->amount,
+            'currency'       => $withdrawal->currency,
+            'network'        => $withdrawal->network,
+            'request_id'     => $withdrawal->transaction_no,
+            'message'        => 'Admin manually marked withdrawal completed.',
         ]);
 
         // FIX (W6): Email user about approval
@@ -77,7 +123,7 @@ class AdminController extends Controller
         if ($user) {
             try {
                 \Mail::to($user->email)->send(new \App\Mail\WithdrawalApproved(
-                    $user, $withdrawal->amount, $withdrawal->transaction_no, $request->txn_hash
+                    $user, $withdrawal->amount, $withdrawal->transaction_no, $txnHash
                 ));
             } catch (\Exception $e) {
                 \Log::warning('Withdrawal approval email failed: ' . $e->getMessage());

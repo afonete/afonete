@@ -20,10 +20,19 @@ class Deposits extends Model
         'status',
         'transaction_id',
         'user_wallet_address',
+        'deposit_address',
         'network',
         'comment',
         'proof_of_payment',
         'blockchain_tx_hash',   // new for direct blockchain
+        'confirmations',
+        'detected_at',
+        'credited_at',
+    ];
+
+    protected $casts = [
+        'detected_at' => 'datetime',
+        'credited_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

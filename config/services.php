@@ -45,10 +45,14 @@ return [
     |--------------------------------------------------------------------------
     */
     'tron' => [
-        'api_key' => env('TRONGRID_API_KEY'),
-        'network' => env('TRON_NETWORK', 'mainnet'), // mainnet or testnet
-        'hot_wallet' => env('TRON_HOT_WALLET_ADDRESS'),
-        'usdt_contract' => env('TRON_USDT_CONTRACT', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'),
+        'api_key'        => env('TRONGRID_API_KEY'),
+        'network'        => env('TRON_NETWORK', 'mainnet'), // mainnet or shasta
+        'base_url'       => env('TRON_FULL_HOST', env('TRON_NETWORK', 'mainnet') === 'shasta' ? 'https://api.shasta.trongrid.io' : 'https://api.trongrid.io'),
+        'hot_wallet'     => env('TRON_HOT_WALLET_ADDRESS'),
+        'usdt_contract'  => env('TRON_USDT_CONTRACT', 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w'),
+        'signer_url'     => env('TRON_SIGNER_URL', 'http://127.0.0.1:8787'),
+        'signer_secret'  => env('TRON_SIGNER_SECRET'),
+        'signer_timeout' => env('TRON_SIGNER_TIMEOUT', 20),
     ],
 
 ];

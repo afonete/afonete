@@ -57,7 +57,17 @@
                                    name="require_admin_approval" value="1" id="require_approval"
                                    {{ $settings->require_admin_approval ? 'checked' : '' }}>
                             <label class="form-check-label" for="require_approval">
-                                Manual withdrawals require admin approval
+                                Require admin approval for all withdrawals
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mt-3 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="auto_withdrawals_enabled" value="1" id="auto_withdrawals_enabled"
+                                   {{ ($settings->auto_withdrawals_enabled ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="auto_withdrawals_enabled">
+                                Enable small automatic USDT TRC20 withdrawals
                             </label>
                         </div>
                     </div>
@@ -70,6 +80,39 @@
                                 Validate TRC-20 address format
                             </label>
                         </div>
+                    </div>
+
+                    <div class="col-md-3 mt-3">
+                        <label class="small text-muted">Admin approval threshold ($)</label>
+                        <input type="number" step="0.01" min="0" name="admin_approval_threshold" class="form-control"
+                               value="{{ $settings->admin_approval_threshold ?? 100 }}">
+                        <small class="text-muted">Withdrawals >= this amount go to admin review.</small>
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="small text-muted">Max automatic withdrawal ($)</label>
+                        <input type="number" step="0.01" min="0" name="max_auto_withdrawal" class="form-control"
+                               value="{{ $settings->max_auto_withdrawal ?? 100 }}">
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="small text-muted">Manual review risk score</label>
+                        <input type="number" min="0" max="100" name="manual_review_risk_score" class="form-control"
+                               value="{{ $settings->manual_review_risk_score ?? 50 }}">
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="small text-muted">Hot wallet max USDT</label>
+                        <input type="number" step="0.000001" min="0" name="hot_wallet_max_balance" class="form-control"
+                               value="{{ $settings->hot_wallet_max_balance }}" placeholder="optional">
+                        <small class="text-muted">Above this, scheduler sweeps to cold wallet.</small>
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="small text-muted">Hot wallet reserve USDT</label>
+                        <input type="number" step="0.000001" min="0" name="hot_wallet_reserve_balance" class="form-control"
+                               value="{{ $settings->hot_wallet_reserve_balance ?? 100 }}">
+                    </div>
+                    <div class="col-md-9 mt-3">
+                        <label class="small text-muted">Cold wallet TRON address</label>
+                        <input type="text" name="cold_wallet_address" class="form-control"
+                               value="{{ $settings->cold_wallet_address }}" placeholder="T...">
                     </div>
 
                     <div class="col-md-12 mt-3">

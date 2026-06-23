@@ -110,6 +110,55 @@
     </div>
 
     {{-- ═══════════════════════════════════
+         PROCESSING — queued / sent by automatic blockchain signer
+    ═══════════════════════════════════ --}}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-info text-white font-weight-bold">
+            <i class="fas fa-sync-alt mr-1"></i> Processing / Queued ({{ isset($processing) ? $processing->count() : 0 }})
+            <small class="ml-2 font-weight-normal">— Automatic blockchain payout in progress</small>
+        </div>
+        <div class="card-body p-0">
+            @if(!isset($processing) || $processing->isEmpty())
+                <p class="text-muted p-3 mb-0">No processing withdrawals.</p>
+            @else
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Amount</th>
+                            <th>Destination</th>
+                            <th>Reference</th>
+                            <th>Attempts</th>
+                            <th>Last Attempt</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($processing as $w)
+                        <tr>
+                            <td>{{ $w->user->name ?? '—' }}<br><small class="text-muted">{{ $w->user->email ?? '' }}</small></td>
+                            <td>${{ number_format($w->amount, 2) }}</td>
+                            <td><small style="word-break:break-all;">{{ $w->currency }} {{ $w->network }} — {{ $w->wallet_address }}</small></td>
+                            <td><small>{{ $w->transaction_no }}</small></td>
+                            <td>{{ $w->attempts ?? 0 }}</td>
+                            <td><small>{{ $w->last_attempt_at ? $w->last_attempt_at->format('d M H:i') : '—' }}</small></td>
+                            <td>
+                                <span class="badge badge-{{ ($w->risk_score ?? 0) >= 50 ? 'danger' : 'secondary' }}">{{ $w->risk_score ?? 0 }}</span>
+                                @if(!empty($w->risk_flags))
+                                    <small class="d-block text-muted">{{ implode(', ', $w->risk_flags) }}</small>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- ═══════════════════════════════════
          COMPLETED
     ═══════════════════════════════════ --}}
     <div class="card mb-4 shadow-sm">
@@ -150,7 +199,7 @@
                             </td>
                             <td><small style="word-break:break-all;">{{ Str::limit($w->wallet_address, 25) }}</small></td>
                             <td><small class="text-muted">{{ $w->transaction_no }}</small></td>
-                            <td><span class="badge badge-info">{{ $w->plisio_txn_id ? 'Instant' : 'Manual' }}</span></td>
+                            <td><span class="badge badge-info">{{ $w->typeLabel() }}</span></td>
                             <td><small>{{ $w->admin_note ?? '—' }}</small></td>
                             <td><small>{{ $w->created_at->format('d M Y') }}</small></td>
                         </tr>

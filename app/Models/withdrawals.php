@@ -22,9 +22,20 @@ class withdrawals extends Model
         'transaction_no',
         'plisio_txn_id',
         'txn_hash',
+        'blockchain_tx_hash',
         'gas_fee',
         'net_amount',
         'status',         // pending | processing | completed | failed
+        'approval_required',
+        'risk_score',
+        'risk_flags',
+        'idempotency_key',
+        'attempts',
+        'locked_at',
+        'last_attempt_at',
+        'failure_reason',
+        'signer_request_id',
+        'signer_response',
         'notes',          // user notes
         'admin_note',
         'processed_by',
@@ -32,10 +43,15 @@ class withdrawals extends Model
     ];
 
     protected $casts = [
-        'amount'       => 'decimal:2',
-        'gas_fee'      => 'decimal:6',
-        'net_amount'   => 'decimal:6',
-        'processed_at' => 'datetime',
+        'amount'            => 'decimal:2',
+        'gas_fee'           => 'decimal:6',
+        'net_amount'        => 'decimal:6',
+        'approval_required' => 'boolean',
+        'risk_flags'        => 'array',
+        'signer_response'   => 'array',
+        'locked_at'         => 'datetime',
+        'last_attempt_at'   => 'datetime',
+        'processed_at'      => 'datetime',
     ];
 
     // Method / status / network constants — used everywhere in views & controllers
@@ -72,11 +88,14 @@ class withdrawals extends Model
     }
 
     /**
-     * "Instant" if this was sent via Plisio automatically,
-     * "Manual" if it's awaiting / done by an admin.
+     * Human-friendly processing type.
      */
     public function typeLabel(): string
     {
+        if ($this->blockchain_tx_hash && !$this->plisio_txn_id) {
+            return 'Direct Blockchain';
+        }
+
         return $this->plisio_txn_id ? 'Instant' : 'Manual';
     }
 

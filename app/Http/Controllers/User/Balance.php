@@ -261,10 +261,20 @@ public function withdraw_money(Request $request)
 
         $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
 
+        // Phase 2: unique user deposit address for automatic USDT TRC20 crediting.
+        // If the signer is not running/configured yet, we fail gracefully and keep manual methods visible.
+        $directDepositAddress = null;
+        try {
+            $directDepositAddress = app(\App\Services\TronBlockchainService::class)->getOrCreateDepositAddressForUser($user);
+        } catch (\Throwable $e) {
+            \Log::warning('Direct deposit address unavailable: ' . $e->getMessage(), ['user_id' => $user->id]);
+        }
+
         return view('user.balance.deposit', compact(
             'cryptoWallets',
             'advcashWallets',
             'perfectMoneyWallets',
+            'directDepositAddress',
             'deposits',
             'minDeposit'
         ));
@@ -493,7 +503,6 @@ public function withdraw_money(Request $request)
         $settings = \App\Models\WithdrawalSetting::current();
         $minAmount = (float) $settings->min_amount;
 
-        // ── Validate request ──
         $request->validate([
             'amount'  => "required|numeric|min:{$minAmount}|max:" . (float) $settings->max_per_transaction,
             'method'  => 'required|string|in:crypto,advcash,perfect_money',
@@ -511,11 +520,10 @@ public function withdraw_money(Request $request)
         $amount    = (float) $request->amount;
         $method    = $request->method;
         $network   = $request->network;
-        $currency  = $request->currency;
+        $currency  = strtoupper((string) $request->currency);
         $address   = trim($request->address);
         $notes     = $request->notes ?? null;
 
-        // ── Light address validation per method ──
         if ($method === 'crypto') {
             $w = new \App\Models\withdrawals();
             $w->network = $network;
@@ -524,58 +532,97 @@ public function withdraw_money(Request $request)
                 return back()->with('error', 'Invalid wallet address for ' . $network . '. Please double-check.');
             }
         } elseif ($method === 'advcash' || $method === 'perfect_money') {
-            // Sanity: at least 8 chars and not a blockchain address.
             if (strlen($address) < 6) {
                 return back()->with('error', 'Please enter a valid ' . ucfirst(str_replace('_', ' ', $method)) . ' account number.');
             }
         }
 
-        // ── FIX (W4): Enforce per-transaction + daily + monthly limits ──
         if ($amount > (float) $settings->max_per_transaction) {
             return back()->with('error', 'Per-transaction maximum is $' . number_format($settings->max_per_transaction, 2));
         }
+
         $todaySpent = \App\Models\WithdrawalSetting::withdrawnToday($user->id);
         if ($settings->daily_limit && ($todaySpent + $amount) > (float) $settings->daily_limit) {
             return back()->with('error', 'Daily limit is $' . number_format($settings->daily_limit, 2) . '. You have already withdrawn $' . number_format($todaySpent, 2) . ' today.');
         }
+
         $monthSpent = \App\Models\WithdrawalSetting::withdrawnThisMonth($user->id);
         if ($settings->monthly_limit && ($monthSpent + $amount) > (float) $settings->monthly_limit) {
             return back()->with('error', 'Monthly limit is $' . number_format($settings->monthly_limit, 2) . '. You have already withdrawn $' . number_format($monthSpent, 2) . ' this month.');
         }
 
-        // ── Check CASHOUT balance ──
-        $cashoutBalance = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        // Duplicate withdrawal protection: same user + same amount + same destination in the last 10 minutes.
+        $recentDuplicate = \App\Models\withdrawals::where('user_id', $user->id)
+            ->where('wallet_address', $address)
+            ->where('currency', $currency)
+            ->where('network', $network)
+            ->whereBetween('amount', [$amount - 0.000001, $amount + 0.000001])
+            ->whereIn('status', ['pending', 'processing'])
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->exists();
 
+        if ($recentDuplicate) {
+            return back()->with('error', 'Duplicate withdrawal blocked. A similar request was already submitted recently.');
+        }
+
+        $risk = app(\App\Services\WithdrawalRiskService::class)->assess($user, $amount, $address, $network);
+        $isAutoCapable = $method === 'crypto' && $currency === 'USDT' && strtoupper((string) $network) === 'TRC-20';
+
+        $approvalRequired = (bool) $settings->require_admin_approval
+            || !$isAutoCapable
+            || !(bool) ($settings->auto_withdrawals_enabled ?? false)
+            || $amount >= (float) ($settings->admin_approval_threshold ?? 100)
+            || $amount > (float) ($settings->max_auto_withdrawal ?? 100)
+            || (int) $risk['score'] >= (int) ($settings->manual_review_risk_score ?? 50);
+
+        $cashoutBalance = (float) $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
         if ($cashoutBalance < $amount) {
             return redirect()->route('user.dashboard.withdraw')
                 ->with('error', 'Insufficient balance. You have $' . number_format($cashoutBalance, 2) . ' available.');
         }
 
-        // ── Hold the amount (deduct now, refund if rejected) ──
-        $user->ChartAccount()->where('acc_type', 'CASHOUT')
-            ->update(['amount' => $cashoutBalance - $amount]);
-
         $trxNo = Transaction::generateTransactionNo();
+        $idempotencyKey = hash('sha256', implode('|', [
+            $user->id,
+            $method,
+            $currency,
+            $network,
+            $address,
+            number_format($amount, 6, '.', ''),
+            floor(time() / 600), // 10 minute bucket
+        ]));
 
-        // ── Friendly deposit method label shown on the admin queue ──
         $methodLabel = match ($method) {
             'advcash'       => 'Advcash '        . $currency,
             'perfect_money' => 'Perfect Money '  . $currency,
             default         => trim($currency . ' ' . ($network ?? '')),
         };
 
-        // ── Create pending withdrawal record ──
-        \App\Models\withdrawals::create([
-            'user_id'        => $user->id,
-            'method'         => $method,
-            'network'        => $network,
-            'amount'         => $amount,
-            'currency'       => $currency,
-            'wallet_address' => $address,
-            'transaction_no' => $trxNo,
-            'status'         => 'pending',
-            'notes'          => $notes,
-        ]);
+        try {
+            $withdrawal = DB::transaction(function () use ($user, $cashoutBalance, $amount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {
+                $user->ChartAccount()->where('acc_type', 'CASHOUT')->update(['amount' => $cashoutBalance - $amount]);
+
+                return \App\Models\withdrawals::create([
+                    'user_id'           => $user->id,
+                    'method'            => $method,
+                    'network'           => $network,
+                    'amount'            => $amount,
+                    'currency'          => $currency,
+                    'wallet_address'    => $address,
+                    'transaction_no'    => $trxNo,
+                    'idempotency_key'   => $idempotencyKey,
+                    'status'            => $approvalRequired ? 'pending' : 'processing',
+                    'approval_required' => $approvalRequired,
+                    'risk_score'        => $risk['score'],
+                    'risk_flags'        => $risk['flags'],
+                    'notes'             => $notes,
+                    'signer_request_id' => $trxNo,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            \Log::error('Withdrawal request failed: ' . $e->getMessage());
+            return back()->with('error', 'Could not create withdrawal request. Please try again.');
+        }
 
         Transaction::create([
             'user_id'             => $user->id,
@@ -583,20 +630,38 @@ public function withdraw_money(Request $request)
             'transaction_type'    => 'WITHDRAWAL_REQUEST',
             'receiver_id'         => 0,
             'transaction_details' => json_encode([
-                'amount'         => $amount,
-                'method'         => $method,
-                'currency'       => $currency,
-                'network'        => $network,
-                'wallet_address' => $address,
-                'date'           => now()->toDateTimeString(),
-                'status'         => 'pending',
-                'method_label'   => $methodLabel,
-                'username'       => $user->name,
-                'note'           => 'Awaiting admin approval',
+                'amount'            => $amount,
+                'method'            => $method,
+                'currency'          => $currency,
+                'network'           => $network,
+                'wallet_address'    => $address,
+                'date'              => now()->toDateTimeString(),
+                'status'            => $approvalRequired ? 'pending' : 'processing',
+                'approval_required' => $approvalRequired,
+                'risk_score'        => $risk['score'],
+                'risk_flags'        => $risk['flags'],
+                'method_label'      => $methodLabel,
+                'username'          => $user->name,
             ]),
         ]);
 
-        // FIX (W6): Email admin about pending request
+        \App\Models\BlockchainAuditLog::record('withdrawal.requested', [
+            'user_id'        => $user->id,
+            'auditable_type' => \App\Models\withdrawals::class,
+            'auditable_id'   => $withdrawal->id,
+            'address'        => $address,
+            'amount'         => $amount,
+            'currency'       => $currency,
+            'network'        => $network,
+            'request_id'     => $trxNo,
+            'message'        => $approvalRequired ? 'Withdrawal requires admin/manual review.' : 'Withdrawal queued for automatic blockchain processing.',
+            'context'        => ['risk' => $risk, 'approval_required' => $approvalRequired],
+        ]);
+
+        if (!$approvalRequired) {
+            \App\Jobs\ProcessBlockchainWithdrawal::dispatch($withdrawal->id);
+        }
+
         try {
             $admins = \App\Models\User::where('utype','ADM')->get();
             foreach ($admins as $admin) {
@@ -606,8 +671,9 @@ public function withdraw_money(Request $request)
             \Log::warning('Could not send withdrawal request email: ' . $e->getMessage());
         }
 
+        $statusMsg = $approvalRequired ? 'Awaiting admin approval/manual review.' : 'Queued for automatic on-chain processing.';
         return redirect()->route('user.dashboard.withdraw')
-            ->with('success', 'Withdrawal request of $' . number_format($amount, 2) . ' (' . $methodLabel . ') submitted. Reference: ' . $trxNo . '. Awaiting admin approval.');
+            ->with('success', 'Withdrawal request of $' . number_format($amount, 2) . ' (' . $methodLabel . ') submitted. Reference: ' . $trxNo . '. ' . $statusMsg);
     }
 
     /**
@@ -637,53 +703,19 @@ public function withdraw_money(Request $request)
 
     /**
      * DIRECT BLOCKCHAIN WITHDRAWAL (TRON USDT TRC20)
+     *
+     * Kept for backward compatibility with the old direct form. It now uses the
+     * same safe path as normal withdrawals: limits, duplicate checks, risk
+     * review, balance hold, queue processing and audit logging.
      */
     public function directBlockchainWithdraw(Request $request)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:10',
-            'address' => 'required|string|min:30',
+        $request->merge([
+            'method'   => 'crypto',
+            'currency' => 'USDT',
+            'network'  => 'TRC-20',
         ]);
 
-        $user = Auth::user();
-        $amount = (float) $request->amount;
-        $toAddress = trim($request->address);
-
-        // Basic TRC20 address validation
-        if (!preg_match('/^T[a-zA-Z0-9]{33}$/', $toAddress)) {
-            return back()->with('error', 'Invalid TRON (TRC-20) address format.');
-        }
-
-        // TODO: Check user has enough withdrawable balance (PAYOUT / ChartAccount etc.)
-        // For now we assume the amount is validated in the view
-
-        $txHash = null;
-
-        try {
-            $service = new \App\Services\TronBlockchainService();
-            $txHash = $service->sendUsdt($toAddress, $amount);
-
-            if (!$txHash) {
-                throw new \Exception('Failed to broadcast transaction on-chain.');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Direct blockchain withdraw failed: ' . $e->getMessage());
-            return back()->with('error', 'Blockchain withdrawal failed: ' . $e->getMessage());
-        }
-
-        // Record the withdrawal
-        $withdrawal = \App\Models\withdrawals::create([
-            'user_id'        => $user->id,
-            'amount'         => $amount,
-            'wallet_address' => $toAddress,
-            'currency'       => 'USDT',
-            'network'        => 'TRC-20',
-            'transaction_no' => \App\Models\Deposits::generateTransactionNo(),
-            'txn_hash'       => $txHash,
-            'status'         => 'completed',   // direct on-chain = immediately completed
-            'notes'          => 'Direct blockchain withdrawal (no Plisio)',
-        ]);
-
-        return back()->with('success', "Withdrawal of \${$amount} sent on-chain! TX: " . substr($txHash, 0, 16) . '...');
+        return $this->requestManualWithdrawal($request);
     }
 }

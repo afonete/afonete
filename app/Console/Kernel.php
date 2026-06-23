@@ -36,6 +36,16 @@ class Kernel extends ConsoleKernel
         $schedule->command('blockchain:check-deposits')
                  ->everyTwoMinutes()
                  ->withoutOverlapping();
+
+        // Dispatch queued direct-chain withdrawals every minute.
+        $schedule->command('blockchain:process-withdrawals')
+                 ->everyMinute()
+                 ->withoutOverlapping();
+
+        // Sweep excess funds out of the hot wallet to cold storage.
+        $schedule->command('blockchain:sweep-hot-wallet')
+                 ->hourly()
+                 ->withoutOverlapping();
     }
 
 
