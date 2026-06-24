@@ -82,11 +82,11 @@ class DepositWallet extends Model
         if (preg_match('#^[a-z]+:#i', $addr)) return $addr;
 
         return match (strtoupper((string) $this->network)) {
-            'TRC-20'  => 'tron:' . $addr,
-            'BEP-20'  => 'bsc:'   . $addr,
-            'ERC-20'  => 'ethereum:' . $addr,
-            'POLYGON' => 'polygon:' . $addr,
-            'BITCOIN' => 'bitcoin:' . $addr,
+            'TRC-20'  => $addr,
+            'BEP-20'  => $addr,
+            'ERC-20'  => $addr,
+            'POLYGON' => $addr,
+            'BITCOIN' => $addr,
             default   => $addr,
         };
     }

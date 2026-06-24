@@ -66,11 +66,11 @@ $directDepositAddress = $directDepositAddress ?? null;
                         <i class="fas fa-coins mr-1"></i>Perfect Money <small class="text-muted">({{ $perfectMoneyWallets->count() }})</small>
                     </a>
                 </li>
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                     <a class="nav-link text-white" data-toggle="pill" href="#tab-auto">
                         <i class="fas fa-bolt mr-1"></i>Auto (Plisio)
                     </a>
-                </li>
+                </li> --}}
             </ul>
 
             <div class="tab-content">
@@ -84,7 +84,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                         <div class="card-body">
                             @if($directDepositAddress)
                                 @php
-                                    $directPayload = 'tron:' . $directDepositAddress->address;
+                                    $directPayload = $directDepositAddress->address;
                                     $directQr = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($directPayload) . '&margin=10';
                                 @endphp
                                 <div class="row align-items-center">
@@ -170,7 +170,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                                         </div>
                                         {{-- Address + copy button --}}
                                         <div class="flex-grow-1" style="min-width:240px;">
-                                            <div class="small text-muted">Address ({{ $cryptoWallets->first()?->currency }} · {{ $cryptoWallets->first()?->network }})</div>
+                                            <div class="small text-muted" id="cryptoAddressLabel">Address ({{ $cryptoWallets->first()?->currency }} · {{ $cryptoWallets->first()?->network }})</div>
                                             <div class="d-flex align-items-center mt-1">
                                                 <code id="cryptoAddressText"
                                                       class="text-warning flex-grow-1"
@@ -419,7 +419,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                 </div>
 
                 {{-- ───────────────── AUTO (Direct Blockchain) TAB ───────────────── --}}
-                <div class="tab-pane fade" id="tab-auto">
+                {{-- <div class="tab-pane fade" id="tab-auto">
                     <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
                         <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
                             <h4 class="text-white mb-0">
@@ -483,7 +483,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
 
@@ -600,6 +600,10 @@ $directDepositAddress = $directDepositAddress ?? null;
                 'Scan with your ' + currency + ' wallet';
             document.getElementById('cryptoMinAmount').textContent = parseFloat(min).toFixed(2);
             document.getElementById('cryptoNetworkName').textContent = network;
+            
+            // FIX ADDRESS ISSUE OF NOT SHOWING ONLY : Address (USDT · BEP-20)
+            document.getElementById('cryptoAddressLabel').textContent =
+                `Address (${currency} · ${network})`;
 
             // Sync hidden inputs in the deposit form
             const wId = document.getElementById('walletIdInput'); if (wId) wId.value = opt.value;

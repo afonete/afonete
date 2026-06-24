@@ -64,11 +64,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                         <i class="fas fa-coins mr-1"></i>Perfect Money <small class="text-muted">(<?php echo e($perfectMoneyWallets->count()); ?>)</small>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white" data-toggle="pill" href="#tab-auto">
-                        <i class="fas fa-bolt mr-1"></i>Auto (Plisio)
-                    </a>
-                </li>
+                
             </ul>
 
             <div class="tab-content">
@@ -82,7 +78,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                         <div class="card-body">
                             <?php if($directDepositAddress): ?>
                                 <?php
-                                    $directPayload = 'tron:' . $directDepositAddress->address;
+                                    $directPayload = $directDepositAddress->address;
                                     $directQr = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($directPayload) . '&margin=10';
                                 ?>
                                 <div class="row align-items-center">
@@ -169,7 +165,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                                         </div>
                                         
                                         <div class="flex-grow-1" style="min-width:240px;">
-                                            <div class="small text-muted">Address (<?php echo e($cryptoWallets->first()?->currency); ?> · <?php echo e($cryptoWallets->first()?->network); ?>)</div>
+                                            <div class="small text-muted" id="cryptoAddressLabel">Address (<?php echo e($cryptoWallets->first()?->currency); ?> · <?php echo e($cryptoWallets->first()?->network); ?>)</div>
                                             <div class="d-flex align-items-center mt-1">
                                                 <code id="cryptoAddressText"
                                                       class="text-warning flex-grow-1"
@@ -423,72 +419,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                 </div>
 
                 
-                <div class="tab-pane fade" id="tab-auto">
-                    <div class="card" style="background:#111; border:1px solid #333; border-radius:8px;">
-                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                            <h4 class="text-white mb-0">
-                                <i class="fas fa-link mr-2 text-success"></i>Automatic Deposit (Direct TRON)
-                            </h4>
-                            <small class="text-muted">Send USDT TRC-20 directly to our wallet — confirmed on-chain automatically.</small>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-success">
-                                <strong>No third-party gateway.</strong> 100% direct blockchain.
-                            </div>
-
-                            <?php
-                                $hotWallet = env('TRON_HOT_WALLET_ADDRESS', 'TYourCompanyHotWalletAddressHere');
-                            ?>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="p-3 mb-3" style="background:#0d0d0d; border:1px solid #444; border-radius:8px;">
-                                        <div class="small text-muted mb-1">Send USDT (TRC-20) to this address</div>
-                                        <div class="d-flex align-items-center">
-                                            <code id="hotWalletAddr" class="text-success flex-grow-1" style="word-break:break-all; font-size:15px; background:#000; padding:8px; border-radius:4px;">
-                                                <?php echo e($hotWallet); ?>
-
-                                            </code>
-                                            <button type="button" class="btn btn-sm btn-outline-success ml-2"
-                                                    data-copy-target="#hotWalletAddr">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
-                                        <div class="small text-muted mt-2">Network: <strong>TRON (TRC-20)</strong></div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="text-center">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=tron:<?php echo e($hotWallet); ?>" 
-                                             alt="QR Code" style="width:160px;height:160px;background:#fff;padding:6px;border-radius:6px;">
-                                        <div class="small text-muted mt-1">Scan with your wallet</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-3">
-                                <h6 class="text-white">How it works:</h6>
-                                <ol class="text-light small mb-3">
-                                    <li>Send any amount of <strong>USDT TRC-20</strong> to the address above.</li>
-                                    <li>Our system polls the blockchain every 2 minutes.</li>
-                                    <li>Once confirmed on-chain, your deposit is automatically marked <strong>approved</strong>.</li>
-                                    <li>No manual submission or proof needed for automatic deposits.</li>
-                                </ol>
-
-                                <div class="alert alert-warning py-2 small">
-                                    <strong>Important:</strong> Only send USDT on the <strong>TRON (TRC-20)</strong> network. 
-                                    Wrong network = funds lost.
-                                </div>
-
-                                <div class="small text-muted">
-                                    Minimum deposit: <strong>$<?php echo e(number_format($minDeposit, 2)); ?></strong><br>
-                                    Deposits are credited after blockchain confirmation.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
         </div>
 
@@ -603,6 +534,10 @@ $directDepositAddress = $directDepositAddress ?? null;
                 'Scan with your ' + currency + ' wallet';
             document.getElementById('cryptoMinAmount').textContent = parseFloat(min).toFixed(2);
             document.getElementById('cryptoNetworkName').textContent = network;
+            
+            // FIX ADDRESS ISSUE OF NOT SHOWING ONLY : Address (USDT · BEP-20)
+            document.getElementById('cryptoAddressLabel').textContent =
+                `Address (${currency} · ${network})`;
 
             // Sync hidden inputs in the deposit form
             const wId = document.getElementById('walletIdInput'); if (wId) wId.value = opt.value;
