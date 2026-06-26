@@ -49,7 +49,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
                 ->middleware(['signed', 'throttle:6,1'])
-                ->name('verification.verify');});
+                ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
                 ->middleware('throttle:6,1')
@@ -69,13 +69,13 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
+});
+
 Route::get('admin/confirm-request', [UserRegistration::class, 'confirm_user'])->name('admin.user.confirm');
 // Route::post('/user-request', [GuestRegistration::class, 'post_user'])->name('admin.user.add');
 Route::post('/user-request', [UserRegistration::class, 'user_request'])->name('guest.request');
 
+
 //admin authantication
-
-
 Route::get('admin/login', [AdminAuthenticatedSessionController::class, 'create'])->name('admin.login');
-
 Route::post('admin/login', [AdminAuthenticatedSessionController::class, 'store'])->name('admin.login');

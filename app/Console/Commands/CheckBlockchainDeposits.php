@@ -194,9 +194,11 @@ class CheckBlockchainDeposits extends Command
 
     protected function creditUser(int $userId, float $amount, Deposits $deposit, string $txHash, string $from, string $to): void
     {
-        $existing = (float) ChartAccount::where('user_id', $userId)->where('acc_type', 'CASHOUT')->sum('amount');
+        // Deposits are not withdrawable. Credit the user's DEPOSIT balance,
+        // while withdrawals continue to use CASHOUT only.
+        $existing = (float) ChartAccount::where('user_id', $userId)->where('acc_type', 'DEPOSIT')->sum('amount');
         ChartAccount::updateOrCreate(
-            ['user_id' => $userId, 'acc_type' => 'CASHOUT'],
+            ['user_id' => $userId, 'acc_type' => 'DEPOSIT'],
             ['amount'  => $existing + $amount]
         );
 

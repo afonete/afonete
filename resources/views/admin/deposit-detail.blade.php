@@ -215,12 +215,12 @@
                         @csrf
                         <input type="hidden" name="deposit" value="{{ $deposit->id }}">
                         <button type="submit"
-                                onclick="return confirm('Approve this deposit and credit {{ number_format($deposit->amount_deposited, 2) }} USD to the user\'s CASHOUT balance?')"
+                                onclick="return confirm('Approve this deposit and credit {{ number_format($deposit->amount_deposited, 2) }} USD to the user\'s DEPOSIT balance? Deposits are not withdrawable.')"
                                 class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded shadow">
                             <i class="fa fa-check mr-2"></i> Approve Deposit
                         </button>
                         <span class="ml-3 text-xs text-gray-500">
-                            Credits the user's CASHOUT balance immediately.
+                            Credits the user's DEPOSIT balance immediately. Deposits are not withdrawable.
                         </span>
                     </form>
                 @endif

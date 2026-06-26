@@ -401,12 +401,13 @@ public function withdraw_money(Request $request)
         'status'            => $depositStatus,
     ]);
 
-    // Only credit CASHOUT on confirmed success
+    // Only credit DEPOSIT on confirmed success.
+    // Deposits are not withdrawable; withdrawals only use CASHOUT.
     if ($depositStatus === 'approved') {
-        $existingCashout = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        $existingDeposit = $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
-            ['amount'  => $existingCashout + $amount]
+            ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+            ['amount'  => $existingDeposit + $amount]
         );
 
         \App\Models\Transaction::create([
@@ -430,7 +431,7 @@ public function withdraw_money(Request $request)
 }
  public function success(Request $request)
   {
-    // FIX (D4): If Plisio redirects user here after payment, also credit CASHOUT
+    // FIX (D4): If Plisio redirects user here after payment, also credit DEPOSIT
     // in case the server-side callback never fires. Idempotent.
     $user = Auth::user();
     if (!$user) {
@@ -441,7 +442,7 @@ public function withdraw_money(Request $request)
     $txnId  = $request->input('txn_id', $request->input('id'));
     $amount = (float) $request->input('amount', 0);
 
-    // If no txn_id provided, fall back to a generic legacy flow but still credit CASHOUT
+    // If no txn_id provided, fall back to a generic legacy flow.
     if (!$txnId && $amount <= 0) {
         return redirect()->route('user.dashboard.deposit')
             ->with('message', 'Thank you! Your deposit is being processed.');
@@ -461,11 +462,11 @@ public function withdraw_money(Request $request)
             'status'            => 'approved',
         ]);
 
-        // Credit CASHOUT
-        $existingCashout = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        // Credit DEPOSIT, not CASHOUT. Deposits are not withdrawable.
+        $existingDeposit = $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
-            ['amount'  => $existingCashout + $amount]
+            ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+            ['amount'  => $existingDeposit + $amount]
         );
 
         \App\Models\Transaction::create([

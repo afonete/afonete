@@ -60,7 +60,7 @@
                     <i class="las la-envelope input_icon"></i>
                 </button>
             </div>
-            <input class="input100 formInputs" name="login"  placeholder="Enter Email/Phone"
+            <input class="input100 formInputs" name="login"  placeholder="Enter Email/Username"
                 :value="old('login')" required>
         </div>
 

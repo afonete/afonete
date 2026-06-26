@@ -238,10 +238,11 @@ class AdminController extends Controller
 
         $deposit->update(['status' => 'approved']);
 
-        // ── Credit CASHOUT account with the deposited amount ──
-        $existing = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        // ── Credit DEPOSIT account with the deposited amount ──
+        // Deposits are not withdrawable; withdrawals only use CASHOUT.
+        $existing = $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
+            ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
             ['amount'  => $existing + $deposit->amount_deposited]
         );
 
