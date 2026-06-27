@@ -955,37 +955,85 @@ public function getTeamTree(Request $request,$id){
                     ->latest()->take(20)->get()
                     ->map(function ($t) {
                         $d = json_decode($t->transaction_details, true) ?? [];
-                        $t->to_name   = $d['to_name'] ?? ($d['to_user'] ?? '—');
-                        $t->to_email  = $d['to_email'] ?? '—';
-                        $t->tok_amt   = $d['token_amount'] ?? 0;
+                        $t->to_name       = $d['to_name'] ?? ($d['to_user'] ?? '—');
+                        $t->to_username   = $d['to_username'] ?? ($d['to_user_column'] ?? '—');
+                        $t->to_activation = $d['to_activation'] ?? '—';
+                        $t->tok_amt       = $d['token_amount'] ?? 0;
                         return $t;
                     });
 
         return view('user.token.transfer', compact('freeBal', 'symbol', 'history'));
     }
 
-    /** AJAX: look up recipient by email, return name for confirmation */
+    /** AJAX: look up recipient by activation code OR username (`users.user`). */
     public function tokenTransferLookup(Request $request)
     {
-        $recipient = \App\Models\User::where('email', $request->email)
-                        ->where('id', '!=', Auth::id())
-                        ->select('id','name','email')
-                        ->first();
+        $identifier = trim((string) $request->query('identifier', $request->query('recipient', $request->query('q', ''))));
+
+        if ($identifier === '') {
+            return response()->json([
+                'found' => false,
+                'message' => 'Enter recipient activation code or username.',
+            ]);
+        }
+
+        $recipient = $this->findTokenTransferRecipient($identifier, Auth::id());
 
         if (!$recipient) {
-            return response()->json(['found' => false, 'message' => 'No user found with that email.']);
+            return response()->json([
+                'found' => false,
+                'message' => 'No user found with that activation code or username.',
+            ]);
         }
-        return response()->json(['found' => true, 'name' => $recipient->name, 'email' => $recipient->email]);
+
+        return response()->json([
+            'found'      => true,
+            'name'       => $recipient->name,
+            'username'   => $recipient->user,
+            'activation' => $recipient->activation,
+        ]);
+    }
+
+    private function findTokenTransferRecipient(string $identifier, ?int $excludeUserId = null)
+    {
+        $identifier = trim($identifier);
+
+        if ($identifier === '') {
+            return null;
+        }
+
+        return \App\Models\User::query()
+            ->where(function ($query) use ($identifier) {
+                $query->where('activation', $identifier)
+                    ->orWhere('user', $identifier);
+            })
+            ->when($excludeUserId, function ($query) use ($excludeUserId) {
+                $query->where('id', '!=', $excludeUserId);
+            })
+            ->select('id', 'name', 'user', 'activation')
+            ->first();
     }
 
     public function tokenTransfer(Request $request)
     {
         $user = Auth::user();
         $request->validate([
-            'recipient_email' => 'required|email|exists:users,email',
-            'token_amount'    => 'required|numeric|min:1',
-            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
+            'recipient_identifier' => 'required|string|max:100',
+            'token_amount'         => 'required|numeric|min:1',
+        ], [
+            'recipient_identifier.required' => 'Please enter recipient activation code or username.',
         ]);
+
+        $identifier = trim((string) $request->recipient_identifier);
+        $recipient  = $this->findTokenTransferRecipient($identifier, $user->id);
+
+        if (!$recipient) {
+            return back()->withInput()->with('error', 'No user found with that activation code or username.');
+        }
+
+        if ($recipient->id === $user->id) {
+            return back()->withInput()->with('error', 'You cannot transfer tokens to yourself.');
+        }
 
         if ($message = $this->transactionPasswordError($request, $user)) {
             return back()->withInput()->with('error', $message);
@@ -995,13 +1043,7 @@ public function getTeamTree(Request $request,$id){
         $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
 
         if ($freeBal < $tokenAmount) {
-            return back()->with('error', 'Insufficient Free Token balance. You have ' . number_format($freeBal, 0) . ' tokens.');
-        }
-
-        $recipient = \App\Models\User::where('email', $request->recipient_email)->first();
-
-        if ($recipient->id === $user->id) {
-            return back()->with('error', 'You cannot transfer tokens to yourself.');
+            return back()->withInput()->with('error', 'Insufficient Free Token balance. You have ' . number_format($freeBal, 0) . ' tokens.');
         }
 
         // Deduct from sender FREE_TOKEN
@@ -1023,18 +1065,19 @@ public function getTeamTree(Request $request,$id){
             'receiver_id'         => $recipient->id,
             'transaction_details' => json_encode([
                 'token_amount' => $tokenAmount,
-                'to_name'      => $recipient->name,
-                'to_email'     => $recipient->email,
-                'to_user'      => $recipient->name,
-                'from_user'    => $user->name,
-                'from_email'   => $user->email,
+                'to_name'       => $recipient->name,
+                'to_username'   => $recipient->user,
+                'to_activation' => $recipient->activation,
+                'to_user'       => $recipient->name,
+                'from_user'     => $user->name,
+                'from_username' => $user->user,
                 'date'         => now()->toDateTimeString(),
                 'status'       => 'completed',
             ]),
         ]);
 
         return back()->with('success', number_format($tokenAmount, 0) . ' ' .
-            \App\Models\TokenSetting::currentSymbol() . ' transferred to ' . $recipient->name . ' (' . $recipient->email . ').');
+            \App\Models\TokenSetting::currentSymbol() . ' transferred to ' . $recipient->name . ' (@' . $recipient->user . ').');
     }
 
     // ═══════════════════════════════════════════════════════════════════════
