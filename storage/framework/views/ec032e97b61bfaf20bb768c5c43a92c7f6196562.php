@@ -85,7 +85,7 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                             </h4>
                         </div>
                         <div class="card-body">
-                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>" class="js-transaction-password-form">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="method" value="crypto">
 
@@ -138,6 +138,10 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                     </div>
 
                                     <div class="col-md-12 mt-3">
+                                        <input type="hidden" name="transaction_password" class="js-transaction-password-value">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
                                         <button type="submit" class="btn btn-warning btn-block font-weight-bold"
                                                 <?php echo e($availlableBalance < $settings->min_amount ? 'disabled' : ''); ?>>
                                             <i class="fas fa-paper-plane mr-1"></i> Submit Crypto Withdrawal Request
@@ -162,7 +166,7 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                             <?php if($advcashActive->isEmpty()): ?>
                                 <div class="alert alert-warning">Advcash withdrawals are not currently configured.</div>
                             <?php else: ?>
-                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>" class="js-transaction-password-form">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="method" value="advcash">
                                 <input type="hidden" name="network" value="ADVCASH">
@@ -204,6 +208,10 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                     </div>
 
                                     <div class="col-md-12 mt-3">
+                                        <input type="hidden" name="transaction_password" class="js-transaction-password-value">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
                                         <button type="submit" class="btn btn-warning btn-block font-weight-bold"
                                                 <?php echo e($availlableBalance < $settings->min_amount ? 'disabled' : ''); ?>>
                                             <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Withdrawal Request
@@ -229,7 +237,7 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                             <?php if($perfectMoneyActive->isEmpty()): ?>
                                 <div class="alert alert-warning">Perfect Money withdrawals are not currently configured.</div>
                             <?php else: ?>
-                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>" class="js-transaction-password-form">
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="method" value="perfect_money">
                                 <input type="hidden" name="network" value="PERFECT_MONEY">
@@ -270,6 +278,10 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                     </div>
 
                                     <div class="col-md-12 mt-3">
+                                        <input type="hidden" name="transaction_password" class="js-transaction-password-value">
+                                    </div>
+
+                                    <div class="col-md-12 mt-3">
                                         <button type="submit" class="btn btn-warning btn-block font-weight-bold"
                                                 <?php echo e($availlableBalance < $settings->min_amount ? 'disabled' : ''); ?>>
                                             <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Withdrawal Request
@@ -296,7 +308,7 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                 <strong>Direct TRON blockchain.</strong> Funds sent immediately when you click withdraw.
                             </div>
 
-                            <form method="POST" action="<?php echo e(route('user.withdraw.direct_blockchain')); ?>">
+                            <form method="POST" action="<?php echo e(route('user.withdraw.direct_blockchain')); ?>" class="js-transaction-password-form">
                                 <?php echo csrf_field(); ?>
 
                                 <div class="form-group">
@@ -321,6 +333,10 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                         <input type="text" value="TRON (TRC-20)" class="form-control" disabled
                                                style="background:#222; color:white; border-color:#555;">
                                     </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <input type="hidden" name="transaction_password" class="js-transaction-password-value">
                                 </div>
 
                                 <div class="mt-3">
@@ -432,4 +448,6 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
 </script>
 
 <?php echo $__env->make('user.footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
+<?php echo $__env->make('user.components.transaction-password-modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/balance/withdraw.blade.php ENDPATH**/ ?>

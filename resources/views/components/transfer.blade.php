@@ -33,6 +33,10 @@
         </div>
 
         <div>
+            @include('user.components.transaction-password-field')
+        </div>
+
+        <div>
             <button class="bg-orange-600 px-8 py-0.5 mt-4 md:mt-6 focus:outline-none text-white rounded-xl">Send</button>
         </div>
     </div>

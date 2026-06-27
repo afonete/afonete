@@ -262,58 +262,79 @@ $package=$user->has_paid_package;
                     
 
                         <!-- second transaction -->
-                        <form action="" method="post" class="pb-5">
+                        <form action="<?php echo e(route('transaction-password.update')); ?>" method="post" class="pb-5">
                             <?php echo csrf_field(); ?>
-                          <!--   <div class=" form-group">
-                                <label for="profile-pic">Profile Picture:</label>
-                                <input type="file" id="profile-pic" name="pic">
-                            </div> -->
+                            <h4>Second Transaction Password</h4>
+                            <p class="text-muted">This password is required when making withdrawals, transfers, token swaps, and token withdrawals.</p>
                             <div class="form-group">
-                                <label for="name">Second Transaction password:</label>
-                                <input type="password" id="current_password" name="current_password" placeholder="current password" required>
-                            </div>
-                            <div class="wrap-input100 validate-input" data-validate="Enter password">
-                                    <span class="btn-show-pass">
-                                        <i class="zmdi zmdi-eye"></i>
-                                    </span>
-                                    <input class="input100" name="password" type="password" placeholder="Enter Password"
-                                        name="password" required autocomplete="current-password">
-                                    <span class="focus-input100"></span>
-
-                                </div>
-                                <div class="wrap-input100 validate-input">
+                                <label for="current_transaction_password">Current login password:</label>
+                                <input type="password" id="current_transaction_password" name="current_password" placeholder="Current login password" required>
                                 <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-label','data' => ['for' => 'password_confirmation']]); ?>
-<?php $component->withName('input-label'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['for' => 'password_confirmation']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?><span class="btn-show-pass"><i
-                                        class="zmdi zmdi-eye"></i></span>
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.text-input','data' => ['id' => 'password_confirmation','class' => 'input100','type' => 'password','name' => 'password_confirmation','required' => true,'placeholder' => 'Re-enter Password']]); ?>
-<?php $component->withName('text-input'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['id' => 'password_confirmation','class' => 'input100','type' => 'password','name' => 'password_confirmation','required' => true,'placeholder' => 'Re-enter Password']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
-<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
-<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
-<?php endif; ?><span
-                                    class="focus-input100"></span>
-                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
-<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-error','data' => ['messages' => $errors->get('password_confirmation'),'class' => 'mt-2']]); ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-error','data' => ['messages' => $errors->get('current_password'),'class' => 'mt-2']]); ?>
 <?php $component->withName('input-error'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('password_confirmation')),'class' => 'mt-2']); ?>
+<?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('current_password')),'class' => 'mt-2']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            </div>
+                            <div class="wrap-input100 validate-input" data-validate="Enter second transaction password">
+                                <span class="btn-show-pass">
+                                    <i class="zmdi zmdi-eye"></i>
+                                </span>
+                                <input class="input100" id="transaction_password" name="transaction_password" type="password" placeholder="Enter Second Transaction Password"
+                                    required autocomplete="new-password">
+                                <span class="focus-input100"></span>
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-error','data' => ['messages' => $errors->get('transaction_password'),'class' => 'mt-2']]); ?>
+<?php $component->withName('input-error'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('transaction_password')),'class' => 'mt-2']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                            </div>
+                            <div class="wrap-input100 validate-input">
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-label','data' => ['for' => 'transaction_password_confirmation']]); ?>
+<?php $component->withName('input-label'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['for' => 'transaction_password_confirmation']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                                <span class="btn-show-pass"><i class="zmdi zmdi-eye"></i></span>
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.text-input','data' => ['id' => 'transaction_password_confirmation','class' => 'input100','type' => 'password','name' => 'transaction_password_confirmation','required' => true,'placeholder' => 'Re-enter Second Transaction Password','autocomplete' => 'new-password']]); ?>
+<?php $component->withName('text-input'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['id' => 'transaction_password_confirmation','class' => 'input100','type' => 'password','name' => 'transaction_password_confirmation','required' => true,'placeholder' => 'Re-enter Second Transaction Password','autocomplete' => 'new-password']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
+<?php $component = $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4; ?>
+<?php unset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4); ?>
+<?php endif; ?>
+                                <span class="focus-input100"></span>
+                                <?php if (isset($component)) { $__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4 = $component; } ?>
+<?php $component = $__env->getContainer()->make(Illuminate\View\AnonymousComponent::class, ['view' => 'components.input-error','data' => ['messages' => $errors->get('transaction_password_confirmation'),'class' => 'mt-2']]); ?>
+<?php $component->withName('input-error'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php $component->withAttributes(['messages' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($errors->get('transaction_password_confirmation')),'class' => 'mt-2']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__componentOriginalc254754b9d5db91d5165876f9d051922ca0066f4)): ?>
@@ -322,7 +343,7 @@ $package=$user->has_paid_package;
 <?php endif; ?>
                             </div>
                             <br>
-                            <input type="submit" value="Change">
+                            <input type="submit" value="Change Second Transaction Password">
                         </form>
 
 

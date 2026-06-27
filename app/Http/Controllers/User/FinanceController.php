@@ -293,9 +293,8 @@ class FinanceController extends Controller
         $user = Auth::User();
         $validatedData = $request->validate([
             'amount' => 'required|max:25',
-            'account'=>'required'
+            'account'=>'required',
         ]);
-        dd($request);
         $amount = $request->amount;
         $receiver_account = $request->account;
         $remaining = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount") - $amount;
@@ -985,7 +984,12 @@ public function getTeamTree(Request $request,$id){
         $request->validate([
             'recipient_email' => 'required|email|exists:users,email',
             'token_amount'    => 'required|numeric|min:1',
+            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
         ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
 
         $tokenAmount = (float) $request->token_amount;
         $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
@@ -1056,7 +1060,12 @@ public function getTeamTree(Request $request,$id){
         $user = Auth::user();
         $request->validate([
             'token_amount' => 'required|numeric|min:1',
+            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
         ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
 
         $tokenAmount = (float) $request->token_amount;
         $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
@@ -1124,7 +1133,12 @@ public function getTeamTree(Request $request,$id){
         $request->validate([
             'token_amount'   => 'required|numeric|min:1',
             'wallet_address' => 'required|string',
+            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
         ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
 
         $tokenAmount = (float) $request->token_amount;
         $freeBal     = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
@@ -1193,7 +1207,9 @@ public function getTeamTree(Request $request,$id){
     public function availableToFree(Request $request)
     {
         $user = Auth::user();
-        $request->validate(['token_amount' => 'required|numeric|min:1']);
+        $request->validate([
+            'token_amount' => 'required|numeric|min:1',
+        ]);
 
         $tokenAmount  = (float) $request->token_amount;
         $availableBal = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
@@ -1258,6 +1274,52 @@ public function getTeamTree(Request $request,$id){
         $exampleTokens = $uvpPrice > 0 ? round($packageAmount / $uvpPrice, 0) : 0;
 
         return view('user.token.locked-info', compact('lockedBal', 'symbol', 'package', 'packageAmount', 'exampleTokens', 'uvpPrice'));
+    }
+
+    /**
+     * Inline transaction password validator.
+     * Avoids autoload issues with custom Rule classes and returns user-friendly messages.
+     */
+    private function transactionPasswordRule($user)
+    {
+        return function ($attribute, $value, $fail) use ($user) {
+            if (! $user) {
+                $fail('Please login first.');
+                return;
+            }
+
+            if (empty($user->transaction_password)) {
+                $fail('Please set your second transaction password first from /user/password.');
+                return;
+            }
+
+            if (! \Illuminate\Support\Facades\Hash::check((string) $value, $user->transaction_password)) {
+                $fail('Second transaction password is wrong.');
+            }
+        };
+    }
+
+    private function transactionPasswordError(Request $request, $user): ?string
+    {
+        $password = (string) $request->input('transaction_password', '');
+
+        if (! $user) {
+            return 'Please login first.';
+        }
+
+        if (empty($user->transaction_password)) {
+            return 'Please set your second transaction password first from /user/password.';
+        }
+
+        if ($password === '') {
+            return 'Second transaction password is required.';
+        }
+
+        if (! \Illuminate\Support\Facades\Hash::check($password, $user->transaction_password)) {
+            return 'Second transaction password is wrong.';
+        }
+
+        return null;
     }
 
 }

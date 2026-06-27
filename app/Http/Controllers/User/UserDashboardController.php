@@ -144,7 +144,7 @@ class UserDashboardController extends Controller{
             default:
             $portfolio = $package->paid;
 
-     }
+        }
 
         $ranks = [
             "isAssociate"=>$this->isAssociate(Auth::User()),
@@ -392,92 +392,92 @@ class UserDashboardController extends Controller{
 
     private function getPeriodDates($period)
     {
-            switch ($period) {
-                case 'this_week':
-                    return [now()->startOfWeek(), now()->endOfWeek()];
+        switch ($period) {
+            case 'this_week':
+                return [now()->startOfWeek(), now()->endOfWeek()];
 
-                case 'last_week':
-                    return [now()-> Week()->startOfWeek(), now()->subWeek()->endOfWeek()];
+            case 'last_week':
+                return [now()-> Week()->startOfWeek(), now()->subWeek()->endOfWeek()];
 
-                case 'this_month':
-                    return [now()->startOfMonth(), now()->endOfMonth()];
+            case 'this_month':
+                return [now()->startOfMonth(), now()->endOfMonth()];
 
-                case 'last_month':
-                    return [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()];
+            case 'last_month':
+                return [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()];
 
-                case 'this_year':
-                    return [now()->startOfYear(), now()->endOfYear()];
+            case 'this_year':
+                return [now()->startOfYear(), now()->endOfYear()];
 
-                case 'last_year':
-                    return [now()->subYear()->startOfYear(), now()->subYear()->endOfYear()];
+            case 'last_year':
+                return [now()->subYear()->startOfYear(), now()->subYear()->endOfYear()];
 
-                default:
-                    return [now()->startOfDay(), now()->endOfDay()];
-            }
+            default:
+                return [now()->startOfDay(), now()->endOfDay()];
+        }
     }
 
-        private function getEarnings($user,$period,$side){
-                $directUsers = $user->ownedTeams()->where('side', $side)->get();
-                $indirectUvpCount = 0;
-                $zone = 0;
-                $d = [];
-                foreach ($directUsers as $directUser) {
-                    $indirectUsers = $this->findIndirectUsers($directUser->teamMember, $side);
-                    foreach ($indirectUsers as $indirectUser) {
-                        $individualUser = $indirectUser->teamMember;
-                        //  dd($indirectUser);
-                        $hasUvpInvestment = $individualUser->investments()->where('category', 'VENTURE')->exists();
+    private function getEarnings($user,$period,$side){
+        $directUsers = $user->ownedTeams()->where('side', $side)->get();
+        $indirectUvpCount = 0;
+        $zone = 0;
+        $d = [];
+        foreach ($directUsers as $directUser) {
+            $indirectUsers = $this->findIndirectUsers($directUser->teamMember, $side);
+            foreach ($indirectUsers as $indirectUser) {
+                $individualUser = $indirectUser->teamMember;
+                //  dd($indirectUser);
+                $hasUvpInvestment = $individualUser->investments()->where('category', 'VENTURE')->exists();
 
-                        if($hasUvpInvestment){
-                            $com = $individualUser->transactions()
-                            ->whereBetween('created_at', $this->getPeriodDates($period))->get();
+                if($hasUvpInvestment){
+                    $com = $individualUser->transactions()
+                    ->whereBetween('created_at', $this->getPeriodDates($period))->get();
 
-                            $commission = $com->filter(function($data) {
-                                return $data->transaction_type == "COMMISSION";
-                            })->sum(function ($data) {
-                                $details = json_decode($data->transaction_details, true);
-                                return $details['amount'] ?? 0;
-                            });
+                    $commission = $com->filter(function($data) {
+                        return $data->transaction_type == "COMMISSION";
+                    })->sum(function ($data) {
+                        $details = json_decode($data->transaction_details, true);
+                        return $details['amount'] ?? 0;
+                    });
 
-                            $zone += $commission;
+                    $zone += $commission;
 
 
-                        }
-
-                    }
                 }
-                return $zone;
-
-        }
-
-
-        private function getDirectUvpPeriodically($teamMembers, $packageType,$period,$side) {
-            $directUvpCount = 0;
-            $commission = 0;
-
-            // dd($teamMembers);
-            foreach ($teamMembers as $teamMember) {
-                // dd($teamMember->teamMember);
-                $individualUser = $teamMember->teamMember;
-
-                // $hasUvpInvestment = $du->investments()->where('category', 'VENTURE')->exists();
-                // $earns = $du->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
-
-                $co = $individualUser->transactions()
-                            ->whereBetween('created_at', $this->getPeriodDates($period))->get();
-
-                        $com = $co->filter(function($data) {
-                                return $data->transaction_type == "COMMISSION";
-                            })->sum(function ($data) {
-                                $details = json_decode($data->transaction_details, true);
-                                return $details['amount'] ?? 0;
-                            });
-                $commission += $com;
 
             }
-
-            return $commission;
         }
+        return $zone;
+
+    }
+
+
+    private function getDirectUvpPeriodically($teamMembers, $packageType,$period,$side) {
+        $directUvpCount = 0;
+        $commission = 0;
+
+        // dd($teamMembers);
+        foreach ($teamMembers as $teamMember) {
+            // dd($teamMember->teamMember);
+            $individualUser = $teamMember->teamMember;
+
+            // $hasUvpInvestment = $du->investments()->where('category', 'VENTURE')->exists();
+            // $earns = $du->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
+
+            $co = $individualUser->transactions()
+                        ->whereBetween('created_at', $this->getPeriodDates($period))->get();
+
+                    $com = $co->filter(function($data) {
+                            return $data->transaction_type == "COMMISSION";
+                        })->sum(function ($data) {
+                            $details = json_decode($data->transaction_details, true);
+                            return $details['amount'] ?? 0;
+                        });
+            $commission += $com;
+
+        }
+
+        return $commission;
+    }
 
     public function fetchCommissions (Request $request){
         $user   =   Auth::User();
@@ -521,53 +521,53 @@ class UserDashboardController extends Controller{
             "zoneB"=>$right_direct_uvp['earnings'] + $right_indirect_uvp['zone']
         ];
 
-}
+    }
     public function calculatePackageMetrics($package)
-        {
-            // The amount paid for the package
-            $amount = $package->paid;
+    {
+        // The amount paid for the package
+        $amount = $package->paid;
 
-            // Calculate Fcoin (uses admin-configurable UVP price from token_settings)
-            $uvpPrice = \App\Models\TokenSetting::uvpPrice();
-            $fcoin = $uvpPrice > 0 ? round($amount / $uvpPrice, 4) : 0;
-            // Calculate percentages of the amount
-            $percent20 = ($amount * 20 / 100); 
-            $percent80 = ($amount * 80 / 100);
+        // Calculate Fcoin (uses admin-configurable UVP price from token_settings)
+        $uvpPrice = \App\Models\TokenSetting::uvpPrice();
+        $fcoin = $uvpPrice > 0 ? round($amount / $uvpPrice, 4) : 0;
+        // Calculate percentages of the amount
+        $percent20 = ($amount * 20 / 100); 
+        $percent80 = ($amount * 80 / 100);
 
-            // Gas fees are 20% of the amount
-            $gasFees = $percent20;
+        // Gas fees are 20% of the amount
+        $gasFees = $percent20;
 
-            // Pool capital is 80% of the amount
-            $poolCapital = $percent80;
+        // Pool capital is 80% of the amount
+        $poolCapital = $percent80;
 
-            // 2% of the pool capital
-            $twoPercentageOfPoolCapital = $poolCapital * 2 / 100;
+        // 2% of the pool capital
+        $twoPercentageOfPoolCapital = $poolCapital * 2 / 100;
 
-            // Daily income is 2% of the pool capital
-            $dailyIncome = $twoPercentageOfPoolCapital;
+        // Daily income is 2% of the pool capital
+        $dailyIncome = $twoPercentageOfPoolCapital;
 
-            // 25% of daily income for cashout
-            $t5percentageOfDailyIncome = $dailyIncome * 25 / 100;
-            $cashout = $t5percentageOfDailyIncome;
+        // 25% of daily income for cashout
+        $t5percentageOfDailyIncome = $dailyIncome * 25 / 100;
+        $cashout = $t5percentageOfDailyIncome;
 
-            // 75% of daily income for shopping
-            $t75PercentOfDailyIncome = $dailyIncome * 75 / 100;
-            $shopping = $t75PercentOfDailyIncome;
+        // 75% of daily income for shopping
+        $t75PercentOfDailyIncome = $dailyIncome * 75 / 100;
+        $shopping = $t75PercentOfDailyIncome;
 
-            // The date the package was created
-            $createdDate = $package->created_at;
+        // The date the package was created
+        $createdDate = $package->created_at;
 
-            // Return all calculated values as an associative array
-            return [
-                'fcoin' => $fcoin,
-                'gasFees' => $gasFees,
-                'poolCapital' => $poolCapital,
-                'dailyIncome' => $dailyIncome,
-                'cashout' => $cashout,
-                'shopping' => $shopping,
-                'createdDate' => $createdDate,
-            ];
-        }
+        // Return all calculated values as an associative array
+        return [
+            'fcoin' => $fcoin,
+            'gasFees' => $gasFees,
+            'poolCapital' => $poolCapital,
+            'dailyIncome' => $dailyIncome,
+            'cashout' => $cashout,
+            'shopping' => $shopping,
+            'createdDate' => $createdDate,
+        ];
+    }
 
 
 
@@ -847,7 +847,7 @@ class UserDashboardController extends Controller{
 
 
 
- public function isDirector(User $user)
+    public function isDirector(User $user)
     {
         // Check personal investment
         $personalInvestment = $this->getTotalInvestmentForVentures($user);
@@ -904,7 +904,7 @@ class UserDashboardController extends Controller{
 
 
 
-public function isRegionalSupervisor(User $user)
+    public function isRegionalSupervisor(User $user)
     {
         $personalInvestment = $this->getTotalInvestmentForVentures($user);
 
@@ -950,7 +950,7 @@ public function isRegionalSupervisor(User $user)
 
 
 
-public function isRegionalVicePresident(User $user)
+    public function isRegionalVicePresident(User $user)
     {
         // Check Personal Investment
         $personalInvestment = $this->getTotalInvestmentForVentures($user);
@@ -1072,6 +1072,12 @@ public function isRegionalVicePresident(User $user)
     public function TransferToInternal(Request $request){
 
         $user = Auth::User();
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'account' => 'required|string',
+            'transaction_password' => ['required', new \App\Rules\ValidTransactionPassword($user)],
+        ]);
+
         $from = "CASHOUT";
         $to = $request->account;
         $amount = $request->amount;
@@ -1087,17 +1093,17 @@ public function isRegionalVicePresident(User $user)
             ]
             );
          ChartAccount::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'acc_type' => 'CASHOUT',
-                ],
-                [
-                    'amount' => $remaining
-                ]
-                );
+            [
+                'user_id' => $user->id,
+                'acc_type' => 'CASHOUT',
+            ],
+            [
+                'amount' => $remaining
+            ]
+            );
 
 
-            return redirect()->route("user.dashboard");
+        return redirect()->route("user.dashboard");
 
     }
     public function coinacc()
@@ -1152,7 +1158,7 @@ public function isRegionalVicePresident(User $user)
         }
     }
 
-    }
+}
 
 // -----------------------------cashout , trading vouchers
 

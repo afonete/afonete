@@ -36,12 +36,12 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name','phone','gender','country','utype',
         'has_paid_package','has_free_package',
-        'referee_id','father','email','user','contract','password',
+        'referee_id','father','email','user','contract','password','transaction_password','transaction_password_set_at',
         'profile_photo_path','activation','gender','ref_code','has_request',
     ];
 
     protected $hidden = [
-        'password','remember_token','two_factor_recovery_codes','two_factor_secret',
+        'password','transaction_password','remember_token','two_factor_recovery_codes','two_factor_secret',
     ];
 
     protected $casts = [

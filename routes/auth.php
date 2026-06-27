@@ -67,6 +67,9 @@ Route::middleware('auth')->group(function () {
     Route::get('admin/password/', [PasswordController::class, 'ad_show'])->name('admin.password.show');
     // Route::post('password', [PasswordResetLinkController::class, 'update'])->name('password.update');
 
+    Route::post('user/transaction-password', [PasswordController::class, 'updateTransactionPassword'])->name('transaction-password.update');
+    Route::post('user/transaction-password/verify', [PasswordController::class, 'verifyTransactionPassword'])->name('transaction-password.verify');
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });

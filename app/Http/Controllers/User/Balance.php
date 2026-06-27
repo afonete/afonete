@@ -84,7 +84,7 @@ class Balance extends Controller{
     }
 
 
-public function withdraw_money(Request $request)
+    public function withdraw_money(Request $request)
     {
         $user = Auth::User();
         $settings = \App\Models\WithdrawalSetting::current();
@@ -93,6 +93,7 @@ public function withdraw_money(Request $request)
         // FIX (W5): API key from config; (W1): min from settings; (W10): TRC-20 format
         $request->validate([
             'amount'  => 'required|numeric|min:' . $settings->min_amount,
+            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
             'address' => [
                 'required','string',
                 // FIX (W10): TRC-20 addresses start with T and are ~34 chars
@@ -105,6 +106,11 @@ public function withdraw_money(Request $request)
                 },
             ],
         ]);
+
+        
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
 
         $amount  = (float) $request->amount;
         $address = $request->address;
@@ -401,8 +407,7 @@ public function withdraw_money(Request $request)
         'status'            => $depositStatus,
     ]);
 
-    // Only credit DEPOSIT on confirmed success.
-    // Deposits are not withdrawable; withdrawals only use CASHOUT.
+    // Only credit DEPOSIT on confirmed success. Deposits are not withdrawable.
     if ($depositStatus === 'approved') {
         $existingDeposit = $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         \App\Models\ChartAccount::updateOrCreate(
@@ -422,6 +427,7 @@ public function withdraw_money(Request $request)
                 'plisio_id' => $txnId,
                 'date'      => now()->toDateTimeString(),
                 'status'    => 'approved',
+                'account'   => 'DEPOSIT',
                 'username'  => $user->name,
             ]),
         ]);
@@ -433,6 +439,7 @@ public function withdraw_money(Request $request)
   {
     // FIX (D4): If Plisio redirects user here after payment, also credit DEPOSIT
     // in case the server-side callback never fires. Idempotent.
+    // Deposits are not withdrawable; CASHOUT is reserved for withdrawable funds.
     $user = Auth::user();
     if (!$user) {
         return redirect()->route('user.dashboard.deposit')
@@ -442,7 +449,7 @@ public function withdraw_money(Request $request)
     $txnId  = $request->input('txn_id', $request->input('id'));
     $amount = (float) $request->input('amount', 0);
 
-    // If no txn_id provided, fall back to a generic legacy flow.
+    // If no txn_id provided, fall back to a generic legacy flow without crediting
     if (!$txnId && $amount <= 0) {
         return redirect()->route('user.dashboard.deposit')
             ->with('message', 'Thank you! Your deposit is being processed.');
@@ -462,7 +469,7 @@ public function withdraw_money(Request $request)
             'status'            => 'approved',
         ]);
 
-        // Credit DEPOSIT, not CASHOUT. Deposits are not withdrawable.
+        // Credit DEPOSIT, not CASHOUT. Deposits are package-spendable only.
         $existingDeposit = $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         \App\Models\ChartAccount::updateOrCreate(
             ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
@@ -481,6 +488,7 @@ public function withdraw_money(Request $request)
                 'plisio_id' => $txnId,
                 'date'      => now()->toDateTimeString(),
                 'status'    => 'approved',
+                'account'   => 'DEPOSIT',
                 'username'  => $user->name,
                 'source'    => 'plisio_success_callback',
             ]),
@@ -506,6 +514,7 @@ public function withdraw_money(Request $request)
 
         $request->validate([
             'amount'  => "required|numeric|min:{$minAmount}|max:" . (float) $settings->max_per_transaction,
+            'transaction_password' => ['required', $this->transactionPasswordRule($user)],
             'method'  => 'required|string|in:crypto,advcash,perfect_money',
             'network' => 'nullable|string|max:30',
             'currency'=> 'required|string|max:10',
@@ -517,6 +526,11 @@ public function withdraw_money(Request $request)
             'currency.required' => 'Please select a currency.',
             'address.required'  => 'Please enter your destination wallet address / account number.',
         ]);
+
+        
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
 
         $amount    = (float) $request->amount;
         $method    = $request->method;
@@ -718,5 +732,51 @@ public function withdraw_money(Request $request)
         ]);
 
         return $this->requestManualWithdrawal($request);
+    }
+
+    /**
+     * Inline transaction password validator.
+     * Avoids autoload issues with custom Rule classes and returns user-friendly messages.
+     */
+    private function transactionPasswordRule($user)
+    {
+        return function ($attribute, $value, $fail) use ($user) {
+            if (! $user) {
+                $fail('Please login first.');
+                return;
+            }
+
+            if (empty($user->transaction_password)) {
+                $fail('Please set your second transaction password first from /user/password.');
+                return;
+            }
+
+            if (! \Illuminate\Support\Facades\Hash::check((string) $value, $user->transaction_password)) {
+                $fail('Second transaction password is wrong.');
+            }
+        };
+    }
+
+    private function transactionPasswordError(Request $request, $user): ?string
+    {
+        $password = (string) $request->input('transaction_password', '');
+
+        if (! $user) {
+            return 'Please login first.';
+        }
+
+        if (empty($user->transaction_password)) {
+            return 'Please set your second transaction password first from /user/password.';
+        }
+
+        if ($password === '') {
+            return 'Second transaction password is required.';
+        }
+
+        if (! \Illuminate\Support\Facades\Hash::check($password, $user->transaction_password)) {
+            return 'Second transaction password is wrong.';
+        }
+
+        return null;
     }
 }

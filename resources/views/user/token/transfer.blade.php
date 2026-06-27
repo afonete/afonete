@@ -21,7 +21,7 @@
                         <span class="font-weight-bold">{{ number_format($freeBal, 0) }} {{ $symbol }}</span>
                     </div>
 
-                    <form method="POST" action="{{ route('user.token.transfer.post') }}" id="transferForm">
+                    <form method="POST" action="{{ route('user.token.transfer.post') }}" id="transferForm" class="js-transaction-password-form">
                         @csrf
 
                         {{-- Email lookup --}}
@@ -60,6 +60,8 @@
                             <i class="fas fa-exclamation-triangle mr-1"></i>
                             Transfers go to the recipient's <strong>Free Token</strong> wallet. Immediate and irreversible.
                         </div>
+
+                        <input type="hidden" name="transaction_password" class="js-transaction-password-value">
 
                         <button type="submit" class="btn btn-primary btn-block font-weight-bold"
                                 id="submitBtn" {{ $freeBal < 1 ? 'disabled' : '' }}>
@@ -105,6 +107,7 @@
 </div>
 </div>
 
+@include('user.components.transaction-password-modal')
 <script>
 document.getElementById('lookupBtn').addEventListener('click', function () {
     const email   = document.getElementById('recipientEmail').value.trim();

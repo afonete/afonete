@@ -52,6 +52,10 @@ class ReferralController extends Controller
     {
         $user = Auth::user();
 
+        $request->validate([
+            'transaction_password' => ['required', new \App\Rules\ValidTransactionPassword($user)],
+        ]);
+
         if (!ReferralService::isMondayNow()) {
             return back()->with('error', 'Referral bonuses can only be withdrawn on Monday.');
         }

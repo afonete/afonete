@@ -21,7 +21,7 @@
                         <span class="font-weight-bold"><?php echo e(number_format($freeBal, 0)); ?> <?php echo e($symbol); ?></span>
                     </div>
 
-                    <form method="POST" action="<?php echo e(route('user.token.transfer.post')); ?>" id="transferForm">
+                    <form method="POST" action="<?php echo e(route('user.token.transfer.post')); ?>" id="transferForm" class="js-transaction-password-form">
                         <?php echo csrf_field(); ?>
 
                         
@@ -60,6 +60,8 @@
                             <i class="fas fa-exclamation-triangle mr-1"></i>
                             Transfers go to the recipient's <strong>Free Token</strong> wallet. Immediate and irreversible.
                         </div>
+
+                        <input type="hidden" name="transaction_password" class="js-transaction-password-value">
 
                         <button type="submit" class="btn btn-primary btn-block font-weight-bold"
                                 id="submitBtn" <?php echo e($freeBal < 1 ? 'disabled' : ''); ?>>
@@ -105,6 +107,7 @@
 </div>
 </div>
 
+<?php echo $__env->make('user.components.transaction-password-modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <script>
 document.getElementById('lookupBtn').addEventListener('click', function () {
     const email   = document.getElementById('recipientEmail').value.trim();
