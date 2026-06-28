@@ -332,9 +332,9 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::post('user/dashboard/ppc', [Payclick::class, 'Payads'])->name('user.ads');
     Route::post('user/dashboard/url', [Payclick::class, 'Payurl'])->name('user.ads.url');
     Route::post('user/dashboard/claim-reward', [Payclick::class, 'ClaimReward'])->name('user.claim.reward');
-// events
-Route::get('user/dashboard/events/', [Events::class, 'getEvents'])->name('user.dashboard.events');
-Route::post('user/dashboard/events-history/', [Events::class, 'reportEvents'])->name('user.event.report');
+    // events
+    Route::get('user/dashboard/events/', [Events::class, 'getEvents'])->name('user.dashboard.events');
+    Route::post('user/dashboard/events-history/', [Events::class, 'reportEvents'])->name('user.event.report');
 
     // club
     Route::get('user/club', [Team::class, 'create'])->name('user.dashboard.create');
@@ -437,7 +437,7 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/user/pending', [AdminController::class, 'pending'])->name('admin.pending');
     Route::get('admin/user/fc1', [AdminController::class, 'fc1'])->name('admin.fc1');
     Route::get('fcpackages/{id}/investors', [FCpackageController::class, 'investors'])->name('fcpackages.investors');
-// 'investors' => 'fcpackages.investors'
+    // 'investors' => 'fcpackages.investors'
     Route::resource('fcpackages', FCpackageController::class)->names([
         'index' => 'fcpackages',
         'create' => 'fcpackages.create',

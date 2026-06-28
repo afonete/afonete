@@ -45,8 +45,8 @@
 	text-decoration: none;
 }
 .nav-item:hover{
-	background-color:rgb(112, 143, 201);
-	border-left-color: tomato;
+	/* background-color:rgb(112, 143, 201); */
+	/* border-left-color: tomato; */
 }
 .nav-tabs li a{
 	font-size: 18px;;

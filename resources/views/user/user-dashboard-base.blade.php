@@ -105,6 +105,82 @@ s0.parentNode.insertBefore(s1,s0);
   }
 }
 
+
+
+/* Modern grouped user sidebar — calmer colors + clearer active states */
+.main-sidebar .nav-sidebar > .nav-item { margin: 4px 8px; }
+.main-sidebar .nav-sidebar .nav-link {
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+    transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+/* Clear but not too bright hover */
+.main-sidebar .nav-sidebar .nav-link:hover {
+    background: rgba(59,130,246,.22) !important;
+    color: #ffffff !important;
+    border-left-color: #60a5fa;
+    transform: translateX(2px);
+}
+
+/* Parent menu when opened/active */
+.main-sidebar .nav-sidebar > .nav-item > .nav-link.active,
+.main-sidebar .nav-sidebar > .nav-item.menu-open > .nav-link {
+    color: #fff !important;
+    background: #1f2937 !important;
+    border-left-color: #38bdf8;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+
+.main-sidebar .nav-sidebar .nav-treeview {
+    display: none;
+    margin: 5px 0 10px 0;
+    padding: 6px 0;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 10px;
+}
+.main-sidebar .nav-sidebar .nav-item.menu-open > .nav-treeview { display: block; }
+.main-sidebar .nav-treeview .nav-link {
+    margin: 3px 8px;
+    padding-left: 18px;
+    color: #d1d5db !important;
+    background: transparent !important;
+    border-left-color: transparent;
+}
+
+/* Sub-menu hover */
+.main-sidebar .nav-treeview .nav-link:hover {
+    background: rgba(14,165,233,.16) !important;
+    color: #ffffff !important;
+    border-left-color: #38bdf8;
+}
+
+/* Clicked/current sub-menu item */
+.main-sidebar .nav-treeview .nav-link.active {
+    background: #0f766e !important;
+    color: #ffffff !important;
+    border-left-color: #2dd4bf;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.main-sidebar .nav-treeview .nav-link.active .nav-icon,
+.main-sidebar .nav-treeview .nav-link.active p { color: #ffffff !important; }
+
+.sidebar-group-toggle .right { transition: transform .18s ease; }
+.menu-open > .sidebar-group-toggle .right,
+.menu-open > a .right { transform: rotate(-90deg); }
+
+/* Group headers: dark base with a colored left border instead of loud gradients */
+.sidebar-group-toggle.group-packages { background:#1f2937 !important; border-left-color:#a78bfa; }
+.sidebar-group-toggle.group-wallets  { background:#1f2937 !important; border-left-color:#34d399; }
+.sidebar-group-toggle.group-tokens   { background:#1f2937 !important; border-left-color:#fbbf24; }
+.sidebar-group-toggle.group-team     { background:#1f2937 !important; border-left-color:#60a5fa; }
+.sidebar-group-toggle.group-tasks    { background:#1f2937 !important; border-left-color:#fb7185; }
+.sidebar-group-toggle.group-other    { background:#1f2937 !important; border-left-color:#9ca3af; }
+.sidebar-group-toggle.group-legacy   { background:#111827 !important; border-left-color:#6b7280; opacity:.92; }
+.nav-header.text-muted { color:#9ca3af !important; letter-spacing:.08em; font-size:.72rem; margin: 10px 12px 4px; }
+
   </style>
 
 
@@ -274,416 +350,189 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                     </div>
 
                  </li>
-                    <li class="nav-item has-treeview ">
-                        <a href="{{route('user.dashboard')}}" class="nav-link active">
+                    {{-- Restructured user sidebar menu --}}
+                    <li class="nav-item">
+                        <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
-                            <p>
-                                <p>
-                                    Dashboard
-                                </p>
-                            </p>
-                        </a>
-
-                    </li>
-
-                    {{-- <!-- End of nav-item {{route('user.dashboard.payclick')}}--> --}}
-                   {{-- @if ($isFree == 'yes' || $isFree == 1) --}}
-                   <li class="nav-item has-treeview ">
-                    <a href="{{route('user.buypackage')}}" class="nav-link">
-                        <i class="nav-icon fas fa-share"></i>
-                        <p>
-
-                                Buy Package
-
-
-                        </p>
-                    </a>
-
-                </li>
-                   {{-- @endif --}}
-
-
-                    <li class="nav-item has-treeview ">
-                        <a href="{{route('user.dashboard.payclick')}}" class="nav-link">
-                            <i class="nav-icon fas fa-share"></i>
-                            <p>
-                                <p>
-                                    FOMO
-                                </p>
-
-                            </p>
-                        </a>
-
-                    </li>
-
-
-                    <!-- End of nav-item  {{route('user.dashboard.balance')}}-->
-
-                    <li class="nav-item has-treeview">
-                        <a href="{{route('user.dashboard.balance')}}" class="nav-link">
-                            <i class="nav-icon fas fa-signal"></i>
-                            <p>
-                                Balance
-                            </p>
+                            <p>Dashboard</p>
                         </a>
                     </li>
 
-                    <li class="nav-item has-treeview">
-                        <a href="{{route('overview')}}" class="nav-link">
-                            <i class="nav-icon fas fa-wallet"></i>
-                            <p>
-                                Finance & Wallet
-                            </p>
+                    {{-- Packages --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-box-open"></i>
+                            <p>Packages <i class="fas fa-angle-left right"></i></p>
                         </a>
-                    </li>
-
-                    <li class="nav-item has-treeview">
-                        @if($user->has_paid_package == 'free' ||$user->has_free_package == 'yes')
-                        <a href="{{route('user.dashboard.freeaccount-restricted')}}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style="display:inline-block;vertical-align:middle">
-                                 <span class="push" style="display:inline-block;vertical-align:middle">  Investment Package</span>
-                          </a>
-                        @else
-                        <a href="{{route('investment-package')}}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style="display:inline-block;vertical-align:middle">
-                                 <span class="push" style="display:inline-block;vertical-align:middle">  Investment Package</span>
-                          </a>
-                        @endif
-                    </li>
-
-                    <li class="nav-item has-treeview">
-
-                        @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
-                        <a href="{{route('user.dashboard.freeaccount-restricted')}}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style="display:inline-block;vertical-align:middle">
-                                 <span class="push" style="display:inline-block;vertical-align:middle">  Staker Package</span>
-                          </a>
-                        @else
-                        <a href="{{ route('staker-package') }}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style=" display:inline-block; vertical-align:middle;">
-                            <span class="push" style="display:inline-block; vertical-align:middle;">Staker Package</span>
-                        </a>
-                        @endif
-                    </li>
-
-
-
-                    <!-- End of nav-item  -->
-
-                    <li class="nav-item has-treeview">
-                        <a  href="/user/deposit" class="nav-link">
-                            <i class="nav-icon fas fa-university "></i>
-                            {{-- <img src="https://cdn-icons-png.flaticon.com/128/2626/2626618.png"> --}}
-
-                               <p>Deposit</p>
-
-                        </a>
-                    </li>
-                    {{-- {{route('user.dashboard.deposit')}} --}}
-                    <li class="nav-item has-treeview">
-                        <a  href="/user/dashboard/withdraw/user" class="nav-link">
-                            <i class="nav-icon fas fa-university "></i>
-                               <p>Withdraw</p>
-
-                        </a>
-                    </li>
-
-                    <li class="nav-item has-treeview">
-                        <a href="{{route('user.dashboard.payments')}}"  class="nav-link">
-                            <i class="nav-icon fas fa-road"></i>
-                            <p>
-                                Internal Exchange
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item has-treeview">
-                        <a href="#" onclick="soon()" class="nav-link">
-                         <img src="https://cdn-icons-png.flaticon.com/128/999/999346.png" >
-                          <p>
-                                Featured
-                                   <span class="right badge badge-danger">coming soon</span>
-
-                            </p>
-
-                        </a>
-                    </li>
-                    <!-- End of nav-item -->
-                    <li class="nav-item has-treeview">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-star"></i>
-                            <p>
-                                Upgrade Package
-                            </p>
-                        </a>
-                    </li>
-
-                   <li> <a class="nav-link"  href="{{route('user.dashboard.project')}}">
-                            <img src="https://cdn-icons-png.flaticon.com/128/4595/4595164.png" style="display:inline-block;vertical-align:middle">
-                            <span class="push" style="display:inline-block;vertical-align:middle">  Upload Project</span>
-
-                        </a>
-                    </li>
-
-
-<?php //{{route('user.dashboard.create')}} ?>
-
-                    <li class="nav-item has-treeview">
-
-                        @if($user->has_free_package == 'yes' ||$user->has_free_package == 'yes')
-                        <a href="{{route('user.dashboard.freeaccount-restricted')}}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style="display:inline-block;vertical-align:middle">
-                                 <span class="push" style="display:inline-block;vertical-align:middle">  Club Building</span>
-                          </a>
-                        @else
-                        <a href="{{route('user.dashboard.create')}}"   class="nav-link ">
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>
-                                club Building
-
-                            </p>
-                        </a>
-                        @endif
-
-                    </li>
-                    <li class="nav-item has-treeview">
-                        <a href="{{route('teambuilding')}}" class="nav-link ">  <!-- teambuilding -->
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>
-                                team Building
-                            </p>
-                        </a>
-
-                    </li>
-                    <!-- start my link-->
-                     <li class="nav-item has-treeview">
-                        <a href="{{route('user.referral.show')}}" class="nav-link ">
-                            <i class="nav-icon fas fa-link"></i>
-                            <p>
-                                My Links
-
-                            </p>
-                        </a>
-
-                    </li>
-                     <!-- end my link-->
-
-                    <!-- End of nav-item -->
-
-                    <li class="nav-item has-treeview">
-
-
-                        @if($user->has_paid_package == 'free' ||$user->has_free_package == 'yes')
-                        <a href="{{route('user.dashboard.freeaccount-restricted')}}" class="nav-link">
-                            <img src="https://cdn-icons-png.flaticon.com/256/7544/7544957.png" style="display:inline-block;vertical-align:middle">
-                                 <span class="push" style="display:inline-block;vertical-align:middle">  Education</span>
-                          </a>
-                        @else
-                        <a href="/user/education" class="nav-link ">
-                            <i class="nav-icon fas fa-book"></i>
-                            <p>
-                                Education
-                            </p>
-                        </a>
-                        @endif
-
-                    </li>
-
-                    <!-- End of nav-item -->
-                     <!-- start Rewards center -->
-                     <li class="nav-item has-treeview">
-                        <a href="/user/rewards"  class="nav-link ">
-                            <i class="nav-icon fas fa-user"></i>
-                            <p>
-                                Reward Center
-                                 <span class="right badge badge-success">New</span>
-                            </p>
-                        </a>
-
-                    </li>
-                     <!-- end Rewards center-->
-
-                    <li class="nav-item has-treeview">
-                        @if($user->has_free_account || $isFree)
-                           <a href="{{route('user.dashboard.freeaccount-restricted')}}" class="nav-link">
-                            <i class="nav-icon fas fa-home"></i>
-                            <p>
-                                Exchange
-                            </p>
-                            @else
-
-                        <a href="https://exchange.focoin.eu/" target="_blank" class="nav-link ">
-                            <i class="nav-icon fas fa-home"></i>
-                            <p>
-                                Exchange
-                            </p>
-                        </a>
-                        @endif
-                    </li>
-
-                    {{-- <!-- End of nav-item -->
-          <li class="nav-item has-treeview">
-            <a href="#" onclick="soon()" class="nav-link ">
-                    <i class="nav-icon fas fa-home"></i>
-                    <p>
-                        Marchants
-                    </p>
-                    </a>
-                    </li> --}}
-
-                    <!-- End of nav-item -->
-
-                    <li class="nav-item has-treeview">
-                        <a href="#"  class="nav-link">
-                            <i class="nav-icon fas fa-plus"></i>
-                            <p>
-                                Products
-                                <i class="fas fa-angle-left right"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview" style="background-color: blanchedalmond">
+                        <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="#" class="nav-link" target=__blank onclick="soon()">
-                                    <i class="fas fa-shopping-cart nav-icon" style="color: black"></i>
-                                    <p style="color: black">Our Shop</p>
+                                <a href="{{ route('user.buypackage') }}" class="nav-link {{ request()->routeIs('user.buypackage') ? 'active' : '' }}">
+                                    <i class="fas fa-shopping-cart nav-icon"></i><p>Buy Package</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" class="nav-link " target="__blank" onclick="soon()">
-                                    <i class="fas fa-home nav-icon" style="color: black"></i>
-                                    <p style="color: black">Our Booking</p>
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-chart-line nav-icon"></i><p>Investment Package</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('investment-package') }}" class="nav-link {{ request()->routeIs('investment-package') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i><p>Investment Package</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-layer-group nav-icon"></i><p>Staker Package</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('staker-package') }}" class="nav-link {{ request()->routeIs('staker-package') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i><p>Staker Package</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.investments') }}" class="nav-link {{ request()->routeIs('user.investments*') ? 'active' : '' }}">
+                                    <i class="fas fa-briefcase nav-icon"></i><p>My Investments</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="#" onclick="soon()" class="nav-link" onclick="soon()">
-                                    <i class="far fa-circle nav-icon" style="color: black"></i>
-                                    <p style="color: black">Other Products</p>
+                                <a href="{{ route('packageRenew') }}" class="nav-link {{ request()->routeIs('packageRenew') ? 'active' : '' }}">
+                                    <i class="fas fa-redo-alt nav-icon"></i><p>Package Renewal</p>
                                 </a>
                             </li>
                         </ul>
-                    </li> <!-- End of nav-item -->
-                     <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon las la-cart-arrow-down"></i>
-                            <p>
-                                Eshop
-                            </p>
-                        </a>
-                    </li>
-                     <li class="nav-item">
-                        <a href="https://loan.focoin.eu/" target="_blank" class="nav-link">
-                            <i class="nav-icon las la-hourglass-half"></i>
-                            <p>
-                                Loan
-                            </p>
-                        </a>
-                    </li>
-                      <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link ">
-                            <i class="nav-icon fas fa-money"></i>
-                            <p>
-                                Bonos
-                                   <span class="right badge badge-danger">coming soon</span>
-
-                            </p>
-                        </a>
-
                     </li>
 
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link ">
-                            <i class="nav-icon fas fa-user"></i>
-                            <p>
-                                Refer & Earn
-                            </p>
+                    {{-- Wallets --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.withdraw','user.dashboard.payments') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.withdraw','user.dashboard.payments') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-wallet"></i>
+                            <p>Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
-
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('user.dashboard.balance') }}" class="nav-link {{ request()->routeIs('user.dashboard.balance') ? 'active' : '' }}">
+                                    <i class="fas fa-scale-balanced nav-icon"></i><p>Balance</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.dashboard.deposit') }}" class="nav-link {{ request()->routeIs('user.dashboard.deposit') ? 'active' : '' }}">
+                                    <i class="fas fa-arrow-down nav-icon"></i><p>Deposit</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.dashboard.withdraw') }}" class="nav-link {{ request()->routeIs('user.dashboard.withdraw') ? 'active' : '' }}">
+                                    <i class="fas fa-arrow-up nav-icon"></i><p>Withdraw</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.dashboard.payments') }}" class="nav-link {{ request()->routeIs('user.dashboard.payments') ? 'active' : '' }}">
+                                    <i class="fas fa-exchange-alt nav-icon"></i><p>Internal Exchange</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
-                    <!-- End of nav-item -->
-                        <li class="nav-item">
-                        <a  class="nav-link">
-                            <i class="nav-icon fas fa-box"></i>
-                            <p>
-                                Inbox
-                                <sup><span class="right badge badge-success">0</span></sup>
-
-
-                            </p>
+                    {{-- Token Wallets --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.token.*') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tokens {{ request()->routeIs('user.token.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-coins"></i>
+                            <p>Token Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"><a href="{{ route('user.token.locked') }}" class="nav-link {{ request()->routeIs('user.token.locked') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Locked Token</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.token.available') }}" class="nav-link {{ request()->routeIs('user.token.available') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Available Token</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.token.transfer') }}" class="nav-link {{ request()->routeIs('user.token.transfer') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Transfer Token</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.token.swap') }}" class="nav-link {{ request()->routeIs('user.token.swap') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Swap Token</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.token.withdraw') }}" class="nav-link {{ request()->routeIs('user.token.withdraw') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Withdraw Token</p></a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a href="/user/user-invitation" class="nav-link">
-                            <i class="fa-duotone fa-location-arrow"></i>
-                            <p>
-                                My Invitations
 
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-box"></i>
-                            <p>
-                                My Invetees
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
+                    {{-- Team & Referrals --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-team {{ request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-users"></i>
-                            <p>
-                                My Team
-                            </p>
+                            <p>Team &amp; Referrals <i class="fas fa-angle-left right"></i></p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"><a href="{{ route('teambuilding') }}" class="nav-link {{ request()->routeIs('teambuilding') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Team Building</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.referral.show') }}" class="nav-link {{ request()->routeIs('user.referral.show') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>My Links</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.referral.bonus') }}" class="nav-link {{ request()->routeIs('user.referral.bonus') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Referral Bonus</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.referral.downline') }}" class="nav-link {{ request()->routeIs('user.referral.downline') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Downline</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.referral.rank') }}" class="nav-link {{ request()->routeIs('user.referral.rank') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Ranks &amp; Rewards</p></a></li>
+                        </ul>
                     </li>
+
+                    {{-- FOMO / Tasks --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tasks {{ request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-tasks"></i>
+                            <p>FOMO / Tasks <i class="fas fa-angle-left right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"><a href="{{ route('user.dashboard.payclick') }}" class="nav-link {{ request()->routeIs('user.dashboard.payclick') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>FOMO</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.dashboard.project') }}" class="nav-link {{ request()->routeIs('user.dashboard.project') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Upload Project</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.dashboard.payvideo') }}" class="nav-link {{ request()->routeIs('user.dashboard.payvideo') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Paid Ads / Videos</p></a></li>
+                        </ul>
+                    </li>
+
+                    {{-- Other --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('profile.edit','password.show') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('profile.edit','password.show') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-ellipsis-h"></i>
+                            <p>Other <i class="fas fa-angle-left right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                <li class="nav-item"><a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Education</p></a></li>
+                            @else
+                                <li class="nav-item"><a href="/user/education" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Education</p></a></li>
+                            @endif
+                            <li class="nav-item"><a href="/user/rewards" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Reward Center <span class="right badge badge-success">New</span></p></a></li>
+                            <li class="nav-item"><a href="/user/faq" class="nav-link"><i class="far fa-circle nav-icon"></i><p>FAQ</p></a></li>
+                            <li class="nav-item"><a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Profile</p></a></li>
+                            <li class="nav-item"><a href="{{ route('password.show') }}" class="nav-link {{ request()->routeIs('password.show') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Password</p></a></li>
+                        </ul>
+                    </li>
+
+                    {{-- Label: NOT IN USE NOW --}}
+                    <li class="nav-header text-uppercase text-muted">Not in use now</li>
+                    <li class="nav-item has-treeview">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-legacy">
+                            <i class="nav-icon fas fa-archive"></i>
+                            <p>Legacy / Coming Soon <i class="fas fa-angle-left right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item"><a href="{{ route('overview') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Finance &amp; Wallet</p></a></li>
+                            <li class="nav-item"><a href="/user/deposit" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Deposit Old Route</p></a></li>
+                            <li class="nav-item"><a href="/user/dashboard/withdraw/user" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Withdraw Old Route</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Featured <span class="right badge badge-danger">soon</span></p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Upgrade Package</p></a></li>
+                            <li class="nav-item"><a href="{{ route('user.dashboard.create') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Club Building</p></a></li>
+                            <li class="nav-item"><a href="https://exchange.focoin.eu/" target="_blank" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Exchange</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Products</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Eshop</p></a></li>
+                            <li class="nav-item"><a href="https://loan.focoin.eu/" target="_blank" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Loan</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Bonus</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Refer &amp; Earn</p></a></li>
+                            <li class="nav-item"><a href="#" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Inbox <sup><span class="right badge badge-success">0</span></sup></p></a></li>
+                            <li class="nav-item"><a href="/user/user-invitation" class="nav-link"><i class="far fa-circle nav-icon"></i><p>My Invitations</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>My Invitees</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>My Team</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Team Summary</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Leaderboard</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Marketing Campaigns</p></a></li>
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Testimonials</p></a></li>
+                        </ul>
+                    </li>
+
                     <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-user"></i>
-                            <p>
-                                Team Summary
-                            </p>
+                        <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
+                            <i class="nav-icon las la-sign-out-alt text-danger"></i><p>Logout</p>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-box"></i>
-                            <p>
-                                Leaderboard
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-box"></i>
-                            <p>
-                                Marketing campaigns
-                            </p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" onclick="soon()" class="nav-link">
-                            <i class="nav-icon fas fa-box"></i>
-                            <p>
-                                Testimonials
-                            </p>
-                        </a>
-                    </li>
-                    {{-- END FO PROFILE SETTINGS --}}
-                    <li class="nav-item">
-                        <a href="/user/faq" class="nav-link">
-                            <i class="nav-icon fas fa-cog"></i>
-                            <p>
-                                FAQ
-                            </p>
-                        </a>
-                    </li>
-                    <li>
-                         <p>
-                    <i class="las la-sign-out-alt text-danger"></i>
-                    <a class="text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
-                        Logout</a></p>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST"> @csrf
-                </form>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST"> @csrf </form>
                     </li>
 
                 </ul>
@@ -826,6 +675,37 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
     }
 
 
+    // Custom sidebar accordion fallback.
+    // This does not depend on AdminLTE treeview JS, so Packages/Wallets/etc always open.
+    document.querySelectorAll('.sidebar-group-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            var item = this.closest('.nav-item.has-treeview');
+            if (!item) return;
+
+            var isOpen = item.classList.contains('menu-open');
+
+            // Close sibling groups for cleaner navigation.
+            var list = item.parentElement;
+            if (list) {
+                Array.prototype.forEach.call(list.children, function(openItem) {
+                    if (openItem !== item && openItem.classList && openItem.classList.contains('has-treeview')) {
+                        openItem.classList.remove('menu-open');
+                    }
+                });
+            }
+
+            if (isOpen) {
+                item.classList.remove('menu-open');
+            } else {
+                item.classList.add('menu-open');
+            }
+        });
+    });
+
+
     // team management dropdown
     const dropBtn = document.querySelector("#dropBtn");
     const dropdown = document.getElementById("myDropdown");
@@ -842,6 +722,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
     const ceoDetails = document.getElementById('ceo-details');
     const hiddenInput = document.getElementById('hiddenInput');
 
+    if (positionSelect) {
     positionSelect.addEventListener('change', function () {
     const selectedValue = positionSelect.value;
      const selectedOption = positionSelect.options[positionSelect.selectedIndex];
@@ -874,6 +755,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
         ceoDetails.style.display = 'block';
     }
     });
+    }
 
 
 
