@@ -471,312 +471,541 @@ img{ max-width:100%;}
             </div>
         </div> -->
        
-                     <div class="ad-main-box mt-3 mb-3">
                      
-                 <div class="ad-sub-box1 ">
+<style>
+    /* Clean Modern Dashboard Grid Styles */
+    .dashboard-grid-container {
+        width: 100%;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .dash-section-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #1f2937;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #3b82f6;
+        padding-left: 10px;
+    }
+    .dash-card {
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+        transition: all 0.25s ease !important;
+        background: #ffffff;
+        color: #333333;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .dash-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+    .dash-card .card-body {
+        padding: 1.25rem !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+    }
+    .dash-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+    .dash-card-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: rgba(0,0,0,0.55);
+        margin: 0;
+    }
+    .text-white .dash-card-title {
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+    .dash-card-icon {
+        font-size: 1.5rem;
+        opacity: 0.85;
+    }
+    .dash-card-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 0.25rem;
+    }
+    .dash-card-subtitle {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        margin: 0;
+    }
+    .dash-card-footer {
+        border-top: 1px solid rgba(0,0,0,0.06);
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        font-size: 0.8rem;
+    }
+    .text-white .dash-card-footer {
+        border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    
+    /* Gradient Color presets */
+    .bg-grad-info {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-secondary {
+        background: linear-gradient(135deg, #64748b, #475569) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-dark {
+        background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-success {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-primary {
+        background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-danger {
+        background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
+        color: #ffffff !important;
+    }
+    .bg-grad-warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Quick Action Button styling */
+    .btn-quick-action {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        border: none;
+    }
+    .btn-quick-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(0,0,0,0.12);
+    }
+</style>
 
-                    <div class="sub-box-1">
-                        <div class="ad-box bg-info mx-1" id="not">
-                            <a class="nav-icon fas fa-window-restore" href="#"><br>Account status<br/>
-                                <b>
-                                    {{-- @if ($user->has_free_package == 'yes')
-                                        FREE
-                                    @endif --}}
-
-                                    @if ($user->has_free_package == 'no' && $user->has_paid_package == 'ft')
-                                        FT
-                                    @elseif($user->has_free_package == 'yes')
-                                         FREE
-                                    @else
-
-                                    {{$user->has_paid_package}}
-                                    @endif
-
-                                </b>
-                            </a>
-                        </div>
-
-
-
-                            {{-- LOCKED TOKEN: investment / uvp_price, locked during package duration --}}
-                            <div class="ad-box bg-secondary" id="not">
-                                <a class="nav-icon fas fa-lock" href="#">
-                                    <br><small>Locked Token</small>
-                                    <b>{{ number_format($locked, 0) }}</b>
-                                </a>
-                            </div>
-
-
-
-                    </div>
-
-
-                 </div>
-
-                 <div class="sub-box-1">
-
-                        <div class="ad-box bg-info mx-2" id="not">
-                            <a class="nav-icon fas fa-window-restore" href="#">
-                                <br>FOMO EARN<br />
-                                <b>{{$gasFees}}</b>
-
-                           </a>
-                        </div>
-                        @if($user->has_free_package == 'no')
-                        <div class="ad-box bg-dark mx-2" id="not">
-                            <a class="nav-icon fas fa-window-restore" href="#">
-                                <br>Portfolio<br />
-                                <b>{{$portfolio}}</b>
-
-                           </a>
-                        </div>
-                        @endif
-
-
-                        @if($user->has_free_package == 'yes')
-                        <div class="ad-box bg-success">
-                            <a href="{{route('user.dashboard.activate')}}" class="nav-icon fas fa-window-restore" >
-                                <br>Activate <br> package</a>
-                            </div> @endif
-                        @if($package1=='fc1' || $package1=='fc2')
-                        <div class="ad-box bg-success">
-                            <a href="#" class="nav-icon fas fa-window-restore" >
-                            <br>Package  <br> Activated</a></div>
-                        @endif
-
-
-                 </div>
-
-
-
-
-                <div class="sub-box-1 ">
-                    <div class="ad-box bg-primary mx-3">
-                        <a class="nav-icon fas fa-wallet" href="{{route('mypayments')}}">
-                            <p class="py-1 text-white">Cash&deposits </p>
-                            {{$deposits}}
-                     </a>
-                    </div>
-
-                        <div class="ad-box bg-danger ">
-                            <div class="d-block">
-                                    <i class="fas fa-bookmark"></i>
-                                    <a class="nav-icon  fw-bold text-white d-block" href="#">
-                                        Cash out
-                                    </a>
-                                    <p class="text-white "> {{ $cashout }} </p>
-
-                            </div>
-                        </div>
-
-                </div>
-
-                @if ($user->has_free_package == 'no')
-
-                    {{-- ════════════════════════════════════════════════════
-                         PACKAGE EXPIRED BANNER
-                         Shown when the 100-day package has fully expired.
-                         User must purchase a new package to continue.
-                    ════════════════════════════════════════════════════ --}}
-                    @if($package_expired)
-                    <div class="alert alert-danger mx-2 mb-2 text-center" role="alert"
-                         style="border-radius:8px; font-size:0.95rem;">
-                        <i class="fas fa-times-circle mr-1"></i>
-                        <strong>Your package has expired.</strong>
-                        Daily income has stopped. Purchase a new package to continue earning.
-                        <div class="mt-2">
-                            <a href="{{ route('user.buypackage') }}"
-                               class="btn btn-danger btn-sm font-weight-bold">
-                                <i class="fas fa-shopping-cart mr-1"></i> Buy New Package
-                            </a>
-                        </div>
-                    </div>
-                    @endif
-
-                    <div class="sub-box-1 px-2">
-                        {{-- Daily Income box — shows per-day amount ($16 for $1000 @ 2%) --}}
-                        <div class="ad-box bg-warning mr-2 ml-1">
-                            <a class="nav-icon fas fa-money" href="#">
-                                <br>Daily Income <br />
-                                <b>${{ $daily_income_per_day }}</b>
-                                <small style="font-size:10px;opacity:0.7;">/ day</small>
-                                @if($package_expired)
-                                    <br><span style="font-size:11px;opacity:0.7;">Expired</span>
-                                @endif
-                            </a>
-                        </div>
-
-                        {{-- Trading Voucher box — shows DAILY accrual ($12/day for $1000 @ 2%) --}}
-                        <div class="ad-box bg-info mr-2 ml-1">
-                            <a class="nav-icon fas fa-gift" href='#'>
-                                <span>Trading Voucher</span>
-                                <span class="py-2">
-                                    <b>${{ $daily_trading }}</b>
-                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
-                                </span>
-                                <br>
-                                <small style="font-size:10px;opacity:0.8;">
-                                    Accumulated: {{ $shooping }}
-                                </small>
-                                @if($show_timer && !$package_expired)
-                                    <span id="countdown" class="bg-dark badge badge-dark"></span>
-                                @endif
-                            </a>
-
-                            {{-- ── Renewal due: show renew button (dynamic #/#) ── --}}
-                            @if($renewal_due && !$package_expired)
-                            <div class="mt-1 text-center">
-                                <a href="{{ route('packageRenew') }}"
-                                   class="btn btn-sm btn-warning font-weight-bold text-dark"
-                                   style="font-size:11px; padding:3px 8px; border-radius:4px;">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Renew Package (#{{ $renewal_number }}/{{ $max_renewals ?? 3 }})
-                                </a>
-                            </div>
-                            @endif
-                        </div>
-
-                        {{-- Cashout box — shows DAILY accrual ($4/day for $1000 @ 2%) --}}
-                        <div class="ad-box bg-success mr-2 ml-1">
-                            <a class="nav-icon fas fa-wallet" href="#">
-                                <span>Cashout (25%)</span>
-                                <span class="py-2">
-                                    <b>${{ $daily_cashout }}</b>
-                                    <small style="font-size:10px;opacity:0.7;">/ day</small>
-                                </span>
-                                <br>
-                                <small style="font-size:10px;opacity:0.8;">
-                                    Accumulated: {{ $cashout }}
-                                </small>
-                            </a>
-                        </div>
-                    </div>
-                @endif
-
-                <script>
-                    const targetDate = "{{ $expirationDate }}";
-                    startCountdown(targetDate);
-                </script>
-
-                <div class="ad-sub-box2">
-              @if ($user->has_free_package != 'yes')
-                <div class="sub-box-1">
-                    <div class="ad-box bg-success col"><a class="nav-icon fas fa-gift" href='#'>
-                        <br>Reserved_ads<br>100000</a>
-                    </div>
-                    <br>
-                </div>
-              @endif
-
-
-             </div>
-
-
-         </div>
 @php
-
     $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances WHERE user = :user GROUP BY user", ['user' => $user->id]);
-
 @endphp
 
+<div class="dashboard-grid-container">
 
+    {{-- Package Expired Banner --}}
+    @if ($user->has_free_package == 'no' && $package_expired)
+    <div class="alert alert-danger mb-4 text-center p-3" role="alert" style="border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <i class="fas fa-times-circle mr-2" style="font-size: 1.2rem;"></i>
+        <strong>Your package has expired!</strong> Daily ROI income has stopped. Purchase a new package to resume earnings.
+        <div class="mt-2">
+            <a href="{{ route('user.buypackage') }}" class="btn btn-danger btn-sm font-weight-bold px-3 py-2" style="border-radius: 6px;">
+                <i class="fas fa-shopping-cart mr-1"></i> Buy New Package
+            </a>
+        </div>
+    </div>
+    @endif
 
-
-        <div class="ad-main-box mt-3 mb-3">
-             <!-- <div class="" style="background-color: white;" id="hide"></div> -->
-             <div class="ad-sub-box1 ">
-
-                    <div class="sub-box-1">
-                         <div class=" ad-box bg-success "><a class="nav-icon fas fa-gear" href="{{route('user.investments')}}"><br>My Investments</a></div>
-                        <div class="ad-box bg-primary"><a class="nav-icon fas fa-user" href="{{route('user.referral.downline')}}"><br>My referrals</a></div>
+    {{-- SECTION 1: SYSTEM & ACCOUNT STATUS --}}
+    <h3 class="dash-section-title">System &amp; Account</h3>
+    <div class="row">
+        {{-- Card 1: Account Status --}}
+        <div class="col-12 col-sm-6 col-lg-3 mb-4">
+            <div class="dash-card bg-grad-info text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">Account Status</span>
+                        <i class="dash-card-icon fas fa-user-circle"></i>
                     </div>
-                    <div class="sub-box-1">
-                        <div class="ad-box bg-danger"><a class="nav-icon fas fa-users" href="#"><br>My Team</a></div>
-                        <div class="ad-box bg-warning "><a class="nav-icon fas fa-gift" href="#"><br>Coin <br> coming soon</a></div>
-                    </div>
-
-             </div>
-
-             <div class="ad-sub-box2">
-                <div  class="sub-box-1">
-                    <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Total <br> Balance</a></div>
-                    @if ($user->has_free_package == 'no')
-                    {{-- LOCKED TOKEN: investment tokens, locked during package period --}}
-                    <div class="ad-box bg-secondary mr-2 ml-1">
-                        <a class="nav-icon fas fa-lock" href="{{ route('user.token.locked') }}">
-                            <br><small>Locked Token</small>
-                            <b>{{ number_format($locked, 0) }}</b>
-                        </a>
-                    </div>
-                    {{-- FREE TOKEN: released after package duration — transfer, swap, or withdraw --}}
-                    <div class="ad-box bg-warning mr-2 ml-1">
-                        <a class="nav-icon fas fa-coins" href="{{ route('user.token.transfer') }}">
-                            <br><small>Free Token</small>
-                            <b>{{ number_format($free_token, 0) }}</b>
-                        </a>
-                        @if($free_token > 0)
-                        <div class="mt-1 text-center" style="font-size:10px;">
-                            <a href="{{ route('user.token.transfer') }}" class="btn btn-xs btn-dark mr-1" style="font-size:9px;padding:2px 4px;">Transfer</a>
-                            <a href="{{ route('user.token.swap') }}" class="btn btn-xs btn-success mr-1" style="font-size:9px;padding:2px 4px;">Swap</a>
-                            <a href="{{ route('user.token.withdraw') }}" class="btn btn-xs btn-danger" style="font-size:9px;padding:2px 4px;">Withdraw</a>
-                        </div>
+                    <div class="dash-card-value">
+                        @if ($user->has_free_package == 'no' && $user->has_paid_package == 'ft')
+                            FT
+                        @elseif($user->has_free_package == 'yes')
+                            FREE
+                        @else
+                            {{ strtoupper($user->has_paid_package) }}
                         @endif
                     </div>
-                    {{-- AVAILABLE TOKEN: renewal tokens + locked tokens after expiry --}}
-                    <div class="ad-box bg-success mr-2 ml-1">
-                        <a class="nav-icon fas fa-check-circle" href="{{ route('user.token.available') }}">
-                            <br><small>Available Token</small>
-                            <b>{{ number_format($available_token, 0) }}</b>
-                        </a>
-                        @if($available_token > 0)
-                        <div class="mt-1 text-center">
-                            <a href="{{ route('user.token.available') }}" class="btn btn-xs btn-light" style="font-size:9px;padding:2px 5px;">→ Free Token</a>
-                        </div>
+                    <div class="dash-card-footer">
+                        @if($user->has_free_package == 'no')
+                            Portfolio: {{ $portfolio }}
+                        @else
+                            No Active Portfolio
                         @endif
                     </div>
-                    @endif
                 </div>
-                <!--<div class="sub-box-1">
-                    <div class="ad-box bg-info col"><a class="nav-icon fas fa-gift" href="#"><br>Wallet  Balance <br> coming soon</a></div>
-                </div>-->
-
-                <div class="sub-box-1">
-                         <div class=" ad-box bg-success ">
-                         <a class="nav-icon fas fa-wallet" href="/user/user-wallet">
-                         <br>Wallet  Balance</a>
-                         </div>
-                        @if ($user->has_free_package == 'no')
-                            <div class="ad-box bg-primary ml-1">
-                                <a class="nav-icon fas fa-gift" href="#"><br>Cashout Credit <br> ${{$credit}}
-                                    <br>
-                                    @php
-                                                    $status = $credit_status;
-                                                    $badgeClass = match($status) {
-                                                        'approved' => 'badge-dark',
-                                                        'rejected' => 'badge-danger',
-                                                        default => 'badge-warning',
-                                                    };
-                                            @endphp
-
-                                                <span class="badge {{ $badgeClass }}">
-                                                    {{ $status }}
-                                                </span>
-
-
-                                </a>
-                            </div>
-
-                        @endif
-                    </div>
-
-
-             </div>
-
-
-         </div>
+            </div>
         </div>
 
-         <!-- Content Header (Page header) -->
+        {{-- Card 2: FOMO Earn --}}
+        <div class="col-12 col-sm-6 col-lg-3 mb-4">
+            <div class="dash-card bg-grad-primary text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">FOMO Earn</span>
+                        <i class="dash-card-icon fas fa-window-restore"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        {{ $gasFees }}
+                    </div>
+                    <div class="dash-card-footer">
+                        Completed actions tracker
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Card 3: Wallet Balance --}}
+        <div class="col-12 col-sm-6 col-lg-3 mb-4">
+            <div class="dash-card bg-grad-success text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">Wallet Balance</span>
+                        <i class="dash-card-icon fas fa-wallet"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        Active
+                    </div>
+                    <div class="dash-card-footer">
+                        <a href="/user/user-wallet" class="text-white font-weight-bold" style="text-decoration: underline;">
+                            View Wallet <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Card 4: Cashout Credit / Activate Package --}}
+        <div class="col-12 col-sm-6 col-lg-3 mb-4">
+            @if($user->has_free_package == 'yes')
+                <div class="dash-card bg-grad-warning text-white">
+                    <div class="card-body">
+                        <div class="dash-card-header">
+                            <span class="dash-card-title">Package Action</span>
+                            <i class="dash-card-icon fas fa-arrow-circle-up"></i>
+                        </div>
+                        <div class="dash-card-value" style="font-size: 1.3rem;">
+                            Inactive
+                        </div>
+                        <div class="dash-card-footer">
+                            <a href="{{ route('user.dashboard.activate') }}" class="btn btn-sm btn-light btn-block font-weight-bold text-dark mt-2" style="border-radius: 6px;">
+                                <i class="fas fa-bolt mr-1"></i> Activate Package
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="dash-card bg-grad-dark text-white">
+                    <div class="card-body">
+                        <div class="dash-card-header">
+                            <span class="dash-card-title">Cashout Credit</span>
+                            <i class="dash-card-icon fas fa-gift"></i>
+                        </div>
+                        <div class="dash-card-value">
+                            ${{ $credit }}
+                        </div>
+                        <div class="dash-card-footer d-flex align-items-center justify-content-between">
+                            <span>Status:</span>
+                            @php
+                                $status = $credit_status;
+                                $badgeClass = match($status) {
+                                    'approved' => 'badge-success',
+                                    'rejected' => 'badge-danger',
+                                    default => 'badge-warning',
+                                };
+                            @endphp
+                            <span class="badge {{ $badgeClass }} px-2 py-1 text-uppercase" style="border-radius: 4px;">
+                                {{ $status ?: 'pending' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- SECTION 2: ACTIVE PACKAGE DAILY ROI (Shown for Paid Accounts) --}}
+    @if ($user->has_free_package == 'no')
+    <h3 class="dash-section-title">Active Package Daily Yields (ROI)</h3>
+    <div class="row">
+        {{-- ROI Card 1: Daily Income --}}
+        <div class="col-12 col-md-4 mb-4">
+            <div class="dash-card bg-grad-warning text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">Daily Income</span>
+                        <i class="dash-card-icon fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        ${{ $daily_income_per_day }}
+                    </div>
+                    <div class="dash-card-footer d-flex justify-content-between align-items-center">
+                        <span>Rate: 2% / day</span>
+                        @if($package_expired)
+                            <span class="badge badge-danger">EXPIRED</span>
+                        @else
+                            <span class="badge badge-success">ACTIVE</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ROI Card 2: Trading Voucher (75%) --}}
+        <div class="col-12 col-md-4 mb-4">
+            <div class="dash-card bg-grad-info text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">Trading Voucher (75%)</span>
+                        <i class="dash-card-icon fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        ${{ $daily_trading }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                    </div>
+                    <div class="dash-card-subtitle mt-1">
+                        Accumulated total: <strong>{{ $shooping }}</strong>
+                    </div>
+                    <div class="dash-card-footer">
+                        @if($show_timer && !$package_expired)
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span>Expiry countdown:</span>
+                                <span id="countdown" class="badge badge-dark px-2 py-1 font-weight-bold"></span>
+                            </div>
+                        @endif
+                        @if($renewal_due && !$package_expired)
+                            <div class="mt-2">
+                                <a href="{{ route('packageRenew') }}" class="btn btn-sm btn-block btn-warning font-weight-bold text-dark" style="border-radius:6px; font-size:11px;">
+                                    <i class="fas fa-sync-alt mr-1"></i> Renew Package (#{{ $renewal_number }}/{{ $max_renewals ?? 3 }})
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ROI Card 3: Cashout (25%) --}}
+        <div class="col-12 col-md-4 mb-4">
+            <div class="dash-card bg-grad-success text-white">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title">Cashout Wallet (25%)</span>
+                        <i class="dash-card-icon fas fa-wallet"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        ${{ $daily_cashout }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                    </div>
+                    <div class="dash-card-subtitle mt-1">
+                        Accumulated total: <strong>{{ $cashout }}</strong>
+                    </div>
+                    <div class="dash-card-footer">
+                        Withdrawable funds account
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- SECTION 3: TOKEN WALLETS (Zero Duplicates!) --}}
+    <h3 class="dash-section-title">Token Wallets</h3>
+    <div class="row">
+        {{-- Token Card 1: Locked Token --}}
+        <div class="col-12 col-sm-6 col-lg-4 mb-4">
+            <div class="dash-card border-left border-secondary" style="border-left-width: 5px !important;">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-secondary font-weight-bold">Locked Token</span>
+                        <i class="dash-card-icon fas fa-lock text-secondary"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        {{ number_format($locked, 0) }}
+                    </div>
+                    <div class="dash-card-subtitle">
+                        Investment tokens locked during package duration.
+                    </div>
+                    <div class="dash-card-footer text-muted" style="font-size: 0.75rem;">
+                        Released to Available Token upon expiration.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Token Card 2: Available Token --}}
+        <div class="col-12 col-sm-6 col-lg-4 mb-4">
+            <div class="dash-card border-left border-success" style="border-left-width: 5px !important;">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-success font-weight-bold">Available Token</span>
+                        <i class="dash-card-icon fas fa-check-circle text-success"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        {{ number_format($available_token, 0) }}
+                    </div>
+                    <div class="dash-card-subtitle mb-2">
+                        Released tokens and earned rewards.
+                    </div>
+                    <div class="dash-card-footer pt-2">
+                        @if($available_token > 0)
+                            <a href="{{ route('user.token.available') }}" class="btn btn-sm btn-success btn-block font-weight-bold" style="border-radius: 6px;">
+                                Claim to Free Token <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        @else
+                            <button class="btn btn-sm btn-block btn-light font-weight-bold text-muted" disabled style="border-radius: 6px;">
+                                No Tokens Available
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Token Card 3: Free Token (FOCOIN) --}}
+        <div class="col-12 col-lg-4 mb-4">
+            <div class="dash-card border-left border-warning" style="border-left-width: 5px !important;">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-warning font-weight-bold">Free Token (FOCOIN)</span>
+                        <i class="dash-card-icon fas fa-coins text-warning"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        {{ number_format($free_token, 0) }}
+                    </div>
+                    <div class="dash-card-subtitle mb-2">
+                        Fully tradeable and transferable FOCOIN tokens.
+                    </div>
+                    <div class="dash-card-footer pt-2">
+                        @if($free_token > 0)
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('user.token.transfer') }}" class="btn btn-xs btn-dark flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Transfer</a>
+                                <a href="{{ route('user.token.swap') }}" class="btn btn-xs btn-success flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Swap</a>
+                                <a href="{{ route('user.token.withdraw') }}" class="btn btn-xs btn-danger flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px;">Withdraw</a>
+                            </div>
+                        @else
+                            <button class="btn btn-sm btn-block btn-light font-weight-bold text-muted" disabled style="border-radius: 6px;">
+                                0 FOCOIN Balance
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- SECTION 4: DEPOSITS & LIQUIDITY --}}
+    <h3 class="dash-section-title">Deposits &amp; Liquidity</h3>
+    <div class="row">
+        {{-- Deposit Card 1: Cash & Deposits --}}
+        <div class="col-12 col-sm-6 col-lg-4 mb-4">
+            <div class="dash-card">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-primary">Cash &amp; Deposits</span>
+                        <i class="dash-card-icon fas fa-university text-primary"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        {{ $deposits }}
+                    </div>
+                    <div class="dash-card-footer">
+                        <a href="{{ route('mypayments') }}" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" style="border-radius: 6px;">
+                            <i class="fas fa-history mr-1"></i> Deposit Records
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Deposit Card 2: Cumulative Cashout --}}
+        <div class="col-12 col-sm-6 col-lg-4 mb-4">
+            <div class="dash-card">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-danger">Cash Out</span>
+                        <i class="dash-card-icon fas fa-bookmark text-danger"></i>
+                    </div>
+                    <div class="dash-card-value text-danger">
+                        {{ $cashout }}
+                    </div>
+                    <div class="dash-card-footer">
+                        Withdrawable accumulated balance
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Deposit Card 3: Reserved Tokens --}}
+        <div class="col-12 col-lg-4 mb-4">
+            <div class="dash-card">
+                <div class="card-body">
+                    <div class="dash-card-header">
+                        <span class="dash-card-title text-info">Reserved Ads / Tokens</span>
+                        <i class="dash-card-icon fas fa-ad text-info"></i>
+                    </div>
+                    <div class="dash-card-value">
+                        100,000
+                    </div>
+                    <div class="dash-card-footer">
+                        Advertising and marketing allocations
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- SECTION 5: OPERATIONS & QUICK ACTIONS --}}
+    <h3 class="dash-section-title">Quick Actions</h3>
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <a href="{{ route('user.investments') }}" class="btn btn-block btn-success btn-quick-action py-3 text-white">
+                <i class="fas fa-cog" style="font-size: 1.1rem;"></i> My Investments
+            </a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="{{ route('user.referral.downline') }}" class="btn btn-block btn-primary btn-quick-action py-3 text-white">
+                <i class="fas fa-user" style="font-size: 1.1rem;"></i> My Referrals
+            </a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="#" class="btn btn-block btn-danger btn-quick-action py-3 text-white">
+                <i class="fas fa-users" style="font-size: 1.1rem;"></i> My Team
+            </a>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <a href="#" class="btn btn-block btn-warning btn-quick-action py-3 text-dark">
+                <i class="fas fa-gift" style="font-size: 1.1rem;"></i> Coin Soon
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const targetDate = "{{ $expirationDate }}";
+    if (typeof startCountdown === 'function') {
+        startCountdown(targetDate);
+    }
+</script>
+<!-- Content Header (Page header) -->
          <div class="content-header">
              <div class="container-fluid">
                  <!-- /.row -->

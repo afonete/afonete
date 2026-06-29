@@ -339,7 +339,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                           <div class="d-flex flex-column align-items-center text-center">
                             <div class="sidebar-user-profile d-flex flex-column align-items-center text-center pb-3">
                                 <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="User Avatar" class="rounded-circle bg-white sidebar-user-avatar">
-                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="<?php echo e($user->name); ?>"><?php echo e($user->name); ?></h5>
+                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="<?php echo e($user->activation); ?>"><?php echo e($user->activation); ?></h5>
                                 <small class="sidebar-user-username text-muted" title="<?php echo e($user->user); ?>"><?php echo e($user->user); ?></small>
                             </div>
 
