@@ -115,12 +115,15 @@ s0.parentNode.insertBefore(s1,s0);
     transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
 }
 
-/* Clear but not too bright hover */
+/* No hover fill/background — keep sidebar calm */
 .main-sidebar .nav-sidebar .nav-link:hover {
-    background: rgba(59,130,246,.22) !important;
+    background: transparent !important;
     color: #ffffff !important;
-    border-left-color: #60a5fa;
-    transform: translateX(2px);
+    border-left-color: transparent;
+    transform: none;
+}
+.sidebar-group-toggle:hover {
+    background: #1f2937 !important;
 }
 
 /* Parent menu when opened/active */
@@ -136,9 +139,10 @@ s0.parentNode.insertBefore(s1,s0);
     display: none;
     margin: 5px 0 10px 0;
     padding: 6px 0;
-    background: #111827;
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 10px;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    border-radius: 0;
 }
 .main-sidebar .nav-sidebar .nav-item.menu-open > .nav-treeview { display: block; }
 .main-sidebar .nav-treeview .nav-link {
@@ -149,20 +153,20 @@ s0.parentNode.insertBefore(s1,s0);
     border-left-color: transparent;
 }
 
-/* Sub-menu hover */
+/* Sub-menu hover: no fill/background */
 .main-sidebar .nav-treeview .nav-link:hover {
-    background: rgba(14,165,233,.16) !important;
+    background: transparent !important;
     color: #ffffff !important;
-    border-left-color: #38bdf8;
+    border-left-color: transparent;
 }
 
-/* Clicked/current sub-menu item */
+/* Clicked/current sub-menu item: no fill, just text + small accent */
 .main-sidebar .nav-treeview .nav-link.active {
-    background: #0f766e !important;
+    background: transparent !important;
     color: #ffffff !important;
     border-left-color: #2dd4bf;
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    box-shadow: none;
 }
 .main-sidebar .nav-treeview .nav-link.active .nav-icon,
 .main-sidebar .nav-treeview .nav-link.active p { color: #ffffff !important; }
@@ -179,6 +183,39 @@ s0.parentNode.insertBefore(s1,s0);
 .sidebar-group-toggle.group-tasks    { background:#1f2937 !important; border-left-color:#fb7185; }
 .sidebar-group-toggle.group-other    { background:#1f2937 !important; border-left-color:#9ca3af; }
 .sidebar-group-toggle.group-legacy   { background:#111827 !important; border-left-color:#6b7280; opacity:.92; }
+
+
+/* Remove all AdminLTE/Bootstrap blue hover/active blocks inside sidebar submenus */
+.main-sidebar .nav-sidebar .nav-treeview,
+.sidebar-dark-info .nav-sidebar > .nav-item > .nav-treeview,
+.sidebar-dark-info .nav-treeview,
+.nav-sidebar .nav-treeview {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+.main-sidebar .nav-treeview .nav-link,
+.main-sidebar .nav-treeview .nav-link:hover,
+.main-sidebar .nav-treeview .nav-link:focus,
+.main-sidebar .nav-treeview .nav-link.active,
+.sidebar-dark-info .nav-treeview > .nav-item > .nav-link,
+.sidebar-dark-info .nav-treeview > .nav-item > .nav-link:hover,
+.sidebar-dark-info .nav-treeview > .nav-item > .nav-link:focus,
+.sidebar-dark-info .nav-treeview > .nav-item > .nav-link.active,
+.nav-pills .nav-treeview .nav-link.active,
+.nav-pills .nav-treeview .show > .nav-link {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+/* Keep a subtle active indication without a filled background */
+.main-sidebar .nav-treeview .nav-link.active,
+.sidebar-dark-info .nav-treeview > .nav-item > .nav-link.active {
+    color: #ffffff !important;
+    border-left-color: #2dd4bf !important;
+    font-weight: 700;
+}
+
 .nav-header.text-muted { color:#9ca3af !important; letter-spacing:.08em; font-size:.72rem; margin: 10px 12px 4px; }
 
   </style>
@@ -228,7 +265,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
 
             <div class="flex-1 d-flex bg-success" >
 
-                     <div class="user-panel d-flex justify-content-end" id="drop-btn" data-widget="control-sidebar" data-slide="true" role="button">
+                     <div class="user-panel d-flex justify-content-end" id="drop-btn" role="button">
                         <div class="info">
                             <a href="#" class="d-block">{{$name}}</a>
                         </div>
@@ -279,7 +316,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
 
                   <div class="flex-1 d-flex " >
 
-                    <div class="user-panel d-flex justify-content-end" id="drop-btn" data-widget="control-sidebar" data-slide="true" role="button">
+                    <div class="user-panel d-flex justify-content-end" id="drop-btn" role="button">
                        <div class="info">
                            <a href="#" class="d-block">{{$name}}</a>
                        </div>
@@ -303,7 +340,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
 </style>
 
     <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-info elevation-4">
+    <aside class="main-sidebar sidebar-dark-info elevation-4 custom-user-sidebar">
 
         <!-- Brand Logo -->
         <a href="{{route('user.dashboard')}}" class="brand-link">
@@ -324,9 +361,10 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                     <div class="py-3 px-0">
 
                           <div class="d-flex flex-column align-items-center text-center">
-                            <div class="d-flex align-items-center justify-between pb-3">
-                                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="Admin" class="rounded-circle bg-white" width="160">
-                                <h5 class="mx-2 text-white">{{$user->name}}</h5>
+                            <div class="sidebar-user-profile d-flex flex-column align-items-center text-center pb-3">
+                                <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="User Avatar" class="rounded-circle bg-white sidebar-user-avatar">
+                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="{{ $user->name }}">{{ $user->name }}</h5>
+                                <small class="sidebar-user-username text-muted" title="{{ $user->user }}">{{ $user->user }}</small>
                             </div>
 
                             <div class="d-flex flex-column align-items-center">
@@ -570,7 +608,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                         <form  method="POST" action="{{route('user.position.apply')}}">
                             @csrf
                              @if($applied)
-                         <div id="dropBtn text-dark">
+                         <div class="text-dark">
                             <div class="p-1 text-dark text-center" style="border-bottom: 1px solid black;">
                                 <span> {{$applied->position}}
                             </div>
@@ -661,14 +699,27 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
 
     <script type="text/javascript">
 
-        // hide and show setting box
-        document.getElementById('drop-btn').addEventListener('click', function() {
-          var dropdownContent = this.nextElementSibling;
-          if (dropdownContent.style.display === 'block') {
-            dropdownContent.style.display = 'none';
-          } else {
-            dropdownContent.style.display = 'block';
-          }
+        // Profile/control-sidebar toggle.
+        // AdminLTE control-sidebar JS is not reliable on small screens in this layout,
+        // so we manually toggle the same body class plus our own fallback class.
+        const profileToggle = document.getElementById('drop-btn');
+        const profileSidebar = document.querySelector('.control-sidebar.profile-drop');
+        if (profileToggle && profileSidebar) {
+            profileToggle.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.body.classList.toggle('profile-menu-open');
+            });
+        }
+
+        // Click outside closes profile menu on small screens.
+        document.addEventListener('click', function(event) {
+            if (!document.body.classList.contains('profile-menu-open')) return;
+            if (profileSidebar && profileSidebar.contains(event.target)) return;
+            if (profileToggle && profileToggle.contains(event.target)) return;
+            document.body.classList.remove('control-sidebar-slide-open');
+            document.body.classList.remove('control-sidebar-open');
+            document.body.classList.remove('profile-menu-open');
         });
     function soon(){
         alert(' This phase is targeting only FC user,  cooming soon')
@@ -710,9 +761,13 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
     const dropBtn = document.querySelector("#dropBtn");
     const dropdown = document.getElementById("myDropdown");
 
-    dropBtn.addEventListener("click", ()=>{
-        dropdown.classList.toggle("showDropdown");
-    })
+    if (dropBtn && dropdown) {
+        dropBtn.addEventListener("click", (event)=>{
+            event.preventDefault();
+            dropdown.classList.toggle("showDropdown");
+        });
+    }
+
 
     const positionSelect = document.getElementById('position-select');
     const teamLeaderDetails = document.getElementById('team-leader-details');
@@ -760,5 +815,502 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
 
 
     </script>
+
+    <style id="final-sidebar-hover-fix">
+        /* FINAL SIDEBAR HOVER FIX
+           Removes the blue/blurred block that appears when hovering submenu items.
+           This is placed at the bottom so it overrides AdminLTE/Bootstrap. */
+        body .main-sidebar .nav-sidebar .nav-treeview,
+        body .main-sidebar .nav-sidebar .nav-treeview:hover,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-item,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-item:hover {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link:hover,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link:focus,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link:active,
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link.active,
+        body .sidebar-dark-info .nav-sidebar .nav-treeview > .nav-item > .nav-link,
+        body .sidebar-dark-info .nav-sidebar .nav-treeview > .nav-item > .nav-link:hover,
+        body .sidebar-dark-info .nav-sidebar .nav-treeview > .nav-item > .nav-link:focus,
+        body .sidebar-dark-info .nav-sidebar .nav-treeview > .nav-item > .nav-link:active,
+        body .sidebar-dark-info .nav-sidebar .nav-treeview > .nav-item > .nav-link.active,
+        body .nav-pills .nav-treeview .nav-link:hover,
+        body .nav-pills .nav-treeview .nav-link:focus,
+        body .nav-pills .nav-treeview .nav-link.active,
+        body .nav-pills .nav-treeview .show > .nav-link {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Parent group headers should also not change to a blue hover block. */
+        body .main-sidebar .nav-sidebar > .nav-item > .sidebar-group-toggle:hover,
+        body .main-sidebar .nav-sidebar > .nav-item > .sidebar-group-toggle:focus,
+        body .main-sidebar .nav-sidebar > .nav-item.menu-open > .sidebar-group-toggle,
+        body .main-sidebar .nav-sidebar > .nav-item.menu-open > .sidebar-group-toggle:hover {
+            background: #1f2937 !important;
+            background-color: #1f2937 !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Active child stays visible only by text weight + left line, no filled rectangle. */
+        body .main-sidebar .nav-sidebar .nav-treeview .nav-link.active {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            border-left: 4px solid #2dd4bf !important;
+        }
+    </style>
+
+    <style id="final-sidebar-fit-fix">
+        /* FINAL SIDEBAR FIT FIX
+           Prevents horizontal scrolling caused by long labels/email and keeps sidebar items inside the sidebar width. */
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden !important;
+        }
+
+        body .custom-user-sidebar,
+        body .custom-user-sidebar .sidebar,
+        body .custom-user-sidebar .nav-sidebar,
+        body .custom-user-sidebar .nav-item,
+        body .custom-user-sidebar .nav-link,
+        body .custom-user-sidebar .nav-treeview {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        body .custom-user-sidebar .brand-link,
+        body .custom-user-sidebar .brand-text,
+        body .custom-user-sidebar .user-panel,
+        body .custom-user-sidebar .user-panel .info,
+        body .custom-user-sidebar .user-panel .info a,
+        body .custom-user-sidebar h5,
+        body .custom-user-sidebar .nav-link p,
+        body .custom-user-sidebar .nav-link span {
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        body .custom-user-sidebar .nav-link {
+            width: auto !important;
+            min-width: 0 !important;
+            padding-right: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        body .custom-user-sidebar .nav-link .nav-icon {
+            flex: 0 0 22px !important;
+            width: 22px !important;
+            min-width: 22px !important;
+            margin-right: 8px !important;
+            text-align: center !important;
+        }
+
+        body .custom-user-sidebar .nav-link p {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+
+        body .custom-user-sidebar .nav-treeview .nav-link {
+            padding-left: 14px !important;
+            margin-left: 4px !important;
+            margin-right: 4px !important;
+        }
+
+        body .custom-user-sidebar .nav-treeview .nav-link .nav-icon {
+            flex-basis: 18px !important;
+            width: 18px !important;
+            min-width: 18px !important;
+            margin-right: 7px !important;
+        }
+
+        /* Keep sidebar usable on smaller screens without forcing horizontal scroll. */
+        /* Sidebar profile/top area above Dashboard: prevent long email/name from widening sidebar */
+        body .custom-user-sidebar .sidebar > .p-0,
+        body .custom-user-sidebar .sidebar .py-3,
+        body .custom-user-sidebar .sidebar .d-flex,
+        body .custom-user-sidebar .sidebar .text-center,
+        body .custom-user-sidebar .sidebar .align-items-center {
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        body .custom-user-sidebar .sidebar h5,
+        body .custom-user-sidebar .sidebar .mx-2,
+        body .custom-user-sidebar .sidebar .text-white,
+        body .custom-user-sidebar .sidebar .user-panel .info a {
+            max-width: 185px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            display: block !important;
+        }
+
+        body .custom-user-sidebar .sidebar img.rounded-circle,
+        body .custom-user-sidebar .sidebar .sidebar-user-avatar {
+            width: 50px !important;
+            height: 50px !important;
+            min-width: 50px !important;
+            max-width: 50px !important;
+            object-fit: cover !important;
+        }
+
+        body .custom-user-sidebar .sidebar .sidebar-user-profile {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            box-sizing: border-box !important;
+        }
+
+        body .custom-user-sidebar .sidebar .sidebar-user-name,
+        body .custom-user-sidebar .sidebar .sidebar-user-username {
+            width: 100% !important;
+            max-width: 210px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            display: block !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
+        }
+
+        body .custom-user-sidebar .sidebar .sidebar-user-name {
+            font-size: 14px !important;
+            font-weight: 700 !important;
+        }
+
+        body .custom-user-sidebar .sidebar .sidebar-user-username {
+            font-size: 11px !important;
+            color: #cbd5e1 !important;
+        }
+
+        body .custom-user-sidebar .sidebar .rounded-pill {
+            max-width: 215px !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            font-size: 12px !important;
+        }
+
+        /* Top navbar also must not force horizontal page scrolling */
+        body .main-header.navbar,
+        body .main-header .navbar-collapse,
+        body .main-header .navbar-nav,
+        body .main-header .user-panel,
+        body .main-header .info,
+        body .main-header .info a {
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        body .main-header .info a {
+            max-width: 160px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+
+        /* Works on all screen sizes. We do not rely on AdminLTE control-sidebar JS. */
+        body.profile-menu-open .control-sidebar.profile-drop {
+            display: block !important;
+            right: 0 !important;
+            z-index: 30000 !important;
+        }
+        body.profile-menu-open .control-sidebar.profile-drop::before {
+            display: block !important;
+            right: 0 !important;
+        }
+
+        /* Profile/control sidebar menu must be visible and scrollable on small screens. */
+        #drop-btn {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+        }
+
+        body .profile-drop {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            z-index: 20000 !important;
+        }
+
+        body .profile-drop .profile-menu-panel {
+            padding: 16px !important;
+            margin-left: 0 !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
+        body .profile-drop .profile-menu-title {
+            color: #ffffff !important;
+            font-size: 15px !important;
+            border-bottom: 1px solid rgba(255,255,255,.15);
+            padding-bottom: 10px;
+        }
+
+        body .profile-drop .profile-action-link {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 0 12px 0 !important;
+            padding: 8px 6px !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        body .profile-drop .profile-action-link i {
+            flex: 0 0 26px !important;
+            width: 26px !important;
+            min-width: 26px !important;
+            text-align: center !important;
+        }
+
+        body .profile-drop .profile-action-link a,
+        body .profile-drop .profile-action-link span {
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        body .profile-drop .dropdown {
+            position: static !important;
+            float: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        body .profile-drop .dropdown.showDropdown {
+            display: block !important;
+        }
+
+        @media (max-width: 767.98px) {
+            body .control-sidebar.profile-drop {
+                position: fixed !important;
+                top: 0 !important;
+                right: -280px !important;
+                bottom: 0 !important;
+                width: 280px !important;
+                max-width: 86vw !important;
+                height: 100vh !important;
+                padding-top: 10px !important;
+                background: #050052 !important;
+                display: block !important;
+                transition: right .25s ease-in-out !important;
+            }
+
+            body.control-sidebar-slide-open .control-sidebar.profile-drop,
+            body.control-sidebar-open .control-sidebar.profile-drop,
+            body.profile-menu-open .control-sidebar.profile-drop {
+                right: 0 !important;
+            }
+
+            body .profile-drop .profile-menu-panel {
+                padding: 16px 14px 24px !important;
+            }
+
+            body .profile-drop .profile-action-link {
+                font-size: 14px !important;
+            }
+
+            body .profile-drop .profile-action-link i {
+                font-size: 21px !important;
+            }
+
+            body .custom-user-sidebar {
+                width: 250px !important;
+                max-width: 250px !important;
+                overflow-x: hidden !important;
+            }
+            body .custom-user-sidebar .nav-link {
+                font-size: 13px !important;
+                padding-left: 10px !important;
+                padding-right: 8px !important;
+            }
+            body .custom-user-sidebar .nav-treeview .nav-link {
+                font-size: 12px !important;
+                padding-left: 12px !important;
+            }
+            body .custom-user-sidebar .sidebar h5,
+            body .custom-user-sidebar .sidebar .mx-2,
+            body .custom-user-sidebar .sidebar .text-white,
+            body .custom-user-sidebar .sidebar .user-panel .info a {
+                max-width: 160px !important;
+            }
+            body .custom-user-sidebar .sidebar .rounded-pill {
+                max-width: 200px !important;
+            }
+            body .content-wrapper,
+            body .main-header,
+            body .main-footer {
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+            body .main-header.navbar {
+                flex-wrap: nowrap !important;
+            }
+            body .main-header .navbar-collapse {
+                overflow: hidden !important;
+            }
+            body .main-header .btn {
+                font-size: 11px !important;
+                padding: 5px 8px !important;
+                white-space: nowrap !important;
+            }
+        }
+    </style>
+
+
+    <style id="final-profile-mobile-visibility-fix">
+        /* On small screens the expanded top navbar can cover the top of the profile/control sidebar.
+           Hide that expanded navbar only while the profile sidebar is open, and put the sidebar above it. */
+        @media (max-width: 767.98px) {
+            body.control-sidebar-slide-open #navbarSupportedContent,
+            body.control-sidebar-open #navbarSupportedContent,
+            body.profile-menu-open #navbarSupportedContent {
+                display: none !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            body .control-sidebar.profile-drop {
+                position: fixed !important;
+                top: 0 !important;
+                right: -260px !important;
+                bottom: 0 !important;
+                width: 250px !important;
+                max-width: 86vw !important;
+                height: 100vh !important;
+                z-index: 30000 !important;
+                display: block !important;
+                padding-top: 14px !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                background: #050052 !important;
+                transition: right .25s ease-in-out !important;
+            }
+
+            body.control-sidebar-slide-open .control-sidebar.profile-drop,
+            body.control-sidebar-open .control-sidebar.profile-drop,
+            body.profile-menu-open .control-sidebar.profile-drop {
+                right: 0 !important;
+            }
+
+            body .control-sidebar.profile-drop > .p-2 {
+                margin-left: 0 !important;
+                padding: 14px !important;
+            }
+
+            body .control-sidebar.profile-drop p {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin: 0 0 13px 0 !important;
+                padding: 2px 0 !important;
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+
+            body .control-sidebar.profile-drop p i {
+                flex: 0 0 26px !important;
+                width: 26px !important;
+                min-width: 26px !important;
+                text-align: center !important;
+                font-size: 22px !important;
+            }
+
+            body .control-sidebar.profile-drop p a,
+            body .control-sidebar.profile-drop p span {
+                min-width: 0 !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                font-size: 14px !important;
+                font-weight: 700 !important;
+            }
+
+            body .control-sidebar.profile-drop .dropdown {
+                position: static !important;
+                float: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }
+
+            body .control-sidebar.profile-drop .dropdown.showDropdown {
+                display: block !important;
+            }
+        }
+    </style>
+
+    <style id="final-sidebar-hover-style">
+        /* Clean sidebar hover: visible without the large blue/blur background */
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .nav-link:hover,
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .sidebar-group-toggle:hover {
+            background: #243044 !important;
+            background-color: #243044 !important;
+            color: #ffffff !important;
+            border-left-color: #38bdf8 !important;
+            box-shadow: none !important;
+            transform: translateX(2px);
+        }
+
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .nav-link:hover .nav-icon,
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .nav-link:hover p,
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .sidebar-group-toggle:hover .nav-icon,
+        body .custom-user-sidebar .nav-sidebar > .nav-item > .sidebar-group-toggle:hover p {
+            color: #ffffff !important;
+        }
+
+        /* Submenu hover: text/icon highlight only; no filled rectangle */
+        body .custom-user-sidebar .nav-treeview .nav-link:hover,
+        body .custom-user-sidebar .nav-treeview .nav-link:focus {
+            background: transparent !important;
+            background-color: transparent !important;
+            color: #ffffff !important;
+            border-left-color: #38bdf8 !important;
+            box-shadow: none !important;
+            transform: translateX(2px);
+        }
+
+        body .custom-user-sidebar .nav-treeview .nav-link:hover .nav-icon,
+        body .custom-user-sidebar .nav-treeview .nav-link:hover p,
+        body .custom-user-sidebar .nav-treeview .nav-link:focus .nav-icon,
+        body .custom-user-sidebar .nav-treeview .nav-link:focus p {
+            color: #ffffff !important;
+        }
+
+        /* Keep the currently selected submenu readable */
+        body .custom-user-sidebar .nav-treeview .nav-link.active {
+            background: transparent !important;
+            background-color: transparent !important;
+            color: #ffffff !important;
+            border-left-color: #2dd4bf !important;
+            font-weight: 700 !important;
+        }
+    </style>
 
 </html>
