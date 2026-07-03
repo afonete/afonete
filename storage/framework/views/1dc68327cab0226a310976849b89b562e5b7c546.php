@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
     use Illuminate\Http\Request;
     use App\Models\User;
-  
+
 
     $user = Auth::user();
     $name = $user->name;
@@ -32,21 +32,21 @@ $ref_code = $user->activation;
 
     $totalSum = 0;
 
-   
-    
-    
+
+
+
 $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE user = :user GROUP BY user", ['user' => $userr]);
-    ?> 
+    ?>
 
  <div class="wrapper">
-     @include('user.user-dashboard-base')
+     <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <div class="content-wrapper"> 
+    <div class="content-wrapper">
         <div class="container-fluid">
      <div class="row mb-2">
               <div style="padding: 10px 0;height:100%;">
         <div>
-       
+
      <style>
      .cc .col {
          background-color: #fff5aa;
@@ -66,7 +66,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
      #founder {
          background-color: lightgreen;
-         border-radius: 1px solid #ccc;
+         border-raius: 1px solid #ccc;
          display: flex;
          width: 80px;
          height: 100px;
@@ -87,14 +87,14 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
 
      @media (max-width: 768px),
-     @media screen and (min-width: 768px) {
+     @media  screen and (min-width: 768px) {
          .cc .col {
              /*  border: 1px solid #ccc; /* Add desired border style */
              */ background-color: red;
              width: 100%;
              flex: 0 0 60%;
              border: 4px solid white;
-              height: 100px; 
+              height: 100px;
              text-align: center;
              left: 40px;
              padding-top: 30px;
@@ -115,30 +115,30 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
      }
      </style>
      <!-- Content Wrapper. Contains page content -->
-     
-  
-        
+
+
+
 
         <marquee behavior="" direction=""><i style="color: brown">
           Welcome To Millionaire Site, We're Here for you , Money is always eager ,
           now you can make money online , Better choice  solutions for your future finance And don't Hesitate to Contact us
 
-                 </i> 
+                 </i>
                  </marquee>
 
 
-     
+
         <div>
                      <div class="ad-main-box mt-3 mb-3">
              <!-- <div class="" style="background-color: white;" id="hide"></div> -->
              <div class="ad-sub-box1 ">
-                    <div class="sub-box-1">   
+                    <div class="sub-box-1">
                         <div class="ad-box bg-info" id="not"> <a class="nav-icon fas fa-window-restore" href="#"><br>Acount stutus<br /><b>*******</b></a></div>
-                         <div class="ad-box bg-success"> <a href="{{route('user.dashboard.activate')}}" class="nav-icon fas fa-window-restore" ><br>Activate <br> package</a></div>
+                         <div class="ad-box bg-success"> <a href="<?php echo e(route('user.dashboard.activate')); ?>" class="nav-icon fas fa-window-restore" ><br>Activate <br> package</a></div>
                     </div>
-                    <div class="sub-box-1">  
+                    <div class="sub-box-1">
                         <div class="ad-box bg-primary"><a class="nav-icon fas fa-wallet" href="#"><br>Cash&deposit <br>0:
-                        <?php 
+                        <?php
                     if (count($deposit))
 {
                               foreach ($deposit as $deposited) {
@@ -146,9 +146,9 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                                         }}
                                         else{ echo "<br> 0"; }
                                         ?></a></a> </div>
-                        <div class="ad-box bg-danger"><a class="nav-icon fas fa-bookmark" href="#"> <br>Cash out <br>0:0</a> </div>    
+                        <div class="ad-box bg-danger"><a class="nav-icon fas fa-bookmark" href="#"> <br>Cash out <br>0:0</a> </div>
                     </div>
-                    
+
              </div>
 
              <div class="ad-sub-box2">
@@ -156,16 +156,16 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                     <div class="ad-box bg-warning mr-2 ml-1"><a class="nav-icon fas fa-money" href="#"> <br>Total Direct <br />0</a></div>
                     <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href='#'> <br>Total working team <br>0</a></div>
                 </div>
-                <div class="sub-box-1">   
-                     <div class="ad-box bg-success col"><a class="nav-icon fas fa-gift" href='#'> <br>Reserved_ads<br>0</a></div><br> 
+                <div class="sub-box-1">
+                     <div class="ad-box bg-success col"><a class="nav-icon fas fa-gift" href='#'> <br>Reserved_ads<br>0</a></div><br>
                 </div>
-                   
-               
+
+
              </div>
-             
-            
+
+
          </div>
-<?php 
+<?php
 
 
 $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances WHERE user = :user GROUP BY user", ['user' => $userr]);
@@ -174,23 +174,23 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
         <div class="ad-main-box mt-3 mb-3">
              <!-- <div class="" style="background-color: white;" id="hide"></div> -->
              <div class="ad-sub-box1 ">
-                    <div class="sub-box-1">   
-                         <div class=" ad-box bg-success "><a class="nav-icon fas fa-gear" href="{{route('user.package.history')}}"><br>My package</a></div>
+                    <div class="sub-box-1">
+                         <div class=" ad-box bg-success "><a class="nav-icon fas fa-gear" href="<?php echo e(route('user.package.history')); ?>"><br>My package</a></div>
                         <div class="ad-box bg-primary"><a class="nav-icon fas fa-user" href="#"><br>My invetees</a></div>
                     </div>
-                    <div class="sub-box-1">  
+                    <div class="sub-box-1">
                         <div class="ad-box bg-danger"><a class="nav-icon fas fa-users" href="#"><br>My Team</a></div>
-                        <div class="ad-box bg-warning "><a class="nav-icon fas fa-gift" href="#"><br>Coin <br> coming soon</a></div> 
+                        <div class="ad-box bg-warning "><a class="nav-icon fas fa-gift" href="#"><br>Coin <br> coming soon</a></div>
                     </div>
-                    
+
              </div>
 
              <div class="ad-sub-box2">
                 <div  class="sub-box-1">
                     <div class="ad-box bg-info mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Total <br> Balance</a></div>
-                    <div class="ad-box bg-success mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Reseved_token 
-                    
-                    <?php 
+                    <div class="ad-box bg-success mr-2 ml-1"><a class="nav-icon fas fa-gift" href="#"><br>Reseved_token
+
+                    <?php
                     if (count($reserved))
 {
                             foreach ($reserved as $token) {
@@ -200,22 +200,22 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
                                         ?></a>
                     </div>
                 </div>
-                <div class="sub-box-1">   
+                <div class="sub-box-1">
                     <div class="ad-box bg-info col"><a class="nav-icon fas fa-gift" href="#"><br>Wallet  Balance <br> coming soon</a></div>
                 </div>
-                   
-               
+
+
              </div>
-             
-            
+
+
          </div>
         </div>
-     
+
          <!-- Content Header (Page header) -->
          <div class="content-header">
              <div class="container-fluid">
                  <!-- /.row -->
-            
+
          <!-- /.content-header -->
          <div class="ref row">
             <div class="col-md-9 mx-div">
@@ -224,11 +224,11 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
                      <a href="">
                          <div class="info-box">
                              <span class="info-box-icon bg-info elevation-1"><i class="fas fa-list"></i></span>
-                                    
+
                              <div class="info-box-content">
                                   <span class="info-box-text">Clicks</span>
                                  <span class="info-box-number">
-                                     
+
                                  </span>
                              </div>
 
@@ -238,14 +238,14 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
                  </div>
                  <!-- /.col -->
                  <div class="col-12 col-sm-6 col-md-3">
-                     <a href="{{route('user.referral.show')}}">
+                     <a href="<?php echo e(route('user.referral.show')); ?>">
                          <div class="info-box mb-3">
                              <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-users"></i></span>
                                  <?php
                                         $referrals=db::SELECT("SELECT * from users where referee_id= :ref",['ref'=>$ref_code]);
 
                                         $earning = db::SELECT("SELECT user, SUM(earning) as earn FROM balances WHERE user = :user GROUP BY user", ['user' => $userr]);
-                                       
+
 
 
 
@@ -253,7 +253,7 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
                                  ?>
                              <div class="info-box-content">
                                  <span class="info-box-text">Referrals</span>
-                                 <span class="info-box-number">{{count($referrals)}}</span>
+                                 <span class="info-box-number"><?php echo e(count($referrals)); ?></span>
                              </div>
 
                          </div>
@@ -266,19 +266,19 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
                  <div class="clearfix hidden-md-up"></div>
 
                  <div class="col-12 col-sm-6 col-md-3">
-                    <a href="{{route('user.task.show')}}">
+                    <a href="<?php echo e(route('user.task.show')); ?>">
                      <div class="info-box mb-3">
                          <span class="info-box-icon bg-success elevation-1"><i class="fas fa-list"></i></span>
 
                          <div class="info-box-content">
                              <span class="info-box-text">Tasks</span>
-                             <span class="info-box-number">{{count($task)}}</span>
+                             <span class="info-box-number"><?php echo e(count($task)); ?></span>
                          </div>
 
                      </div>
                     </a>
                  </div>
-             
+
                  <!-- /.col -->
                  <div class="col-12 col-sm-6 col-md-3">
                      <div class="info-box mb-3">
@@ -286,7 +286,7 @@ $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances 
 
                          <div class="info-box-content">
                              <span class="info-box-text">Earnings</span>
-                             <span class="info-box-number"><?php 
+                             <span class="info-box-number"><?php
 if (count($earning))
 {
                             foreach ($earning as $earned) {
@@ -307,19 +307,19 @@ if (count($earning))
 
             <div class="row2 col-md-3 mx-div zoom">
                  <span style="color:#dc3545; font-size: 15px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coming soon</span>
-                 <div class="subZoom row">  
+                 <div class="subZoom row">
                     <div class="img col-2">
                         <div class="zoomImg">
-                            <img src="{{asset('assets/a/img/zoom.png')}}" alt="">
+                            <img src="<?php echo e(asset('assets/a/img/zoom.png')); ?>" alt="">
                         </div>
                     </div>
                     <div class="col-10 zoom-content">
-                       
+
                         <div>
                             <span class="text-warning">  we are on zoom</span><br>
-                        <span class="font-weight-bold"><a href="#">CLICK  HERE  TO JOIN US</a></span>    
+                        <span class="font-weight-bold"><a href="#">CLICK  HERE  TO JOIN US</a></span>
                         </div>
-                        
+
                     </div>
                 </div>
          </div>
@@ -332,35 +332,35 @@ if (count($earning))
 
                  <div class="row ">
                              <div class="card card-primary card-outline col-lg-4">
-                                
+
                                  <h5 class="card-title">
-                                    Refferral id: 
+                                    Refferral id:
                                     <button class="btn btn-default font-weight-bold" type="submit" id="btn2">
                                          <i class="las la-link" style="font-size: 20px;"></i>
-                                          <input type="hidden" value="{{$ref_code}}" id="link1"> 
+                                          <input type="hidden" value="<?php echo e($ref_code); ?>" id="link1">
 <a href="#" style="color:red;text-decoration:none;">
-    @if($package!='standard')
+    <?php if($package!='standard'): ?>
   <span style="visibility: visible;">*********</span>
-  @else
+  <?php else: ?>
   <span style="visibility: visible;">*********</span>
-  @endif
+  <?php endif; ?>
 </a></h5><br>
                                     </button>
-                                   
+
 
                                             <div class="input-group">
-                                                  @if($package!='standard')
+                                                  <?php if($package!='standard'): ?>
                                                 <input type="text" id="link"value="http://fonepo.com/register?referral=*********"
                                               class="form-control" readonly class="form-control">
                                              <button class="btn btn-default" type="submit" id="btn">
                                                     <i class="las la-link" style="font-size: 20px;"></i>
                                                   </button>
-                                              @else
+                                              <?php else: ?>
                                                 <input type="text" id="link"value="http://fonepo.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control">@endif
-                                                
+                                              class="form-control" readonly class="form-control"><?php endif; ?>
+
                                             </div>
-                                           
+
                                      <script type="text/javascript">
                                          function getreferral() {
                                              var package="<?php echo $package ?>";
@@ -380,7 +380,7 @@ if (count($earning))
                                         }}
                                         var copybtn = document.getElementById('btn2');
                                         copybtn.addEventListener("click", getreferral);
-                         
+
                                      </script>
 
                                         <br>
@@ -417,10 +417,10 @@ if (count($earning))
                                      </div>
                                  </div>
                              </div>
-                                <?php 
+                                <?php
         $fcuser=db::SELECT("SELECT * from users where has_paid_package= 'fc1' or has_paid_package= 'fc2'");
 $user=db::SELECT("SELECT * from users");
-                                   
+
 
 
 
@@ -432,7 +432,7 @@ $user=db::SELECT("SELECT * from users");
 
                                              <div class="info-box-content">
                                                  <span class="info-box-text">Total Founders</span>
-                                                 <span class="info-box-number">{{count($fcuser)+50}}</span>
+                                                 <span class="info-box-number"><?php echo e(count($fcuser)+50); ?></span>
                                              </div>
 
                                          </div>
@@ -440,16 +440,16 @@ $user=db::SELECT("SELECT * from users");
                                                 <div class="topUser_title">Top Users</div>
                                                 <div class="soon">comming soon</div>
                                                 <div class="topUser_img">
-                                                    <img src="{{asset('assets/a/img/team.png')}}" alt="">
+                                                    <img src="<?php echo e(asset('assets/a/img/team.png')); ?>" alt="">
                                                 </div>
                                                 <div class="Usersmsg">
                                                     <span class=""> No users joined yet</span>
-                                            
+
 
                                          </div>
-                                       
+
                                     </div>
-                                    
+
                             </div>
                          <script type="text/javascript">
                          function copylink() {
@@ -466,13 +466,13 @@ $user=db::SELECT("SELECT * from users");
                          var copybtn = document.getElementById('btn');
                          copybtn.addEventListener("click", copylink);
                          </script>
-                  
 
 
-                     {{-- start OF LEADER --}}
-                 </div> 
+
+                     
+                 </div>
                  <span style="color: blue;font-size: 20px;"><b>Upcoming Projects</b> </span>
-                 
+
                                  <div class="row">
                      <div class="comingSoon col-md-5">
                           <div class="row my-2">
@@ -481,7 +481,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box main-upcoming">
                                         <div class="upcoming ">
                                             <div>
-                                                <img src="{{asset('assets/a/img/upcoming.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/upcoming.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                                 <b></b>Future shoop
@@ -496,7 +496,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/booking.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/booking.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                             <b>booking system</b>
@@ -517,7 +517,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/shopping.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/shopping.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                              <b>Market Place</b>
@@ -533,17 +533,17 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/crypto.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/crypto.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
-                                            <b>crypto loans </b> 
+                                            <b>crypto loans </b>
                                             </div>
                                         </div>
 
                                      </div>
 
                                  </div>
-                                 
+
                              </div>
                         </div>
 
@@ -552,85 +552,85 @@ $user=db::SELECT("SELECT * from users");
                         <div class="container-fluid">
                             <span style="color:#dc3545; font-size: 15px;">comming soon</span>
                             <div class="main_comingBox row d-flex justify-content-between ">
-                                <div class="comingBox col-12 col-sm-6 col-md-5">  
-                                 
+                                <div class="comingBox col-12 col-sm-6 col-md-5">
+
                                     <div class="row">
                                         <div class="col-8 zoom-content">
                                             <div>
                                                 <span><a href="#">CLICK  HERE  TO </a></span><br>
                                                 <span>  STAKE YOUR TOKENS</span><br>
                                             </div>
-                                            
+
                                         </div>
 
                                         <div class=" col-3 d-flex justify-content-end align-items-center">
                                             <div class="icon">
                                                 <i class="las la-external-link-alt"></i>
                                             </div>
-                                             
+
                                         </div>
                                     </div>
-                                    
+
                                 </div>
-                               <div class="comingBox col-12 col-sm-6 col-md-5">  
+                               <div class="comingBox col-12 col-sm-6 col-md-5">
                                     <div class="row">
                                         <div class="col-8 zoom-content">
                                             <div>
                                                 <span><a href="#">CLICK  HERE  TO </a></span><br>
                                                 <span> UPGRADE MEMBERSHIP</span><br>
                                             </div>
-                                            
+
                                         </div>
 
                                         <div class=" col-3 d-flex justify-content-end align-items-center"  >
                                             <div class="icon">
                                                 <i class="las la-external-link-alt"></i>
                                             </div>
-                                             
+
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                              </div>
 
                              <div class="main_comingBox row d-flex justify-content-between ">
-                                <div class="comingBox col-12 col-sm-6 col-md-5">  
+                                <div class="comingBox col-12 col-sm-6 col-md-5">
                                     <div class="row">
                                         <div class="col-8 zoom-content">
                                             <div>
                                                 <span><a href="#">CLICK  HERE  TO </a></span><br>
                                                 <span> UNSTAKE </span><br>
                                             </div>
-                                            
+
                                         </div>
 
                                         <div class=" col-3 d-flex justify-content-end align-items-center" >
                                             <div class="icon">
                                                 <i class="las la-external-link-alt text-black "></i>
                                             </div>
-                                             
+
                                         </div>
                                     </div>
-                                    
+
                                 </div>
-                               <div class="comingBox col-12 col-sm-6 col-md-5">  
+                               <div class="comingBox col-12 col-sm-6 col-md-5">
                                     <div class="row">
                                         <div class="col-8 zoom-content">
                                             <div>
                                                 <span><a href="#">CLICK  HERE  TO </a></span><br>
                                                 <span>TOKEN EARNINGS </span><br>
                                             </div>
-                                            
+
                                         </div>
 
                                         <div class=" col-3 d-flex justify-content-end align-items-center">
                                             <div class="icon">
                                                 <i class="las la-external-link-alt text-white "></i>
                                             </div>
-                                             
+
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                              </div>
 
@@ -638,10 +638,10 @@ $user=db::SELECT("SELECT * from users");
                                  <div class="text-white text-center">Add Your self to our <a href="#"> <i class="lab la-facebook-f"></i>FaceBook page</a>   <a href="#"><i class="lab la-telegram-plane"></i>Telegram</a> </div>
                              </div>
                         </div>
-                         
+
                      </div>
                  </div>
-                 
+
                     <div class="row w-100" style="margin-top:15px">
                      <div class="col-md-6">
                          <div class="card direct-chat direct-chat-primary">
@@ -713,7 +713,7 @@ $user=db::SELECT("SELECT * from users");
 
                          </div>
 
-                         {{-- END OF LEADER --}}
+                         
 
 
 
@@ -739,9 +739,9 @@ $user=db::SELECT("SELECT * from users");
                                  <div class="card-body">
                                      <div class="direct-chat-messages">
                                          <!-- Add font awesome icons -->
-                                         <div class="px-3 d-flex justify-content-between align-items-center ">  
-                                            <div class="link-icon">  
-                                                <div><a href="#" onclick="shareOnFacebook()" class="links media_fb"><i class=" lab la-facebook-f "></i></a></div> 
+                                         <div class="px-3 d-flex justify-content-between align-items-center ">
+                                            <div class="link-icon">
+                                                <div><a href="#" onclick="shareOnFacebook()" class="links media_fb"><i class=" lab la-facebook-f "></i></a></div>
                                                 <div class="">Facebook</div>
                                             </div>
                                             <div>
@@ -749,10 +749,10 @@ $user=db::SELECT("SELECT * from users");
                                             </div>
                                          </div>
                                          <hr>
-                                         
-                                         <div class="px-3 d-flex justify-content-between align-items-center">  
-                                             <div class="link-icon">  
-                                                <div><a href="#" class="links media_tw"><i class=" lab la-twitter"></i></a></div> 
+
+                                         <div class="px-3 d-flex justify-content-between align-items-center">
+                                             <div class="link-icon">
+                                                <div><a href="#" class="links media_tw"><i class=" lab la-twitter"></i></a></div>
                                                 <div class="">Twitter</div>
                                             </div>
                                             <div>
@@ -761,11 +761,11 @@ $user=db::SELECT("SELECT * from users");
                                          </div>
                                          <hr>
 
-                                          <div class="px-3 d-flex justify-content-between align-items-center">  
-                                                <div class="link-icon">  
-                                                    <div><a href="#" class="links media_wt"><i class=" lab la-whatsapp"></i></a></div> 
+                                          <div class="px-3 d-flex justify-content-between align-items-center">
+                                                <div class="link-icon">
+                                                    <div><a href="#" class="links media_wt"><i class=" lab la-whatsapp"></i></a></div>
                                                     <div class="">Whatsapp</div>
-                                                </div> 
+                                                </div>
                                             <div>
                                                 <button class=" btn btn-success" onclick="shareOnWhatsApp()">share link</button>
                                             </div>
@@ -801,7 +801,7 @@ $user=db::SELECT("SELECT * from users");
 
                          </div>
 
-                     
+
 
                      </div>
 
@@ -833,7 +833,7 @@ $user=db::SELECT("SELECT * from users");
     // Function to handle the Facebook sharing
    function shareOnFacebook() {
     // Replace "YOUR_SHARE_URL" with the URL you want to share
-    var shareUrl = 'https://www.fonepo.com/register?referral={{$ref_code}}';
+    var shareUrl = 'https://www.fonepo.com/register?referral=<?php echo e($ref_code); ?>';
 
     // Open the Facebook share dialog
     window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl), '_blank');
@@ -842,7 +842,7 @@ $user=db::SELECT("SELECT * from users");
   // Function to handle the WhatsApp sharing
     function shareOnWhatsApp() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = encodeURIComponent('Infinite earning: https:www.fonepo.com/register?referral={{$ref_code}}');
+      var shareText = encodeURIComponent('Infinite earning: https:www.fonepo.com/register?referral=<?php echo e($ref_code); ?>');
       var whatsappURL = 'https://api.whatsapp.com/send?text=' + shareText;
       window.open(whatsappURL, '_blank');
     }
@@ -850,14 +850,14 @@ $user=db::SELECT("SELECT * from users");
    // Function to handle the Twitter sharing
     function shareOnTwitter() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = 'Infinite earning: https:www.fonepo.com/register?referral={{$ref_code}}';
+      var shareText = 'Infinite earning: https:www.fonepo.com/register?referral=<?php echo e($ref_code); ?>';
 
       // Open the Twitter share popup
       window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText), '_blank');
     }
 
     // Add an event listener to the button
- 
+
   </script>
 
 
@@ -871,9 +871,9 @@ $user=db::SELECT("SELECT * from users");
                      <!-- /.row -->
 
                  </div>
-                 
-                 
-                 
+
+
+
                  <div class="col-lg-12">
                      <!-- Map card -->
                      <div class="card " style="background-color:#000050; width: 100%; ">
@@ -1023,7 +1023,7 @@ $user=db::SELECT("SELECT * from users");
                                          <!-- solid sales graph -->
                                      </div>
                                  </div>
-                                 {{-- END OF COL-MD-6 --}}
+                                 
                                  <div class="col-md-6">
                                      Commissions
                                      <div class="card">
@@ -1107,7 +1107,7 @@ $user=db::SELECT("SELECT * from users");
                  <!-- /.col-md-6 -->
              </div>
 
-         
+
 
 
      </div>
@@ -1115,8 +1115,8 @@ $user=db::SELECT("SELECT * from users");
 
  </div>
  </div>
- @if($package=='FT')
- 
+ <?php if($package=='FT'): ?>
+
         <div class="myTask">
             <div>
                 <h1 class="task-head">Task progress</h1>
@@ -1124,7 +1124,7 @@ $user=db::SELECT("SELECT * from users");
                 <div class="clock">
                     <div class="task-content">
                         <div class="perc"></div>
-                        <div class="taskText"> Task Progress</div> 
+                        <div class="taskText"> Task Progress</div>
                     </div>
                     <!-- this one is that yellow background indicating progress -->
                     <div class="indicator">
@@ -1137,10 +1137,10 @@ $user=db::SELECT("SELECT * from users");
                     <div class="task-ticks-miror"></div>
                 </div>
             </div>
-        </div>  
+        </div>
 
         <div id="jsonDataContainer">
-          
+
         </div>
         <script type="text/javascript" >
             //  all variables
@@ -1160,7 +1160,7 @@ $user=db::SELECT("SELECT * from users");
                     <span style="--i:${i}; --total: ${totalTask}"></span>
                 `;
             }
-            
+
             /*taskData.forEach((data, index )=> {
                 task_ticks.innerHTML += `
                     <span style="--i:${index + 1}; --total: ${totalTask}"></span>
@@ -1172,10 +1172,10 @@ $user=db::SELECT("SELECT * from users");
             });*/
 
             setInterval(myFunct, 1000);
-            
+
             function myFunct(){
                 let percentage = completedTask / totalTask * 100;
-                perc.innerHTML = Math.round(percentage) + "%";    
+                perc.innerHTML = Math.round(percentage) + "%";
                 indicator(Math.round(percentage));
                 function indicator(sec){
 
@@ -1192,37 +1192,131 @@ $user=db::SELECT("SELECT * from users");
 
             }
 
-            
+
         </script>
-@endif
-        
-        
-    
+<?php endif; ?>
+
+
+
     </div>
 
  </div>
- 
+
  </div>
 
-  <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery/jquery.min.js')); ?>"></script>
   <!-- Bootstrap 4 -->
-  <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/sparklines/sparkline.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/sparklines/sparkline.js')); ?>"></script>
   <!-- AdminLTE App -->
-  <script src="{{asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/adminlte.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/adminlte.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/pages/dashboard2.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/tree.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/adminlte.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/adminlte.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard2.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/tree.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')); ?>"></script>
 
-  <script src="{{asset('assets/a/dist/js/pages/dashboard.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/summernote/summernote-bs4.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/daterangepicker/daterangepicker.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/moment/moment.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/pages/dashboard3.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/summernote/summernote-bs4.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/daterangepicker/daterangepicker.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/moment/moment.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard3.js')); ?>"></script>
+
+
+
+<style>
+/* The Modal (background) */
+.card_payment {
+    width: 80px;
+    height: 40px
+}
+
+.PayImage {
+    width: 100%;
+    height: 40px;
+}
+
+.modal {
+    display: inline;
+    position: fixed;
+    z-index: 999999;
+    padding-top: 20px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+  overflow-y: hidden;
+    /*    background-color: rgb(0, 0, 0);*/
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+#div {
+    display: none;
+}
+
+
+
+#pay {
+    display: none;
+
+}
+
+#choose {
+    display: none;
+
+}
+
+.chose {
+
+    width: 50%;
+}
+
+.bg-dark {
+    width: 250px;
+    height: 400px;
+}
+
+.card-body1 {
+    width: 250px;
+    height: 80px;
+}
+
+.div1 {
+    width: 250px;
+    height: 100px;
+}
+.submit-btn{
+padding:12px;
+border:none;
+border-radius: 8px;
+font-size: 17px;
+background:white;
+color:#fff;
+
+width:138px;
+
+}
+</style>
+><br>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('livewire:load', function() {
+
+    // $('#exampleModal').modal('show');
+
+})
+</script>
+
+
+
+
 <style>
 /* The Modal (background) */
 .card_payment {
@@ -1299,150 +1393,152 @@ border:none;
 border-radius: 8px;
 font-size: 17px;
 background:white;
-color:#fff; 
+color:#fff;
 
 width:138px;
-  
+
 }
 </style>
-<br>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('livewire:load', function() {
-
-    // $('#exampleModal').modal('show');
-
-})
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<style>
-/* The Modal (background) */
-.card_payment {
-    width: 80px;
-    height: 40px
-}
-
-.PayImage {
-    width: 100%;
-    height: 40px;
-}
-
-.modal {
-    display: inline;
-    position: fixed;
-    z-index: 999999;
-    padding-top: 20px;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow-x: auto;
-  overflow-y: hidden;
-    /*    background-color: rgb(0, 0, 0);*/
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
-#div {
-    display: none;
-}
-
-
-
-#pay {
-    display: none;
-
-}
-
-#choose {
-    display: none;
-
-}
-
-.chose {
-
-    width: 50%;
-}
-
-.bg-dark {
-    width: 250px;
-    height: 400px;
-}
-
-.card-body1 {
-    width: 250px;
-    height: 80px;
-}
-
-.div1 {
-    width: 250px;
-    height: 100px;
-}
-.submit-btn{
-padding:12px;
-border:none;
-border-radius: 8px;
-font-size: 17px;
-background:white;
-color:#fff; 
-
-width:138px;
-  
-}
-</style>
-
+<!-- stat of the modal -->
 <div id="exampleModal" class="modal" data-backdrop="static" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-        <div class="modal-content" style="background: linear-gradient(190deg, #2ecd71 60%, #27ae60 40.1%); color: black; width: auto; margin: 0 auto;">
-            <div class="flex justify-content-between mb-4 fc_container"">
-                <a href="/"><button type="button" class="btn btn-outline-info btn-primary"> Back</button></a>
+        <div class="modal-content" style="background: linear-gradient(190deg, #2ecd71 60%, #27ae60 40.1%); color: black; width: 80%; margin: 0 auto;">
+            <div class="flex justify-content-between mb-4 fc_container">
+                <a href="<?php echo e(route('user.venture')); ?>"><button type="button" class="btn btn-outline-info text-white btn-primary"> Back</button></a>
                 <a class="float-right" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
-                    <button type="button" class="btn btn-outline-info btn-danger"> Logout</button>
+                    <button type="button" class="btn btn-outline-info text-white btn-danger"> Logout</button>
                 </a>
                 <br><center>
-                @if($error)<span class="bg-danger ">{{$error??''}}</span>@endif
-                @if($back)<span class="bg-danger ">{{$back??''}}</span>@endif
+                <span class="bg-danger "><?php echo e($error??''); ?><?php echo e($back??''); ?></span>
                 </center>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST">
-                    @csrf
+                <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST">
+                    <?php echo csrf_field(); ?>
                 </form>
 
                 <div class="container">
                     <div class="row">
                         <div class="col-md-12">
-                            
-                            
-                              @if($status === 'success')
-        <h1>Payment Update Successful</h1>
-        <p>Your payment was processed successfully.</p>
-    @else
-        <h1>Error</h1>
-        <p>There was an error processing your payment update.</p>
-        <p>Error Message: {{ $message }}</p>
-    @endif
-  
+                            <div class="row">
+
+                                 <?php $__currentLoopData = $packages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $package): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+
+                                    <div class="col-md-4">
+                                        <div class="card mb-4">
+                                            <div class="card-body">
+                                                <center class="bg-danger">
+                                                    <h3>FC </h3>
+                                                </center>
+                                                <center>
+                                                    FC VIP <?php echo e($package->price); ?>$
+
+                                                </center>
+                                                <div class="text-center mt-3">
+                                                    <a href="<?php echo e(route('fc',$package->id)); ?>"><button class="btn btn-primary" value="100"> BUY NOW</button></a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
+
+                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                                 <div class="col-md-4">
+                                    <div class="card">
+
+                                    <div class="card-body">
+                                            <center class="bg-danger">
+                                                <h3>Free </h3>
+                                            </center>
+                                            <center>
+                                                Standard
+                                            </center>
+                                            <div class="text-center mt-3">
+
+
+                                                <form action="<?php echo e(route("free")); ?>" method="POST">
+                                                        <?php echo csrf_field(); ?>
+                                                        <?php echo method_field('PUT'); ?>
+                                                        <button class="btn btn-primary"  value="200" >Activate Now</button>
+                                                </form>
+                                                </div>
+
+                                        </div>
+
+                                    </div>
+
                                 </div>
+
+                                <div class="col-md-4">
+                                    <div class="card">
+
+                                    <div class="card-body">
+                                            <center class="bg-danger p-1 rounded">
+                                                <h3 class="text-white text-sm ">Do you have Activation Code</h3>
+                                            </center>
+
+
+                                            <div class="text-center mt-3">
+                                                <?php
+                                                   $msg = session('message');
+                                                   if($msg!=""){
+                                                    echo "<strong class='text-danger'>".$msg."</strong>";
+                                                   }
+
+
+
+
+                                                ?>
+
+
+
+
+
+
+                                                <form action="<?php echo e(route("validate")); ?>" method="POST">
+                                                        <?php echo csrf_field(); ?>
+
+                                                        <input type="text" class="form-control my-1"
+                                                         placeholder="Code" placeholder="Enter Activation Code" name="code">
+
+                                                        <button class="btn btn-primary d-block w-100 mt-3"  value="200" >Submit</button>
+                                                </form>
+                                                </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+
+                                <div class="col-md-4">
+                                    <div class="card">
+
+                                    <div class="card-body">
+                                            <center class="bg-danger p-1 rounded">
+                                                <h3 class="text-white text-sm ">DEPOSIT</h3>
+
+                                            </center>
+                                            <p class="text-sm py-2 px-2">You can deposit and purchase package later</p>
+
+
+                                            <div class="text-center mt-3">
+                                                <a href="<?php echo e(route("user.payment.deposits")); ?>" class="btn btn-primary d-block w-100"  value="200" >DEPOSIT</a>
+
+                                                </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+
+
                             </div>
                         </div>
-                       
+
                     </div>
                 </div>
             </div>
@@ -1450,10 +1546,15 @@ width:138px;
     </div>
 </div>
 
-<!--    
+
+<!-- emd of modal -->
+
+</script>
 
 
-                    </form> <br>
+                        </span><br>
+<br>
+
             </div>
         </div>
     </div>
@@ -1470,6 +1571,6 @@ document.addEventListener('livewire:load', function() {
  </div>
 
 
- -->
 
 
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/user-package.blade.php ENDPATH**/ ?>

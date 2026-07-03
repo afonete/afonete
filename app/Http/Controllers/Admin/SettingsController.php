@@ -59,6 +59,7 @@ class SettingsController extends Controller
             'monthly_limit'          => $request->monthly_limit ? (float) $request->monthly_limit : null,
             'require_admin_approval'    => $request->has('require_admin_approval'),
             'auto_withdrawals_enabled'  => $request->has('auto_withdrawals_enabled'),
+            'allow_free_dashboard_access'=> $request->has('allow_free_dashboard_access'),
             'admin_approval_threshold'  => (float) ($request->admin_approval_threshold ?? 100),
             'manual_review_risk_score'  => (int) ($request->manual_review_risk_score ?? 50),
             'max_auto_withdrawal'       => (float) ($request->max_auto_withdrawal ?? 100),

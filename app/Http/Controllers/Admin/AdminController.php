@@ -593,4 +593,19 @@ public function check(Request $request) {
         return redirect()->route('admin.token-withdrawals')->with('message', 'Token withdrawal rejected and tokens refunded.');
     }
 
+    public function freeUserRegisterPage()
+    {
+        $settings = \App\Models\WithdrawalSetting::current();
+        return view('admin.settings.free-user-on-register', compact('settings'));
+    }
+
+    public function updateFreeUserRegister(Request $request)
+    {
+        $settings = \App\Models\WithdrawalSetting::current();
+        $settings->update([
+            'allow_free_dashboard_access' => (bool) $request->input('allow_free_dashboard_access'),
+        ]);
+        return back()->with('success', 'Registration dashboard access settings updated.');
+    }
+    
 }

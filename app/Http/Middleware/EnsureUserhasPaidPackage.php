@@ -17,9 +17,18 @@ class EnsureUserhasPaidPackage
      */
     public function handle(Request $request, Closure $next)
     {
-        // $activeInvestments = $request->user()->investments->where("is_expired",'0');
-        // dd($activeInvestments);
-    if( $request->user()->utype === 'USR' && ( $request->user()->has_paid_package !== 'no' && $request->user()->has_paid_package != '' ||  $request->user()->has_free_package == 'yes' )
+        $user = $request->user();
+        if ($user && $user->utype === 'USR') {
+            $settings = \App\Models\WithdrawalSetting::current();
+            if ($settings && $settings->allow_free_dashboard_access && $user->has_free_package !== 'yes') {
+                $user->has_free_package = 'yes';
+                $user->has_paid_package = 'standard';
+                $user->contract = 'Signed';
+                $user->save();
+            }
+        }
+
+        if( $request->user()->utype === 'USR' && ( $request->user()->has_paid_package !== 'no' && $request->user()->has_paid_package != '' ||  $request->user()->has_free_package == 'yes' )
      || $request->user()->utype === 'ADM'
     )
 

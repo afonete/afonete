@@ -50,7 +50,7 @@ class InvestmentFactoryTest extends TestCase
     /** @test */
     public function build_venture_for_200_day_adventure(): void
     {
-        $adv = $this->makeAdventure(id: 20, duration: 200, name: 'UVP Licesne', plan: 'VENTURE PRO');
+        $adv = $this->makeAdventure(id: 20, duration: 200, name: 'UVP License', plan: 'VENTURE PRO');
         $pay = InvestmentFactory::buildVenture(
             userId: 42, adventure: $adv, amount: 1000.0, paid: 1000.0
         );

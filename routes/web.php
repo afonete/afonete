@@ -383,6 +383,9 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::put ('admin/settings/deposit-wallets',     [\App\Http\Controllers\Admin\SettingsController::class, 'updateDepositWallets'])->name('admin.settings.deposit-wallets.update');
     Route::get ('admin/settings/withdrawal-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'withdrawalSettings'])->name('admin.settings.withdrawal-settings');
     Route::put ('admin/settings/withdrawal-settings', [\App\Http\Controllers\Admin\SettingsController::class, 'updateWithdrawalSettings'])->name('admin.settings.withdrawal-settings.update');
+
+    Route::get ('admin/enable-free-user/on-register', [\App\Http\Controllers\Admin\AdminController::class, 'freeUserRegisterPage'])->name('admin.enable-free-user.register');
+    Route::post('admin/enable-free-user/on-register', [\App\Http\Controllers\Admin\AdminController::class, 'updateFreeUserRegister'])->name('admin.enable-free-user.update');
     Route::post ('admin/rank/{id}/approve',   [\App\Http\Controllers\Admin\ReferralAdminController::class, 'approveRank'])->name('admin.rank.approve');
     Route::post ('admin/rank/{id}/reject',    [\App\Http\Controllers\Admin\ReferralAdminController::class, 'rejectRank'])->name('admin.rank.reject');
     Route::get  ('admin/rank/eligible',       [\App\Http\Controllers\Admin\ReferralAdminController::class, 'eligible'])->name('admin.rank.eligible');

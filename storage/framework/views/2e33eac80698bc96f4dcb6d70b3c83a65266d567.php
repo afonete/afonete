@@ -970,7 +970,7 @@ img{ max-width:100%;}
             <div class="dash-card">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title text-info">Reserved Ads / Tokens</span>
+                        <span class="dash-card-title text-info">Reserved Ads</span>
                         <i class="dash-card-icon fas fa-ad text-info"></i>
                     </div>
                     <div class="dash-card-value">
@@ -2154,11 +2154,11 @@ $user=db::SELECT("SELECT * from users");
                                                          <p class="description-text"> <b>Volume Bonus</b></p>
                                                          <div class=" d-flex justify-content-center align-items-center" style="color:rgb(238, 193, 71);">
                                                             <i class="fa fa-arrow-up text-success"></i>
-                                                            <span>0 EUR</span>
+                                                            <span>0 $</span>
                                                         </div>
                                                         <p class="text-center p-0 m-0">Week 09 March - 15 March</p>
                                                         <p class="text-center p-0 m-0">Volume Bonus</p>
-                                                        <h5 class="description-header" style="color:rgb(238, 193, 71);">0 EUR</h5>
+                                                        <h5 class="description-header" style="color:rgb(238, 193, 71);">0 $</h5>
 
 
                                                      </div>

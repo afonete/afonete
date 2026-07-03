@@ -346,7 +346,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                             <div class="d-flex flex-column align-items-center">
                                 <div class="d-flex border border-danger align-items-center  rounded-pill p-1 bg-white ">
                                    <span></span>
-                                   <span class="text-xs">Banary status:  </span>
+                                   <span class="text-xs">Binary status:  </span>
                                    <span class="px-1 text-danger text-sm" style=" !important; font-weight:700">inactive</span>
                                 </div>
 
@@ -355,7 +355,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                                    <span class="text-sm">KCY status <strong>None</strong> :</span>
 
                                    <a href="#" class="px-1 text-primary text-sm underlined" style="color:dodgerblue !important; text-style:underlined;
-                                     font-weight:700">apply now</a>
+                                     font-weight:700">Apply Now</a>
                                 </div>
 
                             </div>
@@ -381,7 +381,7 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a href="<?php echo e(route('user.buypackage')); ?>" class="nav-link <?php echo e(request()->routeIs('user.buypackage') ? 'active' : ''); ?>">
-                                    <i class="fas fa-shopping-cart nav-icon"></i><p>Buy Package</p>
+                                    <i class="fas fa-shopping-cart nav-icon"></i><p>Buy UVP AI License</p>
                                 </a>
                             </li>
                             <li class="nav-item">

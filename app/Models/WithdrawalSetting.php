@@ -16,7 +16,7 @@ class WithdrawalSetting extends Model
         'require_admin_approval','auto_withdrawals_enabled','admin_approval_threshold',
         'manual_review_risk_score','max_auto_withdrawal','hot_wallet_max_balance',
         'hot_wallet_reserve_balance','cold_wallet_address','default_trc20_min_length',
-        'validate_trc20_format','notes','updated_by',
+        'validate_trc20_format','notes','updated_by','allow_free_dashboard_access',
     ];
 
     public static function current(): self
@@ -37,6 +37,7 @@ class WithdrawalSetting extends Model
                 'hot_wallet_reserve_balance'=> 100,
                 'default_trc20_min_length'  => 34,
                 'validate_trc20_format'     => true,
+                'allow_free_dashboard_access'=> false,
             ];
 
             $cached = self::first() ?: self::create($defaults);
