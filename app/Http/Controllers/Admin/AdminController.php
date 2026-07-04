@@ -607,5 +607,5 @@ public function check(Request $request) {
         ]);
         return back()->with('success', 'Registration dashboard access settings updated.');
     }
-    
+
 }

@@ -95,7 +95,7 @@
                 <i class="fas fa-info-circle"></i> Operational Guidance
             </h5>
             <ul class="list-disc pl-5 text-xs text-blue-700 space-y-2 leading-relaxed">
-                <li><strong>Turn ON:</strong> Safest for testing or promotional events. Allows zero-cost registration and instantly drops new users into their earning center dashboard without requiring Tron TRC-20 or Plisio payments first.</li>
+                <li><strong>Turn ON:</strong> Safest for testing or promotional events. Allows zero-cost registration and instantly drops new users into their earning center dashboard without requiring Tron TRC-20 payments first.</li>
                 <li><strong>Turn OFF:</strong> Recommended for secure production mode. Forces every registering user to complete their deposit and subscribe to a premium package first.</li>
             </ul>
         </div>

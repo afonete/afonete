@@ -8,13 +8,20 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use IEXBase\TronAPI\Tron;
+use IEXBase\TronAPI\Provider\HttpProvider;
+use IEXBase\TronAPI\Exception\TronException;
 
 /**
  * Direct TRON Blockchain Integration (TRC20 USDT).
  *
  * TronGrid is used for chain reads / transaction monitoring.
- * A separate local signer service is used for key generation and withdrawals,
- * so PHP never tries to implement fragile ECDSA/TRON signing itself.
+ *
+ * Key generation and signing are done with a pure-PHP TRON SDK
+ * (iexbase/tron-api) so this works on ordinary shared hosting
+ * (cPanel, etc.) without a separate Node.js "signer" process.
+ * No external signer HTTP service, no long-running daemon,
+ * no custom localhost port required.
  */
 class TronBlockchainService
 {
@@ -22,19 +29,38 @@ class TronBlockchainService
     protected string $baseUrl;
     protected string $usdtContract;
     protected ?string $hotWalletAddress;
-    protected ?string $signerUrl;
-    protected ?string $signerSecret;
-    protected int $signerTimeout;
+    protected ?string $hotWalletPrivateKey;
+    protected int $feeLimitTrx;
 
     public function __construct()
     {
-        $this->apiKey           = config('services.tron.api_key') ?: env('TRONGRID_API_KEY');
-        $this->baseUrl          = rtrim(config('services.tron.base_url') ?: env('TRON_FULL_HOST', 'https://api.trongrid.io'), '/');
-        $this->usdtContract     = config('services.tron.usdt_contract') ?: env('TRON_USDT_CONTRACT', 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w');
-        $this->hotWalletAddress = config('services.tron.hot_wallet') ?: env('TRON_HOT_WALLET_ADDRESS');
-        $this->signerUrl        = rtrim(config('services.tron.signer_url') ?: env('TRON_SIGNER_URL', 'http://127.0.0.1:8787'), '/');
-        $this->signerSecret     = config('services.tron.signer_secret') ?: env('TRON_SIGNER_SECRET');
-        $this->signerTimeout    = (int) (config('services.tron.signer_timeout') ?: env('TRON_SIGNER_TIMEOUT', 20));
+        $this->apiKey              = config('services.tron.api_key') ?: env('TRONGRID_API_KEY');
+        $this->baseUrl             = rtrim(config('services.tron.base_url') ?: env('TRON_FULL_HOST', 'https://api.trongrid.io'), '/');
+        $this->usdtContract        = config('services.tron.usdt_contract') ?: env('TRON_USDT_CONTRACT', 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w');
+        $this->hotWalletAddress    = config('services.tron.hot_wallet') ?: env('TRON_HOT_WALLET_ADDRESS');
+        $this->hotWalletPrivateKey = config('services.tron.hot_wallet_private_key') ?: env('TRON_HOT_WALLET_PRIVATE_KEY');
+        $this->feeLimitTrx         = (int) (config('services.tron.fee_limit_trx') ?: env('TRON_USDT_FEE_LIMIT_TRX', 50));
+    }
+
+    /**
+     * Build a Tron client instance pointed at TronGrid, optionally
+     * with a private key loaded for signing.
+     */
+    protected function tronClient(?string $privateKey = null): Tron
+    {
+        $headers = $this->apiKey ? ['TRON-PRO-API-KEY' => $this->apiKey] : [];
+
+        $fullNode     = new HttpProvider($this->baseUrl, 30000, false, false, $headers);
+        $solidityNode = new HttpProvider($this->baseUrl, 30000, false, false, $headers);
+        $eventServer  = new HttpProvider($this->baseUrl, 30000, false, false, $headers);
+
+        $tron = new Tron($fullNode, $solidityNode, $eventServer);
+
+        if ($privateKey) {
+            $tron->setPrivateKey($privateKey);
+        }
+
+        return $tron;
     }
 
     public function getHotWalletAddress(): ?string
@@ -100,12 +126,22 @@ class TronBlockchainService
         }
     }
 
-    /** Ask the local signer service to generate a TRON keypair. */
+    /** Generate a fresh TRON keypair locally in PHP (no external signer needed). */
     public function generateAddress(): array
     {
-        return $this->signerPost('/address/generate', [
-            'requestId' => (string) Str::uuid(),
-        ]);
+        try {
+            $tron = $this->tronClient();
+            $account = $tron->generateAddress();
+
+            return [
+                'ok'         => true,
+                'address'    => $account->getAddress(true),
+                'hexAddress' => $account->getAddress(false),
+                'privateKey' => $account->getPrivateKey(),
+            ];
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Address generation failed: ' . $e->getMessage());
+        }
     }
 
     /** Get USDT TRC20 balance of an address. */
@@ -179,20 +215,19 @@ class TronBlockchainService
         return [];
     }
 
-    /** Send USDT TRC20 from the configured hot wallet via the signer service. */
+    /** Send USDT TRC20 from the configured hot wallet, signed locally in PHP. */
     public function sendUsdt(string $toAddress, float $amount, ?string $requestId = null): array
     {
         if (!$this->hotWalletAddress) {
             throw new \RuntimeException('TRON_HOT_WALLET_ADDRESS is not configured.');
         }
+        if (!$this->hotWalletPrivateKey) {
+            throw new \RuntimeException('TRON_HOT_WALLET_PRIVATE_KEY is not configured.');
+        }
 
         $requestId = $requestId ?: (string) Str::uuid();
 
-        $result = $this->signerPost('/usdt/send', [
-            'to'        => $toAddress,
-            'amount'    => $amount,
-            'requestId' => $requestId,
-        ]);
+        $result = $this->signAndSendUsdt($toAddress, $amount, $requestId);
 
         if (empty($result['txid']) && empty($result['txHash'])) {
             throw new \RuntimeException($result['message'] ?? 'Signer did not return a transaction hash.');
@@ -249,32 +284,45 @@ class TronBlockchainService
         ]);
     }
 
-    protected function signerPost(string $path, array $payload): array
+    /**
+     * Sign and broadcast a USDT TRC20 transfer from the hot wallet, entirely
+     * in PHP using the hot wallet's private key. No external signer process
+     * is used, so this works on plain shared hosting.
+     */
+    protected function signAndSendUsdt(string $toAddress, float $amount, string $requestId): array
     {
-        if (!$this->signerUrl) {
-            throw new \RuntimeException('TRON_SIGNER_URL is not configured.');
-        }
-        if (!$this->signerSecret) {
-            throw new \RuntimeException('TRON_SIGNER_SECRET is not configured.');
-        }
+        try {
+            $tron = $this->tronClient($this->hotWalletPrivateKey);
 
-        $response = Http::withHeaders([
-            'X-Signer-Secret' => $this->signerSecret,
-            'Accept'          => 'application/json',
-        ])->timeout($this->signerTimeout)->post($this->signerUrl . $path, $payload);
+            if (!$tron->isAddress($toAddress)) {
+                throw new \RuntimeException('Invalid TRON address: ' . $toAddress);
+            }
 
-        if (!$response->successful()) {
-            throw new \RuntimeException('Signer error HTTP ' . $response->status() . ': ' . $response->body());
-        }
+            $contract = $tron->contract($this->usdtContract);
+            $contract->setFeeLimit($this->feeLimitTrx);
 
-        $json = $response->json();
-        if (!is_array($json)) {
-            throw new \RuntimeException('Signer returned invalid JSON.');
-        }
-        if (($json['ok'] ?? true) === false) {
-            throw new \RuntimeException($json['message'] ?? 'Signer returned ok=false.');
-        }
+            // TRC20Contract::transfer() expects a human-readable amount and
+            // scales it internally using the token's on-chain decimals (6 for USDT).
+            $response = $contract->transfer($toAddress, (string) $amount, $this->hotWalletAddress);
 
-        return $json;
+            $txid = $response['txID'] ?? $response['txid'] ?? null;
+            if (!$txid) {
+                throw new \RuntimeException('Broadcast did not return a transaction ID: ' . json_encode($response));
+            }
+
+            return [
+                'ok'        => true,
+                'txid'      => $txid,
+                'requestId' => $requestId,
+                'to'        => $toAddress,
+                'amount'    => $amount,
+                'contract'  => $this->usdtContract,
+            ];
+        } catch (TronException $e) {
+            throw new \RuntimeException('TRON transfer failed: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('USDT send failed: ' . $e->getMessage());
+        }
     }
+
 }

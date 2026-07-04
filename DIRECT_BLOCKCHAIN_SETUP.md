@@ -23,13 +23,18 @@ This project now supports backend-only blockchain automation without TronLink.
 - Admin can either:
   - approve and queue automatic TRON payout, or
   - enter a tx hash after manual payout and mark completed.
-- Automatic payout is done by a local Node.js signer service using TronWeb.
+- Automatic payout is signed and broadcast directly in PHP (no external signer process).
 
 ### Security
 
-- Signer service binds to `127.0.0.1`.
-- Signer requires IP whitelist + `X-Signer-Secret`.
-- Hot-wallet private key is used only by the signer service.
+- Address generation and USDT transfer signing are done with a pure-PHP
+  TRON SDK (`iexbase/tron-api`) directly inside Laravel. There is no
+  separate Node.js "signer" process and no local port to keep open, so
+  this works on ordinary shared hosting (cPanel, etc.) with no SSH/Node
+  support required.
+- The hot-wallet private key lives only in `.env` (`TRON_HOT_WALLET_PRIVATE_KEY`)
+  and is read only by `App\Services\TronBlockchainService`. Never commit it,
+  never expose it in any public route/response.
 - Hot-wallet sweep command can move excess USDT to cold wallet.
 - Blockchain audit logs are stored.
 
@@ -40,6 +45,13 @@ composer install
 npm install
 php artisan migrate
 ```
+
+If your host has no SSH/terminal access (typical on shared cPanel hosting),
+run `composer install` on your local machine instead, then upload the
+resulting `vendor/` folder (and the rest of the project) via File Manager/FTP.
+`ext-bcmath` is required and is enabled by default on virtually all cPanel
+PHP builds; you can confirm it under cPanel → MultiPHP INI Editor / Select
+PHP Extensions.
 
 If using database queues:
 
@@ -66,19 +78,14 @@ TRONGRID_API_KEY=your_trongrid_api_key
 TRON_USDT_CONTRACT=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
 TRON_HOT_WALLET_ADDRESS=T...
 TRON_HOT_WALLET_PRIVATE_KEY=...
-TRON_SIGNER_SECRET=long_random_secret
-TRON_SIGNER_URL=http://127.0.0.1:8787
+TRON_USDT_FEE_LIMIT_TRX=50
 DIRECT_BLOCKCHAIN_WITHDRAWALS=true
 QUEUE_CONNECTION=database
 ```
 
-## Start signer
-
-```bash
-npm run signer:start
-```
-
-Production recommendation: run `npm run signer:start` with Supervisor, systemd, or PM2. Keep it bound to localhost/private network.
+There is no separate signer service to start — deposit address generation
+and withdrawal signing both happen inline in PHP the first time they're
+needed.
 
 ## Commands
 
