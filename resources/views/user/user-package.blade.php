@@ -1433,7 +1433,12 @@ width:138px;
 
                                                 </center>
                                                 <div class="text-center mt-3">
-                                                    <a href="{{route('fc',$package->id)}}"><button class="btn btn-primary" value="100"> BUY NOW</button></a>
+                                                    <form action="{{ route('payment.directPackage') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="package_type" value="FC">
+                                                        <input type="hidden" name="package_id" value="{{ $package->id }}">
+                                                        <button type="submit" class="btn btn-primary" value="{{ $package->price }}">BUY NOW</button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
@@ -1523,7 +1528,7 @@ width:138px;
 
 
                                             <div class="text-center mt-3">
-                                                <a href="{{route("user.payment.deposits")}}" class="btn btn-primary d-block w-100"  value="200" >DEPOSIT</a>
+                                                <a href="{{route("user.manual-deposit")}}" class="btn btn-primary d-block w-100"  value="200" >DEPOSIT</a>
 
                                                 </div>
 

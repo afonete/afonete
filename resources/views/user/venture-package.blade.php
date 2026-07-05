@@ -1496,16 +1496,18 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                                                       class=" border-bottom border-2 border-bottom-dashed">Total return:{{$venture->total_return}}%</span>
 
                                                 <div class="my-1 text-center">
-                                                    <form action="{{route('ventures')}}" method="post">
+                                                    <form action="{{route('payment.directPackage')}}" method="post">
                                                         @csrf
                                                         @method('POST')
-                                                        <input type="hidden" name="venture" value="{{$venture->id}}"/>
+                                                        <input type="hidden" name="package_type" value="VENTURE"/>
+                                                        <input type="hidden" name="package_id" value="{{$venture->id}}"/>
 
-                                                        <input type="number" name="amount_invest"
+                                                        <input type="number" name="amount"
                                                                placeholder=" Enter Amount (${{abbreviateNumber($venture->min_amount)}} - ${{abbreviateNumber($venture->max_amount)}})"
                                                                class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                                                                min="{{$venture->min_amount}}"
-                                                               max="{{$venture->max_amountb}}"
+                                                               max="{{$venture->max_amount}}"
+                                                               step="0.01"
                                                                required/>
                                                         <button class="btn btn-dark  px-2"
                                                                 style="font-size: 10px; background-color:black;"
@@ -1557,7 +1559,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
                                             <div class="col-md-4 d-flex align-items-center justify-content-center">
 
-                                                <a href="{{route('user.payment.deposits')}}"
+                                                <a href="{{route('user.manual-deposit')}}"
                                                    class="btn btn-primary mx-2">
                                                     Deposit & Pay Later
                                                 </a>

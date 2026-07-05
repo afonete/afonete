@@ -73,7 +73,7 @@ $directDepositAddress = $directDepositAddress ?? null;
                     <div class="card mb-3" style="background:#111; border:1px solid #333; border-radius:8px;">
                         <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
                             <h5 class="text-white mb-0"><i class="fas fa-bolt text-warning mr-2"></i>Automatic USDT TRC20 Deposit</h5>
-                            <small class="text-muted">Send USDT on the TRON/TRC20 network to your unique address. The system checks TronGrid and credits your CASHOUT balance automatically.</small>
+                            <small class="text-muted">Send USDT on the TRON/TRC20 network to your unique address. The system checks TronGrid and credits your DEPOSIT balance automatically.</small>
                         </div>
                         <div class="card-body">
                             <?php if($directDepositAddress): ?>

@@ -99,6 +99,7 @@ class CheckBlockchainDeposits extends Command
 
             $deposit = null;
             $user = $knownUser;
+            $paidAt = $timestamp ? date('Y-m-d H:i:s', (int) ($timestamp / 1000)) : now();
 
             if ($addressModel && $knownUser) {
                 $deposit = Deposits::where('status', 'pending')
@@ -107,6 +108,21 @@ class CheckBlockchainDeposits extends Command
                         $q->where('deposit_address', $to)->orWhere('user_wallet_address', $to);
                     })
                     ->whereBetween('amount_deposited', [$amount - 0.000001, $amount + 0.000001])
+                    ->where(function ($q) use ($paidAt) {
+                        // Package invoices have a 15 minute payment window.
+                        // Match by the on-chain block timestamp, not scanner time,
+                        // so a timely payment still activates even if cron runs later.
+                        $q->whereNull('payment_context')
+                          ->orWhere('payment_context', '!=', \App\Services\DirectPackagePaymentService::PAYMENT_CONTEXT)
+                          ->orWhere(function ($qq) use ($paidAt) {
+                              $qq->where('payment_context', \App\Services\DirectPackagePaymentService::PAYMENT_CONTEXT)
+                                 ->where('created_at', '<=', $paidAt)
+                                 ->where(function ($expires) use ($paidAt) {
+                                     $expires->whereNull('expires_at')->orWhere('expires_at', '>=', $paidAt);
+                                 });
+                          });
+                    })
+                    ->orderByDesc('created_at')
                     ->lockForUpdate()
                     ->first();
             } else {
@@ -168,6 +184,32 @@ class CheckBlockchainDeposits extends Command
             }
 
             $this->creditUser($user->id, $amount, $deposit, $txHash, $from, $to);
+
+            // If this deposit was created from a package-payment invoice,
+            // activate the package immediately after the on-chain payment is
+            // credited. The service is idempotent, so repeated scanner runs are safe.
+            if (($deposit->payment_context ?? null) === \App\Services\DirectPackagePaymentService::PAYMENT_CONTEXT) {
+                try {
+                    app(\App\Services\DirectPackagePaymentService::class)->activateFromDeposit($deposit->fresh());
+                } catch (\Throwable $e) {
+                    Log::error('Direct package activation failed: ' . $e->getMessage(), [
+                        'deposit_id' => $deposit->id,
+                        'tx_hash'    => $txHash,
+                    ]);
+                    BlockchainAuditLog::record('package_payment.activation_failed', [
+                        'level'         => 'error',
+                        'user_id'       => $user->id,
+                        'auditable_type'=> Deposits::class,
+                        'auditable_id'  => $deposit->id,
+                        'tx_hash'       => $txHash,
+                        'address'       => $to,
+                        'amount'        => $amount,
+                        'currency'      => 'USDT',
+                        'network'       => 'TRC-20',
+                        'message'       => $e->getMessage(),
+                    ]);
+                }
+            }
 
             if ($addressModel) {
                 $addressModel->last_tx_hash = $txHash;

@@ -167,11 +167,10 @@
                 <input type="radio" name="option" value="crypto">
             </div>
             <div>
-               Cryptocurrency Payment
+               Automatic USDT TRC20 Payment
             </div>
-            <div>
-                <img src="https://plisio.net/img/donate/donate_light_icons_color.png"
-                alt="Donate Crypto on Plisio" style="width:80px; height: 30px;" />
+            <div class="text-xs font-bold text-green-900">
+                No Plisio
             </div>
 
 

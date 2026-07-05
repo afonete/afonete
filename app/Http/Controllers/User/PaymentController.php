@@ -30,6 +30,7 @@ use App\Models\DailyIncome;
 use App\Models\FCpackage;
 use App\Models\TokenSetting;
 use App\Models\ChartAccount;
+use App\Services\DirectPackagePaymentService;
 
 class PaymentController extends Controller
 {
@@ -43,6 +44,202 @@ class PaymentController extends Controller
     }
 
 
+    /**
+     * Create a direct USDT TRC20 package-payment invoice for UVP/FC.
+     * This replaces Plisio for package purchases.
+     */
+    public function directPackagePayment(Request $request, DirectPackagePaymentService $directPayments)
+    {
+        $request->validate([
+            'package_type' => 'required|string|in:VENTURE,UVP,FC',
+            'package_id'   => 'required|integer|min:1',
+            'amount'       => 'nullable|numeric|min:0.01',
+        ]);
+
+        try {
+            $deposit = $directPayments->createPendingIntent(
+                Auth::user(),
+                $request->input('package_type'),
+                (int) $request->input('package_id'),
+                $request->filled('amount') ? (float) $request->input('amount') : null
+            );
+
+            return redirect()->route('payment.directPackage.show', $deposit->id);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    public function showDirectPackagePayment(Deposits $deposit, DirectPackagePaymentService $directPayments)
+    {
+        if ((int) $deposit->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($deposit->status === 'approved' && !$deposit->activated_payment_id) {
+            try {
+                $directPayments->activateFromDeposit($deposit);
+                $deposit->refresh();
+            } catch (\Throwable $e) {
+                \Log::error('Direct package activation from invoice page failed: ' . $e->getMessage(), ['deposit_id' => $deposit->id]);
+            }
+        }
+
+        if ($deposit->activated_payment_id) {
+            return redirect()->route('user.dashboard')
+                ->with('message', 'Your ' . ($deposit->package_name ?: 'package') . ' has been activated successfully.');
+        }
+
+        return view('user.direct-tron-package-payment', compact('deposit'));
+    }
+
+    public function directPackagePaymentStatus(Deposits $deposit, DirectPackagePaymentService $directPayments)
+    {
+        if ((int) $deposit->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($deposit->status === 'approved' && !$deposit->activated_payment_id) {
+            try {
+                $directPayments->activateFromDeposit($deposit);
+                $deposit->refresh();
+            } catch (\Throwable $e) {
+                \Log::error('Direct package activation status check failed: ' . $e->getMessage(), ['deposit_id' => $deposit->id]);
+            }
+        }
+
+        $secondsRemaining = $deposit->expires_at
+            ? max(0, now()->diffInSeconds($deposit->expires_at, false))
+            : null;
+        $expired = !$deposit->activated_payment_id && $deposit->status === 'pending' && $deposit->expires_at && now()->greaterThan($deposit->expires_at);
+
+        return response()->json([
+            'status'            => $deposit->status,
+            'activated'         => (bool) $deposit->activated_payment_id,
+            'expired'           => (bool) $expired,
+            'expires_at'        => $deposit->expires_at ? $deposit->expires_at->toIso8601String() : null,
+            'seconds_remaining' => $secondsRemaining,
+            'package_name'      => $deposit->package_name,
+            'amount'            => (float) $deposit->amount_deposited,
+            'redirect_url'      => $deposit->activated_payment_id ? route('user.dashboard') : null,
+        ]);
+    }
+
+    public function manualDepositPage()
+    {
+        $wallets = \App\Models\DepositWallet::activeList();
+        $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
+        $pendingDeposit = Auth::user()->deposits()
+            ->where('payment_context', 'MANUAL_DEPOSIT_ACCESS')
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        return view('user.manual-deposit', compact('wallets', 'minDeposit', 'pendingDeposit'));
+    }
+
+    public function submitManualDeposit(Request $request)
+    {
+        $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
+
+        $request->validate([
+            'amount'           => 'required|numeric|min:' . $minDeposit,
+            'wallet_id'        => 'required|integer|exists:deposit_wallets,id',
+            'paymentaccount'   => 'required|string|max:255',
+            'proof_of_payment' => 'required|file|mimes:jpg,jpeg,png,pdf|max:4096',
+        ], [
+            'amount.min' => 'Minimum deposit is $' . number_format($minDeposit, 2) . '.',
+            'wallet_id.required' => 'Please select a manual deposit method.',
+            'paymentaccount.required' => 'Please enter the wallet/account you paid from.',
+            'proof_of_payment.required' => 'Please upload proof of payment for admin approval.',
+        ]);
+
+        $wallet = \App\Models\DepositWallet::where('id', $request->wallet_id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $amount = (float) $request->amount;
+        $walletMin = (float) $wallet->min_amount;
+        $walletMax = (float) $wallet->max_amount;
+        if ($walletMin > 0 && $amount < $walletMin) {
+            return back()->withInput()->with('error', 'Minimum for this method is $' . number_format($walletMin, 2) . '.');
+        }
+        if ($walletMax > 0 && $amount > $walletMax) {
+            return back()->withInput()->with('error', 'Maximum for this method is $' . number_format($walletMax, 2) . '.');
+        }
+
+        $proofPath = $request->file('proof_of_payment')->store('deposits/proofs', 'public');
+
+        $deposit = Deposits::create([
+            'user_id'             => Auth::id(),
+            'amount_deposited'    => $amount,
+            'amount_removed'      => 0,
+            'currency_type'       => $wallet->currency ?: 'USD',
+            'deposit_method'      => 'MANUAL_' . strtoupper((string) $wallet->type),
+            'payment_context'     => 'MANUAL_DEPOSIT_ACCESS',
+            'transaction_id'      => Deposits::generateTransactionNo(),
+            'network'             => $wallet->network,
+            'deposit_address'     => $wallet->wallet_address,
+            'user_wallet_address' => trim((string) $request->paymentaccount),
+            'proof_of_payment'    => $proofPath,
+            'status'              => 'pending',
+            'expires_at'          => now()->addMinutes(15),
+            'comment'             => 'Manual deposit submitted by user. Awaiting admin approval. 15-minute countdown shown to user/admin for review visibility.',
+        ]);
+
+        return redirect()->route('user.manual-deposit.waiting', $deposit->id)
+            ->with('message', 'Deposit submitted. Please wait for admin approval.');
+    }
+
+    public function manualDepositWaiting(Deposits $deposit)
+    {
+        if ((int) $deposit->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($deposit->status === 'approved') {
+            return redirect()->route('user.dashboard')
+                ->with('message', 'Your deposit has been approved. You now have dashboard access.');
+        }
+
+        return view('user.manual-deposit-waiting', compact('deposit'));
+    }
+
+    public function manualDepositStatus(Deposits $deposit)
+    {
+        if ((int) $deposit->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        $secondsRemaining = $deposit->expires_at
+            ? max(0, now()->diffInSeconds($deposit->expires_at, false))
+            : null;
+
+        $expired = $deposit->status === 'pending' && $deposit->expires_at && now()->greaterThan($deposit->expires_at);
+
+        return response()->json([
+            'status'            => $deposit->status,
+            'expired'           => (bool) $expired,
+            'seconds_remaining' => $secondsRemaining,
+            'redirect_url'      => $deposit->status === 'approved' ? route('user.dashboard') : null,
+        ]);
+    }
+
+    private function redirectToDirectPackagePayment(string $packageType, int $packageId, ?float $amount = null)
+    {
+        try {
+            $deposit = app(DirectPackagePaymentService::class)->createPendingIntent(
+                Auth::user(),
+                $packageType,
+                $packageId,
+                $amount
+            );
+
+            return redirect()->route('payment.directPackage.show', $deposit->id);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
 
 
   public function blockpay(Request $request)
@@ -56,102 +253,13 @@ class PaymentController extends Controller
         return redirect()->route('user.payment.deposits');
     }
     if($request->option=='crypto'){
-        // $api_key = '31T8xOus55ePakEZlzlgqUmZ5w34xcF5lJNPvIKqw7M';
-
-        $value=$request->amount;
-        $package=$request->name;
-        $email = $request->email;
-
-        // dd($request);
-
-        $length = 8;
-        $orderNumber = Str::random($length);
-        $client = new Client();
-        $url = 'https://plisio.net/api/v1/invoices/new';
-
-        $response = $client->get($url, [
-            'query' => [
-                'source_currency' => 'USD',
-                'amount' =>$request->amount,
-                'order_number' => $orderNumber,
-                'currency' => 'USDT',
-                'email' => Auth::User()->email,
-                'order_name' => 'package activation',
-                'callback_url' => 'http://focoin.eu/user/package/payment/status',
-                'expire_min'=>15,
-                'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual secret key
-            ],
-        ]);
-
-
-        // $response = $client->get($url, [
-        //     'query' => [
-        //         'source_currency' => 'USD',
-        //         'amount' => $value,
-        //         'order_number' => $orderNumber,
-        //         'currency' => 'USDT',
-        //         'email' => $email,
-        //         'order_name' => 'package activation',
-        //         'callback_url' => 'http://127.0.0.1:8000/user/venture/payment/status?json=true',
-        //         'expire_min' => 15,
-        //         'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual secret key
-        //     ],
-        // ]);
-
-
-        $statusCode = $response->getStatusCode();
-        $body = $response->getBody()->getContents();
-        $responseData = json_decode($body, true);
-
-        // Get the necessary data from the response
-        $txnId = $responseData['data']['txn_id'];
-
-        $invoiceUrl = $responseData['data']['invoice_url'];
-        //registering payment
-        $user=Auth::user();
-         $username=$user->user;
-
-        $userPayment = Paymodel::where('user', $username)->where("category","FC")->orderBy('id','desc')->first();
-
-        $p = FCpackage::where("name",$request->package)->first();
-        if (!$userPayment) {
-
-
-        // Paymodel::create([
-        //     'user' => $username,
-        //     'package' => $package,
-        //     'amount' => $value,
-        //     'paid'=>0,
-        //     'over_paid'=>0,
-        //     'status' => 0,
-        // ]);
-        // dd($package);
-
-            $create_payable = new  Paymodel([
-                'user' => Auth::User()->id,
-                'package' => $p->name,
-                'amount' => $value,
-                'paid'=>0,
-                'over_paid'=>0,
-                'status' => 0,
-                "expiration_date"=>Carbon::now()->addDays(100),
-                "duration"=>100,
-                "category"=>"FC",
-                "category_id"=>2
-            ]);
-            $pay =  $p->payments()->save($create_payable);
+        $package = FCpackage::where("name", $request->package)->first();
+        if (!$package) {
+            return back()->with('error', 'Invalid FC package selected.');
         }
-        else {
-            $userPayment->update([
-            'package' => $package,
-            'amount' => $value
-            ]);
-        }
-        // Redirect the user to the invoice URL
-        return Redirect::away($invoiceUrl);
 
-        // return redirect()->route('user.venture.contract')->with('message', 'You have  activated '. $package.' account ,
-        // Enjoy  earning on Fonepo');
+        // Plisio removed: create a direct USDT TRC20 package-payment invoice.
+        return $this->redirectToDirectPackagePayment('FC', (int) $package->id, (float) $package->price);
 
    }
 
@@ -385,6 +493,9 @@ public function paymentFromDeposits(Request $request){
 
   $transactionNo = Deposits::generateTransactionNo();
   $venture = adventures::find($request->package);
+  if (!$venture) {
+      return back()->with('error', 'Invalid UVP package selected.');
+  }
   $exp = $venture->duration;
 
   // Get the current date
@@ -548,6 +659,9 @@ public function blockpayventure(Request $request)
 
 
   $venture = adventures::find($request->package);
+  if (!$venture) {
+      return back()->with('error', 'Invalid UVP package selected.');
+  }
   $exp = $venture->duration;
 
 
@@ -652,80 +766,16 @@ public function blockpayventure(Request $request)
   }
 
   if ($request->option == 'crypto') {
-    $value = $request->amount;
+    $value = (float) $request->amount;
 
-    if($value < 10){
-        return view("user.payment-custom-error",["amount"=>$value]);
+    if ($value < 10) {
+        return view("user.payment-custom-error", ["amount" => $value]);
     }
-    // dd($value);
-    $package = $request->package;
-    $length = 8;
-    $orderNumber = Str::random($length);
 
-    $client = new Client();
-    $url = 'https://plisio.net/api/v1/invoices/new';
-
-    try {
-        $response = $client->get($url, [
-            'query' => [
-                'source_currency' => 'USD',
-                'amount' => $value,
-                'order_number' => $orderNumber,
-                'currency' => 'USDT',
-                'email' => $email,
-                'order_name' => 'package activation',
-                'callback_url' => 'http://127.0.0.1:8000/user/venture/payment/status?json=true',
-                'expire_min' => 15,
-                'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual secret key
-            ],
-        ]);
-
-
-        $statusCode = $response->getStatusCode();
-        $body = $response->getBody()->getContents();
-        $responseData = json_decode($body, true);
-
-        if ($statusCode === 200 && isset($responseData['data'])) {
-            $txnId = $responseData['data']['txn_id'];
-            $invoiceUrl = $responseData['data']['invoice_url'];
-
-
-
-            $userPayment = Paymodel::where('user', $username)
-                ->where("is_expired", 0)
-                ->where("status", 1)
-                ->orderBy('id', 'desc')
-                ->first();
-
-                session(['payment_intent' => [
-                    'user' => $username,
-                    'package' => $package,
-                    'amount' => $value,
-                    'paid' => 0,
-                    'over_paid' => 0,
-                    'status' => 0,
-                    'expiration_date' => $expDate,
-                    "duration" => $exp,
-                    "category" => "VENTURE",
-                    "category_id" => 1
-                ]]);
-
-                return Redirect::away($invoiceUrl);
-
-        } else {
-            // Handle API error response
-            return redirect()->back()->with('error', 'Failed to create invoice. Please try again later.');
-        }
-    } catch (RequestException $e) {
-        // Customize error handling
-        $errorResponse = $e->getResponse();
-        dd($errorResponse);
-        $errorBody = json_decode($errorResponse->getBody()->getContents(), true);
-        $customErrorMessage = $this->parseError($errorBody);
-
-        // return redirect()->back()->with('error', $customErrorMessage);
-    }
+    // Plisio removed: create a direct USDT TRC20 package-payment invoice.
+    return $this->redirectToDirectPackagePayment('VENTURE', (int) $venture->id, $value);
 }
+
 
 
 
@@ -1308,13 +1358,16 @@ $email=$emaili;
                         ->orderBy("created_at", 'desc')
                         ->first();
     $currentBalance = $this->MyDepositBalance();
+    $adventure = ($venture->venture && $venture->venture !== 'FC' && is_numeric($venture->venture))
+        ? adventures::where("id", $venture->venture)->first()
+        : null;
     $requiredAmount = $currentBalance - $venture->amount_invest;
     $status = ($requiredAmount < 0) ? 'i':'s';
     if($requiredAmount < 0){
         $requiredAmount = -($requiredAmount);
     }
     
-    if($recent->paid >= $venture->amount_invest  && $recent->category == 'VENTURE' ){
+    if($recent && $recent->paid >= $venture->amount_invest  && $recent->category == 'VENTURE' ){
         return view("user.confirm-package-payments-error",[
             "amount"=>$venture->amount_invest,
             "venture"=>$adventure,
@@ -1372,7 +1425,10 @@ $email=$emaili;
                                                 ]);
     }
     else{
-        return view('user.venture',["venture"=>$venture]);
+        if ($adventure) {
+            return $this->redirectToDirectPackagePayment('VENTURE', (int) $adventure->id, (float) $venture->amount_invest);
+        }
+        return back()->with('error', 'Invalid package selected.');
     }
 
 

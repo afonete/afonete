@@ -1497,16 +1497,18 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                                                       class=" border-bottom border-2 border-bottom-dashed">Total return:<?php echo e($venture->total_return); ?>%</span>
 
                                                 <div class="my-1 text-center">
-                                                    <form action="<?php echo e(route('ventures')); ?>" method="post">
+                                                    <form action="<?php echo e(route('payment.directPackage')); ?>" method="post">
                                                         <?php echo csrf_field(); ?>
                                                         <?php echo method_field('POST'); ?>
-                                                        <input type="hidden" name="venture" value="<?php echo e($venture->id); ?>"/>
+                                                        <input type="hidden" name="package_type" value="VENTURE"/>
+                                                        <input type="hidden" name="package_id" value="<?php echo e($venture->id); ?>"/>
 
-                                                        <input type="number" name="amount_invest"
+                                                        <input type="number" name="amount"
                                                                placeholder=" Enter Amount ($<?php echo e(abbreviateNumber($venture->min_amount)); ?> - $<?php echo e(abbreviateNumber($venture->max_amount)); ?>)"
                                                                class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                                                                min="<?php echo e($venture->min_amount); ?>"
-                                                               max="<?php echo e($venture->max_amountb); ?>"
+                                                               max="<?php echo e($venture->max_amount); ?>"
+                                                               step="0.01"
                                                                required/>
                                                         <button class="btn btn-dark  px-2"
                                                                 style="font-size: 10px; background-color:black;"
@@ -1558,7 +1560,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
                                             <div class="col-md-4 d-flex align-items-center justify-content-center">
 
-                                                <a href="<?php echo e(route('user.payment.deposits')); ?>"
+                                                <a href="<?php echo e(route('user.manual-deposit')); ?>"
                                                    class="btn btn-primary mx-2">
                                                     Deposit & Pay Later
                                                 </a>

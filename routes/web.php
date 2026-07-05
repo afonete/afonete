@@ -161,6 +161,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Route::get('user/package/pay', [PaymentController::class, 'pay'])->name('user.pay')->withoutMiddleware('user-package');
     Route::Post('user/package/payment', [PaymentController::class, 'blockpay'])->name('payment');
     Route::Post('user/venture/payment', [PaymentController::class, 'blockpayventure'])->name('paymentventure');
+    Route::Post('user/package/direct-payment', [PaymentController::class, 'directPackagePayment'])->name('payment.directPackage');
+    Route::get('user/package/direct-payment/{deposit}', [PaymentController::class, 'showDirectPackagePayment'])->name('payment.directPackage.show');
+    Route::get('user/package/direct-payment/{deposit}/status', [PaymentController::class, 'directPackagePaymentStatus'])->name('payment.directPackage.status');
+    Route::get('user/manual-deposit', [PaymentController::class, 'manualDepositPage'])->name('user.manual-deposit');
+    Route::post('user/manual-deposit', [PaymentController::class, 'submitManualDeposit'])->name('user.manual-deposit.submit');
+    Route::get('user/manual-deposit/{deposit}/waiting', [PaymentController::class, 'manualDepositWaiting'])->name('user.manual-deposit.waiting');
+    Route::get('user/manual-deposit/{deposit}/status', [PaymentController::class, 'manualDepositStatus'])->name('user.manual-deposit.status');
     Route::Post('user/venture/paymentFromDeposits', [PaymentController::class, 'paymentFromDeposits'])->name('paymentventuredeposits');
     Route::Post('user/fc/payment', [PaymentController::class, 'PaymentFcFromDeposit'])->name('paymentfc');
     // Route::get('user/payment/error', [PaymentController::class, 'paymentError'])->name('payment-error');

@@ -111,11 +111,14 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
 							Currency
 						</th>
                         <th scope="col" class="px-6 py-3">
-							Date
-						</th>
+								Date
+							</th>
                         <th scope="col" class="px-6 py-3">
-							Current Status
-						</th>
+								Timer
+							</th>
+                        <th scope="col" class="px-6 py-3">
+								Current Status
+							</th>
 
 
 						<th scope="col" class="px-6 py-3">
@@ -156,12 +159,21 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
 
 						</td>
 						<td class="px-6 py-4">
-							Dollar
-						</td>
-                        <td class="px-6 py-4">
-							<?php echo e($deposit->created_at->format('Y-m-d h:i A')); ?>
+								<?php echo e(strtoupper($deposit->currency_type ?? 'USD')); ?>
 
 						</td>
+                        <td class="px-6 py-4">
+								<?php echo e($deposit->created_at->format('Y-m-d h:i A')); ?>
+
+							</td>
+                        <td class="px-6 py-4">
+                            <?php if($deposit->expires_at): ?>
+                                <span class="deposit-countdown text-orange-600 font-bold"
+                                      data-expires="<?php echo e($deposit->expires_at->toIso8601String()); ?>">--:--</span>
+                            <?php else: ?>
+                                <span class="text-gray-400">—</span>
+                            <?php endif; ?>
+							</td>
                         <td class="px-6 py-4 status">
                           <?php
                           $color = "";
@@ -277,6 +289,23 @@ items-center justify-center bg-gray-800 bg-opacity-75 hidden">
     <script>
 
 
+function renderDepositCountdowns(){
+    function pad(n){ return String(n).padStart(2, '0'); }
+    document.querySelectorAll('.deposit-countdown[data-expires]').forEach(function(el){
+        var expires = new Date(el.getAttribute('data-expires')).getTime();
+        var remaining = Math.floor((expires - Date.now()) / 1000);
+        if (remaining <= 0) {
+            el.textContent = 'EXPIRED';
+            el.classList.remove('text-orange-600');
+            el.classList.add('text-red-600');
+            return;
+        }
+        var m = Math.floor(remaining / 60);
+        var s = remaining % 60;
+        el.textContent = pad(m) + ':' + pad(s);
+    });
+}
+
 function toggleDropdown(button) {
     // Close any currently open dropdowns
     const openDropdowns = document.querySelectorAll('.dropdown-menu:not(.hidden)');
@@ -298,6 +327,9 @@ function toggleDropdown(button) {
 
 
       $(document).ready(function(){
+
+        renderDepositCountdowns();
+        setInterval(renderDepositCountdowns, 1000);
 
         $('#searchInput').on('keyup', function() {
                 var value = $(this).val().toLowerCase();

@@ -24,6 +24,13 @@ class Deposits extends Model
         'network',
         'comment',
         'proof_of_payment',
+        'payment_context',      // e.g. PACKAGE_PAYMENT for direct package invoices
+        'package_type',         // VENTURE or FC
+        'package_id',
+        'package_name',
+        'activated_payment_id',
+        'activated_at',
+        'expires_at',
         'blockchain_tx_hash',   // new for direct blockchain
         'confirmations',
         'detected_at',
@@ -33,6 +40,8 @@ class Deposits extends Model
     protected $casts = [
         'detected_at' => 'datetime',
         'credited_at' => 'datetime',
+        'activated_at' => 'datetime',
+        'expires_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

@@ -44,23 +44,17 @@
                 Back
             </button>
 
-            <form action="<?php echo e(route('paymentventuredeposits')); ?>" method="post">
+            <form action="<?php echo e(route('payment.directPackage')); ?>" method="post">
                 <?php echo csrf_field(); ?>
-
                 <?php echo method_field('POST'); ?>
-
-
-
-
-                <input type="hidden" name="package" value="<?php echo e($venture->id); ?>"/>
-                <input type="radio" name="option" value="crypto"  checked>
                 <input type="hidden" name="package_type" value="VENTURE">
+                <input type="hidden" name="package_id" value="<?php echo e($venture->id); ?>"/>
                 <input type="hidden" name="amount"
                 class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                 value="<?php echo e($amount); ?>"
                 />
                 <button class="text-blue-500 underline text-lg capitalize hover:text-blue-600 font-semibold" type="submit">
-                    use crypto payment method
+                    use Automatic USDT TRC20 payment
                 </button>
             </form>
             </div>
@@ -107,30 +101,28 @@
 
                 <?php if($package == 'FC'): ?>
 
-                 <div class="flex items-center justify-center">
+                <form action="<?php echo e(route('payment.directPackage')); ?>" method="post" class="flex items-center justify-center">
                     <?php echo csrf_field(); ?>
-
                     <?php echo method_field('POST'); ?>
-                    <input type="hidden" name="package" value="<?php echo e($venture->id); ?>"/>
-                    <input type="radio" name="option" value="crypto"  checked>
-
-
-                    <a href="<?php echo e(route($routes, $id)); ?>" class="text-blue-500 underline text-xs  capitalize hover:text-blue-600 font-semibold"> use crypto payment method </a>
-                </div>
+                    <input type="hidden" name="package_type" value="FC">
+                    <input type="hidden" name="package_id" value="<?php echo e($id); ?>">
+                    <button class="text-blue-500 underline text-xs capitalize hover:text-blue-600 font-semibold" type="submit">
+                        use Automatic USDT TRC20 payment
+                    </button>
+                </form>
                 <?php else: ?>
 
-                <form action="<?php echo e(route('paymentventure')); ?>" method="post" class="flex items-center justify-center">
+                <form action="<?php echo e(route('payment.directPackage')); ?>" method="post" class="flex items-center justify-center">
                     <?php echo csrf_field(); ?>
                     <?php echo method_field('POST'); ?>
-                    <input type="hidden" name="package" value="<?php echo e($venture->id); ?>"/>
-                    <input type="radio" name="option" value="crypto"  checked>
                     <input type="hidden" name="package_type" value="VENTURE">
+                    <input type="hidden" name="package_id" value="<?php echo e($venture->id); ?>"/>
                     <input type="hidden" name="amount"
                     class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                     value="<?php echo e($amount); ?>"
                     />
-                    <button class="text-blue-500 underline text-xs  capitalize hover:text-blue-600 font-semibold" type="submit">
-                        use crypto payment method
+                    <button class="text-blue-500 underline text-xs capitalize hover:text-blue-600 font-semibold" type="submit">
+                        use Automatic USDT TRC20 payment
                     </button>
                 </form>
                 <?php endif; ?>

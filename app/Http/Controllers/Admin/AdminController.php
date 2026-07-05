@@ -236,7 +236,22 @@ class AdminController extends Controller
             return redirect()->route('admin.payments')->with('error', 'User not found.');
         }
 
+        if ($deposit->status === 'approved') {
+            return redirect()->route('admin.payments')->with('error', 'This deposit is already approved.');
+        }
+
         $deposit->update(['status' => 'approved']);
+
+        // Manual Deposit & Pay Later requests should unlock dashboard access
+        // only after admin approval, not when the user submits the request.
+        if (($deposit->payment_context ?? null) === 'MANUAL_DEPOSIT_ACCESS') {
+            $user->has_free_package = 'yes';
+            if (!$user->has_paid_package || $user->has_paid_package === 'no') {
+                $user->has_paid_package = 'standard';
+            }
+            $user->contract = 'Signed';
+            $user->save();
+        }
 
         // ── Credit DEPOSIT account with the deposited amount ──
         // Deposits are not withdrawable; withdrawals only use CASHOUT.
