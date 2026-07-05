@@ -8,9 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Contract extends Model
 {
     use HasFactory;
-    protected $fillable=[
-'name',
-'contract',
-'user_id'
+
+    protected $fillable = [
+        'name',
+        'contract',
+        'user_id',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

@@ -7,6 +7,7 @@
 
     $name = $user->name;
     $country = $user->country;
+    $message = session('message') ?? ($message ?? null);
     ?>
 
 <script>

@@ -424,6 +424,24 @@ ul li a{
 
 
        <li>
+        <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+          <i class="fa-solid fa-file-signature"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">Bifonex contract</span>
+           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+              <i class="fa-solid fa-angle-right"></i>
+           </span>
+        </a>
+        <ul class="submenu ml-2 py-2">
+           <li>
+              <a href="{{ route('admin.contracts.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                 <i class="fa-solid fa-file-contract text-xs mr-2"></i>
+                 <span class="flex-1 ms-3 whitespace-nowrap text-sm">Client Contract</span>
+              </a>
+           </li>
+        </ul>
+       </li>
+
+       <li>
         <a href="{{route('admin.claims')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white
          hover:bg-gray-100 dark:hover:bg-gray-700 group relative">
           <i class="fa-solid fa-bell"></i>

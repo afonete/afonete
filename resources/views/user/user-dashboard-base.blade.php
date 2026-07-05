@@ -516,6 +516,21 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                         </ul>
                     </li>
 
+                    {{-- My Contract --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.contracts.*') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('user.contracts.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-signature"></i>
+                            <p>My contract <i class="fas fa-angle-left right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('user.contracts.bifonex') }}" class="nav-link {{ request()->routeIs('user.contracts.bifonex') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon"></i><p>Bifonex Contract</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     {{-- Other --}}
                     <li class="nav-item has-treeview {{ request()->routeIs('profile.edit','password.show') ? 'menu-open' : '' }}">
                         <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('profile.edit','password.show') ? 'active' : '' }}">

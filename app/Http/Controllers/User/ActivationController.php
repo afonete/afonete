@@ -120,7 +120,13 @@ public function upgrade(Request $request){
                     ]);
                     $pay =  $results->payments()->save($create_payable);
 
-                    return redirect()->route('user.dashboard')->with('message', 'You have been activated Fonepo account. Enjoy unlimited earning on Fonepo!');
+                    $user->refresh();
+                    $target = $this->dashboardRouteForUser($user);
+                    $message = $target === 'user.dashboard'
+                        ? 'You have been activated Fonepo account. Enjoy unlimited earning on Fonepo!'
+                        : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
+
+                    return redirect()->route($target)->with('message', $message);
 
                 } else {
 
@@ -150,10 +156,10 @@ public function g_upgrade(Request $request){
     // dd($request);
         $code=$request->code;
         $userA = Auth::user();
-        $userId = $user->id;
-        $email = $user->email;
-        $name = $user->name;//for now
-        $user=User::where("id",$userId);
+        $userId = $userA->id;
+        $email = $userA->email;
+        $name = $userA->name;//for now
+        $user=User::find($userId);
         // $results = DB::select('SELECT * FROM activations where code= :code',['code'=>$code]);
         $activation = Activations::where("code",$code)->where("stutus","not")->first();
 
@@ -252,13 +258,36 @@ public function g_upgrade(Request $request){
                     $pay =  $activation->payments()->save($create_payable);
 
                     if($user_update && $update){
-                            return redirect()->route('user.dashboard')->with('message', 'You have been  activated Fonepo account , Enjoy unlimited earning on Fonepo');
+                            $user = User::find($userA->id);
+                            $target = $this->dashboardRouteForUser($user);
+                            $message = $target === 'user.dashboard'
+                                ? 'You have been activated Fonepo account, Enjoy unlimited earning on Fonepo'
+                                : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
+
+                            return redirect()->route($target)->with('message', $message);
                     }
 
 
 
             }
         }
+private function dashboardRouteForUser($user): string
+{
+    if (!$user) {
+        return 'user.contract';
+    }
+
+    if ($user->utype === 'ADM' || $user->contract === 'Signed') {
+        return 'user.dashboard';
+    }
+
+    $paidPackage = strtolower(trim((string) $user->has_paid_package));
+    $isFreeStandard = $user->has_free_package === 'yes'
+        && $paidPackage === 'standard';
+
+    return $isFreeStandard ? 'user.dashboard' : 'user.contract';
+}
+
 public function success()
 {
     return ('success');

@@ -224,6 +224,10 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get('user/investments',                [\App\Http\Controllers\User\InvestmentController::class, 'index'])->name('user.investments');
     Route::get('user/investments/{id}',           [\App\Http\Controllers\User\InvestmentController::class, 'show'])->name('user.investments.show');
 
+    // ── MY CONTRACT (user) ─────────────────────────────────────────────
+    Route::get('user/contracts/bifonex', [\App\Http\Controllers\ContractDocumentController::class, 'userIndex'])
+        ->name('user.contracts.bifonex');
+
 
     // create function that will return the page called kyc
     Route::get('user/kyc', function () {
@@ -417,6 +421,12 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::delete('admin/adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.adventures.destroy');
     Route::get("admin/payments/deposited",[AdminController::class,'depositedPayment'])->name("admin.payments");
     Route::get("admin/payments/deposited/{id}",[AdminController::class,'depositDetail'])->name("admin.payments.show");
+
+    // ── BIFONEX CONTRACTS (admin) ──────────────────────────────────────
+    Route::get('admin/bifonex-contracts', [\App\Http\Controllers\ContractDocumentController::class, 'adminIndex'])->name('admin.contracts.index');
+    Route::get('admin/bifonex-contracts/{contract}', [\App\Http\Controllers\ContractDocumentController::class, 'adminShow'])->name('admin.contracts.show');
+    Route::get('admin/bifonex-contracts/{contract}/download', [\App\Http\Controllers\ContractDocumentController::class, 'adminDownload'])->name('admin.contracts.download');
+
     Route::get('admin/dashboard/contacted', [AdminController::class, 'contacted'])->name('admin.contacted');
     Route::post('admin/admin-login', [AdminController::class, 'logout'])->name('admin.logout');
     Route::get('admin/manage-ads', [manage::class, 'ads'])->name('admin.ads');

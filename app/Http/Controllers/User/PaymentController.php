@@ -86,8 +86,12 @@ class PaymentController extends Controller
         }
 
         if ($deposit->activated_payment_id) {
-            return redirect()->route('user.dashboard')
-                ->with('message', 'Your ' . ($deposit->package_name ?: 'package') . ' has been activated successfully.');
+            $target = $this->dashboardRouteForUser(Auth::user());
+            $message = $target === 'user.dashboard'
+                ? 'Your ' . ($deposit->package_name ?: 'package') . ' has been activated successfully.'
+                : 'Your ' . ($deposit->package_name ?: 'package') . ' has been activated successfully. Please sign the contract to access your dashboard.';
+
+            return redirect()->route($target)->with('message', $message);
         }
 
         return view('user.direct-tron-package-payment', compact('deposit'));
@@ -121,7 +125,9 @@ class PaymentController extends Controller
             'seconds_remaining' => $secondsRemaining,
             'package_name'      => $deposit->package_name,
             'amount'            => (float) $deposit->amount_deposited,
-            'redirect_url'      => $deposit->activated_payment_id ? route('user.dashboard') : null,
+            'redirect_url'      => $deposit->activated_payment_id
+                ? route($this->dashboardRouteForUser(Auth::user()))
+                : null,
         ]);
     }
 
@@ -198,8 +204,12 @@ class PaymentController extends Controller
         }
 
         if ($deposit->status === 'approved') {
-            return redirect()->route('user.dashboard')
-                ->with('message', 'Your deposit has been approved. You now have dashboard access.');
+            $target = $this->dashboardRouteForUser(Auth::user());
+            $message = $target === 'user.dashboard'
+                ? 'Your deposit has been approved. You now have dashboard access.'
+                : 'Your deposit has been approved. Please sign the contract before accessing your dashboard.';
+
+            return redirect()->route($target)->with('message', $message);
         }
 
         return view('user.manual-deposit-waiting', compact('deposit'));
@@ -221,8 +231,27 @@ class PaymentController extends Controller
             'status'            => $deposit->status,
             'expired'           => (bool) $expired,
             'seconds_remaining' => $secondsRemaining,
-            'redirect_url'      => $deposit->status === 'approved' ? route('user.dashboard') : null,
+            'redirect_url'      => $deposit->status === 'approved'
+                ? route($this->dashboardRouteForUser(Auth::user()))
+                : null,
         ]);
+    }
+
+    private function dashboardRouteForUser($user): string
+    {
+        if (!$user) {
+            return 'user.contract';
+        }
+
+        if ($user->utype === 'ADM' || $user->contract === 'Signed') {
+            return 'user.dashboard';
+        }
+
+        $paidPackage = strtolower(trim((string) $user->has_paid_package));
+        $isFreeStandard = $user->has_free_package === 'yes'
+            && $paidPackage === 'standard';
+
+        return $isFreeStandard ? 'user.dashboard' : 'user.contract';
     }
 
     private function redirectToDirectPackagePayment(string $packageType, int $packageId, ?float $amount = null)
@@ -1290,7 +1319,7 @@ public function free(Request $request)
       $email =$user->email;
       $user = User::find($userId);
       $user->has_paid_package = 'standard';
-      $user->contract='Signed';
+      // Do not auto-sign. User must sign contract before dashboard access.
       $package='standard';
       $name=$user->user;
       $user->has_free_package = 'yes';
@@ -1300,7 +1329,7 @@ public function free(Request $request)
 
 
       if ($user->save() ) {
-        return redirect()->route('user.dashboard')->with('message', 'You have been  activated standard account , Enjoy free earning on Fonepo');
+        return redirect()->route('user.dashboard')->with('message', 'Your standard account has been activated. You can access the dashboard as a free standard user.');
 
       } else {
         return redirect()->route('user.package')->with('message', 'error while savig');

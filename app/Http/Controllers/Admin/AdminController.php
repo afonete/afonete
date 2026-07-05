@@ -249,7 +249,9 @@ class AdminController extends Controller
             if (!$user->has_paid_package || $user->has_paid_package === 'no') {
                 $user->has_paid_package = 'standard';
             }
-            $user->contract = 'Signed';
+            // Admin approval unlocks the account/package gate, but it must not
+            // bypass the contract. The contract middleware will send the user
+            // to sign before dashboard access.
             $user->save();
         }
 

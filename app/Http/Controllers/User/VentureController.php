@@ -58,7 +58,6 @@ class VentureController extends Controller
 
 
                     $user->contract='Signed';
-                    $user->has_paid_package = 'yes';
                     $pack=$user->has_paid_package;
                     $contract->name=$name;
                     $contract->user_id = $user->id;

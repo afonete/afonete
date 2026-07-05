@@ -23,7 +23,8 @@ class EnsureUserhasPaidPackage
             if ($settings && $settings->allow_free_dashboard_access && $user->has_free_package !== 'yes') {
                 $user->has_free_package = 'yes';
                 $user->has_paid_package = 'standard';
-                $user->contract = 'Signed';
+                // Do not auto-sign the contract. The contract middleware
+                // will force the user to sign before dashboard access.
                 $user->save();
             }
         }
