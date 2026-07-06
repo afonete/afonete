@@ -1,12 +1,11 @@
-@extends('admin.sidebar')
-
-@section('contents')
+<?php $__env->startSection('contents'); ?>
     <div class="container bg-white h-screen py-4 px-3">
-        @if(session('status'))
+        <?php if(session('status')): ?>
             <div class="alert alert-success">
-                {{ session('status') }}
+                <?php echo e(session('status')); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
 
        <header class="bg-blue-50 py-[2rem] rounded ">
         <h1 class="text-2xl uppercase text-slate-700 font-bold">USERS - MEMBERSHIP PLANS</h1>
@@ -22,7 +21,7 @@
 	<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
 
         <div class="flex justify-between items-center  px-3">
-             {{-- <a href="{{route("admin.adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a> --}}
+             
              <div class="p-4">
                 <label for="table-search" class="sr-only">Search</label>
                 <div class="relative mt-1">
@@ -69,117 +68,131 @@
                 </thead>
                 <tbody>
                     <!-- Row 1 -->
-                    @foreach ($users as $user)
-                    @php
+                    <?php $__currentLoopData = $users; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $user): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                         $membership = $user->membershipSummary;
-                    @endphp
+                    ?>
                     <tr class="bg-white border-b hover:bg-gray-50 align-top">
                         <td class="px-4 py-3 text-sm text-gray-700 border-b">
-                            {{ $users->firstItem() + $loop->index }}
+                            <?php echo e($users->firstItem() + $loop->index); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b min-w-[260px]">
                             <div class="flex flex-col gap-1">
                                 <div class="font-semibold text-gray-900">
-                                    <i class="fa fa-user text-xs pr-1 text-gray-300"></i>{{ $user->name }}
+                                    <i class="fa fa-user text-xs pr-1 text-gray-300"></i><?php echo e($user->name); ?>
+
                                 </div>
-                                <div><span class="font-semibold">Username:</span> {{ $user->user ?? 'N/A' }}</div>
-                                <div><i class="fa fa-envelope text-xs pr-1 text-gray-300"></i>{{ $user->email }}</div>
-                                <div><i class="fa fa-phone-square text-xs pr-1 text-gray-300"></i>{{ $user->phone }}</div>
-                                <div><i class="fa fa-calendar-check text-xs pr-1 text-gray-300"></i>Joined: {{ $user->created_at }}</div>
+                                <div><span class="font-semibold">Username:</span> <?php echo e($user->user ?? 'N/A'); ?></div>
+                                <div><i class="fa fa-envelope text-xs pr-1 text-gray-300"></i><?php echo e($user->email); ?></div>
+                                <div><i class="fa fa-phone-square text-xs pr-1 text-gray-300"></i><?php echo e($user->phone); ?></div>
+                                <div><i class="fa fa-calendar-check text-xs pr-1 text-gray-300"></i>Joined: <?php echo e($user->created_at); ?></div>
                             </div>
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b min-w-[190px]">
-                            <div class="font-semibold text-gray-900">{{ $membership->plan_type }}</div>
-                            <div class="text-xs text-gray-500">Category: {{ $membership->category }}</div>
+                            <div class="font-semibold text-gray-900"><?php echo e($membership->plan_type); ?></div>
+                            <div class="text-xs text-gray-500">Category: <?php echo e($membership->category); ?></div>
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->amount }}
+                            <?php echo e($membership->amount); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->interest }}
+                            <?php echo e($membership->interest); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->daily_bonus }}
+                            <?php echo e($membership->daily_bonus); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->duration }}
+                            <?php echo e($membership->duration); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b min-w-[180px]">
-                            {{ $membership->reward }}
+                            <?php echo e($membership->reward); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            <span class="{{ $membership->status_badge_class }} px-2 py-1 text-white rounded-md text-xs font-semibold">
-                                {{ $membership->plan_status }}
+                            <span class="<?php echo e($membership->status_badge_class); ?> px-2 py-1 text-white rounded-md text-xs font-semibold">
+                                <?php echo e($membership->plan_status); ?>
+
                             </span>
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->user_level }}
+                            <?php echo e($membership->user_level); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-xs text-gray-700 border-b min-w-[230px]">
                             <div class="flex flex-col gap-1">
-                                @foreach($membership->membership_details as $detail)
-                                    <div>{{ $detail }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $membership->membership_details; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $detail): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div><?php echo e($detail); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </td>
 
                         <td class="px-4 py-3 text-xs text-gray-700 border-b min-w-[170px]">
                             <div class="flex flex-col gap-1">
-                                @foreach($membership->role_position as $role)
-                                    <div>{{ $role }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $membership->role_position; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $role): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div><?php echo e($role); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </td>
 
                         <td class="px-4 py-3 text-xs text-gray-700 border-b min-w-[170px]">
                             <div class="flex flex-col gap-1">
-                                @foreach($membership->groups as $group)
-                                    <div>{{ $group }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $membership->groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div><?php echo e($group); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->country }}
+                            <?php echo e($membership->country); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-sm text-gray-700 border-b whitespace-nowrap">
-                            {{ $membership->approved_date }}
+                            <?php echo e($membership->approved_date); ?>
+
                         </td>
 
                         <td class="px-4 py-3 text-xs text-gray-700 border-b min-w-[150px]">
                             <div class="flex flex-col gap-1">
-                                <span class="{{ $membership->email_verified ? 'bg-green-500' : 'bg-yellow-500' }} px-2 py-1 text-white rounded-md text-xs font-semibold text-center">
-                                    {{ $membership->email_verified ? 'Email verified' : 'Email unverified' }}
+                                <span class="<?php echo e($membership->email_verified ? 'bg-green-500' : 'bg-yellow-500'); ?> px-2 py-1 text-white rounded-md text-xs font-semibold text-center">
+                                    <?php echo e($membership->email_verified ? 'Email verified' : 'Email unverified'); ?>
+
                                 </span>
-                                <span class="{{ $membership->contract_signed ? 'bg-green-500' : 'bg-yellow-500' }} px-2 py-1 text-white rounded-md text-xs font-semibold text-center">
-                                    {{ $membership->contract_signed ? 'Contract signed' : 'Contract pending' }}
+                                <span class="<?php echo e($membership->contract_signed ? 'bg-green-500' : 'bg-yellow-500'); ?> px-2 py-1 text-white rounded-md text-xs font-semibold text-center">
+                                    <?php echo e($membership->contract_signed ? 'Contract signed' : 'Contract pending'); ?>
+
                                 </span>
                             </div>
                         </td>
 
                         <td class="px-4 py-3 text-xs text-gray-700 border-b min-w-[130px]">
                             <div class="flex flex-col gap-1">
-                                @foreach($membership->reference_lines as $reference)
-                                    <div>{{ $reference }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $membership->reference_lines; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reference): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div><?php echo e($reference); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </td>
                     </tr>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     <tr>
                         <td colspan="17" class="py-2 px-3">
-                            {{ $users->links() }}
+                            <?php echo e($users->links()); ?>
+
                         </td>
                     </tr>
                     <!-- Add more rows here -->
@@ -191,12 +204,12 @@
 		</div>
 
 
-		{{-- <script src="https://unpkg.com/flowbite@1.3.4/dist/flowbite.js"></script> --}}
+		
 	</div>
 
-    <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+    <script src="<?php echo e(asset('assets/a/plugins/jquery/jquery.min.js')); ?>"></script>
     <!-- Bootstrap 4 -->
-    <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="<?php echo e(asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
     <script>
 
 
@@ -236,4 +249,6 @@
     }
     </script>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('admin.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/admin-users-memberships.blade.php ENDPATH**/ ?>
