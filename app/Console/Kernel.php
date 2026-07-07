@@ -42,6 +42,12 @@ class Kernel extends ConsoleKernel
                  ->everyMinute()
                  ->withoutOverlapping();
 
+        // Sweep/consolidate USDT from unique user deposit addresses into the hot wallet.
+        // Addresses must already have enough TRX to pay the TRC20 transfer fee.
+        $schedule->command('blockchain:sweep-deposit-addresses')
+                 ->hourly()
+                 ->withoutOverlapping();
+
         // Sweep excess funds out of the hot wallet to cold storage.
         $schedule->command('blockchain:sweep-hot-wallet')
                  ->hourly()

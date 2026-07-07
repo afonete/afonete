@@ -30,6 +30,8 @@ class TronBlockchainService
     protected string $usdtContract;
     protected ?string $hotWalletAddress;
     protected ?string $hotWalletPrivateKey;
+    protected ?string $feeWalletAddress;
+    protected ?string $feeWalletPrivateKey;
     protected int $feeLimitTrx;
 
     public function __construct()
@@ -39,6 +41,8 @@ class TronBlockchainService
         $this->usdtContract        = config('services.tron.usdt_contract') ?: env('TRON_USDT_CONTRACT', 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w');
         $this->hotWalletAddress    = config('services.tron.hot_wallet') ?: env('TRON_HOT_WALLET_ADDRESS');
         $this->hotWalletPrivateKey = config('services.tron.hot_wallet_private_key') ?: env('TRON_HOT_WALLET_PRIVATE_KEY');
+        $this->feeWalletAddress    = config('services.tron.fee_wallet') ?: env('TRON_FEE_WALLET_ADDRESS');
+        $this->feeWalletPrivateKey = config('services.tron.fee_wallet_private_key') ?: env('TRON_FEE_WALLET_PRIVATE_KEY');
         $this->feeLimitTrx         = (int) (config('services.tron.fee_limit_trx') ?: env('TRON_USDT_FEE_LIMIT_TRX', 50));
     }
 
@@ -66,6 +70,11 @@ class TronBlockchainService
     public function getHotWalletAddress(): ?string
     {
         return $this->hotWalletAddress;
+    }
+
+    public function getFeeWalletAddress(): ?string
+    {
+        return $this->feeWalletAddress;
     }
 
     public function getUsdtContract(): string
@@ -215,6 +224,64 @@ class TronBlockchainService
         return [];
     }
 
+    /** Send native TRX from the configured fee wallet to a deposit address. */
+    public function sendTrxFromFeeWallet(string $toAddress, float $amount, ?string $requestId = null): array
+    {
+        if (!$this->feeWalletAddress) {
+            throw new \RuntimeException('TRON_FEE_WALLET_ADDRESS is not configured.');
+        }
+        if (!$this->feeWalletPrivateKey) {
+            throw new \RuntimeException('TRON_FEE_WALLET_PRIVATE_KEY is not configured.');
+        }
+
+        return $this->sendTrxFromPrivateKey(
+            $this->feeWalletAddress,
+            $this->feeWalletPrivateKey,
+            $toAddress,
+            $amount,
+            $requestId ?: 'trx-fund-' . (string) Str::uuid()
+        );
+    }
+
+    /** Send native TRX from any locally-controlled TRON address. */
+    public function sendTrxFromPrivateKey(
+        string $fromAddress,
+        string $privateKey,
+        string $toAddress,
+        float $amount,
+        ?string $requestId = null
+    ): array {
+        $fromAddress = trim($fromAddress);
+        $toAddress = trim($toAddress);
+        $privateKey = trim($privateKey);
+
+        if ($fromAddress === '') {
+            throw new \RuntimeException('Source TRON address is required.');
+        }
+        if ($toAddress === '') {
+            throw new \RuntimeException('Destination TRON address is required.');
+        }
+        if ($privateKey === '') {
+            throw new \RuntimeException('Source private key is required.');
+        }
+        if ($amount <= 0) {
+            throw new \RuntimeException('TRX amount must be greater than zero.');
+        }
+
+        $requestId = $requestId ?: 'trx-send-' . (string) Str::uuid();
+        $result = $this->signAndSendTrxFrom($fromAddress, $privateKey, $toAddress, $amount, $requestId);
+
+        if (empty($result['txid']) && empty($result['txID'])) {
+            throw new \RuntimeException($result['message'] ?? 'TRX transfer did not return a transaction hash.');
+        }
+
+        return [
+            'txid'      => $result['txid'] ?? $result['txID'],
+            'requestId' => $requestId,
+            'raw'       => $result,
+        ];
+    }
+
     /** Send USDT TRC20 from the configured hot wallet, signed locally in PHP. */
     public function sendUsdt(string $toAddress, float $amount, ?string $requestId = null): array
     {
@@ -231,6 +298,56 @@ class TronBlockchainService
 
         if (empty($result['txid']) && empty($result['txHash'])) {
             throw new \RuntimeException($result['message'] ?? 'Signer did not return a transaction hash.');
+        }
+
+        return [
+            'txid'      => $result['txid'] ?? $result['txHash'],
+            'requestId' => $requestId,
+            'raw'       => $result,
+        ];
+    }
+
+    /**
+     * Send USDT TRC20 from any locally-controlled TRON address.
+     *
+     * Used for treasury consolidation: unique user deposit address -> hot wallet.
+     * The source address must already hold enough TRX/Energy to pay the network fee.
+     */
+    public function sendUsdtFromPrivateKey(
+        string $fromAddress,
+        string $privateKey,
+        string $toAddress,
+        float $amount,
+        ?string $requestId = null
+    ): array {
+        $fromAddress = trim($fromAddress);
+        $toAddress = trim($toAddress);
+        $privateKey = trim($privateKey);
+
+        if ($fromAddress === '') {
+            throw new \RuntimeException('Source TRON address is required.');
+        }
+        if ($toAddress === '') {
+            throw new \RuntimeException('Destination TRON address is required.');
+        }
+        if ($privateKey === '') {
+            throw new \RuntimeException('Source private key is required.');
+        }
+        if ($amount <= 0) {
+            throw new \RuntimeException('Sweep amount must be greater than zero.');
+        }
+
+        $requestId = $requestId ?: 'deposit-sweep-' . (string) Str::uuid();
+        $result = $this->signAndSendUsdtFrom(
+            $fromAddress,
+            $privateKey,
+            $toAddress,
+            $amount,
+            $requestId
+        );
+
+        if (empty($result['txid']) && empty($result['txHash'])) {
+            throw new \RuntimeException($result['message'] ?? 'TRON transfer did not return a transaction hash.');
         }
 
         return [
@@ -285,25 +402,28 @@ class TronBlockchainService
     }
 
     /**
-     * Sign and broadcast a USDT TRC20 transfer from the hot wallet, entirely
-     * in PHP using the hot wallet's private key. No external signer process
-     * is used, so this works on plain shared hosting.
+     * Sign and broadcast a native TRX transfer from an arbitrary TRON address.
      */
-    protected function signAndSendUsdt(string $toAddress, float $amount, string $requestId): array
-    {
+    protected function signAndSendTrxFrom(
+        string $fromAddress,
+        string $privateKey,
+        string $toAddress,
+        float $amount,
+        string $requestId
+    ): array {
         try {
-            $tron = $this->tronClient($this->hotWalletPrivateKey);
+            $tron = $this->tronClient($privateKey);
 
+            if (!$tron->isAddress($fromAddress)) {
+                throw new \RuntimeException('Invalid source TRON address: ' . $fromAddress);
+            }
             if (!$tron->isAddress($toAddress)) {
-                throw new \RuntimeException('Invalid TRON address: ' . $toAddress);
+                throw new \RuntimeException('Invalid destination TRON address: ' . $toAddress);
             }
 
-            $contract = $tron->contract($this->usdtContract);
-            $contract->setFeeLimit($this->feeLimitTrx);
-
-            // TRC20Contract::transfer() expects a human-readable amount and
-            // scales it internally using the token's on-chain decimals (6 for USDT).
-            $response = $contract->transfer($toAddress, (string) $amount, $this->hotWalletAddress);
+            // sendTransaction() expects the amount in human-readable TRX and
+            // converts it to SUN internally.
+            $response = $tron->sendTransaction($toAddress, $amount, $fromAddress);
 
             $txid = $response['txID'] ?? $response['txid'] ?? null;
             if (!$txid) {
@@ -314,6 +434,72 @@ class TronBlockchainService
                 'ok'        => true,
                 'txid'      => $txid,
                 'requestId' => $requestId,
+                'from'      => $fromAddress,
+                'to'        => $toAddress,
+                'amount'    => $amount,
+                'asset'     => 'TRX',
+                'raw'       => $response,
+            ];
+        } catch (TronException $e) {
+            throw new \RuntimeException('TRX transfer failed: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('TRX send failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sign and broadcast a USDT TRC20 transfer from the hot wallet, entirely
+     * in PHP using the hot wallet's private key. No external signer process
+     * is used, so this works on plain shared hosting.
+     */
+    protected function signAndSendUsdt(string $toAddress, float $amount, string $requestId): array
+    {
+        return $this->signAndSendUsdtFrom(
+            (string) $this->hotWalletAddress,
+            (string) $this->hotWalletPrivateKey,
+            $toAddress,
+            $amount,
+            $requestId
+        );
+    }
+
+    /**
+     * Sign and broadcast a USDT TRC20 transfer from an arbitrary TRON address.
+     */
+    protected function signAndSendUsdtFrom(
+        string $fromAddress,
+        string $privateKey,
+        string $toAddress,
+        float $amount,
+        string $requestId
+    ): array {
+        try {
+            $tron = $this->tronClient($privateKey);
+
+            if (!$tron->isAddress($fromAddress)) {
+                throw new \RuntimeException('Invalid source TRON address: ' . $fromAddress);
+            }
+            if (!$tron->isAddress($toAddress)) {
+                throw new \RuntimeException('Invalid destination TRON address: ' . $toAddress);
+            }
+
+            $contract = $tron->contract($this->usdtContract);
+            $contract->setFeeLimit($this->feeLimitTrx);
+
+            // TRC20Contract::transfer() expects a human-readable amount and
+            // scales it internally using the token's on-chain decimals (6 for USDT).
+            $response = $contract->transfer($toAddress, (string) $amount, $fromAddress);
+
+            $txid = $response['txID'] ?? $response['txid'] ?? null;
+            if (!$txid) {
+                throw new \RuntimeException('Broadcast did not return a transaction ID: ' . json_encode($response));
+            }
+
+            return [
+                'ok'        => true,
+                'txid'      => $txid,
+                'requestId' => $requestId,
+                'from'      => $fromAddress,
                 'to'        => $toAddress,
                 'amount'    => $amount,
                 'contract'  => $this->usdtContract,

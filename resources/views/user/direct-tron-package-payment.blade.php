@@ -133,7 +133,7 @@
                     <strong>What happens next?</strong>
                     <ol>
                         <li>Pay <strong>{{ number_format($amount, 2) }} USDT</strong> to the address above before the 15-minute timer ends.</li>
-                        <li>The system scans TronGrid automatically every 2 minutes.</li>
+                        <li>The system scans automatically every 2 minutes.</li>
                         <li>If the payment is received inside the timer window, your <strong>{{ $packageName }}</strong> package is activated automatically.</li>
                     </ol>
                 </div>
