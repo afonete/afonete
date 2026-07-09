@@ -1,7 +1,7 @@
 @extends('admin.sidebar')
 
 @section('contents')
-<div class="container bg-white min-h-screen py-4 px-3">
+<div class="p-4 sm:p-6 bg-slate-50 min-h-screen">
 
     {{-- Flash messages --}}
     @if(session('message'))

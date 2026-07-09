@@ -38,7 +38,7 @@ class TronBlockchainService
     {
         $this->apiKey              = config('services.tron.api_key') ?: env('TRONGRID_API_KEY');
         $this->baseUrl             = rtrim(config('services.tron.base_url') ?: env('TRON_FULL_HOST', 'https://api.trongrid.io'), '/');
-        $this->usdtContract        = config('services.tron.usdt_contract') ?: env('TRON_USDT_CONTRACT', 'TKu83PAfPbGd6KmoUx8dmST2qpdb2nnV8w');
+        $this->usdtContract        = config('services.tron.usdt_contract') ?: env('TRON_USDT_CONTRACT', 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t');
         $this->hotWalletAddress    = config('services.tron.hot_wallet') ?: env('TRON_HOT_WALLET_ADDRESS');
         $this->hotWalletPrivateKey = config('services.tron.hot_wallet_private_key') ?: env('TRON_HOT_WALLET_PRIVATE_KEY');
         $this->feeWalletAddress    = config('services.tron.fee_wallet') ?: env('TRON_FEE_WALLET_ADDRESS');

@@ -59,6 +59,16 @@ class SweepDepositAddressesToHotWallet extends Command
             return 1;
         }
 
+        if (!$this->isValidTronAddress($destination)) {
+            $this->error('Sweep destination/hot wallet is not a valid TRON address. Check TRON_HOT_WALLET_ADDRESS.');
+            return 1;
+        }
+
+        if ($destination === $tron->getUsdtContract()) {
+            $this->error('TRON_HOT_WALLET_ADDRESS is set to the USDT token contract address. Set it to your company hot wallet address instead.');
+            return 1;
+        }
+
         $query = BlockchainDepositAddress::activeTronUsdt()
             ->whereNotNull('encrypted_private_key')
             ->orderBy('id');
@@ -218,13 +228,13 @@ class SweepDepositAddressesToHotWallet extends Command
                         $this->warn('  ' . $fundingMessage);
                     }
 
-                    $previousStatus = ($depositAddress->metadata ?: [])['last_sweep_status'] ?? null;
                     if (!$dryRun) {
                         $this->rememberSweepCheck($depositAddress, $usdtBalance, $trxBalance, 'needs_trx', $fundingMessage);
                     }
 
-                    // Avoid writing the same warning every hour for the same unfunded address.
-                    if (!$dryRun && $previousStatus !== 'needs_trx') {
+                    // Record every retry attempt. This makes it visible that the scheduler
+                    // is re-checking the address until TRX funding/sweep succeeds.
+                    if (!$dryRun) {
                         BlockchainAuditLog::record('deposit_address.sweep_needs_trx', [
                             'level'          => 'warning',
                             'user_id'        => $depositAddress->user_id,
@@ -362,6 +372,11 @@ class SweepDepositAddressesToHotWallet extends Command
     {
         // USDT TRC20 uses 6 decimals. Floor to avoid trying to send dust beyond precision.
         return floor($balance * 1_000_000) / 1_000_000;
+    }
+
+    private function isValidTronAddress(?string $address): bool
+    {
+        return is_string($address) && (bool) preg_match('/^T[a-zA-Z0-9]{33}$/', trim($address));
     }
 
     private function rememberTrxFunding(

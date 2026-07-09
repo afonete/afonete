@@ -299,7 +299,7 @@ class ReferralAdminController extends Controller
 
     public function rankSettings()
     {
-        $ranks = RankSetting::orderedList();
+        $ranks = RankSetting::orderBy('order')->orderBy('level')->paginate(5);
         return view('admin.referral.rank-settings', compact('ranks'));
     }
 
