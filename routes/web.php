@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::Post('user/package/direct-payment', [PaymentController::class, 'directPackagePayment'])->name('payment.directPackage');
     Route::get('user/package/direct-payment/{deposit}', [PaymentController::class, 'showDirectPackagePayment'])->name('payment.directPackage.show');
     Route::get('user/package/direct-payment/{deposit}/status', [PaymentController::class, 'directPackagePaymentStatus'])->name('payment.directPackage.status');
+    Route::post('user/package/direct-payment/{deposit}/cancel', [PaymentController::class, 'cancelDirectPackagePayment'])->name('payment.directPackage.cancel');
     Route::get('user/manual-deposit', [PaymentController::class, 'manualDepositPage'])->name('user.manual-deposit');
     Route::post('user/manual-deposit', [PaymentController::class, 'submitManualDeposit'])->name('user.manual-deposit.submit');
     Route::get('user/manual-deposit/{deposit}/waiting', [PaymentController::class, 'manualDepositWaiting'])->name('user.manual-deposit.waiting');

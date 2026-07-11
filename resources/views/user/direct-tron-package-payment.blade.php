@@ -13,6 +13,7 @@
         .btn { border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; font-weight: 700; text-decoration: none; display: inline-block; }
         .btn-blue { background: #2563eb; color: white; }
         .btn-green { background: #16a34a; color: white; }
+        .btn-red { background: #dc2626; color: white; }
         .btn-dark { background: #1f2937; color: white; border: 1px solid #374151; }
         .grid { display: grid; grid-template-columns: minmax(260px, 360px) 1fr; gap: 22px; }
         .card { background: #161a22; border: 1px solid #293244; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.32); overflow: hidden; }
@@ -28,6 +29,7 @@
         .pending { background: #78350f; color: #fef3c7; }
         .approved { background: #14532d; color: #dcfce7; }
         .expired { background: #7f1d1d; color: #fee2e2; }
+        .cancelled { background: #374151; color: #e5e7eb; }
         .qr { background: white; padding: 12px; border-radius: 14px; width: 260px; height: 260px; object-fit: contain; }
         .warn { background: #431407; color: #fed7aa; border: 1px solid #9a3412; border-radius: 12px; padding: 12px; margin-top: 14px; }
         .info { background: #082f49; color: #bae6fd; border: 1px solid #0369a1; border-radius: 12px; padding: 12px; margin-top: 14px; }
@@ -44,20 +46,24 @@
     $packageName = $deposit->package_name ?: ($deposit->package_type . ' Package');
     $paymentUrl = route('payment.directPackage.show', $deposit->id);
     $statusUrl = route('payment.directPackage.status', $deposit->id);
+    $network = 'TRC-20';
+    $networkLabel = 'TRON / TRC20';
     $qrPayload = $address; // Keep QR wallet-compatible. Amount is displayed clearly beside it.
     $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' . urlencode($qrPayload) . '&margin=10';
     $expiresAtIso = $deposit->expires_at ? $deposit->expires_at->toIso8601String() : null;
     $secondsRemaining = $deposit->expires_at ? max(0, now()->diffInSeconds($deposit->expires_at, false)) : null;
     $isExpired = !$deposit->activated_payment_id && $deposit->status === 'pending' && $deposit->expires_at && now()->greaterThan($deposit->expires_at);
+    $isCancelled = $deposit->status === 'cancelled';
 @endphp
 <div class="wrap">
     <div class="top">
         <div>
             <h1 style="margin:0 0 6px;">Automatic USDT TRC20 Payment</h1>
-            <div class="muted">Send USDT directly on TRON/TRC20.</div>
+            <div class="muted">Send USDT directly on TRON / TRC20 only.</div>
         </div>
         <div class="row">
             <a class="btn btn-dark" href="{{ $deposit->package_type === 'FC' ? route('user.package') : route('user.venture') }}">Back to packages</a>
+            <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use manual deposit</a>
             <a class="btn btn-dark" href="{{ route('user.dashboard') }}">Dashboard</a>
         </div>
     </div>
@@ -70,14 +76,14 @@
         <div class="card">
             <div class="card-h">
                 <strong>Scan QR Code</strong><br>
-                <span class="muted">TRON / TRC20 USDT address</span>
+                <span class="muted">{{ $networkLabel }} USDT address</span>
             </div>
             <div class="card-b" style="text-align:center;">
-                <img class="qr" src="{{ $qrUrl }}" alt="USDT TRC20 payment QR code">
+                <img class="qr" src="{{ $qrUrl }}" alt="USDT {{ $network }} payment QR code">
                 <div class="info" style="text-align:left;">
                     <strong>Before sending, confirm:</strong><br>
                     Amount: <strong>{{ number_format($amount, 2) }} USDT</strong><br>
-                    Network: <strong>TRON / TRC20</strong><br>
+                    Network: <strong>TRON / TRC20 only</strong><br>
                     Package: <strong>{{ $packageName }}</strong>
                 </div>
             </div>
@@ -85,8 +91,8 @@
 
         <div class="card">
             <div class="card-h">
-                <span id="statusBadge" class="pill {{ $deposit->status === 'approved' ? 'approved' : ($isExpired ? 'expired' : 'pending') }}">
-                    {{ $isExpired && $deposit->status === 'pending' ? 'EXPIRED' : strtoupper($deposit->status) }}
+                <span id="statusBadge" class="pill {{ $deposit->status === 'approved' ? 'approved' : ($isCancelled ? 'cancelled' : ($isExpired ? 'expired' : 'pending')) }}">
+                    {{ $isCancelled ? 'CANCELLED' : ($isExpired && $deposit->status === 'pending' ? 'EXPIRED' : strtoupper($deposit->status)) }}
                 </span>
                 <h2 style="margin:12px 0 0;">{{ $packageName }}</h2>
                 <div class="muted">Reference: {{ $deposit->transaction_id }}</div>
@@ -94,7 +100,14 @@
             <div class="card-b">
                 <div class="label">Exact amount to pay</div>
                 <div class="amount">{{ number_format($amount, 2) }} USDT</div>
-                <div class="muted">Send this exact amount to avoid delayed matching.</div>
+                <div class="muted">The blockchain amount received by us must be at least this amount.</div>
+
+                <div class="warn">
+                    <strong>Network fee warning:</strong> Pay your Binance/wallet TRC-20 network fee separately.
+                    Do <strong>not</strong> subtract the network charge from the invoice amount.
+                    Example: if this invoice is <strong>{{ number_format($amount, 2) }} USDT</strong> and your exchange charges a fee,
+                    your wallet balance must cover <strong>{{ number_format($amount, 2) }} USDT + the fee</strong>, so we still receive the full invoice amount.
+                </div>
 
                 <div class="timer">
                     <div class="label">Payment window</div>
@@ -106,16 +119,33 @@
 
                 <div style="height:18px"></div>
 
-                <div class="label">USDT TRC20 payment address</div>
+                <div class="label">USDT {{ $network }} payment address</div>
                 <div id="payAddress" class="value">{{ $address }}</div>
                 <div class="row">
                     <button class="btn btn-green" type="button" data-copy="payAddress">Copy address</button>
                     <button class="btn btn-dark" type="button" data-copy-text="{{ $paymentUrl }}">Copy payment URL</button>
+                    <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use another payment option</a>
+                    @if($deposit->status === 'pending')
+                        <form method="POST" action="{{ route('payment.directPackage.cancel', $deposit->id) }}" onsubmit="return confirm('Cancel this automatic TRC-20 payment invoice?');" style="display:inline;">
+                            @csrf
+                            <button class="btn btn-red" type="submit">Cancel payment</button>
+                        </form>
+                    @endif
                 </div>
 
                 <div class="warn">
-                    <strong>Important:</strong> Only send <strong>USDT on TRON/TRC20</strong>. Do not send ERC20, BEP20, TRX, BTC, or any other asset to this address.
+                    <strong>Important:</strong> Only send <strong>USDT on {{ $networkLabel }}</strong>. Do not send through another network or any other asset to this address.
                 </div>
+
+                @if($isCancelled)
+                    <div class="warn">
+                        <strong>This payment invoice was cancelled.</strong><br>
+                        Do not send USDT to this invoice. If you want to pay manually or use another option, continue to manual deposit.
+                        <div class="row" style="margin-top:10px;">
+                            <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Go to manual deposit</a>
+                        </div>
+                    </div>
+                @endif
 
                 <div id="expiredBox" class="warn" style="{{ $isExpired ? '' : 'display:none;' }}">
                     <strong>This payment window has expired.</strong><br>
@@ -125,6 +155,7 @@
                         <input type="hidden" name="package_type" value="{{ $deposit->package_type }}">
                         <input type="hidden" name="package_id" value="{{ $deposit->package_id }}">
                         <input type="hidden" name="amount" value="{{ number_format($amount, 2, '.', '') }}">
+                        <input type="hidden" name="network" value="{{ $network }}">
                         <button type="submit" class="btn btn-blue">Create new 15-minute payment</button>
                     </form>
                 </div>
@@ -133,7 +164,7 @@
                     <strong>What happens next?</strong>
                     <ol>
                         <li>Pay <strong>{{ number_format($amount, 2) }} USDT</strong> to the address above before the 15-minute timer ends.</li>
-                        <li>The system scans automatically every 2 minutes.</li>
+                        <li>The system scans the TRON blockchain automatically every 5 minutes.</li>
                         <li>If the payment is received inside the timer window, your <strong>{{ $packageName }}</strong> package is activated automatically.</li>
                     </ol>
                 </div>
@@ -226,6 +257,10 @@
                     statusBadge.className = 'pill approved';
                     statusText.textContent = 'Payment confirmed. Package activated. Redirecting...';
                     setTimeout(function(){ window.location.href = data.redirect_url; }, 1800);
+                } else if (data.cancelled || data.status === 'cancelled') {
+                    statusBadge.textContent = 'CANCELLED';
+                    statusBadge.className = 'pill cancelled';
+                    statusText.textContent = 'This automatic payment was cancelled. Please use manual deposit or create a new payment request.';
                 } else if (data.expired && data.status === 'pending') {
                     statusBadge.textContent = 'EXPIRED';
                     statusBadge.className = 'pill expired';

@@ -58,4 +58,5 @@ class BlockchainDepositAddress extends Model
             ->where('currency', 'USDT')
             ->where('network', 'TRC-20');
     }
+
 }

@@ -31,19 +31,27 @@ class Kernel extends ConsoleKernel
         $schedule->command('referrals:process-weekly')
                  ->weeklyOn(1, '00:15'); // 1 = Monday
 
-        // === DIRECT BLOCKCHAIN (TRON USDT TRC20) ===
-        // Poll TronGrid for incoming deposits every 2 minutes
-        $schedule->command('blockchain:check-deposits')
-                 ->everyTwoMinutes()
+        // Auto-cancel user deposit requests that stayed pending for 24+ hours.
+        // Runs every 5 minutes so deposits are cancelled shortly after the 24-hour mark.
+        $schedule->command('deposits:cancel-stale-pending --hours=24')
+                 ->everyFiveMinutes()
                  ->withoutOverlapping();
 
-        // Dispatch queued direct-chain withdrawals every minute.
+        // === DIRECT BLOCKCHAIN (TRON USDT TRC20) ===
+        // Shared hosting allows cron no more often than every 5 minutes,
+        // so keep sub-hourly blockchain jobs aligned to 5-minute boundaries.
+        $schedule->command('blockchain:check-deposits')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping();
+
+        // Dispatch queued direct-chain withdrawals every 5 minutes.
         $schedule->command('blockchain:process-withdrawals')
-                 ->everyMinute()
+                 ->everyFiveMinutes()
                  ->withoutOverlapping();
 
         // Sweep/consolidate USDT from unique user deposit addresses into the hot wallet.
-        // Addresses must already have enough TRX to pay the TRC20 transfer fee.
+        // If auto-TRX funding is needed, funding happens on one run and USDT sweep happens
+        // on a later run after the TRX funding transaction confirms.
         $schedule->command('blockchain:sweep-deposit-addresses')
                  ->everyTenMinutes()
                  ->withoutOverlapping();

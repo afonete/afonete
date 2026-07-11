@@ -488,6 +488,30 @@ $directDepositAddress = $directDepositAddress ?? null;
         </div>
 
         {{-- ═══════════════════════════════════════════════════
+             AUTOMATIC UNIQUE TRC-20 ADDRESS
+        ═══════════════════════════════════════════════════ --}}
+        <div class="mt-4 px-3">
+            <h4 class="text-white mb-3"><i class="fas fa-bolt mr-2 text-warning"></i>Automatic USDT TRC-20 Deposit</h4>
+            <div class="row">
+                @if($directDepositAddress)
+                    <div class="col-md-8 mb-3">
+                        <div class="card" style="background:#111; border:1px solid #1e3a8a; border-radius:8px;">
+                            <div class="card-header" style="background:#0f172a; border-bottom:1px solid #1e3a8a;">
+                                <h5 class="text-white mb-0">USDT TRC-20 Automatic Deposit</h5>
+                                <small class="text-muted">TRON / TRC-20 only</small>
+                            </div>
+                            <div class="card-body">
+                                <code id="tronAutoDepositAddr" class="d-block text-info" style="word-break:break-all; background:#000; padding:10px; border-radius:4px;">{{ $directDepositAddress->address }}</code>
+                                <button type="button" class="btn btn-sm btn-outline-info mt-2" data-copy-target="#tronAutoDepositAddr"><i class="fas fa-copy mr-1"></i>Copy TRC-20 Address</button>
+                                <div class="alert alert-warning py-2 small mt-3 mb-0"><strong>Important:</strong> Only send USDT on <strong>TRC-20 / TRON</strong>. Network fees must be paid separately by your wallet/exchange so the full deposit amount arrives.</div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- ═══════════════════════════════════════════════════
              DEPOSIT HISTORY
         ═══════════════════════════════════════════════════ --}}
         <div class="mt-4 px-3">

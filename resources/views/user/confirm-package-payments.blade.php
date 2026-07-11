@@ -49,6 +49,7 @@
                 @method('POST')
                 <input type="hidden" name="package_type" value="VENTURE">
                 <input type="hidden" name="package_id" value="{{$venture->id}}"/>
+                <input type="hidden" name="network" value="TRC-20">
                 <input type="hidden" name="amount"
                 class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                 value="{{$amount}}"
@@ -106,6 +107,7 @@
                     @method('POST')
                     <input type="hidden" name="package_type" value="FC">
                     <input type="hidden" name="package_id" value="{{$id}}">
+                    <input type="hidden" name="network" value="TRC-20">
                     <button class="text-blue-500 underline text-xs capitalize hover:text-blue-600 font-semibold" type="submit">
                         use Automatic USDT TRC20 payment
                     </button>
@@ -117,6 +119,7 @@
                     @method('POST')
                     <input type="hidden" name="package_type" value="VENTURE">
                     <input type="hidden" name="package_id" value="{{$venture->id}}"/>
+                    <input type="hidden" name="network" value="TRC-20">
                     <input type="hidden" name="amount"
                     class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
                     value="{{$amount}}"

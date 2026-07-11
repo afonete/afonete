@@ -29,20 +29,24 @@ class DirectPackagePaymentService
     public const USED_METHOD     = 'AUTO_TRON_PACKAGE_USED';
     public const PAYMENT_WINDOW_MINUTES = 15;
 
-    public function createPendingIntent(User $user, string $packageType, int $packageId, ?float $amount = null): Deposits
+    public function createPendingIntent(User $user, string $packageType, int $packageId, ?float $amount = null, string $network = 'TRC-20'): Deposits
     {
+        $network = 'TRC-20';
         $resolved = $this->resolvePackage($packageType, $packageId, $amount);
 
         $depositAddress = app(TronBlockchainService::class)->getOrCreateDepositAddressForUser($user);
+        $depositMethod = self::DEPOSIT_METHOD;
+
         if (!$depositAddress) {
-            throw new \RuntimeException('Automatic USDT TRC20 address is not available. Please contact support.');
+            throw new \RuntimeException('Automatic USDT TRC-20 address is not available. Please contact support.');
         }
 
-        return DB::transaction(function () use ($user, $resolved, $depositAddress) {
+        return DB::transaction(function () use ($user, $resolved, $depositAddress, $network, $depositMethod) {
             $existing = Deposits::where('user_id', $user->id)
                 ->where('payment_context', self::PAYMENT_CONTEXT)
                 ->where('package_type', $resolved['type'])
                 ->where('package_id', $resolved['id'])
+                ->where('network', $network)
                 ->where('status', 'pending')
                 ->where('expires_at', '>', now())
                 ->whereBetween('amount_deposited', [$resolved['amount'] - 0.000001, $resolved['amount'] + 0.000001])
@@ -55,7 +59,7 @@ class DirectPackagePaymentService
                     $existing->update([
                         'deposit_address'     => $depositAddress->address,
                         'user_wallet_address' => $existing->user_wallet_address ?: $depositAddress->address,
-                        'network'             => 'TRC-20',
+                        'network'             => $network,
                     ]);
                 }
 
@@ -67,7 +71,7 @@ class DirectPackagePaymentService
                 'amount_deposited'    => $resolved['amount'],
                 'amount_removed'      => 0,
                 'currency_type'       => 'USDT',
-                'deposit_method'      => self::DEPOSIT_METHOD,
+                'deposit_method'      => $depositMethod,
                 'payment_context'     => self::PAYMENT_CONTEXT,
                 'package_type'        => $resolved['type'],
                 'package_id'          => $resolved['id'],
@@ -77,10 +81,10 @@ class DirectPackagePaymentService
                 // Temporary value required by the production schema; replaced
                 // with the actual sender wallet when the scanner sees payment.
                 'user_wallet_address' => $depositAddress->address,
-                'network'             => 'TRC-20',
+                'network'             => $network,
                 'status'              => 'pending',
                 'expires_at'          => now()->addMinutes(self::PAYMENT_WINDOW_MINUTES),
-                'comment'             => 'Direct USDT TRC20 package payment invoice. Send exact amount to the listed address within ' . self::PAYMENT_WINDOW_MINUTES . ' minutes.',
+                'comment'             => 'Direct USDT ' . $network . ' package payment invoice. Send exact amount to the listed address within ' . self::PAYMENT_WINDOW_MINUTES . ' minutes.',
             ]);
 
             BlockchainAuditLog::record('package_payment.intent_created', [
@@ -90,9 +94,9 @@ class DirectPackagePaymentService
                 'address'        => $depositAddress->address,
                 'amount'         => $resolved['amount'],
                 'currency'       => 'USDT',
-                'network'        => 'TRC-20',
+                'network'        => $network,
                 'request_id'     => $deposit->transaction_id,
-                'message'        => 'Direct USDT TRC20 package payment invoice created.',
+                'message'        => 'Direct USDT ' . $network . ' package payment invoice created.',
                 'context'        => [
                     'package_type' => $resolved['type'],
                     'package_id'   => $resolved['id'],
@@ -177,7 +181,7 @@ class DirectPackagePaymentService
                 'currency'       => 'USDT',
                 'network'        => 'TRC-20',
                 'request_id'     => $locked->transaction_id,
-                'message'        => 'Package activated automatically from direct USDT TRC20 payment.',
+                'message'        => 'Package activated automatically from direct USDT ' . ($locked->network ?: 'TRC-20') . ' payment.',
                 'context'        => [
                     'deposit_id'      => $locked->id,
                     'used_deposit_id' => $usedDeposit->id,
@@ -189,6 +193,11 @@ class DirectPackagePaymentService
 
             return $payment;
         });
+    }
+
+    public function normalizeNetwork(?string $network): string
+    {
+        return 'TRC-20';
     }
 
     public function resolvePackage(string $packageType, int $packageId, ?float $amount = null): array

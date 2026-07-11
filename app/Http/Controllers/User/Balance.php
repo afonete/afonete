@@ -267,13 +267,13 @@ class Balance extends Controller{
 
         $minDeposit = (float) (\App\Models\WithdrawalSetting::current()->min_deposit_amount ?? 10);
 
-        // Phase 2: unique user deposit address for automatic USDT TRC20 crediting.
-        // If the signer is not running/configured yet, we fail gracefully and keep manual methods visible.
+        // Unique user TRC-20 deposit address for automatic USDT crediting.
+        // If the signer is not configured yet, fail gracefully and keep manual methods visible.
         $directDepositAddress = null;
         try {
             $directDepositAddress = app(\App\Services\TronBlockchainService::class)->getOrCreateDepositAddressForUser($user);
         } catch (\Throwable $e) {
-            \Log::warning('Direct deposit address unavailable: ' . $e->getMessage(), ['user_id' => $user->id]);
+            \Log::warning('TRC20 direct deposit address unavailable: ' . $e->getMessage(), ['user_id' => $user->id]);
         }
 
         return view('user.balance.deposit', compact(

@@ -1437,6 +1437,7 @@ width:138px;
                                                         @csrf
                                                         <input type="hidden" name="package_type" value="FC">
                                                         <input type="hidden" name="package_id" value="{{ $package->id }}">
+                                                        <input type="hidden" name="network" value="TRC-20">
                                                         <button type="submit" class="btn btn-primary" value="{{ $package->price }}">BUY NOW</button>
                                                     </form>
                                                 </div>

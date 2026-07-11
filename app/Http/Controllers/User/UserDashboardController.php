@@ -52,10 +52,11 @@ class UserDashboardController extends Controller{
 
     public function index()
     {
-        $user=Auth::user();
+        $user = Auth::user();
         $userId = $user->id;
         // does user have claims
         $userHasClaims = $user->have_claims->where("is_fixed",false)->first();
+        // refresh user
         $user = User::where("id",$userId)->first();
         $portfolio = 0;
 
@@ -63,8 +64,12 @@ class UserDashboardController extends Controller{
         $right = $myteam->where("side","RIGHT")->count();
         $left = $myteam->where("side","LEFT")->count();
         $allUsers = $this->getAllDownlineUsers($user);
-        // dd($allUsers);referral
-        
+
+        // --- FIX: Load package BEFORE any calculations that depend on it ---
+        $package = Paymodel::where("user",$userId)
+                            ->where("is_expired",false)
+                            ->where("status","1")
+                            ->first();
 
         $mostRecentPayment = $user->investments()
                                   ->where("is_expired",0)
@@ -72,15 +77,18 @@ class UserDashboardController extends Controller{
                                   ->orderBy('created_at', 'desc')
                                   ->first();
 
+        // fallback to mostRecentPayment if $package is null
+        if (!$package && $mostRecentPayment) {
+            $package = $mostRecentPayment;
+        }
 
         // Daily income is now calculated by the scheduler (income:calculate command).
-        // Do NOT call showDailyIncome() here — it would run on every page load.
-        // $cashout and $shooping remain the CUMULATIVE totals (what the user can withdraw/spend).
-        $cashout = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
-        $shooping = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
+        // $cashout and $shooping remain the CUMULATIVE totals.
+        $cashout = (float) $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
+        $shooping = (float) $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
 
-        // Legacy cumulative total (kept for compatibility with views that show it as a badge).
-        $dailyIncome = $user->DailyIncomes()->sum("amount");
+        // Legacy cumulative total
+        $dailyIncome = (float) $user->DailyIncomes()->sum("amount");
 
         // ── Compute the PER-DAY breakdown for the active package ──
         // Per spec: Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
@@ -89,24 +97,29 @@ class UserDashboardController extends Controller{
         $dailyIncomePerDay = 0.0;
         $dailyCashout      = 0.0;
         $dailyTrading      = 0.0;
+        $adventureRow = null;
+
         if ($package) {
             $adventureRow = \App\Models\adventures::find($package->payable_id);
-            if ($adventureRow) {
-                $poolCapital    = (float) $package->paid * 80 / 100;
+            $packagePaid = (float) ($package->paid ?? 0);
+            if ($adventureRow && (float)$adventureRow->percentage > 0) {
+                $poolCapital    = $packagePaid * 80 / 100;
                 $dailyIncomePerDay = $poolCapital * ((float) $adventureRow->percentage / 100);
-                $dailyCashout      = $dailyIncomePerDay * 25 / 100;
-                $dailyTrading      = $dailyIncomePerDay * 75 / 100;
+            } else {
+                // Fallback to 2% daily as shown in UI "Rate: 2% / day"
+                $poolCapital    = $packagePaid * 80 / 100;
+                $dailyIncomePerDay = $poolCapital * 0.02;
             }
+            $dailyCashout      = $dailyIncomePerDay * 25 / 100;
+            $dailyTrading      = $dailyIncomePerDay * 75 / 100;
         }
 
+        // Contract gate
         if(($user->has_paid_package=='yes' || $user->has_paid_package=='ft' || $user->has_paid_package=='tm') && $user->contract != 'Signed'){
             return redirect()->route("user.contract");
         }
-        $package = Paymodel::where("user",$userId)
-                            ->where("is_expired",false)
-                            ->where("status","1")
-                            ->first();
 
+        // Deposits summary
         $deposits = $user->deposits->filter(function ($deposit) {
             return $deposit->status == 'approved';
         });
@@ -117,33 +130,35 @@ class UserDashboardController extends Controller{
         $deposits_pending = $user->deposits->where('status', 'pending');
         $differences = $deposits->sum('amount_deposited') - $deposits_used->sum('amount_removed');
         $sum = $differences;
-        // dd($user->has_paid_package);
+
         $credit = 0;
         $credit_status = '';
 
         $ftcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","FT");
         $tmcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","TM");
         $venturcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","FT");
-        // $ftcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","FT");
 
-
+        // Portfolio value - safe null handling
         switch($user->has_paid_package){
-        case 'ft':
-        case 'FT':
-        case 'VENTURE':
-            $portfolio = $package->paid;
-            break;
-        case 'TM':
-        case 'tm':
-            $p = $user->have_activation_code;
-            $portfolio = $p->price;
-            $credit = $p->myCredit->amount;
-            $credit_status = $p->myCredit->status;
-
+            case 'ft':
+            case 'FT':
+            case 'VENTURE':
+            case 'yes':
+                $portfolio = $package ? (float)$package->paid : 0;
+                break;
+            case 'TM':
+            case 'tm':
+                $p = $user->have_activation_code ?? null;
+                if ($p) {
+                    $portfolio = (float) ($p->price ?? 0);
+                    if (isset($p->myCredit)) {
+                        $credit = (float) ($p->myCredit->amount ?? 0);
+                        $credit_status = $p->myCredit->status ?? '';
+                    }
+                }
                 break;
             default:
-            $portfolio = $package->paid;
-
+                $portfolio = $package ? (float)$package->paid : 0;
         }
 
         $ranks = [
@@ -154,29 +169,21 @@ class UserDashboardController extends Controller{
             "associateManager"=>$this->isAssociateManager(Auth::User()),
         ];
 
-
-
-        $createdDate = $mypackage->created_at;
+        // FIX: $mypackage was undefined – use $package
+        $createdDate = $package ? $package->created_at : now();
         $today = Carbon::now();
         // Calculate the difference in days
-        $daysGone = isset($createdDate) ? $createdDate->diffInDays($today) : 0;
-        $earnings = $user->earnings->sum("amount");
-
-        // dd($this->isAssociate(Auth::User()));
-        // dd($this->isDirector(Auth::User()));
-        // dd($this->isRegionalSupervisor(Auth::User()));
-        // dd($this->isRegionalVicePresident(Auth::User()));
-        // dd($ranks);
-        // $referrals = $this->referrals(Auth::User());
+        $daysGone = $createdDate ? Carbon::parse($createdDate)->diffInDays($today) : 0;
+        $earnings = (float) $user->earnings->sum("amount");
 
         $ChartAccount = $user->ChartAccount()->where("acc_type","TRADING")->first();
-        $lockedToken    = $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
-        $freeToken      = $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
-        $availableToken = $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+        $lockedToken    = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        $freeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
+        $availableToken = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
         // GAS_FEE is admin-only — not read here
-        $COMMISSION = $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
+        $COMMISSION = (float) $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
 
-        // ── Referral bonus breakdown for dashboard (live, from referral_bonuses table) ──
+        // ── Referral bonus breakdown for dashboard ──
         $referralBonusTotals = \App\Models\ReferralBonus::totalsForUser($user->id);
         $directReferralCount   = $user->referrals()->count();
         $activeReferralCount   = $user->referrals()->whereHas('investments', function ($q) {
@@ -197,37 +204,35 @@ class UserDashboardController extends Controller{
             $nextRankInfo = $r; break;
         }
 
-        $purchaseDate = Carbon::parse($ChartAccount->created_at);
+        $purchaseDate = $ChartAccount && $ChartAccount->created_at
+            ? Carbon::parse($ChartAccount->created_at)
+            : ($package ? Carbon::parse($package->created_at) : Carbon::now());
+
         $expirationDate = null;
         $show = false;
 
         if ($mostRecentPayment && $mostRecentPayment->category == "VENTURE") {
-            // Use the package's actual expiration_date (set at purchase based on adventure.duration),
-            // not a hardcoded 31 days. This works for 100, 200, 600-day packages etc.
+            // Use the package's actual expiration_date
             $expirationDate = $package && $package->expiration_date
                 ? Carbon::parse($package->expiration_date)
-                : $purchaseDate->copy()->addDays(100); // safe fallback for legacy rows
+                : $purchaseDate->copy()->addDays(100);
             $show = true;
         }
 
         // ── Package expiry state ──
-        // A package is considered expired when:
-        //   (a) is_expired flag is true, OR
-        //   (b) no active payment exists at all
-        $packageExpired = !$package || $package->is_expired;
+        $packageExpired = !$package || ($package->is_expired ?? true);
 
         // If the package just expired, make sure has_paid_package is reset
-        // (CheckPackages command does this nightly; this is a safety fallback)
         if ($packageExpired && $user->has_paid_package !== 'no') {
             $user->has_paid_package = 'no';
             $user->save();
         }
 
         // ── Renewal due state ──
-        // Derived from package duration: max_renewals = floor((duration-1)/30).
-        // Renewal #N is due from day (N*30 - 1) onward (1 day grace before the window).
         $renewalDue    = false;
         $renewalNumber = 0;
+        $maxRenewals   = 0;
+        $pkgDuration   = $package && isset($adventureRow) && $adventureRow ? (int)$adventureRow->duration : 100;
 
         if ($package && !$packageExpired) {
             $pkgStart    = Carbon::parse($package->created_at);
@@ -237,38 +242,42 @@ class UserDashboardController extends Controller{
                                 ->count();
 
             // Get duration from the adventure package
-            $activePkg2   = \App\Models\adventures::find($package->payable_id);
+            $activePkg2   = $adventureRow ?: \App\Models\adventures::find($package->payable_id);
             $pkgDuration  = $activePkg2 ? (int) $activePkg2->duration : 100;
             $maxRenewals  = \App\Services\RenewalCalculator::maxRenewals($pkgDuration);
 
             $nextRenewalNum       = $renewalsDone + 1;
-            $nextRenewalThreshold = $nextRenewalNum * 30;  // e.g. renewal #1 due at day 30
+            $nextRenewalThreshold = $nextRenewalNum * 30;
 
             if ($renewalsDone < $maxRenewals && $daysSince >= ($nextRenewalThreshold - 1)) {
                 $renewalDue    = true;
                 $renewalNumber = $nextRenewalNum;
             }
+        } else {
+            // defaults to avoid undefined variable in view
+            $maxRenewals = 3;
+            $pkgDuration = 100;
         }
 
         $comm = $this->commissions();
 
-        // dd($deposits_pending);
+        // Also pass raw deposit balance for "Cash & Deposits" card clarity
+        $depositBalance = (float) $sum;
+        $cashoutBalance = $cashout;
+
         return view('user.dashboard',
         [
             "mypackage"              => $package,
             "show_timer"             => $show,
-            "deposits"               => number_format($sum),
+            "deposits"               => number_format($depositBalance,2),
+            "deposit_raw"            => $depositBalance,
             "ranks"                  => $ranks,
             "amount"                 => 0,
-            // ── Token balances (shown to user) ──
-            // LOCKED_TOKEN   : full investment / uvp_price. Locked during package. Released to AVAILABLE_TOKEN on expiry (per spec).
-            // AVAILABLE_TOKEN: receives (a) locked tokens released at package expiry, and (b) tokens earned each 30-day renewal (trading_voucher / renewal_price). Must be moved to FREE_TOKEN before use.
-            // FREE_TOKEN     : usable tokens — transfer to user, swap to cashout, or withdraw to wallet.
-            // GAS_FEE        : 20% charges — admin-only, never shown here.
+            // Token balances
             "locked"                 => $lockedToken,
             "free_token"             => $freeToken,
             "available_token"        => $availableToken,
-            "fcoin"                  => number_format($freeToken, 0), // used in blade fcoin box
+            "fcoin"                  => number_format($freeToken, 0),
             "commission"             => $COMMISSION,
             "referral_bonus_totals"  => $referralBonusTotals,
             "current_rank"           => $currentRank,
@@ -278,10 +287,12 @@ class UserDashboardController extends Controller{
             "direct_bonus_earned"    => $directBonusEarned,
             "gasfees"                => 0,
             "pool"                   => 0,
-            "dailyIncome"            => "$".$dailyIncome,
-            "cashout"                => "$".$cashout,
-            "shooping"               => "$".$shooping,
-            // ── Per-day breakdown (Issue 2 + 6) ──
+            "dailyIncome"            => "$".number_format($dailyIncome,2),
+            "cashout"                => "$".number_format($cashoutBalance,2),
+            "cashout_raw"            => $cashoutBalance,
+            "shooping"               => "$".number_format($shooping,2),
+            "trading_raw"            => $shooping,
+            // Per-day breakdown
             "daily_income_per_day"   => number_format($dailyIncomePerDay, 2),
             "daily_cashout"          => number_format($dailyCashout, 2),
             "daily_trading"          => number_format($dailyTrading, 2),
@@ -289,7 +300,8 @@ class UserDashboardController extends Controller{
             "pkg_duration"           => $pkgDuration,
             "daysgone"               => $daysGone,
             "credit"                 => $credit,
-            "portfolio"              => "$".$portfolio,
+            "portfolio"              => "$".number_format($portfolio,2),
+            "portfolio_raw"          => $portfolio,
             "credit_status"          => $credit_status,
             "right"                  => $right,
             "left"                   => $left,
@@ -307,6 +319,10 @@ class UserDashboardController extends Controller{
             "package_expired"        => $packageExpired,
             "renewal_due"            => $renewalDue,
             "renewal_number"         => $renewalNumber,
+            // Extra helpers for blade
+            "package_name"           => $adventureRow ? $adventureRow->name : ($package ? 'VENTURE' : 'FREE'),
+            "package_paid"           => $package ? (float)$package->paid : 0,
+            "package_currency"       => $adventureRow->currency ?? 'USD',
         ]);
     }
 

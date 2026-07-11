@@ -54,6 +54,7 @@ class PaymentController extends Controller
             'package_type' => 'required|string|in:VENTURE,UVP,FC',
             'package_id'   => 'required|integer|min:1',
             'amount'       => 'nullable|numeric|min:0.01',
+            'network'      => 'nullable|string|in:TRC-20,TRC20,TRON',
         ]);
 
         try {
@@ -61,7 +62,8 @@ class PaymentController extends Controller
                 Auth::user(),
                 $request->input('package_type'),
                 (int) $request->input('package_id'),
-                $request->filled('amount') ? (float) $request->input('amount') : null
+                $request->filled('amount') ? (float) $request->input('amount') : null,
+                $request->input('network', 'TRC-20')
             );
 
             return redirect()->route('payment.directPackage.show', $deposit->id);
@@ -121,6 +123,7 @@ class PaymentController extends Controller
             'status'            => $deposit->status,
             'activated'         => (bool) $deposit->activated_payment_id,
             'expired'           => (bool) $expired,
+            'cancelled'         => $deposit->status === 'cancelled',
             'expires_at'        => $deposit->expires_at ? $deposit->expires_at->toIso8601String() : null,
             'seconds_remaining' => $secondsRemaining,
             'package_name'      => $deposit->package_name,
@@ -129,6 +132,28 @@ class PaymentController extends Controller
                 ? route($this->dashboardRouteForUser(Auth::user()))
                 : null,
         ]);
+    }
+
+    public function cancelDirectPackagePayment(Deposits $deposit)
+    {
+        if ((int) $deposit->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if ($deposit->activated_payment_id || $deposit->status === 'approved') {
+            return redirect()->route('payment.directPackage.show', $deposit->id)
+                ->with('error', 'This payment is already confirmed and cannot be cancelled.');
+        }
+
+        if ($deposit->status === 'pending') {
+            $deposit->update([
+                'status'  => 'cancelled',
+                'comment' => trim(($deposit->comment ? $deposit->comment . "\n" : '') . 'User cancelled this automatic TRC-20 payment invoice.'),
+            ]);
+        }
+
+        $route = $deposit->package_type === 'FC' ? 'user.package' : 'user.venture';
+        return redirect()->route($route)->with('message', 'Automatic TRC-20 payment cancelled. You can choose another payment option.');
     }
 
     public function manualDepositPage()
@@ -254,14 +279,15 @@ class PaymentController extends Controller
         return $isFreeStandard ? 'user.dashboard' : 'user.contract';
     }
 
-    private function redirectToDirectPackagePayment(string $packageType, int $packageId, ?float $amount = null)
+    private function redirectToDirectPackagePayment(string $packageType, int $packageId, ?float $amount = null, string $network = 'TRC-20')
     {
         try {
             $deposit = app(DirectPackagePaymentService::class)->createPendingIntent(
                 Auth::user(),
                 $packageType,
                 $packageId,
-                $amount
+                $amount,
+                $network
             );
 
             return redirect()->route('payment.directPackage.show', $deposit->id);
@@ -288,7 +314,7 @@ class PaymentController extends Controller
         }
 
         // Plisio removed: create a direct USDT TRC20 package-payment invoice.
-        return $this->redirectToDirectPackagePayment('FC', (int) $package->id, (float) $package->price);
+        return $this->redirectToDirectPackagePayment('FC', (int) $package->id, (float) $package->price, $request->input('network', 'TRC-20'));
 
    }
 
@@ -802,7 +828,7 @@ public function blockpayventure(Request $request)
     }
 
     // Plisio removed: create a direct USDT TRC20 package-payment invoice.
-    return $this->redirectToDirectPackagePayment('VENTURE', (int) $venture->id, $value);
+    return $this->redirectToDirectPackagePayment('VENTURE', (int) $venture->id, $value, $request->input('network', 'TRC-20'));
 }
 
 
@@ -1455,7 +1481,7 @@ $email=$emaili;
     }
     else{
         if ($adventure) {
-            return $this->redirectToDirectPackagePayment('VENTURE', (int) $adventure->id, (float) $venture->amount_invest);
+            return $this->redirectToDirectPackagePayment('VENTURE', (int) $adventure->id, (float) $venture->amount_invest, $request->input('network', 'TRC-20'));
         }
         return back()->with('error', 'Invalid package selected.');
     }

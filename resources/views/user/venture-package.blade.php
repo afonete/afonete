@@ -1501,6 +1501,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                                                         @method('POST')
                                                         <input type="hidden" name="package_type" value="VENTURE"/>
                                                         <input type="hidden" name="package_id" value="{{$venture->id}}"/>
+                                                        <input type="hidden" name="network" value="TRC-20">
 
                                                         <input type="number" name="amount"
                                                                placeholder=" Enter Amount (${{abbreviateNumber($venture->min_amount)}} - ${{abbreviateNumber($venture->max_amount)}})"

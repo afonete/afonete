@@ -74,7 +74,7 @@ class AdminController extends Controller
             $withdrawal->update([
                 'status'            => WithdrawalModel::STATUS_PROCESSING,
                 'approval_required' => false,
-                'admin_note'        => $request->admin_note ?: 'Approved by admin for automatic TRON payout.',
+                'admin_note'        => $request->admin_note ?: 'Approved by admin for automatic blockchain payout.',
                 'processed_by'      => Auth::id(),
                 'processed_at'      => now(),
             ]);
@@ -92,7 +92,7 @@ class AdminController extends Controller
             ]);
 
             \App\Jobs\ProcessBlockchainWithdrawal::dispatch($withdrawal->id);
-            return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal approved and queued for automatic TRON payout.');
+            return redirect()->route('admin.withdrawal')->with('message', 'Withdrawal approved and queued for automatic blockchain payout.');
         }
 
         // Manual approval path: admin has already sent funds externally and provides tx hash/reference.
