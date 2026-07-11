@@ -108,6 +108,7 @@ class CalculateDailyIncome extends Command
 
                 // Skip if already recorded
                 $incomeExists = DailyIncome::where('user_id', $user->id)
+                                            ->where('payment_id', $package->id)
                                             ->whereDate('earned_at', $earnedAt->toDateString())
                                             ->exists();
                 if ($incomeExists) {
@@ -122,9 +123,10 @@ class CalculateDailyIncome extends Command
 
                 // Record DailyIncome
                 DailyIncome::create([
-                    'user_id'   => $user->id,
-                    'amount'    => $dailyIncome,
-                    'earned_at' => $earnedAt,
+                    'user_id'    => $user->id,
+                    'payment_id' => $package->id,
+                    'amount'     => $dailyIncome,
+                    'earned_at'  => $earnedAt,
                 ]);
 
                 // Record Transaction

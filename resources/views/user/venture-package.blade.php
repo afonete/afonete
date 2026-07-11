@@ -1484,7 +1484,13 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                                                 <span style="font-size: 11px;  margin-bottom: -15%; "
                                                       class="text-danger">{{$venture->plan}} {{$venture->duration}} days</span>
                                                 <br>
-                                                <span style="font-size: 11px;" class="text-white">{{ $venture->percentage }} % </span>
+                                                <span style="font-size: 11px;" class="text-white">
+                                                    @if(!empty($venture->percentage_range))
+                                                        {{ $venture->percentage_range }}
+                                                    @else
+                                                        {{ $venture->percentage }} %
+                                                    @endif
+                                                </span>
                                             </div>
 
                                             <div class="mt-1 px-1 text-center ">

@@ -49,6 +49,7 @@ class AdventureController extends Controller
             'min_amount' => 'required|numeric|min:0',
             'max_amount' => 'required|numeric|min:0',
             'percentage' => 'required|numeric|min:0|max:100',
+            'percentage_range' => 'nullable|string|max:100',
             'duration' => 'required|integer|min:1',
             'total_return' => 'required|string|max:10',
             'currency' => 'required|string|max:3',
@@ -63,6 +64,7 @@ class AdventureController extends Controller
             'min_amount' => $validatedData['min_amount'],
             'max_amount' => $validatedData['max_amount'],
             'percentage' => $validatedData['percentage'],
+            'percentage_range' => $validatedData['percentage_range'] ?? null,
             'duration' => $validatedData['duration'],
             'total_return' => $validatedData['total_return'],
             'currency' => $validatedData['currency'],
@@ -119,6 +121,7 @@ class AdventureController extends Controller
         'min_amount' => 'required|numeric|min:0',
         'max_amount' => 'required|numeric|min:0',
         'percentage' => 'required|numeric|min:0|max:100',
+        'percentage_range' => 'nullable|string|max:100',
         'duration' => 'required|integer|min:1',
         'total_return' => 'required|string|max:10',
         'currency' => 'required|string|max:3'
@@ -136,6 +139,7 @@ class AdventureController extends Controller
         'min_amount' => $validatedData['min_amount'],
         'max_amount' => $validatedData['max_amount'],
         'percentage' => $validatedData['percentage'],
+        'percentage_range' => $validatedData['percentage_range'] ?? null,
         'duration' => $validatedData['duration'],
         'total_return' => $validatedData['total_return'],
         'currency' => $validatedData['currency']

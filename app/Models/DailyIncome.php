@@ -11,6 +11,7 @@ class DailyIncome extends Model
 
     protected $fillable = [
         "user_id",
+        "payment_id",
         "amount",
         "earned_at",
         "is_redeemed"

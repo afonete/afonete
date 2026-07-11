@@ -83,6 +83,14 @@
                       focus:ring-blue-500 focus:ring-opacity-50" required value="{{old('percentage')}}">
                 </div>
 
+                <div>
+                    <label for="percentage_range" class="block text-sm font-medium text-gray-700  pb-2">Percentage Range (Display Only): </label>
+                    <input type="text" id="percentage_range"
+                     name="percentage_range" placeholder="Ex:  1% - 2%"
+                      class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
+                      focus:ring-blue-500 focus:ring-opacity-50" value="{{old('percentage_range')}}">
+                </div>
+
 
                 <div>
                     <label for="min_amount" class="block text-sm font-medium text-gray-700  pb-2">Minimum Amount: </label>

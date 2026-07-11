@@ -61,7 +61,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 ?>
 
 <div class="wrapper">
- @include('user.user-dashboard-base')
+ <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div class="content-wrapper">
     <div class="container-fluid">
@@ -69,11 +69,12 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
           <div style="padding: 10px 0;height:100%;">
     <div>
 
-         @if(session('message'))
+         <?php if(session('message')): ?>
          <p class="btn btn-success d-flex justify-content-center" >
-             {{ session('message') }}
+             <?php echo e(session('message')); ?>
+
          </p>
-         @endif
+         <?php endif; ?>
 
 
      </div>
@@ -117,7 +118,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
 
  @media (max-width: 768px),
- @media screen and (min-width: 768px) {
+ @media  screen and (min-width: 768px) {
      .cc .col {
          /*  border: 1px solid #ccc; /* Add desired border style */
          */ background-color: red;
@@ -332,12 +333,7 @@ background-color:yellow;
  </style>
 
 
-    {{-- <marquee behavior="" direction=""><i style="color: brown">
-      Welcome To Millionaire Site, We're Here for you , Money is always eager ,
-      now you can make money online , Better choice  solutions for your future finance And don't Hesitate to Contact us
-
-             </i>
-    </marquee> --}}
+    
 
 
 
@@ -345,7 +341,7 @@ background-color:yellow;
 
 
                 <div class="">
-                    @php
+                    <?php
                         function abbreviateNumber($number) {
         if ($number < 1000) {
             return $number;
@@ -361,7 +357,7 @@ background-color:yellow;
     }
 
 
-    @endphp
+    ?>
 
    <div class="container">
     <div class="row  pb-3  " style="margin:-10px">
@@ -375,7 +371,7 @@ background-color:yellow;
                     <h4>VENTURE PACKAGES</h4>
                   </div>
                   <div class="py-2 my-2 bg-white px-3 rounded">
-                    <h4>BALANCE: <strong class="px-2">$ {{$balance}}</strong></h4>
+                    <h4>BALANCE: <strong class="px-2">$ <?php echo e($balance); ?></strong></h4>
 
                   </div>
             </div>
@@ -419,23 +415,24 @@ background-color:yellow;
         </div>
 
              <div class="row">
-                @foreach ($adventures as $venture )
+                <?php $__currentLoopData = $adventures; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $venture): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <div class="col-md-3 my-2">
                             <div class="mycard rounded border border-dark">
                                 <div class="m-1">
-                                    <p class="text-danger text-center" style="fon-size:10px;">{{$venture->name}}</p>
+                                    <p class="text-danger text-center" style="fon-size:10px;"><?php echo e($venture->name); ?></p>
                                     <div class="d-flex justify-content-center">
                                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
                                     </div>
                                 </div>
                                 <div class="text-center" style="background-color:black;">
-                                    <span style="font-size: 11px;  margin-bottom: -15%; " class="text-danger" >{{$venture->plan}} {{$venture->duration}} days</span> <br>
+                                    <span style="font-size: 11px;  margin-bottom: -15%; " class="text-danger" ><?php echo e($venture->plan); ?> <?php echo e($venture->duration); ?> days</span> <br>
                                     <span style="font-size: 11px;" class="text-white">
-                                        @if(!empty($venture->percentage_range))
-                                            {{ $venture->percentage_range }}
-                                        @else
-                                            {{ $venture->percentage }} %
-                                        @endif
+                                        <?php if(!empty($venture->percentage_range)): ?>
+                                            <?php echo e($venture->percentage_range); ?>
+
+                                        <?php else: ?>
+                                            <?php echo e($venture->percentage); ?> %
+                                        <?php endif; ?>
                                     </span>
                                 </div>
 
@@ -443,23 +440,24 @@ background-color:yellow;
                                     <div class="mt-1 px-1 text-center ">
 
                             <span  style="font-size: 10px; margin-bottom:-22px; font-weight:bold;"
-                            class=" border-bottom border-2 border-bottom-dashed">Min ${{abbreviateNumber($venture->min_amount)}}
-                            -Max${{abbreviateNumber($venture->max_amount)}}</span> <br>
+                            class=" border-bottom border-2 border-bottom-dashed">Min $<?php echo e(abbreviateNumber($venture->min_amount)); ?>
+
+                            -Max$<?php echo e(abbreviateNumber($venture->max_amount)); ?></span> <br>
                             <span  style="font-size: 10px; margin-to:-22px; font-weight:bold;"
-                            class=" border-bottom border-2 border-bottom-dashed">Total return:{{$venture->total_return}}%</span>
+                            class=" border-bottom border-2 border-bottom-dashed">Total return:<?php echo e($venture->total_return); ?>%</span>
 
                             <div class="my-1 text-center">
-                                <form action="{{route('ventures')}}" method="post">
-                                    @csrf
-                                    @method('POST')
-                                    <input type="hidden" name="venture" value="{{$venture->id}}"/>
+                                <form action="<?php echo e(route('ventures')); ?>" method="post">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('POST'); ?>
+                                    <input type="hidden" name="venture" value="<?php echo e($venture->id); ?>"/>
                                     <input type="hidden" name="payment_method" value="FROM_DEPOSITS">
                             <input type="number" name="amount_invest"
-                            placeholder=" Enter Amount (${{abbreviateNumber($venture->min_amount)}} - ${{abbreviateNumber($venture->max_amount)}})"
+                            placeholder=" Enter Amount ($<?php echo e(abbreviateNumber($venture->min_amount)); ?> - $<?php echo e(abbreviateNumber($venture->max_amount)); ?>)"
 
                                     class="form-control-smaller text-sm  my-1 border p-1  w-100 mx-auto rounded"
-                                    min="{{$venture->min_amount}}"
-                                    max="{{$venture->max_amount}}"
+                                    min="<?php echo e($venture->min_amount); ?>"
+                                    max="<?php echo e($venture->max_amount); ?>"
                                     required/>
                                     <button class="btn btn-dark  px-2"
                                     style="font-size: 10px; background-color:black;" type="submit">
@@ -472,29 +470,29 @@ background-color:yellow;
 
                             </div>
                     </div>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <div class="col-12">
                       <div class="py-2 my-2">
                         <h4>FC PACKAGES</h4>
                       </div>
                     <div class="row">
-                        @foreach ($fc as $f)
+                        <?php $__currentLoopData = $fc; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $f): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="col-md-4">
                             <div class="card mb-4">
                                 <div class="card-body">
-                                    <form action="{{route('ventures')}}" method="POST">
-                                        @csrf
+                                    <form action="<?php echo e(route('ventures')); ?>" method="POST">
+                                        <?php echo csrf_field(); ?>
                                         <center class="bg-danger">
-                                            <h3>{{$f->name}}</h3>
+                                            <h3><?php echo e($f->name); ?></h3>
                                         </center>
                                         <center>
-                                            FC VIP {{$f->price}}$
+                                            FC VIP <?php echo e($f->price); ?>$
                                         </center>
                                         <input type="hidden" name="venture"  value="FC"/>
-                                        <input type="hidden" name="package"  value="{{$f->id}}"/>
-                                        <input type="hidden" name="routes"   value="{{$f->name}}"/>
+                                        <input type="hidden" name="package"  value="<?php echo e($f->id); ?>"/>
+                                        <input type="hidden" name="routes"   value="<?php echo e($f->name); ?>"/>
                                         <input type="hidden" name="payment_method" value="FROM_DEPOSITS">
-                                        <input type="hidden" name="amount_invest" value="{{$f->price}}"/>
+                                        <input type="hidden" name="amount_invest" value="<?php echo e($f->price); ?>"/>
                                         <div class="text-center ">
                                             <button class="btn btn-primary" value="100">
                                                 BUY NOW
@@ -505,7 +503,7 @@ background-color:yellow;
                             </div>
                         </div>
 
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
 
                         <!-- <div class="col-md-4">
@@ -519,7 +517,7 @@ background-color:yellow;
 
                                     </center>
                                     <div class="text-center mt-3">
-                                        <a href="{{route('fc2')}}"><button class="btn btn-primary"  value="200" > BUY NOW</button></a>
+                                        <a href="<?php echo e(route('fc2')); ?>"><button class="btn btn-primary"  value="200" > BUY NOW</button></a>
                                     </div>
                                 </div>
                             </div>
@@ -538,17 +536,7 @@ background-color:yellow;
     </div>
 </div>
 
-{{-- <div class="btn btn-group">
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#activationCode"
-         id="showActivation" >
-            User Activation Code
-        </button>
-        <a href="{{route('user.payment.deposits')}}" class="btn btn-primary mx-2"   >
-            Deposit & Pay Later
-        </a>
 
-    </div>
-</div> --}}
 
 
 
@@ -565,24 +553,25 @@ background-color:yellow;
 
 </div>
 
-<script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+<script src="<?php echo e(asset('assets/a/plugins/jquery/jquery.min.js')); ?>"></script>
 <!-- Bootstrap 4 -->
-<script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-<script src="{{asset('assets/a/plugins/sparklines/sparkline.js')}}"></script>
+<script src="<?php echo e(asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/sparklines/sparkline.js')); ?>"></script>
 
 <!-- AdminLTE App -->
 
-<script src="{{asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')}}"></script>
-<script src="{{asset('assets/a/dist/js/adminlte.min.js')}}"></script>
-<script src="{{asset('assets/a/dist/js/adminlte.js')}}"></script>
-<script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-<script src="{{asset('assets/a/dist/js/pages/dashboard2.js')}}"></script>
-<script src="{{asset('assets/a/dist/js/tree.js')}}"></script>
-<script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-<script src="{{asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')}}"></script>
+<script src="<?php echo e(asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/adminlte.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/adminlte.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard2.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/tree.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')); ?>"></script>
 
-<script src="{{asset('assets/a/dist/js/pages/dashboard.js')}}"></script>
-<script src="{{asset('assets/a/plugins/summernote/summernote-bs4.min.js')}}"></script>
-<script src="{{asset('assets/a/plugins/daterangepicker/daterangepicker.js')}}"></script>
-<script src="{{asset('assets/a/plugins/moment/moment.min.js')}}"></script>
-<script src="{{asset('assets/a/dist/js/pages/dashboard3.js')}}"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/summernote/summernote-bs4.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/daterangepicker/daterangepicker.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/plugins/moment/moment.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard3.js')); ?>"></script>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/buypackages.blade.php ENDPATH**/ ?>

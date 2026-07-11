@@ -15,6 +15,7 @@ class Adventures extends Model
         'min_amount',
         'max_amount',
         'percentage',
+        'percentage_range',
         'duration',
         'total_return',
         'currency',

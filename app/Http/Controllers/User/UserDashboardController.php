@@ -66,9 +66,11 @@ class UserDashboardController extends Controller{
         $allUsers = $this->getAllDownlineUsers($user);
 
         // --- FIX: Load package BEFORE any calculations that depend on it ---
+        // We order by created_at DESC to load the current newly activated package as the primary package
         $package = Paymodel::where("user",$userId)
                             ->where("is_expired",false)
                             ->where("status","1")
+                            ->orderBy("created_at", "desc")
                             ->first();
 
         $mostRecentPayment = $user->investments()
@@ -90,7 +92,7 @@ class UserDashboardController extends Controller{
         // Legacy cumulative total
         $dailyIncome = (float) $user->DailyIncomes()->sum("amount");
 
-        // ── Compute the PER-DAY breakdown for the active package ──
+        // ── Compute the PER-DAY breakdown for ALL active packages combined ──
         // Per spec: Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
         //   → Cashout (25%): withdrawable anytime, min $10
         //   → Trading Voucher (75%): accumulates, used every 30 days for renewal
@@ -101,18 +103,33 @@ class UserDashboardController extends Controller{
 
         if ($package) {
             $adventureRow = \App\Models\adventures::find($package->payable_id);
-            $packagePaid = (float) ($package->paid ?? 0);
-            if ($adventureRow && (float)$adventureRow->percentage > 0) {
-                $poolCapital    = $packagePaid * 80 / 100;
-                $dailyIncomePerDay = $poolCapital * ((float) $adventureRow->percentage / 100);
+        }
+
+        $activePackages = Paymodel::where("user", $userId)
+                                  ->where("is_expired", false)
+                                  ->where("status", "1")
+                                  ->get();
+
+        if ($activePackages->isEmpty() && $package) {
+            $activePackages = collect([$package]);
+        }
+
+        foreach ($activePackages as $p) {
+            $pAdv = \App\Models\adventures::find($p->payable_id);
+            $packagePaid = (float) ($p->paid ?? 0);
+            if ($pAdv && (float)$pAdv->percentage > 0) {
+                $poolCapital = $packagePaid * 80 / 100;
+                $pkgRate = $poolCapital * ((float) $pAdv->percentage / 100);
             } else {
                 // Fallback to 2% daily as shown in UI "Rate: 2% / day"
-                $poolCapital    = $packagePaid * 80 / 100;
-                $dailyIncomePerDay = $poolCapital * 0.02;
+                $poolCapital = $packagePaid * 80 / 100;
+                $pkgRate = $poolCapital * 0.02;
             }
-            $dailyCashout      = $dailyIncomePerDay * 25 / 100;
-            $dailyTrading      = $dailyIncomePerDay * 75 / 100;
+            $dailyIncomePerDay += $pkgRate;
         }
+
+        $dailyCashout      = $dailyIncomePerDay * 25 / 100;
+        $dailyTrading      = $dailyIncomePerDay * 75 / 100;
 
         // Contract gate
         if(($user->has_paid_package=='yes' || $user->has_paid_package=='ft' || $user->has_paid_package=='tm') && $user->contract != 'Signed'){
@@ -670,6 +687,7 @@ class UserDashboardController extends Controller{
 
             // Already recorded?
             $incomeExists = DailyIncome::where("user_id", $userId)
+                                        ->where("payment_id", $package->id)
                                         ->whereDate("earned_at", $earnedAt->toDateString())
                                         ->exists();
             if ($incomeExists) {
@@ -683,9 +701,10 @@ class UserDashboardController extends Controller{
             $cashout     = $dailyIncome * 25 / 100;  // 25% Cashout
 
             DailyIncome::create([
-                "user_id"   => $userId,
-                "amount"    => $dailyIncome,
-                "earned_at" => $earnedAt,
+                "user_id"    => $userId,
+                "payment_id" => $package->id,
+                "amount"     => $dailyIncome,
+                "earned_at"  => $earnedAt,
             ]);
 
             $transactionNo = Transaction::generateTransactionNo();

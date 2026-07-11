@@ -1,15 +1,14 @@
-@extends('admin.sidebar')
-
-@section('contents')
+<?php $__env->startSection('contents'); ?>
     <div class="container bg-white min-h-screen py-4 px-3">
-        @if(session('status'))
+        <?php if(session('status')): ?>
             <div class="alert alert-success">
-                {{ session('status') }}
+                <?php echo e(session('status')); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
 
         <header class="bg-blue-50 py-[2rem] rounded ">
-          <h1 class="text-2xl uppercase text-slate-700 font-bold">ADVENTURE - EDIT ({{$adventure->name}})</h1>
+          <h1 class="text-2xl uppercase text-slate-700 font-bold">ADVENTURE - EDIT (<?php echo e($adventure->name); ?>)</h1>
         </header>
 
 
@@ -22,36 +21,37 @@
 
 
 
-            @if (session('message'))
+            <?php if(session('message')): ?>
 
             <div class="text-green-500 my-2 py-2 px-1 bg-green-200 rounded">
                 <strong class="">
-                    {{session('message')}}
+                    <?php echo e(session('message')); ?>
+
                 </strong>
             </div>
 
-            @endif
+            <?php endif; ?>
 
-            @if ($errors->any())
+            <?php if($errors->any()): ?>
                 <div class="bg-red-400 py-2 px-2 rounded shadow-sm">
                     <ul>
-                        @foreach ($errors->all() as $error)
-                            <li class="text-red-600">{{ $error }}</li>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li class="text-red-600"><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </ul>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            <form action="{{ route('adventures.update', $adventure->id) }}" method="POST" class="block sm:grid grid-cols-3 gap-3">
-            @csrf
-                @method('PUT')
+            <form action="<?php echo e(route('adventures.update', $adventure->id)); ?>" method="POST" class="block sm:grid grid-cols-3 gap-3">
+            <?php echo csrf_field(); ?>
+                <?php echo method_field('PUT'); ?>
 
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700  pb-2">Name: </label>
                     <input type="text" id="name" name="name" class=" block w-full border-gray-300
                         rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                         placeholder="Ex: UVP, default:UVP"
-                        value="{{$adventure->name}}"
+                        value="<?php echo e($adventure->name); ?>"
                         >
                 </div>
 
@@ -60,7 +60,7 @@
                     <input type="text"  name="plan" class=" block w-full border-gray-300
                         rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                         placeholder="Ex: Venture Light"
-                        value="{{$adventure->plan}}"
+                        value="<?php echo e($adventure->plan); ?>"
                         >
                 </div>
 
@@ -70,7 +70,7 @@
                         name="percentage" placeholder="Ex:  1%"
                         class=" block w-full border-gray-300 rounded-md sha
                         dow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required
-                        value="{{$adventure->percentage}}"
+                        value="<?php echo e($adventure->percentage); ?>"
                         >
                 </div>
 
@@ -80,7 +80,7 @@
                         name="percentage_range" placeholder="Ex:  1% - 2%"
                         class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
                         focus:ring-blue-500 focus:ring-opacity-50"
-                        value="{{$adventure->percentage_range}}"
+                        value="<?php echo e($adventure->percentage_range); ?>"
                         >
                 </div>
 
@@ -90,7 +90,7 @@
                     <input type="number" id="min_amount" name="min_amount"
                         class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
                         focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 19000$"
-                        value="{{$adventure->min_amount}}"
+                        value="<?php echo e($adventure->min_amount); ?>"
                         >
                 </div>
                 <div>
@@ -98,7 +98,7 @@
                     <input type="number" id="max_amount" name="max_amount"
                     class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
                         focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 400000$"
-                        value="{{$adventure->max_amount}}"
+                        value="<?php echo e($adventure->max_amount); ?>"
                         >
                 </div>
                 <div>
@@ -106,7 +106,7 @@
                     <input type="number" id="duration" name="duration"
                     class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring
                     focus:ring-blue-500 focus:ring-opacity-50" required placeholder="Ex: 100 days"
-                    value="{{$adventure->duration}}"
+                    value="<?php echo e($adventure->duration); ?>"
                     >
                 </div>
                 <div>
@@ -116,7 +116,7 @@
                         focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" required
 
                         placeholder="EX: 130%"
-                        value="{{$adventure->total_return}}"
+                        value="<?php echo e($adventure->total_return); ?>"
 
                         >
                 </div>
@@ -126,8 +126,8 @@
                     <label for="currency" class="block text-sm font-medium text-gray-700  pb-2">Choose a currency:</label>
                     <select name="currency" id="currency"   class=" block w-full border-gray-300 rounded-md shadow-sm
                     focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 py-2 px-2 text-gray-500">
-                        <option value="EUR" {{$adventure->currency == "EUR" ?'selected':''}}>Euro (€)</option>
-                        <option value="USD" {{$adventure->currency == "USD" ?'selected':''}}>USD ($)</option>
+                        <option value="EUR" <?php echo e($adventure->currency == "EUR" ?'selected':''); ?>>Euro (€)</option>
+                        <option value="USD" <?php echo e($adventure->currency == "USD" ?'selected':''); ?>>USD ($)</option>
                     </select>
 
                 </div>
@@ -137,7 +137,7 @@
                     <input type="number" id="current_price" name="current_price"
                         class=" block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                         required
-                        value="{{$adventure->current_price}}"
+                        value="<?php echo e($adventure->current_price); ?>"
                         >
                 </div>
 
@@ -156,9 +156,9 @@
 
     </div>
 </div>
-    <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+    <script src="<?php echo e(asset('assets/a/plugins/jquery/jquery.min.js')); ?>"></script>
     <!-- Bootstrap 4 -->
-    <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="<?php echo e(asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
     <script>
 
 
@@ -198,4 +198,6 @@
     }
     </script>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('admin.sidebar', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/uvp/update.blade.php ENDPATH**/ ?>
