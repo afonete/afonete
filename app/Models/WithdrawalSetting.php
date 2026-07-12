@@ -17,6 +17,7 @@ class WithdrawalSetting extends Model
         'manual_review_risk_score','max_auto_withdrawal','hot_wallet_max_balance',
         'hot_wallet_reserve_balance','cold_wallet_address','default_trc20_min_length',
         'validate_trc20_format','notes','updated_by','allow_free_dashboard_access',
+        'withdrawal_fee_percent',
     ];
 
     public static function current(): self
@@ -38,6 +39,7 @@ class WithdrawalSetting extends Model
                 'default_trc20_min_length'  => 34,
                 'validate_trc20_format'     => true,
                 'allow_free_dashboard_access'=> false,
+                'withdrawal_fee_percent'    => 0.00,
             ];
 
             $cached = self::first() ?: self::create($defaults);

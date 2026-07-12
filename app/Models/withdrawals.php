@@ -24,6 +24,7 @@ class withdrawals extends Model
         'txn_hash',
         'blockchain_tx_hash',
         'gas_fee',
+        'fee_amount',
         'net_amount',
         'status',         // pending | processing | completed | failed
         'approval_required',

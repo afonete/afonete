@@ -29,13 +29,20 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
         @if($errors->any())<div class="alert alert-danger mx-3">{{ $errors->first() }}</div>@endif
 
         {{-- ─── Available balance strip (always shown) ─── --}}
-        <div class="d-flex justify-content-between mb-3 p-3" style="background:#0d0d0d; border-radius:8px;">
-            <span class="text-muted">Available Balance (Payout Wallet - Withdrawable):</span>
-        <div class="alert alert-info mx-3" style="font-size: 0.9rem;">
-            <strong>Important:</strong> Only money in your <strong>Payout Wallet</strong> can be withdrawn. 
-            Deposits are never withdrawable. Your daily 25% income is automatically moved here.
-        </div>
-            <span class="font-weight-bold text-success" style="font-size:1.2rem;">${{ number_format($availlableBalance, 2) }}</span>
+        <div class="d-flex justify-content-between mb-3 p-3 flex-wrap" style="background:#0d0d0d; border-radius:8px; gap: 10px;">
+            <div class="d-flex flex-column justify-content-center">
+                <span class="text-muted small">Available Balance (Payout Wallet):</span>
+                <span class="font-weight-bold text-success" style="font-size:1.5rem;">${{ number_format($availlableBalance, 2) }}</span>
+                @if(isset($settings->withdrawal_fee_percent) && $settings->withdrawal_fee_percent > 0)
+                    <span class="badge badge-warning text-dark text-xs mt-1 font-weight-bold" style="width: max-content;"><i class="fas fa-percent mr-1"></i> Withdrawal Fee: {{ number_format($settings->withdrawal_fee_percent, 2) }}%</span>
+                @else
+                    <span class="badge badge-success text-xs mt-1 font-weight-bold" style="width: max-content;"><i class="fas fa-check-circle mr-1"></i> Withdrawal Fee: Free (0.00%)</span>
+                @endif
+            </div>
+            <div class="alert alert-info mx-3 mb-0 flex-fill" style="font-size: 0.9rem; border-color: rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.05); color: #93c5fd;">
+                <strong>Important:</strong> Only money in your <strong>Payout Wallet</strong> can be withdrawn. 
+                Deposits are never withdrawable. Your daily 25% income is automatically moved here.
+            </div>
         </div>
 
         @if($availlableBalance < $settings->min_amount)
@@ -378,7 +385,9 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                             <th>#</th>
                             <th>Reference</th>
                             <th>Method</th>
-                            <th>Amount</th>
+                            <th>Requested</th>
+                            <th>Fee</th>
+                            <th>Net Received</th>
                             <th>Destination</th>
                             <th>Type</th>
                             <th>Status</th>
@@ -396,7 +405,21 @@ $history = WithdrawalModel::where('user_id', $user->id)->latest()->take(15)->get
                                     {{ $w->methodLabel() }}
                                 </span>
                             </td>
-                            <td>${{ number_format($w->amount, 2) }}</td>
+                            <td class="font-weight-bold">${{ number_format($w->amount, 2) }}</td>
+                            <td class="text-warning">
+                                @if(isset($w->fee_amount) && $w->fee_amount > 0)
+                                    ${{ number_format($w->fee_amount, 2) }}
+                                @else
+                                    $0.00
+                                @endif
+                            </td>
+                            <td class="text-success font-weight-bold">
+                                @if(isset($w->net_amount) && $w->net_amount > 0)
+                                    ${{ number_format($w->net_amount, 2) }}
+                                @else
+                                    ${{ number_format($w->amount, 2) }}
+                                @endif
+                            </td>
                             <td>
                                 <small>
                                     {{ $w->currency }}{{ $w->network ? ' · ' . $w->network : '' }}<br>

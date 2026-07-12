@@ -26,7 +26,12 @@ class UserDashboardController extends Controller{
     public function mypayments() {
 
         $user = Auth::user();
-        return view("user.Mypayments",["deposits"=>$user->deposits]);
+        $deposits = $user->deposits()->orderBy('created_at', 'desc')->paginate(10, ['*'], 'deposits_page');
+        $investments = $user->investments()->orderBy('created_at', 'desc')->paginate(10, ['*'], 'purchases_page');
+        return view("user.Mypayments",[
+            "deposits" => $deposits,
+            "investments" => $investments
+        ]);
     }
 
     private function getAllDownlineUsers($user) {

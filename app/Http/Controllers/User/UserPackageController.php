@@ -51,7 +51,10 @@ class UserpackageController extends Controller
     public function claim(Request $request){
         $user = Auth::user();
       
-        $transaction = $user->deposits->where("transaction_no",$request->transactionId)->first();
+        $transaction = $user->deposits->where("transaction_id",$request->transactionId)->first();
+        if (!$transaction) {
+            return back()->with('error', 'This transaction was not found.');
+        }
         if ($transaction->status == 'approved') {
             return back()->with('error', 'This transaction is already approved.');
         }

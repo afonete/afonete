@@ -1177,27 +1177,35 @@ img{ max-width:100%;}
              @if($have_pending_deposits)
 <div id="myModal" class="modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-top warning " role="document">
-        <div class="modal-content p-4 shadow border rounded " style="background:#27445D;">
+        <div class="modal-content p-4 shadow border rounded " style="background:#27445D; color: #fff;">
             @if (session('success'))
-                <div class="text-success">
+                <div class="text-success mb-2">
                     {{ session('success') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="text-danger">
+                <div class="text-danger mb-2">
                     {{ session('error') }}
                 </div>
             @endif
 
             <div class="text-center mb-3">
-                <h2 class="text-uppercase fw-bold text-white" >YOU HAVE PENDING DEPOSIT</h2>
+                <h2 class="text-uppercase fw-bold text-white" style="font-size: 1.4rem;">YOU HAVE PENDING DEPOSIT</h2>
             </div>
             
-            <p class="text-light small">You still have a pending order.</p>
+            <p class="text-light small mb-2">You still have a pending order.</p>
+
+            @if(!empty($have_pending_deposits->comment))
+                <div class="alert alert-info text-left small mb-3 p-3" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 8px;">
+                    <strong class="text-white d-block mb-1"><i class="fas fa-comment-dots mr-1 text-warning"></i> Admin Note / Response:</strong>
+                    <p class="mb-0 text-light" style="font-size: 0.85rem;">{{ $have_pending_deposits->comment }}</p>
+                </div>
+            @endif
+
             <p class="text-light small py-1">If your transaction is not approved, please submit your transaction ID below:</p>
             
-            <form class="d-flex justify-content-center align-items-center gap-2" method="POST" action="{{route('user.claim')}}">
+            <form class="d-flex justify-content-center align-items-center gap-2 mb-3" method="POST" action="{{route('user.claim')}}">
                 @csrf
                 <input type="text" 
                   class="form-control me-2" 
@@ -1205,12 +1213,17 @@ img{ max-width:100%;}
                   value="{{ $have_pending_deposits->transaction_id ?? '' }}" readonly>
                 <button type="submit" class="btn btn-success text-white mx-2">Send</button>
             </form>
-            <p class="text-sm">Please wait admin to approve your deposit</p>
-            <a class="btn btn-danger btn-sm" href="#" 
-                onclick="event.preventDefault(); document.getElementById('logout-form').submit()">Logout</a>
- 
-
-          
+            <p class="text-sm mb-3">Please wait for the admin to approve your deposit.</p>
+            
+            <div class="d-flex justify-content-between align-items-center pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
+                <a class="btn btn-info btn-sm font-weight-bold px-3 py-2" href="{{ route('mypayments') }}" style="border-radius: 6px;">
+                    <i class="fas fa-history mr-1"></i> View Order Status
+                </a>
+                <a class="btn btn-danger btn-sm font-weight-bold px-3 py-2" href="#" style="border-radius: 6px;"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </a>
+            </div>
         </div>
     </div>
 </div>

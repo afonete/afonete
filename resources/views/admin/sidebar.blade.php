@@ -384,6 +384,12 @@ ul li a{
                        <span class="flex-1 ms-3 whitespace-nowrap">Deposit Wallets &amp; Accounts</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{route('admin.settings.withdrawal-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                      <i class="fa-solid fa-sliders"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal &amp; Deposit Settings</span>
+                    </a>
+                </li>
 
 
                 <li>
@@ -402,6 +408,12 @@ ul li a{
                     <a href="{{route('admin.token-withdrawals')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-arrow-up-from-bracket"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{route('admin.withdrawal')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                      <i class="fa-solid fa-money-bill-transfer"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal</span>
                     </a>
                 </li>
                 <li>

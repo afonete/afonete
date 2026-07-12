@@ -1,251 +1,163 @@
 @extends('admin.sidebar')
 
 @section('contents')
-    <div class="container bg-white h-screen py-4 px-3">
-        @if(session('status'))
-            <div class="alert alert-success">
-                {{ session('status') }}
+<div class="container mx-auto py-6 px-6 bg-slate-50 min-h-screen">
+
+    {{-- Alert Banner --}}
+    @if(session('status'))
+        <div class="p-4 mb-4 text-sm text-emerald-800 rounded-lg bg-emerald-50 dark:bg-gray-800 dark:text-emerald-400 font-semibold" role="alert">
+            <i class="fas fa-check-circle mr-1"></i> {{ session('status') }}
+        </div>
+    @endif
+
+    {{-- Page Header --}}
+    <div class="bg-white border border-slate-200 rounded-xl px-5 py-4 mb-6 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-100 text-blue-600 p-2.5 rounded-lg text-lg">
+                <i class="fas fa-box"></i>
             </div>
-        @endif
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Manage UVP (Adventures)</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Create, edit, and configure active Unique Venture Portfolio packages and interest rates.</p>
+            </div>
+        </div>
+        <div>
+            <a href="{{ route('admin.adventures.create') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm shadow-blue-500/10 transition-all flex items-center gap-2 text-sm">
+                <i class="fas fa-plus"></i> <span>New Adventure</span>
+            </a>
+        </div>
+    </div>
 
-       <header class="bg-blue-50 py-[2rem] rounded ">
-        <h1 class="text-2xl uppercase text-slate-700 font-bold">ADVENTURES - UVP</h1>
-
-    </header>
-
-
-
-
-
-<div class=" mx-auto">
-
-	<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-
-        <div class="flex justify-between items-center  px-3">
-             <a href="{{route("admin.adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a>
-             <div class="p-4">
-                <label for="table-search" class="sr-only">Search</label>
-                <div class="relative mt-1">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd"
-                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                    <input type="text" id="searchInput"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                     focus:ring-blue-500 focus:border-blue-500 block w-80 pl-10 p-2.5  dark:bg-gray-700
-                      dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500
-                       dark:focus:border-blue-500" placeholder="Search username,names,email,date,..">
+    {{-- Table Card --}}
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        
+        {{-- Search Actions --}}
+        <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <span class="font-bold text-slate-800 text-sm">Active Adventure Plans</span>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                    <i class="fas fa-search text-xs"></i>
                 </div>
+                <input type="text" id="searchInput"
+                       class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 pl-9 p-2.5 transition-all" 
+                       placeholder="Search packages, plans, rates...">
             </div>
         </div>
 
-
-			<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400" id="myTable">
-				<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-					<tr>
-						<th scope="col" class="p-4">
-							{{-- <div class="flex items-center">
-								<input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-								<label for="checkbox-all-search" class="sr-only">checkbox</label>
-							</div> --}}
-                            #
-						</th>
-
-						<th scope="col" class="px-6 py-3">
-						Name
-						</th>
-
-
-						<th scope="col" class="px-6 py-3">
-							Plan
-						</th>
-						<th scope="col" class="px-3 py-3">
-                            Percentage
-						</th>
-						<th scope="col" class="px-6 py-3">
-							Max-Amount
-						</th>
-                        <th scope="col" class="px-6 py-3">
-							Min-Amount
-						</th>
-                        <th scope="col" class="px-2 py-3">
-							Current Price
-						</th>
-                        <th scope="col" class="px-2 py-3">
-							Currency
-						</th>
-                        <th scope="col" class="px-2 py-3">
-							Total Return
-						</th>
-
-                        <th scope="col" class="px-2 py-3">
-							Investors
-						</th>
-
-
-						<th scope="col" class="px-6 py-3">
-							Actions
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-
-
-                    @foreach($adventures as $deposit)
-
-
-
-                    <tr
-						class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-						<td class="w-4 p-4">
-							{{-- <div class="flex items-center">
-								<input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-								<label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-							</div> --}}
-                            {{ $loop->iteration }}
-						</td>
-
-						<th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
-							{{ $deposit->name }}
-						</th>
-
-						<td class="px-6 py-4">
-                            {{ $deposit->plan }}
-						</td>
-						<td class="px-3 py-4 uppercase">
-							{{ $deposit->percentage}} %
-						</td>
-						<td class="px-6 py-4">
-							{{ $deposit->max_amount }} {{ $deposit->currency == 'USD' ? '$' : 'EUR' }}
-						</td>
-                        <td class="px-6 py-4">
-							{{ $deposit->min_amount }} {{ $deposit->currency == 'USD' ? '$' : 'EUR' }}
-						</td>
-
-                        <td class="px-6 py-4">
-							{{ $deposit->current_price }} {{ $deposit->currency == 'USD' ? '$' : 'EUR' }}
-						</td>
-
-                        <td class="px-2 py-4">
-                            {{ $deposit->currency }}
-                        </td>
-
-                        <td class="px-2 py-4">
-                            {{ $deposit->total_return }} %
-                        </td>
-                        <td class="px-2 py-4 text-center">
-                            {{$deposit->investments()->count()}}
-                        </td>
-						<td class="px-6 py-4 text-right">
-
-                           <div class="flex gap-2">
-
-
-
-                                <a href="{{route('admin.adventure.edit',$deposit)}}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 rounded focus:outline-none" >
-                                    <i class="fa fa-edit"></i>
-                                </a>
-
-
-
-
-
-                               <form id="deleteForm" action="{{ route('admin.adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
-                                    <i class="fa fa-trash"></i>
-                                </button>
-                            </form>
-
-                            <script>
-                                function confirmDeletion() {
-                                    return confirm('Are you sure you want to delete this adventure?');
-                                }
-                            </script>
-
-                                <a href="{{route("admin.adventures.investors",$deposit->id)}}" class="bg-gray-700 hover:bg-gray-800
-                                 text-white px-2 py-2 rounded focus:outline-none flex gap-1 items-center" >
-                                    Investors <i class="fa fa-eye"></i>
-                                </a>
-
-
-
-
-
-
-
-                           </div>
-
-                            {{-- route('admin.approve-deposit')}} --}}
-
-
-
-						</td>
-					</tr>
-
-                @endforeach
-
-
-
-                    <tr>
-                        <td colspan="11" class="px-6 py-4">
-                            {{ $adventures->links() }}
-                        </td>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" id="myTable">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">#</th>
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">UVP Plan &amp; Name</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Daily ROI / Range</th>
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Investment Limits</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Token Swap Price</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Return</th>
+                        <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Investors</th>
+                        <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
+                </thead>
+                <tbody>
+                    @forelse($adventures as $deposit)
+                        <tr class="hover:bg-slate-50 border-b border-slate-100 transition-all">
+                            <td class="p-4 text-sm font-semibold text-slate-500">
+                                {{ ($adventures->currentPage() - 1) * $adventures->perPage() + $loop->iteration }}
+                            </td>
+                            <td class="px-5 py-4">
+                                <span class="font-bold text-slate-800 text-sm block">{{ $deposit->plan }}</span>
+                                <span class="text-xs text-slate-400 mt-0.5">Name: {{ $deposit->name }}</span>
+                            </td>
+                            <td class="px-4 py-4 text-sm">
+                                @if(!empty($deposit->percentage_range))
+                                    <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-0.5 rounded border border-blue-100 block w-max">{{ $deposit->percentage_range }}</span>
+                                @else
+                                    <span class="font-bold text-indigo-600 block">{{ $deposit->percentage }}%</span>
+                                @endif
+                                <span class="text-xs text-slate-400 mt-1 block">Base Rate: {{ $deposit->percentage }}%</span>
+                            </td>
+                            <td class="px-5 py-4 text-sm">
+                                <span class="font-semibold text-slate-700 block">${{ number_format($deposit->min_amount, 0) }} - ${{ number_format($deposit->max_amount, 0) }}</span>
+                                <span class="text-xs text-slate-400 mt-0.5 block">Currency: {{ $deposit->currency }}</span>
+                            </td>
+                            <td class="px-4 py-4 text-sm">
+                                <span class="font-semibold text-slate-600 block">${{ number_format($deposit->current_price, 4) }}</span>
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Per UVP Swap</span>
+                            </td>
+                            <td class="px-4 py-4 text-sm font-bold text-slate-600">
+                                {{ $deposit->total_return }}%
+                            </td>
+                            <td class="px-4 py-4 text-sm text-center">
+                                {{-- Polymorphic relation count --}}
+                                @if($deposit->payments()->count() > 0)
+                                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full"><i class="fas fa-users mr-1"></i>{{ $deposit->payments()->count() }}</span>
+                                @else
+                                    <span class="bg-slate-100 text-slate-400 text-xs font-semibold px-2.5 py-1 rounded-full">0</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-4 text-sm text-right">
+                                <div class="flex justify-end gap-2">
+                                    {{-- Edit Button --}}
+                                    <a href="{{ route('admin.adventure.edit', $deposit) }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold p-2 rounded-lg shadow-sm shadow-blue-500/10 transition-all text-xs flex items-center justify-center" title="Edit Plan">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
 
-				</tbody>
-			</table>
-		</div>
+                                    {{-- Delete Button --}}
+                                    <form action="{{ route('admin.adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this adventure?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-lg shadow-sm shadow-red-500/10 transition-all text-xs flex items-center justify-center" title="Delete Plan">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
 
+                                    {{-- View Investors Link --}}
+                                    <a href="{{ route('admin.adventures.investors', $deposit->id) }}" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all text-xs inline-flex items-center gap-1.5" title="View Investors">
+                                        <i class="fas fa-eye"></i> <span>Investors</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-6 text-slate-400 text-sm">
+                                <i class="fas fa-folder-open mb-1 text-slate-300 block text-lg"></i>
+                                No active adventure plans found.
+                            </td>
+                        </tr>
+                    @endforelse
+                    
+                    {{-- Pagination Controls Row (Using Clean Tailwind CSS layout) --}}
+                    @if($adventures->hasPages())
+                        <tr class="bg-slate-50">
+                            <td colspan="8" class="px-6 py-4">
+                                <div class="flex justify-center">
+                                    {{ $adventures->links() }}
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-		{{-- <script src="https://unpkg.com/flowbite@1.3.4/dist/flowbite.js"></script> --}}
-	</div>
+</div>
 
-    <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
-    <!-- Bootstrap 4 -->
-    <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-    <script>
-
-
-
-      $(document).ready(function(){
-
+<script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+<!-- Bootstrap 4 -->
+<script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
+<script>
+    $(document).ready(function(){
         $('#searchInput').on('keyup', function() {
-        var value = $(this).val().toLowerCase();
-        $('#myTable tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            var value = $(this).val().toLowerCase();
+            $('#myTable tbody tr').filter(function() {
+                // Ignore the pagination row
+                if ($(this).find('td').attr('colspan') != '8') {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
         });
     });
-
-
-
-    $('#openModal').click(function() {
-                $('#modal').removeClass('hidden');
-            });
-
-            $('#closeModal').click(function() {
-                $('#modal').addClass('hidden');
-                $("#action").value = ""
-            });
-
-      })
-      function show(action,deposit){
-        // alert(deposit)
-
-        $('#modal').removeClass('hidden');
-        // $("#action").value(action)
-        // $("#deposit").value(deposit);
-        $("#inputs").html(`
-        <input type="hidden" name="action" value="${action}"/>
-        <input type="hidden" name="deposit" value="${deposit}"/>
-        `)
-
-    }
-    </script>
-    </div>
+</script>
 @endsection

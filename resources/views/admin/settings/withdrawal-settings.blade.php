@@ -4,8 +4,8 @@
 
     {{-- Back Button --}}
     <div class="mb-6">
-        <a href="{{ route('admin.referral.bonuses') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm transition duration-150 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:text-white">
-            <i class="fas fa-arrow-left text-xs"></i> Back to Referral Bonuses
+        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 bg-white hover:bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm transition duration-150 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:text-white">
+            <i class="fas fa-arrow-left text-xs"></i> Back to Dashboard
         </a>
     </div>
 
@@ -78,6 +78,17 @@
                                 <input type="number" step="0.01" min="0" name="min_amount" value="{{ $settings->min_amount }}" required class="rounded-none rounded-r-xl bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5 font-mono font-semibold dark:bg-gray-700 dark:border-gray-600 dark:text-white transition">
                             </div>
                             <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Per specification: $10.00</p>
+                        </div>
+
+                        <div>
+                            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+                                Withdrawal Fee (%) <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex rounded-xl shadow-sm">
+                                <input type="number" step="0.01" min="0" max="100" name="withdrawal_fee_percent" value="{{ $settings->withdrawal_fee_percent ?? 0.00 }}" required class="rounded-l-xl bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block flex-1 min-w-0 w-full text-sm p-2.5 font-mono font-semibold dark:bg-gray-700 dark:border-gray-600 dark:text-white transition">
+                                <span class="inline-flex items-center px-3.5 text-sm font-bold text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-xl dark:bg-gray-700 dark:text-gray-400 dark:border-gray-600">%</span>
+                            </div>
+                            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Default is 0.00% fee</p>
                         </div>
 
                         <div>

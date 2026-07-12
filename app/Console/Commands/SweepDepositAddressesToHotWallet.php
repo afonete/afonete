@@ -290,6 +290,52 @@ class SweepDepositAddressesToHotWallet extends Command
                 $totalSwept += $amount;
                 $this->info('  Swept ' . $amount . ' USDT. TX: ' . ($txid ?: 'unknown'));
 
+                // ── Recycle remaining TRX back to Fee Wallet (Zero Dust Policy) ──
+                if (!$dryRun) {
+                    try {
+                        $feeWallet = $tron->getFeeWalletAddress();
+                        if ($feeWallet && $feeWallet !== $address) {
+                            $this->info('  Waiting 3 seconds for transaction finality to query remaining TRX...');
+                            sleep(3);
+                            $updatedTrxBalance = (float) $tron->getTrxBalance($address);
+                            
+                            // Only sweep if there is a meaningful amount of TRX left (e.g. > 0.1 TRX)
+                            if ($updatedTrxBalance > 0.1) {
+                                $this->info("  Recycling remaining {$updatedTrxBalance} TRX back to Fee Wallet (Zero Dust)...");
+                                $trxSweepRequestId = 'deposit-trx-recycle-' . $depositAddress->id . '-' . (string) Str::uuid();
+                                $trxSweepResult = $tron->sendTrxFromPrivateKey(
+                                    $address,
+                                    $privateKey,
+                                    $feeWallet,
+                                    $updatedTrxBalance,
+                                    $trxSweepRequestId
+                                );
+                                $trxSweepTxid = $trxSweepResult['txid'] ?? 'unknown';
+                                $this->info("  Successfully recycled remaining TRX! TX: {$trxSweepTxid}. Address balance is now 0 TRX.");
+                                
+                                BlockchainAuditLog::record('deposit_address.trx_recycled', [
+                                    'user_id'        => $depositAddress->user_id,
+                                    'auditable_type' => BlockchainDepositAddress::class,
+                                    'auditable_id'   => $depositAddress->id,
+                                    'tx_hash'        => $trxSweepTxid,
+                                    'address'        => $address,
+                                    'amount'         => $updatedTrxBalance,
+                                    'currency'       => 'TRX',
+                                    'network'        => 'TRC-20',
+                                    'request_id'     => $trxSweepRequestId,
+                                    'message'        => 'Remaining TRX recycled back to fee wallet.',
+                                    'context'        => [
+                                        'fee_wallet' => $feeWallet,
+                                        'raw'        => $trxSweepResult['raw'] ?? [],
+                                    ],
+                                ]);
+                            }
+                        }
+                    } catch (\Throwable $trxEx) {
+                        $this->warn('  Warning: Failed to recycle remaining TRX: ' . $trxEx->getMessage());
+                    }
+                }
+
                 $metadata = $depositAddress->metadata ?: [];
                 $metadata['last_sweep_checked_at'] = now()->toDateTimeString();
                 $metadata['last_sweep_status'] = 'swept';

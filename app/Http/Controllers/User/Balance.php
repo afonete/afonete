@@ -613,8 +613,12 @@ class Balance extends Controller{
             default         => trim($currency . ' ' . ($network ?? '')),
         };
 
+        $feePercent = (float) ($settings->withdrawal_fee_percent ?? 0.00);
+        $feeAmount  = round($amount * ($feePercent / 100), 2);
+        $netAmount  = round($amount - $feeAmount, 2);
+
         try {
-            $withdrawal = DB::transaction(function () use ($user, $cashoutBalance, $amount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {
+            $withdrawal = DB::transaction(function () use ($user, $cashoutBalance, $amount, $feeAmount, $netAmount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {
                 $user->ChartAccount()->where('acc_type', 'CASHOUT')->update(['amount' => $cashoutBalance - $amount]);
 
                 return \App\Models\withdrawals::create([
@@ -622,6 +626,8 @@ class Balance extends Controller{
                     'method'            => $method,
                     'network'           => $network,
                     'amount'            => $amount,
+                    'fee_amount'        => $feeAmount,
+                    'net_amount'        => $netAmount,
                     'currency'          => $currency,
                     'wallet_address'    => $address,
                     'transaction_no'    => $trxNo,

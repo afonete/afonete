@@ -96,6 +96,7 @@ class SettingsController extends Controller
             'cold_wallet_address'       => $coldWalletAddress ?: null,
             'default_trc20_min_length'  => (int) $request->default_trc20_min_length,
             'validate_trc20_format'     => $request->has('validate_trc20_format'),
+            'withdrawal_fee_percent'    => (float) ($request->withdrawal_fee_percent ?? 0.00),
             'notes'                  => $request->notes,
             'updated_by'             => Auth::id(),
         ]);
