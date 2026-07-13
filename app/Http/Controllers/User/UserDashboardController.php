@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Payment as Paymodel;
 use App\Models\User;
 use App\Models\DailyIncome;
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\ChartAccount;
 use App\Models\Transaction;
 use App\Models\Claim;
@@ -98,7 +98,7 @@ class UserDashboardController extends Controller{
         $dailyIncome = (float) $user->DailyIncomes()->sum("amount");
 
         // ── Compute the PER-DAY breakdown for ALL active packages combined ──
-        // Per spec: Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
+        // Per spec: Daily ROI = (package_amount × 80%) × (Adventures.percentage / 100)
         //   → Cashout (25%): withdrawable anytime, min $10
         //   → Trading Voucher (75%): accumulates, used every 30 days for renewal
         $dailyIncomePerDay = 0.0;
@@ -107,7 +107,7 @@ class UserDashboardController extends Controller{
         $adventureRow = null;
 
         if ($package) {
-            $adventureRow = \App\Models\adventures::find($package->payable_id);
+            $adventureRow = \App\Models\Adventures::find($package->payable_id);
         }
 
         $activePackages = Paymodel::where("user", $userId)
@@ -120,7 +120,7 @@ class UserDashboardController extends Controller{
         }
 
         foreach ($activePackages as $p) {
-            $pAdv = \App\Models\adventures::find($p->payable_id);
+            $pAdv = \App\Models\Adventures::find($p->payable_id);
             $packagePaid = (float) ($p->paid ?? 0);
             if ($pAdv && (float)$pAdv->percentage > 0) {
                 $poolCapital = $packagePaid * 80 / 100;
@@ -264,7 +264,7 @@ class UserDashboardController extends Controller{
                                 ->count();
 
             // Get duration from the adventure package
-            $activePkg2   = $adventureRow ?: \App\Models\adventures::find($package->payable_id);
+            $activePkg2   = $adventureRow ?: \App\Models\Adventures::find($package->payable_id);
             $pkgDuration  = $activePkg2 ? (int) $activePkg2->duration : 100;
             $maxRenewals  = \App\Services\RenewalCalculator::maxRenewals($pkgDuration);
 
@@ -635,7 +635,7 @@ class UserDashboardController extends Controller{
             return;
         }
 
-        $package2 = adventures::where("id", $package->payable_id)->first();
+        $package2 = Adventures::where("id", $package->payable_id)->first();
         if (!$package2) {
             return;
         }

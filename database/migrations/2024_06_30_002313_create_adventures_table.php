@@ -14,7 +14,7 @@ class CreateAdventuresTable extends Migration
 
     public function up()
     {
-        Schema::create('adventures', function (Blueprint $table) {
+        Schema::create('Adventures', function (Blueprint $table) {
             $table->id();
             $table->string("name", 200)->default('UVP');
             $table->string("plan", 200)->comment("plan name like VENTURE LIGHT");
@@ -36,6 +36,6 @@ class CreateAdventuresTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('adventures');
+        Schema::dropIfExists('Adventures');
     }
 }

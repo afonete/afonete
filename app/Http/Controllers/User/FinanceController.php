@@ -729,7 +729,7 @@ public function getTeamTree(Request $request,$id){
 
         // Package runs 100 days → renewals at day 30, 60, 90  (max 3)
         // max_renewals derived from adventure package duration
-        $activePkg2  = \App\Models\adventures::find($activePayment->payable_id);
+        $activePkg2  = \App\Models\Adventures::find($activePayment->payable_id);
         $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
         $maxRenewals = RenewalCalculator::maxRenewals($pkgDuration);
 
@@ -826,7 +826,7 @@ public function getTeamTree(Request $request,$id){
         $renewalNumber = $renewalsDone + 1;
 
         // Calculate maxRenewals from package duration
-        $activePkg2ForPay = \App\Models\adventures::find($activePayment->payable_id);
+        $activePkg2ForPay = \App\Models\Adventures::find($activePayment->payable_id);
         $pkgDurationPay   = $activePkg2ForPay ? (int) $activePkg2ForPay->duration : 100;
         $maxRenewals      = RenewalCalculator::maxRenewals($pkgDurationPay);
 

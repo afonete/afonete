@@ -76,6 +76,11 @@ Route::get('guest-request', [HomeController::class, 'requested'])->name('request
 
 // end ventures
 
+Route::middleware(['auth'])->group(function () {
+    Route::post('email/verify-pin', [\App\Http\Controllers\User\UserPackageController::class, 'verifyEmailPin'])->name('verification.verify-pin');
+    Route::post('email/resend-pin', [\App\Http\Controllers\User\UserPackageController::class, 'resendEmailPin'])->name('verification.resend-pin');
+});
+
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     // Route::get("user/underpayment",function(){
     //     return view("user.callback",["status"=>"success"]);
@@ -407,19 +412,19 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/users/list', [AdminController::class, 'users'])->name('users.list');
     Route::get('admin/memberships-plan', [AdminController::class, 'plans'])->name('membership.plans');
 
-    Route::get('admin/adventures', [AdventureController::class, 'index'])->name('admin.adventures');
+    Route::get('admin/Adventures', [AdventureController::class, 'index'])->name('admin.Adventures');
     Route::get('admin/campains', [CampainController::class, 'index'])->name('admin.campains');
     Route::get('admin/video-campains', [CampainController::class, 'VideoCampain'])->name('admin.video-campain');
     Route::get('admin/Text-campains', [CampainController::class, 'TextCampain'])->name('admin.text-campain');
     Route::get('admin/Banner-campains', [CampainController::class, 'BannerCampain'])->name('admin.banner-campain');
     Route::get('admin/Link-campains', [CampainController::class, 'LinkCampain'])->name('admin.link-campain');
 
-    Route::get('admin/adventures/create', [AdventureController::class, 'create'])->name('admin.adventures.create');
-    Route::post('admin/adventures/store', [AdventureController::class, 'store'])->name('admin.adventures.store');
-    Route::get('admin/adventures/{adventure}/edit', [AdventureController::class, 'edit'])->name('admin.adventure.edit');
-    Route::put('admin/adventures/{adventure}/update', [AdventureController::class, 'update'])->name('adventures.update');
-    Route::get('admin/adventures/{adventure}/investors', [AdventureController::class, 'investors'])->name('admin.adventures.investors');
-    Route::delete('admin/adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.adventures.destroy');
+    Route::get('admin/Adventures/create', [AdventureController::class, 'create'])->name('admin.Adventures.create');
+    Route::post('admin/Adventures/store', [AdventureController::class, 'store'])->name('admin.Adventures.store');
+    Route::get('admin/Adventures/{adventure}/edit', [AdventureController::class, 'edit'])->name('admin.adventure.edit');
+    Route::put('admin/Adventures/{adventure}/update', [AdventureController::class, 'update'])->name('Adventures.update');
+    Route::get('admin/Adventures/{adventure}/investors', [AdventureController::class, 'investors'])->name('admin.Adventures.investors');
+    Route::delete('admin/Adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.Adventures.destroy');
     Route::get("admin/payments/deposited",[AdminController::class,'depositedPayment'])->name("admin.payments");
     Route::get("admin/payments/deposited/{id}",[AdminController::class,'depositDetail'])->name("admin.payments.show");
 

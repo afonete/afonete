@@ -13,8 +13,8 @@ class AddPercentageRangeToAdventuresTable extends Migration
      */
     public function up()
     {
-        if (Schema::hasTable('adventures') && !Schema::hasColumn('adventures', 'percentage_range')) {
-            Schema::table('adventures', function (Blueprint $table) {
+        if (Schema::hasTable('Adventures') && !Schema::hasColumn('Adventures', 'percentage_range')) {
+            Schema::table('Adventures', function (Blueprint $table) {
                 $table->string('percentage_range')->nullable()->after('percentage')
                       ->comment('Optional display range for package interest percentage on purchase UI');
             });
@@ -28,8 +28,8 @@ class AddPercentageRangeToAdventuresTable extends Migration
      */
     public function down()
     {
-        if (Schema::hasColumn('adventures', 'percentage_range')) {
-            Schema::table('adventures', function (Blueprint $table) {
+        if (Schema::hasColumn('Adventures', 'percentage_range')) {
+            Schema::table('Adventures', function (Blueprint $table) {
                 $table->dropColumn('percentage_range');
             });
         }

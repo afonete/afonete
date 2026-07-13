@@ -37,7 +37,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name','phone','gender','country','utype',
         'has_paid_package','has_free_package',
         'referee_id','father','email','user','contract','password','transaction_password','transaction_password_set_at',
-        'profile_photo_path','activation','gender','ref_code','has_request',
+        'profile_photo_path','activation','gender','ref_code','has_request','email_verification_pin','transfer_code',
     ];
 
     protected $hidden = [
@@ -264,4 +264,20 @@ class User extends Authenticatable implements MustVerifyEmail
     }
     public function teamSide() { return $this->hasOne(Teams::class, 'team_user_id'); }
     public function currentPortfolio() { return $this->hasMany(Portfolio::class,'user_id'); }
+
+    public function sendEmailVerificationNotification()
+    {
+        $pin = $this->email_verification_pin;
+        if (empty($pin)) {
+            $pin = (string) rand(100000, 999999);
+            $this->email_verification_pin = $pin;
+            $this->save();
+        }
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($this->email)->send(new \App\Mail\VerificationPinEmail($this->name, $pin));
+        } catch (\Throwable $e) {
+            \Log::error('Could not send verification PIN email: ' . $e->getMessage());
+        }
+    }
 }

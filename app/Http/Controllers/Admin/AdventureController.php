@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\adventures;
+use App\Models\Adventures;
 
 class AdventureController extends Controller
 {
@@ -17,9 +17,9 @@ class AdventureController extends Controller
     {
         //
 
-        $adventure = adventures::paginate(10);
+        $adventure = Adventures::paginate(10);
 
-        return view ("admin.uvp.Adventures",["adventures"=>$adventure]);
+        return view ("admin.uvp.Adventures",["Adventures"=>$adventure]);
     }
 
     /**
@@ -58,7 +58,7 @@ class AdventureController extends Controller
 //
         // dd($validatedData['current_price']);
         // Create a new Adventure instance with the validated data
-        $adventure = adventures::create([
+        $adventure = Adventures::create([
             'name' => $validatedData['name'],
             'plan' => $validatedData['plan'],
             'min_amount' => $validatedData['min_amount'],
@@ -95,7 +95,7 @@ class AdventureController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(adventures $adventure)
+    public function edit(Adventures $adventure)
     {
         //
         // dd($adventure->name);
@@ -128,7 +128,7 @@ class AdventureController extends Controller
     ]);
 
     // Find the adventure by id
-    $adventure = adventures::findOrFail($id);
+    $adventure = Adventures::findOrFail($id);
 
 
 
@@ -160,7 +160,7 @@ class AdventureController extends Controller
     public function destroy($id)
     {
         // Find the adventure by id
-        $adventure = adventures::findOrFail($id);
+        $adventure = Adventures::findOrFail($id);
 
         // Delete the adventure
         $adventure->delete();
@@ -171,7 +171,7 @@ class AdventureController extends Controller
 
 
     public function investors($id){
-        $uvp = adventures::findOrFail($id)->payments()->paginate(15);
+        $uvp = Adventures::findOrFail($id)->payments()->paginate(15);
 
 
         return view("admin.uvp.investors",["investors"=>$uvp]);

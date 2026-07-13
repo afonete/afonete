@@ -22,7 +22,7 @@
             </div>
         </div>
         <div>
-            <a href="{{ route('admin.adventures.create') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm shadow-blue-500/10 transition-all flex items-center gap-2 text-sm">
+            <a href="{{ route('admin.Adventures.create') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm shadow-blue-500/10 transition-all flex items-center gap-2 text-sm">
                 <i class="fas fa-plus"></i> <span>New Adventure</span>
             </a>
         </div>
@@ -59,10 +59,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($adventures as $deposit)
+                    @forelse($Adventures as $deposit)
                         <tr class="hover:bg-slate-50 border-b border-slate-100 transition-all">
                             <td class="p-4 text-sm font-semibold text-slate-500">
-                                {{ ($adventures->currentPage() - 1) * $adventures->perPage() + $loop->iteration }}
+                                {{ ($Adventures->currentPage() - 1) * $Adventures->perPage() + $loop->iteration }}
                             </td>
                             <td class="px-5 py-4">
                                 <span class="font-bold text-slate-800 text-sm block">{{ $deposit->plan }}</span>
@@ -103,7 +103,7 @@
                                     </a>
 
                                     {{-- Delete Button --}}
-                                    <form action="{{ route('admin.adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this adventure?');" class="inline">
+                                    <form action="{{ route('admin.Adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this adventure?');" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold p-2 rounded-lg shadow-sm shadow-red-500/10 transition-all text-xs flex items-center justify-center" title="Delete Plan">
@@ -112,7 +112,7 @@
                                     </form>
 
                                     {{-- View Investors Link --}}
-                                    <a href="{{ route('admin.adventures.investors', $deposit->id) }}" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all text-xs inline-flex items-center gap-1.5" title="View Investors">
+                                    <a href="{{ route('admin.Adventures.investors', $deposit->id) }}" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all text-xs inline-flex items-center gap-1.5" title="View Investors">
                                         <i class="fas fa-eye"></i> <span>Investors</span>
                                     </a>
                                 </div>
@@ -128,11 +128,11 @@
                     @endforelse
                     
                     {{-- Pagination Controls Row (Using Clean Tailwind CSS layout) --}}
-                    @if($adventures->hasPages())
+                    @if($Adventures->hasPages())
                         <tr class="bg-slate-50">
                             <td colspan="8" class="px-6 py-4">
                                 <div class="flex justify-center">
-                                    {{ $adventures->links() }}
+                                    {{ $Adventures->links() }}
                                 </div>
                             </td>
                         </tr>

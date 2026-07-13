@@ -106,10 +106,10 @@ INSERT INTO `ads` (`id`, `url`, `banner`, `tittle`, `description`, `targeted_vie
 -- --------------------------------------------------------
 
 --
--- Table structure for table `adventures`
+-- Table structure for table `Adventures`
 --
 
-CREATE TABLE `adventures` (
+CREATE TABLE `Adventures` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(200) NOT NULL DEFAULT 'UVP',
   `plan` varchar(200) NOT NULL COMMENT 'plan name like VENTURE LIGHT',
@@ -125,10 +125,10 @@ CREATE TABLE `adventures` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `adventures`
+-- Dumping data for table `Adventures`
 --
 
-INSERT INTO `adventures` (`id`, `name`, `plan`, `min_amount`, `max_amount`, `percentage`, `duration`, `total_return`, `currency`, `created_at`, `updated_at`, `current_price`) VALUES
+INSERT INTO `Adventures` (`id`, `name`, `plan`, `min_amount`, `max_amount`, `percentage`, `duration`, `total_return`, `currency`, `created_at`, `updated_at`, `current_price`) VALUES
 (15, 'Ai agent  UVP License', 'VENTURE LIGHT', 120, 999, 1.50, 100, '150', 'USD', '2024-10-31 05:49:47', '2026-06-30 11:23:04', 0),
 (17, 'UVP License', 'VENTURE LIGHT', 1000, 10000, 2.00, 100, '200', 'USD', '2024-11-27 14:06:26', '2026-06-30 08:04:33', 0),
 (18, 'UVP License', 'VENTURE LIGHT', 10001, 25000, 2.60, 100, '260', 'USD', '2024-11-27 14:12:03', '2026-06-30 08:06:49', 0),
@@ -5877,9 +5877,9 @@ ALTER TABLE `ads`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `adventures`
+-- Indexes for table `Adventures`
 --
-ALTER TABLE `adventures`
+ALTER TABLE `Adventures`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -6234,9 +6234,9 @@ ALTER TABLE `ads`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `adventures`
+-- AUTO_INCREMENT for table `Adventures`
 --
-ALTER TABLE `adventures`
+ALTER TABLE `Adventures`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --

@@ -21,7 +21,7 @@
 	<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
 
         <div class="flex justify-between items-center  px-3">
-             <!-- <a href="{{route("admin.adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a> -->
+             <!-- <a href="{{route("admin.Adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a> -->
              <div class="p-4">
                 <label for="table-search" class="sr-only">Search</label>
                 <div class="relative mt-1">

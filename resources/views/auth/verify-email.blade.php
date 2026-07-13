@@ -14,11 +14,11 @@ $requested = $user->has_request;
 
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="FONEPO Template">
-    <meta name="keywords" content="FONEPO, unica, creative, html">
+    <meta name="description" content="Bifonex Template">
+    <meta name="keywords" content="Bifonex, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fonepo </title>
+    <title>Bifonex </title>
     <!-- Css Styles -->
     <link rel="stylesheet" href="{{asset('assets/front/css/jquery-ui.min.css')}}" type="text/css">
     <link rel="stylesheet" href="{{asset('assets/front/css/booststrap.min.css')}}">
@@ -64,44 +64,64 @@ $requested = $user->has_request;
 
     <div class="fd-flex justify-content-around align-self-center">
 
-        <div class="text-center" style="width: 80%">
+        <div class="text-center" style="width: 80%; max-width: 500px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
             <div class="card-body">
-                <h5 class="card-title mb-3">
-                    Email Verification
+                <h3 class="card-title mb-4 font-weight-bold text-primary" style="font-size: 1.4rem; color: #4f46e5;">
+                    <i class="fas fa-envelope-open-text mr-1"></i> Email Verification PIN
+                </h3>
 
-                </h5>
-
-
-
-                @if (session('status') == 'verification-link-sent')
-                <div style="color: green" class="mb-4 font-medium text-sm">
-                    A new verification link has been sent to <u>{{$email}}</u>. Please check your inbox, including spam or junk folder.
-                </div>
-                @else
-                <p class="card-text">Thanks for signing up! Before getting started, please verify your email address by clicking on the link we just emailed to you. If you didn't receive the email at <u>{{$email}}</u>, please check your spam or junk folder, and we will gladly send you another if needed.</p>
+                @if(session('success'))
+                    <div class="alert alert-success text-sm mb-3">
+                        <i class="fas fa-check-circle mr-1"></i> {{ session('success') }}
+                    </div>
                 @endif
 
+                @if(session('error'))
+                    <div class="alert alert-danger text-sm mb-3">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> {{ session('error') }}
+                    </div>
+                @endif
 
+                @if ($errors->any())
+                    <div class="alert alert-danger text-sm mb-3">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> {{ $errors->first() }}
+                    </div>
+                @endif
+
+                <p class="card-text text-sm text-gray-600 mb-4 leading-relaxed">
+                    Thanks for signing up! We have sent a **6-digit Activation PIN** to your email address <u>{{ $email }}</u>. 
+                    Please enter the code below to instantly verify and activate your account.
+                </p>
+
+                {{-- Custom PIN Verification Form --}}
+                <form method="POST" action="{{ route('verification.verify-pin') }}" class="mb-4">
+                    @csrf
+                    <div class="form-group mb-3">
+                        <input type="text" name="pin" max-length="6" required 
+                               class="form-control text-center font-weight-bold font-mono text-lg py-2.5 mx-auto w-48" 
+                               placeholder="******" 
+                               style="letter-spacing: 6px; font-size: 1.5rem; border-radius: 8px; border: 1px solid #cbd5e1;"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)">
+                    </div>
+                    <button class="btn btn-primary btn-block font-weight-bold py-2" type="submit" style="border-radius: 8px;">
+                        <i class="fas fa-check-double mr-1"></i> Verify &amp; Activate Account
+                    </button>
+                </form>
 
             </div>
 
-
-            <div class="mt-4 d-flex justify-content-center">
-                <form method="POST" action="{{ route('verification.send') }}">
+            <div class="mt-4 d-flex justify-content-center align-items-center gap-3 border-top pt-3" style="border-color: #f1f5f9;">
+                <form method="POST" action="{{ route('verification.resend-pin') }}">
                     @csrf
-
-                    <div>
-                        <button class="btn btn-sm btn-primary" type="submit">
-                            {{ __('Resend Verification Email') }}
-                        </button>
-                    </div>
+                    <button class="btn btn-sm btn-outline-secondary font-weight-bold" type="submit" style="border-radius: 6px;">
+                        <i class="fas fa-redo-alt mr-1"></i> Resend PIN
+                    </button>
                 </form>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-
-                    <button class="ml-3" type="submit" class="border border-1 text-md text-gray-600 hover:text-blue-900">
-                        {{ __('Log Out') }}
+                    <button class="btn btn-sm btn-danger font-weight-bold" type="submit" style="border-radius: 6px;">
+                        <i class="fas fa-sign-out-alt mr-1"></i> Log Out
                     </button>
                 </form>
             </div>

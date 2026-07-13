@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\DailyIncome;
 use App\Models\ChartAccount;
 use App\Models\Transaction;
-use App\Models\adventures;
+use App\Models\Adventures;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,7 +43,7 @@ class CalculateDailyIncome extends Command
                 continue;
             }
 
-            $package2 = adventures::find($package->payable_id);
+            $package2 = Adventures::find($package->payable_id);
             if (!$package2) {
                 $this->warn("Adventure package {$package->payable_id} not found for payment {$package->id}, skipping.");
                 continue;

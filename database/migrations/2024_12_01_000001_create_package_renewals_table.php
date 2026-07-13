@@ -25,7 +25,7 @@ class CreatePackageRenewalsTable extends Migration
             $table->integer('renewal_number')->default(1)
                   ->comment('Which renewal cycle (1 = first 30-day window, 2 = second, etc.)');
             $table->integer('max_renewals')->default(3)
-                  ->comment('Total renewals for this package (derived from adventures.duration)');
+                  ->comment('Total renewals for this package (derived from Adventures.duration)');
             $table->date('renewed_at')
                   ->comment('Date this renewal was processed');
             $table->date('next_renewal_due')->nullable()

@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
     use App\Models\Contract;
     use App\Models\Payment as Paymodel;
 
-    use App\Models\adventures;
+    use App\Models\Adventures;
     use App\Models\FCpackage;
     use App\Models\Claim;
 
@@ -41,11 +41,11 @@ class UserpackageController extends Controller
     }
 
     public function buypackages(){
-        $adventures = adventures::all();
+        $Adventures = Adventures::all();
         $MyDepositBalance = $this->MyDepositBalance();
         $fc = FCpackage::all();
         
-        return view("user.buypackages",['adventures'=>$adventures,'balance'=>$MyDepositBalance,'fc'=>$fc]);
+        return view("user.buypackages",['Adventures'=>$Adventures,'balance'=>$MyDepositBalance,'fc'=>$fc]);
     }
 
     public function claim(Request $request){
@@ -110,14 +110,14 @@ class UserpackageController extends Controller
         });
         $sum = $deposits->sum('amount_deposited');
 
-        $adventures = adventures::all();
+        $Adventures = Adventures::all();
 
         if($user->has_free_package == "yes"){
 
             return redirect()->route("user.buypackage");
         }
 
-        return view('user.venture-package',["deposits"=>$sum,"adventures"=>$adventures]);
+        return view('user.venture-package',["deposits"=>$sum,"Adventures"=>$Adventures]);
     }
     public function UserPackage()
     {
@@ -197,6 +197,43 @@ if ($user->save()) {
 }
 return view('user.previeu');
 
+    }
+
+    public function verifyEmailPin(Request $request)
+    {
+        $request->validate([
+            'pin' => 'required|string|size:6',
+        ]);
+
+        $user = Auth::user();
+        if ($user->email_verification_pin === $request->pin) {
+            // Activate / verify email
+            $user->email_verified_at = now();
+            $user->email_verification_pin = null; // Clear PIN after use
+            $user->save();
+
+            return redirect()->route('user.dashboard')->with('message', 'Email verified successfully! Welcome to your dashboard.');
+        }
+
+        return back()->with('error', 'The verification PIN code you entered is incorrect. Please try again.');
+    }
+
+    public function resendEmailPin()
+    {
+        $user = Auth::user();
+        
+        // Generate new 6-digit PIN
+        $pin = (string) rand(100000, 999999);
+        $user->email_verification_pin = $pin;
+        $user->save();
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\VerificationPinEmail($user->name, $pin));
+            return back()->with('success', 'A new verification PIN has been sent to your email.');
+        } catch (\Throwable $e) {
+            \Log::error('Could not resend verification PIN email: ' . $e->getMessage());
+            return back()->with('error', 'Could not send the email. Please try again later.');
+        }
     }
 
 }

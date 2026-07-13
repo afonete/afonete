@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Earnings;
 use App\Models\User;
-use App\Models\adventures;
+use App\Models\Adventures;
 
 class Payment extends Model
 {
@@ -40,7 +40,7 @@ public function user()
     return $this->belongsTo(User::class,"user","id");
 }
 public function package(){
-    return $this->belongsTo(adventures::class,"package","id");
+    return $this->belongsTo(Adventures::class,"package","id");
 }
 public function earnings()
 {

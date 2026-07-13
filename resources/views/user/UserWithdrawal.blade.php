@@ -1,7 +1,3 @@
-
-
-
-
 <div class="wrapper">
     @include('user.user-dashboard-base')
     <title>Withdrawal</title>
@@ -21,6 +17,32 @@
 <body>
 
     <div x-data="walletApp()" class="min-h-screen bg-gray-900  text-white p-8">
+        
+        {{-- Session Success/Error Feedback Alerts --}}
+        @if(session('success'))
+            <div class="bg-emerald-950/40 border border-emerald-800/40 text-emerald-300 p-3.5 rounded-xl mb-6 flex justify-between items-center text-sm shadow-sm max-w-2xl mx-auto">
+                <span><i class="fas fa-check-circle mr-2 text-emerald-400"></i><strong>Success!</strong> {{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-950/40 border border-red-800/40 text-red-300 p-3.5 rounded-xl mb-6 flex justify-between items-center text-sm shadow-sm max-w-2xl mx-auto">
+                <span><i class="fas fa-exclamation-triangle mr-2 text-red-400"></i><strong>Error:</strong> {{ session('error') }}</span>
+                @if(str_contains(strtolower(session('error')), 'password'))
+                    <a href="/user/password" class="text-xs bg-red-800 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg ml-3 transition-all" style="text-decoration:none;"><i class="fas fa-key mr-1"></i> Set Password</a>
+                @endif
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="bg-red-950/40 border border-red-800/40 text-red-300 p-3.5 rounded-xl mb-6 flex justify-between items-center text-sm shadow-sm max-w-2xl mx-auto">
+                <span><i class="fas fa-exclamation-triangle mr-2 text-red-400"></i><strong>Error:</strong> {{ $errors->first() }}</span>
+                @if(str_contains(strtolower($errors->first()), 'password'))
+                    <a href="/user/password" class="text-xs bg-red-800 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg ml-3 transition-all" style="text-decoration:none;"><i class="fas fa-key mr-1"></i> Set Password</a>
+                @endif
+            </div>
+        @endif
+
         <!-- Wallet Balance and Actions -->
         <div class="text-center mb-8">
             <h2 class="text-3xl font-semibold text-gray-200">Wallet Balance</h2>
@@ -76,64 +98,304 @@
         </div>
 
         <!-- Transaction History -->
-        <div class="mt-6 bg-gray-800 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold">Transaction History</h3>
-            <table class="w-full text-center mt-4 text-gray-200">
-                <thead>
-                    <tr class="bg-gray-700">
-                        <th class="py-2">Date</th>
-                        <th class="py-2">Type</th>
-                        <th class="py-2">Amount</th>
-                        <th class="py-2">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="py-2">No Data</td>
-                        <td class="py-2">--</td>
-                        <td class="py-2">--</td>
-                        <td class="py-2">--</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="mt-6 bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-700">
+            <h3 class="text-lg font-bold text-gray-100 flex items-center gap-2">
+                <i class="fas fa-history text-yellow-500"></i> Withdrawal Transaction History
+            </h3>
+            
+            <div class="overflow-x-auto mt-4 rounded-lg border border-gray-700">
+                <table class="w-full text-left border-collapse text-sm text-gray-200">
+                    <thead>
+                        <tr class="bg-gray-700 text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                            <th class="px-4 py-3">Reference No</th>
+                            <th class="px-4 py-3">Method</th>
+                            <th class="px-4 py-3">Requested</th>
+                            <th class="px-4 py-3">Fee Charged</th>
+                            <th class="px-4 py-3">Net Received</th>
+                            <th class="px-4 py-3">Destination</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700 bg-gray-800/50">
+                        @forelse($history as $w)
+                            <tr class="hover:bg-gray-700/50 transition-all">
+                                <td class="px-4 py-3 font-mono text-xs select-all text-gray-400">
+                                    {{ $w->transaction_no }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="bg-indigo-900/40 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded border border-indigo-800/40 uppercase">
+                                        {{ $w->methodLabel() }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 font-bold text-gray-100">
+                                    ${{ number_format($w->amount, 2) }}
+                                </td>
+                                <td class="px-4 py-3 text-yellow-400 font-semibold">
+                                    ${{ number_format($w->fee_amount ?? 0.00, 2) }}
+                                </td>
+                                <td class="px-4 py-3 font-extrabold text-emerald-400">
+                                    ${{ number_format($w->net_amount ?? $w->amount, 2) }}
+                                </td>
+                                <td class="px-4 py-3 text-xs text-gray-400 max-w-[200px] truncate" title="{{ $w->wallet_address }}">
+                                    {{ $w->wallet_address }}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    @php
+                                        $badgeClass = match($w->status) {
+                                            'completed' => 'bg-emerald-900/40 text-emerald-300 border border-emerald-800/40',
+                                            'pending' => 'bg-amber-900/40 text-amber-300 border border-amber-800/40',
+                                            'processing' => 'bg-sky-900/40 text-sky-300 border border-sky-800/40',
+                                            default => 'bg-red-900/40 text-red-300 border border-red-800/40',
+                                        };
+                                    @endphp
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ $badgeClass }}">
+                                        {{ ucfirst($w->status) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-xs text-gray-400">
+                                    {{ $w->created_at->format('Y-m-d H:i') }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-6 text-gray-400">
+                                    <i class="fas fa-folder-open text-xl mb-1 block text-gray-500"></i>
+                                    No withdrawal transactions found yet.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Pagination Links --}}
+            @if($history->hasPages())
+                <div class="mt-4 flex justify-center text-sm">
+                    {{ $history->links() }}
+                </div>
+            @endif
         </div>
 
         <!-- Send Modal -->
         <div x-cloak x-show="showSendModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Transfer</h3>
-                    <button @click="showSendModal = false" class="text-white bg-red-500 px-3">X</button>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xl font-bold text-gray-100 flex items-center gap-2">
+                        <i class="fas fa-wallet text-yellow-500"></i> Manual Withdrawal
+                    </h3>
+                    <button @click="showSendModal = false; withdrawAmount = ''" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded font-bold">X</button>
                 </div>
-                <div class="mb-4">
-                    <div class="mb-4">
-                        <div class="flex space-x-2">
-                            <button :class="{ 'bg-blue-500 text-white': type=='USDT', 'bg-gray-500 text-white': type !=='USDT' }" @click="selectType('USDT')"  class="px-2 py-2  text-gray-200 border-none outline-none">USDT</button>
-                            <button :class="{ 'bg-blue-500 text-white': type=='PERFECT_MONEY', 'bg-gray-500 text-white': type !=='PERFECT_MONEY' }" @click="selectType('PERFECT_MONEY')"  class="px-2 py-2  text-gray-200 border-none outline-none">PERFECT MONEY</button>
-                            <button :class="{ 'bg-blue-500 text-white': type=='VOLE', 'bg-gray-500 text-white': type !=='VOLE' }" @click="selectType('VOLE')"  class="px-2 py-2  text-gray-200 border-none outline-none">VOLET</button>
-                        </div>
+
+                {{-- Status Feedbacks inside modal --}}
+                @if($cashout < $settings->min_amount)
+                    <div class="bg-amber-950/20 border border-amber-800/40 text-amber-300 text-xs p-3 rounded-lg mb-3">
+                        <i class="fas fa-info-circle mr-1"></i> Balance is below minimum withdrawal amount of ${{ number_format($settings->min_amount, 2) }}.
                     </div>
+                @else
+                    <div class="bg-slate-700/50 p-2.5 rounded-lg mb-3 text-xs text-slate-300 flex justify-between items-center">
+                        <span>Min: <strong>${{ number_format($settings->min_amount, 2) }}</strong></span>
+                        <span>Max per trx: <strong>${{ number_format($settings->max_per_transaction, 2) }}</strong></span>
+                    </div>
+                @endif
 
+                {{-- Methods select bar --}}
+                <div class="flex space-x-2 mb-4 border-b border-gray-700 pb-2">
+                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='crypto', 'bg-gray-700 text-gray-300': withdrawMethod !=='crypto' }" @click="withdrawMethod = 'crypto'" class="flex-1 py-1.5 text-xs rounded transition-all">Crypto</button>
+                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='advcash', 'bg-gray-700 text-gray-300': withdrawMethod !=='advcash' }" @click="withdrawMethod = 'advcash'" class="flex-1 py-1.5 text-xs rounded transition-all">Advcash</button>
+                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='perfect_money', 'bg-gray-700 text-gray-300': withdrawMethod !=='perfect_money' }" @click="withdrawMethod = 'perfect_money'" class="flex-1 py-1.5 text-xs rounded transition-all">Perfect Money</button>
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-gray-400">Address:</label>
-                    <input type="text" placeholder="Enter wallet address" class="w-full mt-1 py-2 px-2 bg-gray-900 border border-gray-700 rounded-lg">
-                </div>
-                <div class="mb-4">
-                    <label class="block text-gray-400">Amount:</label>
-                    <input type="number" placeholder="Enter amount" class="w-full mt-1 py-2 px-2 bg-gray-900 border border-gray-700 rounded-lg">
+                {{-- Method 1: Crypto Form --}}
+                <div x-show="withdrawMethod == 'crypto'" class="space-y-3 text-left">
+                    <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                        @csrf
+                        <input type="hidden" name="method" value="crypto">
+                        
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1">Pick Currency &amp; Network</label>
+                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required
+                                    @change="cryptoNetwork = $event.target.options[$event.target.selectedIndex].getAttribute('data-network')">
+                                @foreach($cryptoByCurrency as $currency => $rows)
+                                    <optgroup label="{{ $currency }}">
+                                        @foreach($rows as $w)
+                                            <option value="{{ $currency }}" data-network="{{ $w->network }}">
+                                                {{ $currency }} — {{ $w->network }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="network" :value="cryptoNetwork">
+                        </div>
 
-                </div>
-                <div x-show="amount < 10 && dataAvailable" x-cloak class="bg-red-500 text-center py-2 text-white font-semibold rounded-lg">Not eligible: Balance below 10 USDT</div>
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Destination Wallet Address</label>
+                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your receiving wallet address">
+                        </div>
 
-                <div x-show="dataAvailable" x-cloak class="mb-4 p-2 text-gray-200">
-                    <p class="flex gap-2">Balance: <span x-html="amount"></span></p>
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="{{ $settings->min_amount }}" max="{{ $settings->max_per_transaction }}" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min ${{ number_format($settings->min_amount, 2) }}">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                        </div>
+
+                        {{-- On-the-fly Fee Calculator --}}
+                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Requested Amount:</span>
+                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between border-b border-gray-800 pb-2">
+                                <span class="text-gray-400">Withdrawal Fee ({{ number_format($settings->withdrawal_fee_percent, 2) }}%):</span>
+                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between pt-1">
+                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                {{ $cashout < $settings->min_amount ? 'disabled' : '' }}>
+                            <i class="fas fa-paper-plane mr-1"></i> Submit Crypto Withdrawal
+                        </button>
+                    </form>
                 </div>
 
-                <div>
-                     <button :disabled="amount<10?'true':'false'"
-                      type="submit" class="bg-indigo-500 hover:bg-indigo-600 cursor-pointer px-3 py-2 rounded w-full">Send</button>
+                {{-- Method 2: Advcash Form --}}
+                <div x-show="withdrawMethod == 'advcash'" class="space-y-3 text-left">
+                    @if($advcashActive->isEmpty())
+                        <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Advcash withdrawals are not configured currently.</div>
+                    @else
+                    <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                        @csrf
+                        <input type="hidden" name="method" value="advcash">
+                        <input type="hidden" name="network" value="ADVCASH">
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
+                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
+                                @foreach($advcashActive as $w)
+                                    <option value="{{ $w->currency }}">{{ $w->currency }} — {{ $w->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Advcash Account Number</label>
+                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Advcash Account No">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="{{ $settings->min_amount }}" max="{{ $settings->max_per_transaction }}" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min ${{ number_format($settings->min_amount, 2) }}">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                        </div>
+
+                        {{-- On-the-fly Fee Calculator --}}
+                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Requested Amount:</span>
+                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between border-b border-gray-800 pb-2">
+                                <span class="text-gray-400">Withdrawal Fee ({{ number_format($settings->withdrawal_fee_percent, 2) }}%):</span>
+                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between pt-1">
+                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                {{ $cashout < $settings->min_amount ? 'disabled' : '' }}>
+                            <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Withdrawal
+                        </button>
+                    </form>
+                    @endif
+                </div>
+
+                {{-- Method 3: Perfect Money Form --}}
+                <div x-show="withdrawMethod == 'perfect_money'" class="space-y-3 text-left">
+                    @if($perfectMoneyActive->isEmpty())
+                        <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Perfect Money withdrawals are not configured currently.</div>
+                    @else
+                    <form method="POST" action="{{ route('user.withdraw.manual') }}">
+                        @csrf
+                        <input type="hidden" name="method" value="perfect_money">
+                        <input type="hidden" name="network" value="PERFECT_MONEY">
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
+                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
+                                @foreach($perfectMoneyActive as $w)
+                                    <option value="{{ $w->currency }}">{{ $w->currency }} — {{ $w->label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Perfect Money Account Number</label>
+                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Perfect Money Account No">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="{{ $settings->min_amount }}" max="{{ $settings->max_per_transaction }}" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min ${{ number_format($settings->min_amount, 2) }}">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                        </div>
+
+                        {{-- On-the-fly Fee Calculator --}}
+                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Requested Amount:</span>
+                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between border-b border-gray-800 pb-2">
+                                <span class="text-gray-400">Withdrawal Fee ({{ number_format($settings->withdrawal_fee_percent, 2) }}%):</span>
+                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                            </div>
+                            <div class="flex justify-between pt-1">
+                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                {{ $cashout < $settings->min_amount ? 'disabled' : '' }}>
+                            <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Withdrawal
+                        </button>
+                    </form>
+                    @endif
                 </div>
 
             </div>
@@ -237,6 +499,10 @@
                 dataAvailable:false,
                 amount:'',
                 type:'',
+                withdrawMethod: 'crypto',
+                cryptoNetwork: '{{ optional($cryptoByCurrency->first())->first()?->network }}',
+                withdrawAmount: '',
+                feePercent: {{ (float) ($settings->withdrawal_fee_percent ?? 0.00) }},
 
                 async selectType(type) {
                     try {

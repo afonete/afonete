@@ -277,7 +277,7 @@
 
             // --- 2. Reliable Embedded Country Dropdown & Phone Prefix ---
             const countrySelectElement = document.getElementById('countrySelect');
-            const limitedCountries = ['Chile', 'Israel', 'Rwanda'];
+            const limitedCountries = ['Chile', 'Israel'];
 
             // Static embedded list of 250 countries [CountryName, DialCode]
             // Immune to API deprecations, CORS issues, or server downtimes!

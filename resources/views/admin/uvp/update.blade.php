@@ -42,7 +42,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('adventures.update', $adventure->id) }}" method="POST" class="block sm:grid grid-cols-3 gap-3">
+            <form action="{{ route('Adventures.update', $adventure->id) }}" method="POST" class="block sm:grid grid-cols-3 gap-3">
             @csrf
                 @method('PUT')
 

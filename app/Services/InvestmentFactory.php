@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\Payment as Paymodel;
 use Carbon\Carbon;
 
@@ -35,7 +35,7 @@ class InvestmentFactory
      * Build (but don't save) a Paymodel for a VENTURE investment.
      *
      * @param  int    $userId      owning user
-     * @param  adventures $adventure  the adventure package bought
+     * @param  Adventures $adventure  the adventure package bought
      * @param  float  $amount      nominal package amount
      * @param  float  $paid        amount actually paid (same as amount unless partial)
      * @param  int    $status      1 = paid well, 2 = underpayment, 3 = overpayment
@@ -46,7 +46,7 @@ class InvestmentFactory
      */
     public static function buildVenture(
         int $userId,
-        adventures $adventure,
+        Adventures $adventure,
         float $amount,
         float $paid,
         int $status = 1,
@@ -80,7 +80,7 @@ class InvestmentFactory
      * Compute the expiration date string for a VENTURE investment.
      * Returns null if duration is invalid (caller decides how to handle).
      */
-    public static function expirationDateFor(adventures $adventure): ?string
+    public static function expirationDateFor(Adventures $adventure): ?string
     {
         $duration = (int) ($adventure->duration ?? 0);
         if ($duration <= 0) {

@@ -47,7 +47,22 @@ class Balance extends Controller{
             "USDT TRON"=>0.00
         ];
 
-        return view("user.UserWithdrawal",["data"=>$data,"cashout"=>$cashout]);
+        // Fetch actual withdrawal history for the user
+        $history = \App\Models\withdrawals::where('user_id', $user->id)->latest()->paginate(10);
+        $settings = \App\Models\WithdrawalSetting::current();
+
+        // Pre-group active crypto wallets by currency for the picker
+        $cryptoByCurrency = \App\Models\DepositWallet::activeOfType('crypto')->groupBy('currency');
+
+        return view("user.UserWithdrawal",[
+            "data"               => $data,
+            "cashout"            => $cashout,
+            "history"            => $history,
+            "settings"           => $settings,
+            "cryptoByCurrency"   => $cryptoByCurrency,
+            "advcashActive"      => \App\Models\DepositWallet::activeOfType('advcash'),
+            "perfectMoneyActive" => \App\Models\DepositWallet::activeOfType('perfect_money'),
+        ]);
     }
     
     public function index(){

@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Payment as Paymodel;
-use App\Models\adventures;
+use App\Models\Adventures;
 use Carbon\Carbon;
 
 /**
@@ -14,7 +14,7 @@ use Carbon\Carbon;
  *   payments.expiration_date was being set to today (or null) instead of
  *   today + adventure.duration, because:
  *     (a) the confirm-page form hardcoded `package=FC` (fixed),
- *     (b) the backend read `adventures::find('FC')` → null → addDays(null)
+ *     (b) the backend read `Adventures::find('FC')` → null → addDays(null)
  *         = addDays(0) = today,
  *     (c) the FC package flow hardcoded 100 days.
  *
@@ -58,13 +58,13 @@ class FixPaymentExpirationDates extends Command
         foreach ($payments as $pay) {
             $adventure = null;
             if ($pay->payable_id) {
-                $adventure = adventures::find($pay->payable_id);
+                $adventure = Adventures::find($pay->payable_id);
             }
             // Fallback: match by package name (used in older rows that
             // never set payable_id but stored the plan in `package`).
             if (!$adventure && $pay->package) {
-                $adventure = adventures::where('plan', $pay->package)->first()
-                             ?? adventures::where('name', $pay->package)->first();
+                $adventure = Adventures::where('plan', $pay->package)->first()
+                             ?? Adventures::where('name', $pay->package)->first();
             }
 
             if (!$adventure) {

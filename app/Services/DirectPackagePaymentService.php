@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\BlockchainAuditLog;
 use App\Models\ChartAccount;
 use App\Models\Deposits;
@@ -205,7 +205,7 @@ class DirectPackagePaymentService
         $type = strtoupper(trim($packageType));
 
         if ($type === 'VENTURE' || $type === 'UVP') {
-            $adventure = adventures::findOrFail($packageId);
+            $adventure = Adventures::findOrFail($packageId);
             $investmentAmount = (float) $amount;
 
             if ($investmentAmount <= 0) {
@@ -254,7 +254,7 @@ class DirectPackagePaymentService
 
     private function activateVenture(User $user, Deposits $deposit, float $amount): Paymodel
     {
-        $adventure = adventures::findOrFail((int) $deposit->package_id);
+        $adventure = Adventures::findOrFail((int) $deposit->package_id);
 
         $payment = InvestmentFactory::buildVenture(
             userId:    $user->id,
@@ -397,7 +397,7 @@ class DirectPackagePaymentService
         );
     }
 
-    private function createVentureSubscriptionTransaction(User $user, adventures $adventure, Paymodel $payment, Deposits $deposit, float $amount): void
+    private function createVentureSubscriptionTransaction(User $user, Adventures $adventure, Paymodel $payment, Deposits $deposit, float $amount): void
     {
         $startDate = Carbon::now()->addHours(24);
         $endDate = $startDate->copy()->addDays((int) $adventure->duration);

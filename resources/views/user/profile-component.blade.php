@@ -208,6 +208,15 @@ $package=$user->has_paid_package;
                                     class="focus-input100"></span>
                                 <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                             </div>
+                            
+                            <div class="form-group mt-3">
+                                <label for="password_pin" style="color: #4b5563; font-size: 14px;">Email Verification PIN <span class="text-danger">*</span></label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" name="pin" placeholder="Enter 6-digit PIN" required style="flex: 1; padding: 10px;" class="form-control">
+                                    <button type="button" class="btn btn-info btn-sm font-weight-bold send-pw-pin-btn" style="width: 100px; background-color: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Send PIN</button>
+                                </div>
+                            </div>
+
                             <br>
                             <input type="submit" value="Change">
                         </form>
@@ -242,6 +251,15 @@ $package=$user->has_paid_package;
                                 <span class="focus-input100"></span>
                                 <x-input-error :messages="$errors->get('transaction_password_confirmation')" class="mt-2" />
                             </div>
+
+                            <div class="form-group mt-3">
+                                <label for="transaction_password_pin" style="color: #4b5563; font-size: 14px;">Email Verification PIN <span class="text-danger">*</span></label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" name="pin" placeholder="Enter 6-digit PIN" required style="flex: 1; padding: 10px;" class="form-control">
+                                    <button type="button" class="btn btn-info btn-sm font-weight-bold send-pw-pin-btn" style="width: 100px; background-color: #3b82f6; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;">Send PIN</button>
+                                </div>
+                            </div>
+
                             <br>
                             <input type="submit" value="Change Second Transaction Password">
                         </form>
@@ -332,3 +350,46 @@ $package=$user->has_paid_package;
 
 @include('user.footer')
 </div>
+
+<script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+<script>
+$(document).ready(function() {
+    $('.send-pw-pin-btn').on('click', function(e) {
+        e.preventDefault();
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Sending...');
+        
+        $.ajax({
+            url: "{{ route('password.send-pin') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(response) {
+                if (response.ok) {
+                    alert(response.message);
+                    $btn.text('Sent!');
+                    // Re-enable after 60 seconds countdown
+                    var countdown = 60;
+                    var interval = setInterval(function() {
+                        countdown--;
+                        if (countdown <= 0) {
+                            clearInterval(interval);
+                            $btn.prop('disabled', false).text('Send PIN');
+                        } else {
+                            $btn.text('Resend (' + countdown + 's)');
+                        }
+                    }, 1000);
+                } else {
+                    alert('Error: ' + response.message);
+                    $btn.prop('disabled', false).text('Send PIN');
+                }
+            },
+            error: function(xhr) {
+                alert('Could not send PIN. Please try again later.');
+                $btn.prop('disabled', false).text('Send PIN');
+            }
+        });
+    });
+});
+</script>

@@ -20,7 +20,7 @@ class FCpackageController extends Controller
 
 
         return view("admin.fc.fcpackage",[
-            "adventures"=>$packages
+            "Adventures"=>$packages
         ]);
     }
 

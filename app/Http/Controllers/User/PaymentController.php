@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Deposits;
 use App\Models\Earnings;
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\Transaction;
 use App\Models\DailyIncome;
 use App\Models\FCpackage;
@@ -547,7 +547,7 @@ public function paymentFromDeposits(Request $request){
 
 
   $transactionNo = Deposits::generateTransactionNo();
-  $venture = adventures::find($request->package);
+  $venture = Adventures::find($request->package);
   if (!$venture) {
       return back()->with('error', 'Invalid UVP package selected.');
   }
@@ -600,7 +600,7 @@ $user = Auth::User();
     // Each investment is independent — don't accumulate into the existing amount.
 
 
-    $p = adventures::where('id',$request->uvp_id)->first(); // find a range of bought venture
+    $p = Adventures::where('id',$request->uvp_id)->first(); // find a range of bought venture
 
     if(!$p){
         return back()->with("error","Invalid Package, Please make another account to perform desired investment");
@@ -713,7 +713,7 @@ public function blockpayventure(Request $request)
 {
 
 
-  $venture = adventures::find($request->package);
+  $venture = Adventures::find($request->package);
   if (!$venture) {
       return back()->with('error', 'Invalid UVP package selected.');
   }
@@ -750,8 +750,8 @@ public function blockpayventure(Request $request)
 
 
     // Each investment is independent — don't accumulate into the existing amount.
-    // $p = adventures::where("id",$request->package)->first();
-    $p = adventures::where('min_amount', '<=', $amount)
+    // $p = Adventures::where("id",$request->package)->first();
+    $p = Adventures::where('min_amount', '<=', $amount)
                     ->where('max_amount', '>=', $amount)
                     ->first(); // find a range of bought venture
 
@@ -958,7 +958,7 @@ public function successVenture(Request $request)
         // FIX: expiration_date was coming from a session value computed
         // BEFORE we knew the actual adventure. Now we look up the adventure
         // and use its duration to compute the real expiration_date.
-        $adventure = \App\Models\adventures::find($paymentIntent['package'] ?? null);
+        $adventure = \App\Models\Adventures::find($paymentIntent['package'] ?? null);
 
         if ($adventure) {
             $paymodel = \App\Services\InvestmentFactory::buildVenture(
@@ -1100,7 +1100,7 @@ public function ventureCallback(Request $request)
 
         // Create a new payment record
 
-        $p = adventures::where("id",$paymentIntent['package'])->first();
+        $p = Adventures::where("id",$paymentIntent['package'])->first();
         $muser = User::where("id",$user->id)->first();
         $muser->update(["has_paid_package"=>$p->name,"has_free_package"=>"no"]);
 
@@ -1414,7 +1414,7 @@ $email=$emaili;
                         ->first();
     $currentBalance = $this->MyDepositBalance();
     $adventure = ($venture->venture && $venture->venture !== 'FC' && is_numeric($venture->venture))
-        ? adventures::where("id", $venture->venture)->first()
+        ? Adventures::where("id", $venture->venture)->first()
         : null;
     $requiredAmount = $currentBalance - $venture->amount_invest;
     $status = ($requiredAmount < 0) ? 'i':'s';
@@ -1453,7 +1453,7 @@ $email=$emaili;
             ]);
         }
 
-        $adventure = adventures::where("id",$venture->venture)->first();
+        $adventure = Adventures::where("id",$venture->venture)->first();
        
         if($requiredAmount < 0){
             $requiredAmount = -($requiredAmount);

@@ -22,7 +22,7 @@
 	<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
 
         <div class="flex justify-between items-center  px-3">
-             {{-- <a href="{{route("admin.adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a> --}}
+             {{-- <a href="{{route("admin.Adventures.create")}}" class="bg-blue-500 py-2 px-3 rounded text-gray-50">New <i class="fa fa-save"></i></a> --}}
              <div class="p-4">
                 <label for="table-search" class="sr-only">Search</label>
                 <div class="relative mt-1">
@@ -166,7 +166,7 @@
 
 
 
-                               <form id="deleteForm" action="{{ route('admin.adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
+                               <form id="deleteForm" action="{{ route('admin.Adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
@@ -180,7 +180,7 @@
                                 }
                             </script>
 
-                                <a href="{{route("admin.adventures.investors",$deposit->id)}}" class="bg-gray-700 hover:bg-gray-800
+                                <a href="{{route("admin.Adventures.investors",$deposit->id)}}" class="bg-gray-700 hover:bg-gray-800
                                  text-white px-2 py-2 rounded focus:outline-none flex gap-1 items-center" >
                                     Investors <i class="fa fa-eye"></i>
                                 </a>

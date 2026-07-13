@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Services;
 
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\Payment;
 use App\Services\InvestmentFactory;
 use Carbon\Carbon;
@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * Covers the bug where expiration_date was being set to TODAY (instead
  * of today + duration) because:
  *   - the confirm-page form hardcoded `package=FC`,
- *   - the backend looked up adventures::find('FC') → null,
+ *   - the backend looked up Adventures::find('FC') → null,
  *   - addDays(null) returned today (addDays(0)).
  *
  * Also covers:
@@ -88,7 +88,7 @@ class InvestmentFactoryTest extends TestCase
     public function build_venture_with_null_duration_throws(): void
     {
         // Simulate a DB row with no duration set
-        $adv = new adventures(['name' => 'Broken', 'plan' => 'Broken']);
+        $adv = new Adventures(['name' => 'Broken', 'plan' => 'Broken']);
         // duration stays null
 
         $this->expectException(\InvalidArgumentException::class);
@@ -142,10 +142,10 @@ class InvestmentFactoryTest extends TestCase
     public function expiration_date_helper_returns_null_for_invalid_duration(): void
     {
         $this->assertNull(InvestmentFactory::expirationDateFor(
-            new adventures(['duration' => 0])
+            new Adventures(['duration' => 0])
         ));
         $this->assertNull(InvestmentFactory::expirationDateFor(
-            new adventures(['duration' => null])
+            new Adventures(['duration' => null])
         ));
     }
 
@@ -161,9 +161,9 @@ class InvestmentFactoryTest extends TestCase
 
     // ── helper ──
 
-    private function makeAdventure(int $id, int $duration, string $name = 'UVP', string $plan = 'VENTURE LIGHT'): adventures
+    private function makeAdventure(int $id, int $duration, string $name = 'UVP', string $plan = 'VENTURE LIGHT'): Adventures
     {
-        $adv = new adventures();
+        $adv = new Adventures();
         $adv->id        = $id;
         $adv->name      = $name;
         $adv->plan      = $plan;

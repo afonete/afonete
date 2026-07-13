@@ -108,7 +108,7 @@
 				<tbody>
 
 
-                    @foreach($adventures as $deposit)
+                    @foreach($Adventures as $deposit)
 
 
 
@@ -167,7 +167,7 @@
 
 
 
-                               <form id="deleteForm" action="{{ route('admin.adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
+                               <form id="deleteForm" action="{{ route('admin.Adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
@@ -181,7 +181,7 @@
                                 }
                             </script>
 
-                                <a href="{{route("admin.adventures.investors",$deposit->id)}}" class="bg-gray-700 hover:bg-gray-800
+                                <a href="{{route("admin.Adventures.investors",$deposit->id)}}" class="bg-gray-700 hover:bg-gray-800
                                  text-white px-2 py-2 rounded focus:outline-none flex gap-1 items-center" >
                                     Investors <i class="fa fa-eye"></i>
                                 </a>
@@ -210,7 +210,7 @@
                         <div>
                             @php
 
-                                //$adventures->links()
+                                //$Adventures->links()
                             @endphp
                         </div>
                     </td>

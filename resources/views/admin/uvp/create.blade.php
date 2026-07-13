@@ -9,7 +9,7 @@
         @endif
 
        <header class="bg-blue-50 py-[2rem] rounded ">
-        <h1 class="text-2xl uppercase text-slate-700 font-bold">ADVENTURES - CREATE</h1>
+        <h1 class="text-2xl uppercase text-slate-700 font-bold">Adventures - CREATE</h1>
 
     </header>
 
@@ -21,7 +21,7 @@
 
     <div class="my-3">
 
-        <a href="{{route('admin.adventures')}}" class="bg-purple-500 text-white py-2 px-3 my-2 flex gap-2 w-28 items-center rounded justify-center">
+        <a href="{{route('admin.Adventures')}}" class="bg-purple-500 text-white py-2 px-3 my-2 flex gap-2 w-28 items-center rounded justify-center">
             <span>Report</span>
             <i class="fa fa-book"></i>
         </a>
@@ -47,7 +47,7 @@
 
 
 
-            <form action="{{route("admin.adventures.store")}}" method="POST" class="block sm:grid grid-cols-3 gap-3">
+            <form action="{{route("admin.Adventures.store")}}" method="POST" class="block sm:grid grid-cols-3 gap-3">
                 @csrf
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700  pb-2">Names: </label>

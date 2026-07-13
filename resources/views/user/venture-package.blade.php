@@ -1468,7 +1468,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
                             @endphp
 
                             <div class="row  pb-3  " style="margin:-10px">
-                                @foreach ($adventures as $venture )
+                                @foreach ($Adventures as $venture )
                                     <div class="col-md-3 mt-2">
                                         <div class="mycard rounded border border-dark">
                                             <div class="m-1">

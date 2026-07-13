@@ -8,7 +8,7 @@ use Carbon\Carbon;
  * RenewalCalculator — single source of truth for the package renewal math.
  *
  * Per spec (Issue 2 + 6):
- *   • Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
+ *   • Daily ROI = (package_amount × 80%) × (Adventures.percentage / 100)
  *     → Cashout (25%): withdrawable anytime, min $10
  *     → Trading Voucher (75%): accumulates, used every 30 days for renewal
  *
@@ -159,7 +159,7 @@ class RenewalCalculator
      * Compute the daily breakdown (cashout + trading voucher) for a package.
      *
      * @param  float $amount     package investment amount (USD)
-     * @param  float $percentage adventures.percentage (daily ROI %)
+     * @param  float $percentage Adventures.percentage (daily ROI %)
      * @return array{
      *     pool_capital: float,
      *     daily_income: float,

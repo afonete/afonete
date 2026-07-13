@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for RenewalCalculator — the source of truth for the renewal fee
  * math, partial-month pro-rating, and income-pause window logic.
  *
- * Covers three real-world package durations from the adventures table:
+ * Covers three real-world package durations from the Adventures table:
  *   • 100 days  → max 3 renewals, last one covers 10 days (partial)
  *   • 200 days  → max 6 renewals, last one covers 20 days (partial)
  *   • 600 days  → max 19 renewals, last one covers 30 days (full month)

@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
 
     // Route::post('store-password/', [ConfirmablePasswordController::class, 'store'])->name('password.store');
 
+    Route::post('user/password/send-pin', [PasswordController::class, 'sendPasswordPin'])->name('password.send-pin');
     Route::post('user/password', [PasswordController::class, 'update'])->name('password.update');
 
     Route::post('admin/password', [PasswordController::class, 'ad_update'])->name('admin.password.update');

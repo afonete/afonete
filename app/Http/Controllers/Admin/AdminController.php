@@ -399,14 +399,14 @@ class AdminController extends Controller
             return $this->isActivationPayment($payment);
         })->pluck('payable_id')->filter()->unique()->values();
 
-        $adventures = $adventureIds->isNotEmpty()
-            ? \App\Models\adventures::whereIn('id', $adventureIds)->get()->keyBy('id')
+        $Adventures = $adventureIds->isNotEmpty()
+            ? \App\Models\Adventures::whereIn('id', $adventureIds)->get()->keyBy('id')
             : collect();
 
         // Some legacy payment rows point to old adventure IDs that no longer exist.
         // Keep all packages available so the page can still resolve percentage,
         // duration and reward by plan/range fallback.
-        $allAdventures = \App\Models\adventures::all();
+        $allAdventures = \App\Models\Adventures::all();
 
         $fcPackages = $fcPackageIds->isNotEmpty()
             ? \App\Models\FCpackage::whereIn('id', $fcPackageIds)->get()->keyBy('id')
@@ -455,7 +455,7 @@ class AdminController extends Controller
         foreach ($users as $user) {
             $summary = $this->membershipSummaryForUser(
                 $user,
-                $adventures,
+                $Adventures,
                 $allAdventures,
                 $fcPackages,
                 $paymentActivations,
@@ -467,7 +467,7 @@ class AdminController extends Controller
         }
     }
 
-    private function membershipSummaryForUser(User $user, $adventures, $allAdventures, $fcPackages, $paymentActivations, $positions, $teamLeaderLookup)
+    private function membershipSummaryForUser(User $user, $Adventures, $allAdventures, $fcPackages, $paymentActivations, $positions, $teamLeaderLookup)
     {
         $payment = $user->investments->first();
         $activation = $this->isUsedPaidActivation($user->have_activation_code) ? $user->have_activation_code : null;
@@ -479,7 +479,7 @@ class AdminController extends Controller
 
         if ($payment) {
             if ($this->isVenturePayment($payment)) {
-                $packageModel = $adventures->get($payment->payable_id)
+                $packageModel = $Adventures->get($payment->payable_id)
                     ?: $this->resolveAdventurePackage($payment, $allAdventures);
             } elseif ($this->isFcPayment($payment)) {
                 $packageModel = $fcPackages->get($payment->payable_id);

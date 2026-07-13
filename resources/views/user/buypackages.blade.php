@@ -419,7 +419,7 @@ background-color:yellow;
         </div>
 
              <div class="row">
-                @foreach ($adventures as $venture )
+                @foreach ($Adventures as $venture )
                     <div class="col-md-3 my-2">
                             <div class="mycard rounded border border-dark">
                                 <div class="m-1">

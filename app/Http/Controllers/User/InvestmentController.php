@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\adventures;
+use App\Models\Adventures;
 use App\Models\FCpackage;
 use App\Models\PackageRenewal;
 use App\Models\Payment as Paymodel;
@@ -70,7 +70,7 @@ class InvestmentController extends Controller
         }
         // Fallback: look up by name
         if (!$package && $payment->category === 'VENTURE') {
-            $package = adventures::where('name', $payment->package)->first();
+            $package = Adventures::where('name', $payment->package)->first();
         }
         if (!$package && $payment->category === 'FC') {
             $package = FCpackage::where('name', $payment->package)->first();
