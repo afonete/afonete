@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://marathon.fonepo.com'),
+    'url' => env('APP_URL', 'https://mtest.muhahe.com'),
 
     'asset_url' => env('ASSET_URL', null),
 

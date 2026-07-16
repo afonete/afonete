@@ -22,9 +22,9 @@
             <p>Dear partners and users</p>
         </div>
 
-        <p class="">We congratulate you to decided   to join  the fonepo in the pre-launch period and opening fc account registration on our platform. <span class="">only one who interesting to contribute to constructing  or put stone on this infrastructure the projects    we  called  pioneer members all complete active account automatic join  founder club member Get  super  account  now because  fc </span>has specific limit  number worldwide mix 200 000 <span class="">fc account only</span></p>
+        <p class="">We congratulate you to decided   to join  the Bifonex in the pre-launch period and opening fc account registration on our platform. <span class="">only one who interesting to contribute to constructing  or put stone on this infrastructure the projects    we  called  pioneer members all complete active account automatic join  founder club member Get  super  account  now because  fc </span>has specific limit  number worldwide mix 200 000 <span class="">fc account only</span></p>
     
-        <p>Are you in Thousands of people around the worldwide  are yet to join us please the opening of fc account registration on the platform  <span class=""> Only payment through on website <a href="#" style="color:blue;">www.fonepo.com</a>  and after complete pay get activation code immediately and activate after see your fc account activated on Backoffice , you get confirmation email from admin   and no other way for payment beyond site .
+        <p>Are you in Thousands of people around the worldwide  are yet to join us please the opening of fc account registration on the platform  <span class=""> Only payment through on website <a href="#" style="color:blue;">www.Bifonex.com</a>  and after complete pay get activation code immediately and activate after see your fc account activated on Backoffice , you get confirmation email from admin   and no other way for payment beyond site .
  </span></p>
 
         <ul>
@@ -44,7 +44,7 @@
             </li>
             <li>
                 <p>
-                    WE NEED local and worldwide   partners to live the dreams, transform fonepo   into one of the most popular platform globally.
+                    WE NEED local and worldwide   partners to live the dreams, transform Bifonex   into one of the most popular platform globally.
                 </p>
               
             </li>
@@ -55,13 +55,13 @@
 Has priority for other feature after launch according step of part launched huge benefits after full launch feature waiting you.
 
         </p>
-        <p>Don't forget that registration is only available via affiliate links to ensure the most fair allocation allowed of new users in the fonepo global.
+        <p>Don't forget that registration is only available via affiliate links to ensure the most fair allocation allowed of new users in the Bifonex global.
 </p>
         <p style="text-transform: lowercase;">CONNECT WITH US  Work the way you want, earn the way you want and most importantly , live the way you want</p>
 
         <p > Take well This is your own business, Building together, WE WILL LIVE    DREAMS TOGETHER
 </p>
-    <p class="font-weight-bold">Regards, Fonepo Team</p>
+    <p class="font-weight-bold">Regards, Bifonex Team</p>
     </di>
 
 

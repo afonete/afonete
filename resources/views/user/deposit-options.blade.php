@@ -129,7 +129,7 @@
                 </div>
                 <!-- Advcash Modal -->
                 <div x-cloak x-show="showAdvcash"  class="bg-white p-6 w-xl">
-                    <h2 class="text-lg font-semibold text-center">Fonepo | Activate</h2>
+                    <h2 class="text-lg font-semibold text-center">Bifonex | Activate</h2>
                     <h2 class="text-lg font-semibold">Pay With Advcash</h2>
                     <div id="advCash">
                     <ul class="list-decimal pl-4  text-gray-600 text-sm">

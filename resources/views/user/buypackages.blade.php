@@ -425,7 +425,7 @@ background-color:yellow;
                                 <div class="m-1">
                                     <p class="text-danger text-center" style="fon-size:10px;">{{$venture->name}}</p>
                                     <div class="d-flex justify-content-center">
-                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
                                     </div>
                                 </div>
                                 <div class="text-center" style="background-color:black;">

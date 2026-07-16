@@ -359,7 +359,7 @@ if (id=='link')
                  <p id="descriptions"></p>
                 </div>
                 <div class="font-size-14 " style="color:#e7e7e7">
-<p >You can create a PTC (Paid to Click) advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your ad is approved, Fonepo users will view your website for the amount of time you have chosen. Every time a user views your ad they will receive a small number of money.</p>
+<p >You can create a PTC (Paid to Click) advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your ad is approved, Bifonex users will view your website for the amount of time you have chosen. Every time a user views your ad they will receive a small number of money.</p>
 
 <p>You can pay PTC ads with your main Coin balance, or you can <a href="{{route('user.dashboard.deposit')}}" style="color:red">Deposit</a> to add Coins to your balance.</p>
                 </div>

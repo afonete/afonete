@@ -80,6 +80,12 @@ class ProcessBlockchainWithdrawal implements ShouldQueue
                 if ($hotBalance + 0.000001 < (float) $withdrawal->amount) {
                     throw new \RuntimeException('Insufficient hot-wallet USDT balance for automatic payout.');
                 }
+                
+                // ── THE FIX: Validate that the hot wallet has enough TRX for fees (Min 20 TRX) ──
+                $hotTrxBalance = $tron->getTrxBalance($hotWallet);
+                if ($hotTrxBalance < 20.0) {
+                    throw new \RuntimeException('Insufficient hot-wallet TRX balance to pay for network fee (min 20 TRX required). Hot wallet has ' . $hotTrxBalance . ' TRX.');
+                }
             }
 
             $requestId = $withdrawal->signer_request_id ?: $withdrawal->transaction_no;
@@ -135,11 +141,18 @@ class ProcessBlockchainWithdrawal implements ShouldQueue
 
             $user = $fresh->user;
             if ($user) {
-                $existing = (float) $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
-                ChartAccount::updateOrCreate(
-                    ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
-                    ['amount'  => $existing + (float) $fresh->amount]
-                );
+                // Lock the ChartAccount row for update to prevent concurrent double-refunding race conditions
+                $account = $user->ChartAccount()->where('acc_type', 'CASHOUT')->lockForUpdate()->first();
+                if ($account) {
+                    $account->amount = (float) $account->amount + (float) $fresh->amount;
+                    $account->save();
+                } else {
+                    ChartAccount::create([
+                        'user_id'  => $user->id,
+                        'acc_type' => 'CASHOUT',
+                        'amount'   => (float) $fresh->amount
+                    ]);
+                }
             }
 
             BlockchainAuditLog::record('withdrawal.failed_refunded', [

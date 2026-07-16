@@ -633,8 +633,15 @@ class Balance extends Controller{
         $netAmount  = round($amount - $feeAmount, 2);
 
         try {
-            $withdrawal = DB::transaction(function () use ($user, $cashoutBalance, $amount, $feeAmount, $netAmount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {
-                $user->ChartAccount()->where('acc_type', 'CASHOUT')->update(['amount' => $cashoutBalance - $amount]);
+            $withdrawal = DB::transaction(function () use ($user, $amount, $feeAmount, $netAmount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {
+                // Lock the ChartAccount row for update to prevent concurrent double-spending race conditions
+                $account = $user->ChartAccount()->where('acc_type', 'CASHOUT')->lockForUpdate()->first();
+                if (!$account || (float) $account->amount < $amount) {
+                    throw new \RuntimeException('Insufficient funds for withdrawal.');
+                }
+
+                $account->amount = (float) $account->amount - $amount;
+                $account->save();
 
                 return \App\Models\withdrawals::create([
                     'user_id'           => $user->id,
@@ -657,7 +664,8 @@ class Balance extends Controller{
             });
         } catch (\Throwable $e) {
             \Log::error('Withdrawal request failed: ' . $e->getMessage());
-            return back()->with('error', 'Could not create withdrawal request. Please try again.');
+            $errorMsg = $e->getMessage() === 'Insufficient funds for withdrawal.' ? 'Insufficient funds.' : 'Could not create withdrawal request. Please try again.';
+            return back()->with('error', $errorMsg);
         }
 
         Transaction::create([
@@ -799,5 +807,20 @@ class Balance extends Controller{
         }
 
         return null;
+    }
+
+    public function userWithdrawalHistory()
+    {
+        $user = Auth::user();
+        $history = \App\Models\withdrawals::where('user_id', $user->id)->latest()->paginate(15);
+        
+        $stats = [
+            'total_requested' => (float) \App\Models\withdrawals::where('user_id', $user->id)->sum('amount'),
+            'total_completed' => (float) \App\Models\withdrawals::where('user_id', $user->id)->where('status', 'completed')->sum('net_amount'),
+            'pending_count'   => (int) \App\Models\withdrawals::where('user_id', $user->id)->where('status', 'pending')->count(),
+            'total_fees'      => (float) \App\Models\withdrawals::where('user_id', $user->id)->sum('fee_amount'),
+        ];
+
+        return view('user.balance.withdraw-history', compact('history', 'stats'));
     }
 }

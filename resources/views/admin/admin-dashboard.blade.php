@@ -321,6 +321,68 @@ $ftt = User::where('utype', '!=', 'ADM')
 
 
 
+@php
+    use App\Models\Deposits;
+    use App\Models\withdrawals;
+    use App\Models\ChartAccount;
+    use Carbon\Carbon;
+
+    // ── Deposits ──
+    $totalDepositAllTime = (float) Deposits::whereIn('status', ['approved', 'used'])->sum('amount_deposited');
+    $totalDepositThisMonth = (float) Deposits::whereIn('status', ['approved', 'used'])
+        ->where('created_at', '>=', Carbon::now()->startOfMonth())
+        ->sum('amount_deposited');
+    $totalDepositThisWeek = (float) Deposits::whereIn('status', ['approved', 'used'])
+        ->where('created_at', '>=', Carbon::now()->startOfWeek())
+        ->sum('amount_deposited');
+
+    // Last Month Deposits for percentage change
+    $startOfLastMonth = Carbon::now()->subMonth()->startOfMonth();
+    $endOfLastMonth = Carbon::now()->subMonth()->endOfMonth();
+    $totalDepositLastMonth = (float) Deposits::whereIn('status', ['approved', 'used'])
+        ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
+        ->sum('amount_deposited');
+    
+    if ($totalDepositLastMonth > 0) {
+        $depositPct = (($totalDepositThisMonth - $totalDepositLastMonth) / $totalDepositLastMonth) * 100;
+    } else {
+        $depositPct = $totalDepositThisMonth > 0 ? 100.0 : 0.0;
+    }
+
+    // ── Withdrawals ──
+    $totalWithdrawAllTime = (float) withdrawals::where('status', 'completed')->sum('amount');
+    $totalWithdrawThisMonth = (float) withdrawals::where('status', 'completed')
+        ->where('created_at', '>=', Carbon::now()->startOfMonth())
+        ->sum('amount');
+    $totalWithdrawThisWeek = (float) withdrawals::where('status', 'completed')
+        ->where('created_at', '>=', Carbon::now()->startOfWeek())
+        ->sum('amount');
+
+    // Last Month Withdrawals for percentage change
+    $totalWithdrawLastMonth = (float) withdrawals::where('status', 'completed')
+        ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
+        ->sum('amount');
+
+    if ($totalWithdrawLastMonth > 0) {
+        $withdrawPct = (($totalWithdrawThisMonth - $totalWithdrawLastMonth) / $totalWithdrawLastMonth) * 100;
+    } else {
+        $withdrawPct = $totalWithdrawThisMonth > 0 ? 100.0 : 0.0;
+    }
+
+    // ── Available Balances ──
+    $totalAvailableBalance = $totalDepositAllTime - $totalWithdrawAllTime;
+    
+    $availableThisMonth = $totalDepositThisMonth - $totalWithdrawThisMonth;
+    $availableThisWeek = $totalDepositThisWeek - $totalWithdrawThisWeek;
+    $availableLastMonth = $totalDepositLastMonth - $totalWithdrawLastMonth;
+
+    if ($availableLastMonth > 0) {
+        $availablePct = (($availableThisMonth - $availableLastMonth) / $availableLastMonth) * 100;
+    } else {
+        $availablePct = $availableThisMonth > 0 ? 100.0 : 0.0;
+    }
+@endphp
+
             </ul>
 
             <ul role="list" class=" px-3  py-2 bg-indigo-200 block sm:grid grid-cols-3 gap-3">
@@ -331,23 +393,23 @@ $ftt = User::where('utype', '!=', 'ADM')
                       <h3 class="font-bold uppercase">Total Deposit</h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">0,000.00 USD</h2>
-                      <div class="indicator flex gap-1 text-green-500 font-bold">
+                    <h2 class="text-lg font-bold text-slate-800">{{ number_format($totalDepositAllTime, 2) }} USD</h2>
+                      <div class="indicator flex gap-1 {{ $depositPct >= 0 ? 'text-green-500' : 'text-red-500' }} font-bold">
                         <p>
-                          <i class="fa-solid fa-arrow-up text-xs "></i>
-                          <i class="fa-solid fa-arrow-up text-xs "></i>
+                          <i class="fa-solid {{ $depositPct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
+                          <i class="fa-solid {{ $depositPct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
                         </p>
-                        <p>93%</p>
+                        <p>{{ number_format(abs($depositPct), 0) }}%</p>
                       </div>
                   </div>
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
-                        <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Month</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($totalDepositThisMonth, 2) }} USD</p>
                       </div>
                       <div>
-                        <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Week</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($totalDepositThisWeek, 2) }} USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-1"></div>
@@ -359,26 +421,26 @@ $ftt = User::where('utype', '!=', 'ADM')
               <li class="  bg-white py-5 px-2  text-xs my-2 lg:my-auto">
                 <div class="cards">
                   <div class="header flex gap-2 pb-2">
-                      <h3 class="font-bold">Total Withdraw </h3>
+                      <h3 class="font-bold text-slate-800 uppercase">Total Withdraw </h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">00,000.00 USD</h2>
-                      <div class="indicator flex gap-1 text-green-500 font-bold">
+                    <h2 class="text-lg font-bold text-slate-800">{{ number_format($totalWithdrawAllTime, 2) }} USD</h2>
+                      <div class="indicator flex gap-1 {{ $withdrawPct >= 0 ? 'text-green-500' : 'text-red-500' }} font-bold">
                         <p>
-                          <i class="fa-solid fa-arrow-up text-xs "></i>
-                          <i class="fa-solid fa-arrow-up text-xs "></i>
+                          <i class="fa-solid {{ $withdrawPct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
+                          <i class="fa-solid {{ $withdrawPct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
                         </p>
-                        <p>93%</p>
+                        <p>{{ number_format(abs($withdrawPct), 0) }}%</p>
                       </div>
                   </div>
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
-                        <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Month</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($totalWithdrawThisMonth, 2) }} USD</p>
                       </div>
                       <div>
-                        <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Week</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($totalWithdrawThisWeek, 2) }} USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-2"></div>
@@ -391,26 +453,26 @@ $ftt = User::where('utype', '!=', 'ADM')
               <li class="  bg-white py-5 px-2  text-xs">
                 <div class="cards">
                   <div class="header flex gap-2 pb-2">
-                      <h3 class="font-bold">Total available Balance</h3>
+                      <h3 class="font-bold text-slate-800 uppercase">Total available Balance</h3>
                   </div>
                   <div class="middle flex justify-between gap-3 w-full items-center pb-2 ">
-                    <h2 class="text-lg">00,000.00 USD</h2>
-                      <div class="indicator flex gap-1 text-red-500 font-bold">
+                    <h2 class="text-lg font-bold text-slate-800">{{ number_format($totalAvailableBalance, 2) }} USD</h2>
+                      <div class="indicator flex gap-1 {{ $availablePct >= 0 ? 'text-green-500' : 'text-red-500' }} font-bold">
                         <p>
-                          <i class="fa-solid fa-arrow-down text-xs "></i>
-                          <i class="fa-solid fa-arrow-down text-xs "></i>
+                          <i class="fa-solid {{ $availablePct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
+                          <i class="fa-solid {{ $availablePct >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs "></i>
                         </p>
-                        <p>93%</p>
+                        <p>{{ number_format(abs($availablePct), 0) }}%</p>
                       </div>
                   </div>
                   <div class="down flex gap-2 uppercase items-end justify-between">
                       <div>
-                        <h2 class="pb-1 font-semibold">This Moth</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Month</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($availableThisMonth, 2) }} USD</p>
                       </div>
                       <div>
-                        <h2 class="pb-1 font-semibold">This Week</h2>
-                        <p class="text-slate-600 text-bold">0,000.00 USD</p>
+                        <h2 class="pb-1 font-semibold text-slate-500">This Week</h2>
+                        <p class="text-slate-800 font-bold" style="font-size: 0.8rem;">{{ number_format($availableThisWeek, 2) }} USD</p>
                       </div>
                       <div class="simple-chart  flex justify-center ">
                         <div id="deposit-chart-3"></div>

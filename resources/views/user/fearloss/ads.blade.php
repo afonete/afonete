@@ -126,7 +126,7 @@ use Illuminate\Http\Request;
                   {{$errora??''}}
             {{$errorb??''}}</span><br></p>
                   <p class=" text-lg" id="leftSec" style="margin-top: -40px"></p>
-                  <p class="text-center" style="font-size: 10px;" id="powed">Powered by Fonepo </p>
+                  <p class="text-center" style="font-size: 10px;" id="powed">Powered by Bifonex </p>
                 </div>
             </div>
             @if(!$already)

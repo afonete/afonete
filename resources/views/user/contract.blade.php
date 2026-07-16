@@ -23,11 +23,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="FONEPO Template">
-    <meta name="keywords" content="FONEPO, unica, creative, html">
+    <meta name="description" content="Bifonex Template">
+    <meta name="keywords" content="Bifonex, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fonepo Affiliate || Earn money infinetely</title>
+    <title>Bifonex Affiliate || Earn money infinetely</title>
     <link rel="icon" href="{{asset('assets/front/img/big-logo.png')}}">
     <!-- Css Styles -->
     <link rel="stylesheet" href="{{asset('assets/front/css/jquery-ui.min.css')}}" type="text/css">
@@ -51,7 +51,7 @@
                                 <p class="par">The Independent Marketing affiliate ("IMA") Agreement, the Compensation Plan and the
                                         General Terms and Conditions (forming inseparable part of one document and entire
                                         agreement between the Company and its IMA) explains and governs the relationship between
-                                        each IMA and COMPANY, (referred to hereafter as the "FONEPO"). Each IMA is required to
+                                        each IMA and COMPANY, (referred to hereafter as the "Bifonex"). Each IMA is required to
                                         read, understand, and comply with all terms and conditions of the Agreement. The Agreement
                                         shall constitute the entire understanding of the parties. All parts of this Agreement shall apply
                                         to the Registered IMA agreement. By submitting the IMA Application/Agreement you hereby
@@ -75,7 +75,7 @@ effective as of the date of show or acknowledgement of accepting the Agreement a
 through a registered website of the COMPANY, by and between:
                                 </p>
                                  <p class="par">
-                                     <span class="font-weight-bold">‘FONEPO</span>  hereinafter referred to as the (May Referred to as “COMPANY” affiliate system
+                                     <span class="font-weight-bold">‘Bifonex</span>  hereinafter referred to as the (May Referred to as “COMPANY” affiliate system
 ECOSYSTEM PLATFORM, “OUR”, “US”, “WE” Or Disclosing Party). Which expression shall refer
 to the context or meaning thereof, be deemed to mean and include its successors and assigns
 of the First Party
@@ -409,7 +409,7 @@ written or permanent form.
 
                                         <p class="par">
                                                <span class="two-num">2.1.6</span> <span class="font-weight-bold" > Registration Suspension term</span>The Notice of Warning will contain instructions to contact company via an account-associated
-email at support@fonepo.com citing time limits. If offending Founder does not respond to the
+email at support@Bifonex.com citing time limits. If offending Founder does not respond to the
 Notice of Warning, does not respond to the Notice of Warning with allotted time, or does not
 produce vindicating evidence or explanation through valid a current, valid e-mail address that is
 associated with the offending Founders account, the Founder’s account [with full registration]
@@ -422,7 +422,7 @@ shall be terminated without further notice.
                                         </li>
 
                                           <p class="par">
-                                            By using FONEPO you agree to receive advertising from numerous third party advertisers.
+                                            By using Bifonex you agree to receive advertising from numerous third party advertisers.
 Attempts to block or otherwise bypass the advertising will be considered a breach of these
 terms.
                                         </p>
@@ -557,7 +557,7 @@ information. Spam is strictly prohibited
                                                     access to our Website, Content, products or Services at any time (for any reason, or for no
                                                     reason). In particular, and without limitation, we may terminate, modify, or suspend your
                                                     access to the Website, Content and/or Services upon your non-compliance with these Terms of
-                                                    Use, and, if you are a distributor of COMPANY, your Application and Agreement (the “FONEPO
+                                                    Use, and, if you are a distributor of COMPANY, your Application and Agreement (the “Bifonex
                                                     Agreement”) or if you violate our rights or the rights of any other party or if something we
                                                     consider inappropriate behavior. Furthermore, if an account has been inactive for over 6
                                                     months, then we will terminate the person from being an affiliate and the account will be
@@ -566,7 +566,7 @@ information. Spam is strictly prohibited
                                             <p class="par">
                                                    From any country whose applications would violate any of the applicable and relevant national,
                                                     international, directive and/or regulations that may comply.
-                                                    IMAs may only market FONEPO system and services or recruit new IMAs in those countries
+                                                    IMAs may only market Bifonex system and services or recruit new IMAs in those countries
                                                     officially authorized by the Company. <br>
                                                     Upon notification of acceptance by the Company, the new IMA will be entered into the
                                                     Company database. If there are any errors on an application, IMAs should verify with the
@@ -840,9 +840,9 @@ received or transactions entered into through or from the services; (iii) any pr
 related prizes or rewards made available through the services; (iv) unauthorized access to or
 alteration of your transmissions or data; (v) statements or conduct of any third party on the
 services; or (vi) any other matter relating to the services. To the fullest extent permitted by
-applicable law, in no event will fonepo's total liability to you for all damages, losses (including
+applicable law, in no event will Bifonex's total liability to you for all damages, losses (including
 contract, negligence, statutory liability or otherwise) or causes of action exceed the amount you
-have paid FONEPO in the last six (6) months.
+have paid Bifonex in the last six (6) months.
                                         </p>
 
                                          <p class="par">
@@ -889,7 +889,7 @@ payment proof and date of purchase.
 
                                         <p class="par">
                                              We grant you a membership license to access feature on our website and make personal use of
-fonepo website. Except if something wrong happened with our express written consent, you
+Bifonex website. Except if something wrong happened with our express written consent, you
 might not be allowed to views , download or edit or use our website, or any portion of it. You
 are not allowed to reproduce duplicate, copy or edit any material from our website or any
 portion of it
@@ -1065,8 +1065,8 @@ permissible under the law.
                                         </li>
 
                                          <p class="par">
-                                             All the information provided by us on fonepo Website is available for general and indicative
-purposes only. We do all the efforts to ensure the reliability of the information given on fonepo
+                                             All the information provided by us on Bifonex Website is available for general and indicative
+purposes only. We do all the efforts to ensure the reliability of the information given on Bifonex
 website, this shall not constitute as a warranty or even a promise for any future financial
 success or career.
                                         </p>

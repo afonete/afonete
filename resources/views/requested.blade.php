@@ -16,7 +16,7 @@
     <meta name="keywords" content="AFONETE, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fonepo request </title>
+    <title>Bifonex request </title>
     <!-- Css Styles -->
     <link rel="stylesheet" href="{{asset('assets/front/css/jquery-ui.min.css')}}" type="text/css">
     <link rel="stylesheet" href="{{asset('assets/front/css/booststrap.min.css')}}">
@@ -36,7 +36,7 @@
 
                 </h5>
 
-                              <p class="card-text"> Your request to join Fonepo on <u>{{$email}}</u> has been accepted and it will be  waiting admin approved. After You will receive acceptance email once you will be accepted. This action takes 30min-48hr normal.
+                              <p class="card-text"> Your request to join Bifonex on <u>{{$email}}</u> has been accepted and it will be  waiting admin approved. After You will receive acceptance email once you will be accepted. This action takes 30min-48hr normal.
             </div>
 
 

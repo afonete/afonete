@@ -37,12 +37,12 @@
         
         <div class="content">
             <p>Just a quick reminder as a team leader to complete your account to <br>qualify for the bonus today because your account will soon<br> change to standard or be frozen.</p>
-            <p>If you need any support, contact us at <a href="mailto:admin@fonepo.com">admin@fonepo.com</a>.</p>
+            <p>If you need any support, contact us at <a href="mailto:admin@Bifonex.com">admin@Bifonex.com</a>.</p>
         </div>
         
         <div class="footer">
             <p>Regards,</p>
-            <p>Fonepo Team</p>
+            <p>Bifonex Team</p>
         </div>
     </div>
 </body>

@@ -123,7 +123,7 @@ public function upgrade(Request $request){
                     $user->refresh();
                     $target = $this->dashboardRouteForUser($user);
                     $message = $target === 'user.dashboard'
-                        ? 'You have been activated Fonepo account. Enjoy unlimited earning on Fonepo!'
+                        ? 'You have been activated Bifonex account. Enjoy unlimited earning on Bifonex!'
                         : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                     return redirect()->route($target)->with('message', $message);
@@ -261,7 +261,7 @@ public function g_upgrade(Request $request){
                             $user = User::find($userA->id);
                             $target = $this->dashboardRouteForUser($user);
                             $message = $target === 'user.dashboard'
-                                ? 'You have been activated Fonepo account, Enjoy unlimited earning on Fonepo'
+                                ? 'You have been activated Bifonex account, Enjoy unlimited earning on Bifonex'
                                 : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                             return redirect()->route($target)->with('message', $message);

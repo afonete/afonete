@@ -50,12 +50,12 @@
         <div class="content">
             <p>Hello Leader {{$username}},</p>
             <p>Just quick reminder you as team leader  to complete your account to qualified bonus today please because soon as possible your account change standard  or freezing.</p>
-            <p>If you require any assistance, please don't hesitate to contact us at <a href="mailto:admin@fonepo.com">admin@fonepo.com</a>.</p>
+            <p>If you require any assistance, please don't hesitate to contact us at <a href="mailto:admin@Bifonex.com">admin@Bifonex.com</a>.</p>
            <div class="best"> <p>Best regards,</p>
-            <p>The Fonepo Team</p><div>
+            <p>The Bifonex Team</p><div>
         </div>
         <div class="footer">
-            <p>&copy; <?php echo date("Y"); ?> Fonepo. All rights reserved.</p>
+            <p>&copy; <?php echo date("Y"); ?> Bifonex. All rights reserved.</p>
         </div>
     </div>
 </body>

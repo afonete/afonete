@@ -50,7 +50,7 @@ $orderNumber = Str::random($length);
                 'currency' => 'USDT',
                 'email' => $request->email,
                 'order_name' => 'package activation',
-                'callback_url' => 'http://fonepo.com/user/package/payment/status',
+                'callback_url' => 'http://Bifonex.com/user/package/payment/status',
                 'expire_min'=>15,
                 'api_key' => 'rPs1vyRlJZChOsYy9F--yeiEUTNgCOzCcnG4bKu_sp3hM5SP64GzWqqdadDM6x95', // Replace with your actual secret key
             ],
@@ -200,7 +200,7 @@ $user->save();
 
             if ($paybalance->save())
             {
-                 return redirect()->route('user.dashboard')->with('message','You have been  activated '.$pack.' account , Enjoy unlimited earning on Fonepo');
+                 return redirect()->route('user.dashboard')->with('message','You have been  activated '.$pack.' account , Enjoy unlimited earning on Bifonex');
             }
             else{
                 return  redirect()->route('user.dashboard')->with('message','error occour, call admin pr live chat');
@@ -290,7 +290,7 @@ $token=$value==100?'10000':'20000';
     }
 
     if ($user->save() && $paybalance->save()) {
-      return redirect()->route('user.dashboard')->with('message', 'You have been  activated '.$pack.' account , Enjoy unlimited earning on Fonepo');
+      return redirect()->route('user.dashboard')->with('message', 'You have been  activated '.$pack.' account , Enjoy unlimited earning on Bifonex');
 
     } else {
       return redirect()->route('user.package')->with('message', 'error while savig');
@@ -316,7 +316,7 @@ $token=$value==100?'10000':'20000';
 
 
     if ($user->save() ) {
-      return redirect()->route('user.dashboard')->with('message', 'You have been  activated standard account , Enjoy free earning on Fonepo');
+      return redirect()->route('user.dashboard')->with('message', 'You have been  activated standard account , Enjoy free earning on Bifonex');
 
     } else {
       return redirect()->route('user.package')->with('message', 'error while savig');
@@ -328,9 +328,9 @@ $token=$value==100?'10000':'20000';
 private function SendCode($emaili,$activation,$package) {
 
 // $subjects = "Activation code of your package";
-// $messages = "hello dear. We are happy to have you in system. enter this code $activation to activate your package.This is individual email from Fonepo don't share it.";
-// $headers = "From: infoFonepo@gmail.com\r\n" .
-//            "Reply-To: infoFonepo@gmail.com\r\n" .
+// $messages = "hello dear. We are happy to have you in system. enter this code $activation to activate your package.This is individual email from Bifonex don't share it.";
+// $headers = "From: infoBifonex@gmail.com\r\n" .
+//            "Reply-To: infoBifonex@gmail.com\r\n" .
 //            "X-Mailer: PHP/" . phpversion();
 
 $email=$emaili;

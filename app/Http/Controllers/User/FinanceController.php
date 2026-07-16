@@ -701,97 +701,163 @@ public function getTeamTree(Request $request,$id){
      *   • For the LAST renewal covering N leftover days (<30), the fee is
      *     pro-rated: monthly_fee × (N / 30).
      */
-    public function packageRenewPage()
+    public function packageRenewPage($payment_id = null)
     {
         $user = Auth::user();
 
-        // Active paid package
-        $activePayment = \App\Models\Payment::where('user', $user->id)
-            ->where('is_expired', false)
-            ->where('status', '1')
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        if (!$activePayment) {
-            return redirect()->route('user.dashboard')
-                ->with('error', 'You have no active package to renew.');
-        }
-
-        // Trading Voucher balance  (acc_type = TRADING in ChartAccount)
+        // Always load Trading Voucher balance  (acc_type = TRADING in ChartAccount)
         $tradingVoucherBalance = $user->ChartAccount()
             ->where('acc_type', 'TRADING')
             ->sum('amount');
 
-        // How many renewals has this user already done for this payment?
-        $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
-            ->where('payment_id', $activePayment->id)
-            ->count();
+        if ($payment_id) {
+            // SINGLE PACKAGE DETAILED RENEWAL VIEW
+            $activePayment = \App\Models\Payment::where('user', $user->id)
+                ->where('id', $payment_id)
+                ->where('is_expired', false)
+                ->where('status', '1')
+                ->first();
 
-        // Package runs 100 days → renewals at day 30, 60, 90  (max 3)
-        // max_renewals derived from adventure package duration
-        $activePkg2  = \App\Models\Adventures::find($activePayment->payable_id);
-        $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
-        $maxRenewals = RenewalCalculator::maxRenewals($pkgDuration);
+            if (!$activePayment) {
+                return redirect()->route('packageRenew')
+                    ->with('error', 'The requested active package was not found or is expired.');
+            }
 
-        $renewalNumber = $renewalsDone + 1;
+            // How many renewals has this user already done for this payment?
+            $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
+                ->where('payment_id', $activePayment->id)
+                ->count();
 
-        if ($renewalNumber > $maxRenewals) {
-            return redirect()->route('user.dashboard')
-                ->with('info', 'You have completed all renewals for this package cycle.');
+            // Package runs 100 days → renewals at day 30, 60, 90  (max 3)
+            // max_renewals derived from adventure package duration
+            $activePkg2  = \App\Models\Adventures::find($activePayment->payable_id);
+            $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
+            $maxRenewals = RenewalCalculator::maxRenewals($pkgDuration);
+
+            $renewalNumber = $renewalsDone + 1;
+
+            if ($renewalNumber > $maxRenewals) {
+                return redirect()->route('packageRenew')
+                    ->with('info', 'You have completed all renewals for this package cycle.');
+            }
+
+            // ── Renewal fee (Issue 2) ── delegated to RenewalCalculator
+            $calc = RenewalCalculator::compute(
+                packageAmount:   (float) $activePayment->amount,
+                percentage:      (float) ($activePkg2->percentage ?? 0),
+                packageDuration: $pkgDuration,
+                renewalNumber:   $renewalNumber,
+                renewalsDone:    $renewalsDone,
+                renewalPrice:    \App\Models\TokenSetting::renewalPrice(),
+            );
+
+            $monthlyFee    = $calc['monthly_fee'];
+            $renewalFee    = $calc['renewal_fee'];
+            $daysCovered   = $calc['days_covered'];
+            $isPartialFee  = $calc['is_partial'];
+            $leftoverDays  = $calc['leftover_days'];
+            $tokenPrice    = \App\Models\TokenSetting::renewalPrice();
+            $tokensToReceive = $calc['tokens_received'];
+
+            // Is renewal due? (every 30 days from package purchase)
+            $packageStart   = Carbon::parse($activePayment->created_at);
+            $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
+            // No 1-day-early grace (Issue 6): renewal is due on the exact day or after.
+            $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
+
+            // Pre-computed schedule for the upcoming renewal display
+            $schedule = RenewalCalculator::schedule(
+                packageAmount:   (float) $activePayment->amount,
+                percentage:      (float) ($activePkg2->percentage ?? 0),
+                packageDuration: $pkgDuration,
+                renewalPrice:    $tokenPrice,
+                packageStart:    $packageStart,
+            );
+
+            return view('user.package-renew', [
+                'isSingleView'         => true,
+                'activePayment'        => $activePayment,
+                'tradingVoucherBalance'=> $tradingVoucherBalance,
+                'renewalFee'           => $renewalFee,
+                'monthlyFee'           => $monthlyFee,
+                'daysCovered'          => $daysCovered,
+                'isPartialFee'         => $isPartialFee,
+                'leftoverDays'         => $leftoverDays,
+                'pkgDuration'          => $pkgDuration,
+                'tokenPrice'           => $tokenPrice,
+                'tokensToReceive'      => $tokensToReceive,
+                'renewalNumber'        => $renewalNumber,
+                'maxRenewals'          => $maxRenewals,
+                'renewalDueDate'       => $renewalDueDate,
+                'isDue'                => $isDue,
+                'schedule'             => $schedule,
+            ]);
         }
 
-        // ── Renewal fee (Issue 2) ── delegated to RenewalCalculator
-        // Math is identical to what was inline before; centralised so it's testable.
-        $calc = RenewalCalculator::compute(
-            packageAmount:   (float) $activePayment->amount,
-            percentage:      (float) ($activePkg2->percentage ?? 0),
-            packageDuration: $pkgDuration,
-            renewalNumber:   $renewalNumber,
-            renewalsDone:    $renewalsDone,
-            renewalPrice:    \App\Models\TokenSetting::renewalPrice(),
-        );
+        // MULTI-PACKAGE RENEWAL DASHBOARD VIEW (NO $payment_id PROVIDED)
+        $activePayments = \App\Models\Payment::where('user', $user->id)
+            ->where('is_expired', false)
+            ->where('status', '1')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        $monthlyFee    = $calc['monthly_fee'];
-        $renewalFee    = $calc['renewal_fee'];
-        $daysCovered   = $calc['days_covered'];
-        $isPartialFee  = $calc['is_partial'];
-        $leftoverDays  = $calc['leftover_days'];
-        $tokenPrice    = \App\Models\TokenSetting::renewalPrice();
-        $tokensToReceive = $calc['tokens_received'];
+        $packagesData = [];
 
-        // Is renewal due? (every 30 days from package purchase)
-        $packageStart   = Carbon::parse($activePayment->created_at);
-        $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
-        // No 1-day-early grace (Issue 6): renewal is due on the exact day or after.
-        $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
+        foreach ($activePayments as $payment) {
+            $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
+                ->where('payment_id', $payment->id)
+                ->count();
 
-        // Pre-computed schedule for the upcoming renewal display
-        $schedule = RenewalCalculator::schedule(
-            packageAmount:   (float) $activePayment->amount,
-            percentage:      (float) ($activePkg2->percentage ?? 0),
-            packageDuration: $pkgDuration,
-            renewalPrice:    $tokenPrice,
-            packageStart:    $packageStart,
-        );
+            $activePkg2  = \App\Models\Adventures::find($payment->payable_id);
+            $pkgDuration = $activePkg2 ? (int) $activePkg2->duration : 100;
+            $maxRenewals = RenewalCalculator::maxRenewals($pkgDuration);
+
+            $renewalNumber = $renewalsDone + 1;
+            $allRenewalsDone = $renewalsDone >= $maxRenewals;
+
+            $renewalDueDate = null;
+            $isDue = false;
+            $renewalFee = 0.0;
+            $tokensToReceive = 0.0;
+
+            if (!$allRenewalsDone) {
+                $packageStart   = Carbon::parse($payment->created_at);
+                $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
+                $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
+
+                $calc = RenewalCalculator::compute(
+                    packageAmount:   (float) $payment->amount,
+                    percentage:      (float) ($activePkg2->percentage ?? 0),
+                    packageDuration: $pkgDuration,
+                    renewalNumber:   $renewalNumber,
+                    renewalsDone:    $renewalsDone,
+                    renewalPrice:    \App\Models\TokenSetting::renewalPrice(),
+                );
+                $renewalFee      = $calc['renewal_fee'];
+                $tokensToReceive = $calc['tokens_received'];
+            }
+
+            $packagesData[] = [
+                'payment'         => $payment,
+                'renewalsDone'    => $renewalsDone,
+                'maxRenewals'     => $maxRenewals,
+                'renewalNumber'   => $renewalNumber,
+                'allRenewalsDone' => $allRenewalsDone,
+                'renewalDueDate'  => $renewalDueDate,
+                'isDue'           => $isDue,
+                'renewalFee'      => $renewalFee,
+                'tokensToReceive' => $tokensToReceive,
+                'pkgDuration'     => $pkgDuration,
+            ];
+        }
 
         return view('user.package-renew', [
-            'activePayment'        => $activePayment,
+            'isSingleView'         => false,
             'tradingVoucherBalance'=> $tradingVoucherBalance,
-            'renewalFee'           => $renewalFee,
-            'monthlyFee'           => $monthlyFee,
-            'daysCovered'          => $daysCovered,
-            'isPartialFee'         => $isPartialFee,
-            'leftoverDays'         => $leftoverDays,
-            'pkgDuration'          => $pkgDuration,
-            'tokenPrice'           => $tokenPrice,
-            'tokensToReceive'      => $tokensToReceive,
-            'renewalNumber'        => $renewalNumber,
-            'maxRenewals'          => $maxRenewals,
-            'renewalDueDate'       => $renewalDueDate,
-            'isDue'                => $isDue,
-            'schedule'             => $schedule,
+            'packagesData'         => $packagesData,
         ]);
     }
+    
 
     /**
      * Process the Trading Voucher renewal payment.
@@ -807,12 +873,22 @@ public function getTeamTree(Request $request,$id){
     {
         $user = Auth::user();
 
-        // Active package
-        $activePayment = \App\Models\Payment::where('user', $user->id)
-            ->where('is_expired', false)
-            ->where('status', '1')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        $paymentId = $request->input('payment_id');
+
+        if ($paymentId) {
+            $activePayment = \App\Models\Payment::where('user', $user->id)
+                ->where('id', $paymentId)
+                ->where('is_expired', false)
+                ->where('status', '1')
+                ->first();
+        } else {
+            // Active package
+            $activePayment = \App\Models\Payment::where('user', $user->id)
+                ->where('is_expired', false)
+                ->where('status', '1')
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
 
         if (!$activePayment) {
             return redirect()->route('user.dashboard')
@@ -856,7 +932,7 @@ public function getTeamTree(Request $request,$id){
             ->sum('amount');
 
         if ($currentBalance < $renewalFee) {
-            return redirect()->route('packageRenew')
+            return redirect()->route('packageRenew', ['payment_id' => $activePayment->id])
                 ->with('error', 'Insufficient Trading Voucher balance. You need $' . number_format($renewalFee, 2) . ' but have $' . number_format($currentBalance, 2) . '.');
         }
 

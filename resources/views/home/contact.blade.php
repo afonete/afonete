@@ -61,7 +61,7 @@
                                 <div class="addr-name south-team">SOUTHAFRICA TEAM: </div>
                                 <div class="addr-link">
                                     <div><a href="mailto:sfsupport@bifonex.com">sfsupport@bifonex.com</a></div>
-                                    <!-- <div><a href="mailto:fonepoteam@gmail.com">fonepoteam@gmail.com</a></div> -->
+                                    <!-- <div><a href="mailto:Bifonexteam@gmail.com">Bifonexteam@gmail.com</a></div> -->
                                 </div>
                                 
                             </div>
@@ -72,7 +72,7 @@
                                 <div class="addr-name">KENYA TEAM: </div>
                                 <div class="addr-link">
                                     <div><a href="mailto:kesupport@bifonex.com">kesupport@bifonex.com</a></div>
-                                    <!-- <div><a href="mailto:servicefonepo@gmail.com">servicefonepo@gmail.com</a></div> -->
+                                    <!-- <div><a href="mailto:serviceBifonex@gmail.com">serviceBifonex@gmail.com</a></div> -->
                                 </div>
                                 
                             </div>

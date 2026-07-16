@@ -189,224 +189,296 @@
         <!-- Send Modal -->
         <div x-cloak x-show="showSendModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-xl font-bold text-gray-100 flex items-center gap-2">
-                        <i class="fas fa-wallet text-yellow-500"></i> Manual Withdrawal
-                    </h3>
-                    <button @click="showSendModal = false; withdrawAmount = ''" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded font-bold">X</button>
-                </div>
-
                 
-                <?php if($cashout < $settings->min_amount): ?>
-                    <div class="bg-amber-950/20 border border-amber-800/40 text-amber-300 text-xs p-3 rounded-lg mb-3">
-                        <i class="fas fa-info-circle mr-1"></i> Balance is below minimum withdrawal amount of $<?php echo e(number_format($settings->min_amount, 2)); ?>.
+                
+                <?php if(isset($settings->auto_withdrawals_enabled) && $settings->auto_withdrawals_enabled): ?>
+                    
+                    
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-bold text-gray-100 flex items-center gap-2">
+                            <i class="fas fa-link text-emerald-500"></i> Instant Withdrawal (TRC-20)
+                        </h3>
+                        <button @click="showSendModal = false; withdrawAmount = ''" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded font-bold">X</button>
                     </div>
+
+                    
+                    <?php if($cashout < $settings->min_amount): ?>
+                        <div class="bg-amber-950/20 border border-amber-800/40 text-amber-300 text-xs p-3 rounded-lg mb-3">
+                            <i class="fas fa-info-circle mr-1"></i> Balance is below minimum withdrawal amount of $<?php echo e(number_format($settings->min_amount, 2)); ?>.
+                        </div>
+                    <?php else: ?>
+                        <div class="bg-slate-700/50 p-2.5 rounded-lg mb-3 text-xs text-slate-300 flex justify-between items-center">
+                            <span>Min: <strong>$<?php echo e(number_format($settings->min_amount, 2)); ?></strong></span>
+                            <span>Max per trx: <strong>$<?php echo e(number_format($settings->max_per_transaction, 2)); ?></strong></span>
+                        </div>
+                    <?php endif; ?>
+
+                    
+                    <div class="space-y-3 text-left">
+                        <form method="POST" action="<?php echo e(route('user.withdraw.direct_blockchain')); ?>">
+                            <?php echo csrf_field(); ?>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1">Destination USDT TRC-20 Address <span class="text-danger">*</span></label>
+                                <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="T... (TRON address)">
+                                <small class="text-[10px] text-gray-500 mt-1 block">Must be a valid TRON address</small>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USDT) <span class="text-danger">*</span></label>
+                                <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password <span class="text-danger">*</span></label>
+                                <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                            </div>
+
+                            
+                            <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Requested Amount:</span>
+                                    <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between border-b border-gray-800 pb-2">
+                                    <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
+                                    <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between pt-1">
+                                    <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                    <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                    <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
+                                <i class="fas fa-paper-plane mr-1"></i> Send USDT Instantly
+                            </button>
+                        </form>
+                    </div>
+
                 <?php else: ?>
-                    <div class="bg-slate-700/50 p-2.5 rounded-lg mb-3 text-xs text-slate-300 flex justify-between items-center">
-                        <span>Min: <strong>$<?php echo e(number_format($settings->min_amount, 2)); ?></strong></span>
-                        <span>Max per trx: <strong>$<?php echo e(number_format($settings->max_per_transaction, 2)); ?></strong></span>
+                    
+                    
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-bold text-gray-100 flex items-center gap-2">
+                            <i class="fas fa-wallet text-yellow-500"></i> Manual Withdrawal
+                        </h3>
+                        <button @click="showSendModal = false; withdrawAmount = ''" class="text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded font-bold">X</button>
+                    </div>
+
+                    
+                    <?php if($cashout < $settings->min_amount): ?>
+                        <div class="bg-amber-950/20 border border-amber-800/40 text-amber-300 text-xs p-3 rounded-lg mb-3">
+                            <i class="fas fa-info-circle mr-1"></i> Balance is below minimum withdrawal amount of $<?php echo e(number_format($settings->min_amount, 2)); ?>.
+                        </div>
+                    <?php else: ?>
+                        <div class="bg-slate-700/50 p-2.5 rounded-lg mb-3 text-xs text-slate-300 flex justify-between items-center">
+                            <span>Min: <strong>$<?php echo e(number_format($settings->min_amount, 2)); ?></strong></span>
+                            <span>Max per trx: <strong>$<?php echo e(number_format($settings->max_per_transaction, 2)); ?></strong></span>
+                        </div>
+                    <?php endif; ?>
+
+                    
+                    <div class="flex space-x-2 mb-4 border-b border-gray-700 pb-2">
+                        <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='crypto', 'bg-gray-700 text-gray-300': withdrawMethod !=='crypto' }" @click="withdrawMethod = 'crypto'" class="flex-1 py-1.5 text-xs rounded transition-all">Crypto</button>
+                        <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='advcash', 'bg-gray-700 text-gray-300': withdrawMethod !=='advcash' }" @click="withdrawMethod = 'advcash'" class="flex-1 py-1.5 text-xs rounded transition-all">Advcash</button>
+                        <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='perfect_money', 'bg-gray-700 text-gray-300': withdrawMethod !=='perfect_money' }" @click="withdrawMethod = 'perfect_money'" class="flex-1 py-1.5 text-xs rounded transition-all">Perfect Money</button>
+                    </div>
+
+                    
+                    <div x-show="withdrawMethod == 'crypto'" class="space-y-3 text-left">
+                        <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="method" value="crypto">
+                            
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1">Pick Currency &amp; Network</label>
+                                <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required
+                                        @change="cryptoNetwork = $event.target.options[$event.target.selectedIndex].getAttribute('data-network')">
+                                    <?php $__currentLoopData = $cryptoByCurrency; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $currency => $rows): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <optgroup label="<?php echo e($currency); ?>">
+                                            <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($currency); ?>" data-network="<?php echo e($w->network); ?>">
+                                                    <?php echo e($currency); ?> — <?php echo e($w->network); ?>
+
+                                                </option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </optgroup>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                                <input type="hidden" name="network" :value="cryptoNetwork">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Destination Wallet Address</label>
+                                <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your receiving wallet address">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                                <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                                <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                                <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                            </div>
+
+                            
+                            <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Requested Amount:</span>
+                                    <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between border-b border-gray-800 pb-2">
+                                    <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
+                                    <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between pt-1">
+                                    <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                    <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                    <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
+                                <i class="fas fa-paper-plane mr-1"></i> Submit Crypto Withdrawal
+                            </button>
+                        </form>
+                    </div>
+
+                    
+                    <div x-show="withdrawMethod == 'advcash'" class="space-y-3 text-left">
+                        <?php if($advcashActive->isEmpty()): ?>
+                            <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Advcash withdrawals are not configured currently.</div>
+                        <?php else: ?>
+                        <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="method" value="advcash">
+                            <input type="hidden" name="network" value="ADVCASH">
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
+                                <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
+                                    <?php $__currentLoopData = $advcashActive; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($w->currency); ?>"><?php echo e($w->currency); ?> — <?php echo e($w->label); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Advcash Account Number</label>
+                                <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Advcash Account No">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                                <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                                <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                                <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                            </div>
+
+                            
+                            <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Requested Amount:</span>
+                                    <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between border-b border-gray-800 pb-2">
+                                    <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
+                                    <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between pt-1">
+                                    <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                    <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                    <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
+                                <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Withdrawal
+                            </button>
+                        </form>
+                        <?php endif; ?>
+                    </div>
+
+                    
+                    <div x-show="withdrawMethod == 'perfect_money'" class="space-y-3 text-left">
+                        <?php if($perfectMoneyActive->isEmpty()): ?>
+                            <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Perfect Money withdrawals are not configured currently.</div>
+                        <?php else: ?>
+                        <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="method" value="perfect_money">
+                            <input type="hidden" name="network" value="PERFECT_MONEY">
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
+                                <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
+                                    <?php $__currentLoopData = $perfectMoneyActive; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($w->currency); ?>"><?php echo e($w->currency); ?> — <?php echo e($w->label); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Perfect Money Account Number</label>
+                                <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Perfect Money Account No">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
+                                <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
+                                <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
+                                <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
+                            </div>
+
+                            
+                            <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Requested Amount:</span>
+                                    <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between border-b border-gray-800 pb-2">
+                                    <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
+                                    <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
+                                </div>
+                                <div class="flex justify-between pt-1">
+                                    <span class="text-gray-400 font-bold">You will Receive (Net):</span>
+                                    <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
+                                    <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
+                                <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Withdrawal
+                            </button>
+                        </form>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
-
-                
-                <div class="flex space-x-2 mb-4 border-b border-gray-700 pb-2">
-                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='crypto', 'bg-gray-700 text-gray-300': withdrawMethod !=='crypto' }" @click="withdrawMethod = 'crypto'" class="flex-1 py-1.5 text-xs rounded transition-all">Crypto</button>
-                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='advcash', 'bg-gray-700 text-gray-300': withdrawMethod !=='advcash' }" @click="withdrawMethod = 'advcash'" class="flex-1 py-1.5 text-xs rounded transition-all">Advcash</button>
-                    <button :class="{ 'bg-blue-600 text-white font-bold': withdrawMethod=='perfect_money', 'bg-gray-700 text-gray-300': withdrawMethod !=='perfect_money' }" @click="withdrawMethod = 'perfect_money'" class="flex-1 py-1.5 text-xs rounded transition-all">Perfect Money</button>
-                </div>
-
-                
-                <div x-show="withdrawMethod == 'crypto'" class="space-y-3 text-left">
-                    <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="method" value="crypto">
-                        
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1">Pick Currency &amp; Network</label>
-                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required
-                                    @change="cryptoNetwork = $event.target.options[$event.target.selectedIndex].getAttribute('data-network')">
-                                <?php $__currentLoopData = $cryptoByCurrency; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $currency => $rows): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <optgroup label="<?php echo e($currency); ?>">
-                                        <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <option value="<?php echo e($currency); ?>" data-network="<?php echo e($w->network); ?>">
-                                                <?php echo e($currency); ?> — <?php echo e($w->network); ?>
-
-                                            </option>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                    </optgroup>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-                            <input type="hidden" name="network" :value="cryptoNetwork">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Destination Wallet Address</label>
-                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your receiving wallet address">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
-                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
-                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
-                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
-                        </div>
-
-                        
-                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Requested Amount:</span>
-                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-800 pb-2">
-                                <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
-                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between pt-1">
-                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
-                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
-                                <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
-                            <i class="fas fa-paper-plane mr-1"></i> Submit Crypto Withdrawal
-                        </button>
-                    </form>
-                </div>
-
-                
-                <div x-show="withdrawMethod == 'advcash'" class="space-y-3 text-left">
-                    <?php if($advcashActive->isEmpty()): ?>
-                        <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Advcash withdrawals are not configured currently.</div>
-                    <?php else: ?>
-                    <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="method" value="advcash">
-                        <input type="hidden" name="network" value="ADVCASH">
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
-                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
-                                <?php $__currentLoopData = $advcashActive; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($w->currency); ?>"><?php echo e($w->currency); ?> — <?php echo e($w->label); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Advcash Account Number</label>
-                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Advcash Account No">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
-                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
-                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
-                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
-                        </div>
-
-                        
-                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Requested Amount:</span>
-                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-800 pb-2">
-                                <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
-                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between pt-1">
-                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
-                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
-                                <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
-                            <i class="fas fa-paper-plane mr-1"></i> Submit Advcash Withdrawal
-                        </button>
-                    </form>
-                    <?php endif; ?>
-                </div>
-
-                
-                <div x-show="withdrawMethod == 'perfect_money'" class="space-y-3 text-left">
-                    <?php if($perfectMoneyActive->isEmpty()): ?>
-                        <div class="p-3 text-xs text-yellow-500 bg-yellow-950/20 border border-yellow-800/20 rounded-lg">Perfect Money withdrawals are not configured currently.</div>
-                    <?php else: ?>
-                    <form method="POST" action="<?php echo e(route('user.withdraw.manual')); ?>">
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="method" value="perfect_money">
-                        <input type="hidden" name="network" value="PERFECT_MONEY">
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1">Select Currency</label>
-                            <select name="currency" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs font-semibold focus:outline-none" required>
-                                <?php $__currentLoopData = $perfectMoneyActive; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $w): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($w->currency); ?>"><?php echo e($w->currency); ?> — <?php echo e($w->label); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Perfect Money Account Number</label>
-                            <input type="text" name="address" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none font-mono" placeholder="Your Perfect Money Account No">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Amount (USD)</label>
-                            <input type="number" name="amount" x-model="withdrawAmount" required step="0.01" min="<?php echo e($settings->min_amount); ?>" max="<?php echo e($settings->max_per_transaction); ?>" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Min $<?php echo e(number_format($settings->min_amount, 2)); ?>">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Trading (Second) Password</label>
-                            <input type="password" name="transaction_password" required class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Enter transaction password">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-gray-400 font-bold mb-1 mt-2">Notes</label>
-                            <input type="text" name="notes" class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-2.5 text-xs focus:outline-none" placeholder="Notes for admin (optional)">
-                        </div>
-
-                        
-                        <div class="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-3 space-y-2 text-xs" x-show="withdrawAmount > 0">
-                            <div class="flex justify-between">
-                                <span class="text-gray-400">Requested Amount:</span>
-                                <span class="font-bold text-gray-200" x-text="'$' + parseFloat(withdrawAmount).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between border-b border-gray-800 pb-2">
-                                <span class="text-gray-400">Withdrawal Fee (<?php echo e(number_format($settings->withdrawal_fee_percent, 2)); ?>%):</span>
-                                <span class="font-bold text-yellow-500" x-text="'$' + (withdrawAmount * (feePercent / 100)).toFixed(2)"></span>
-                            </div>
-                            <div class="flex justify-between pt-1">
-                                <span class="text-gray-400 font-bold">You will Receive (Net):</span>
-                                <span class="font-extrabold text-emerald-400 text-sm" x-text="'$' + (withdrawAmount - (withdrawAmount * (feePercent / 100))).toFixed(2)"></span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-2.5 px-4 rounded-lg mt-3 transition-all text-xs"
-                                <?php echo e($cashout < $settings->min_amount ? 'disabled' : ''); ?>>
-                            <i class="fas fa-paper-plane mr-1"></i> Submit Perfect Money Withdrawal
-                        </button>
-                    </form>
-                    <?php endif; ?>
-                </div>
 
             </div>
         </div>

@@ -64,8 +64,8 @@ class VentureController extends Controller
 
                         $contract->contract=$file;
                     if ($user->save() && $contract->save()) {
-                        return Redirect::route('user.dashboard')->with('message','You have been  activated Fonepo account ,
-                         Enjoy unlimited earning on Fonepo');
+                        return Redirect::route('user.dashboard')->with('message','You have been  activated Bifonex account ,
+                         Enjoy unlimited earning on Bifonex');
                     }
 
                   return view('user.preview')->with('message',$file);

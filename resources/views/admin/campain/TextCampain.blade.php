@@ -529,7 +529,7 @@
                         </div>
 
                         <p class="text-sm mb-4">
-                            You can create a PTC (Paid to Click) advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your ad is approved, Fonepo users will view your website for the amount of time you have chosen. Every time a user views your ad they will receive a small amount of money.
+                            You can create a PTC (Paid to Click) advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your ad is approved, Bifonex users will view your website for the amount of time you have chosen. Every time a user views your ad they will receive a small amount of money.
                         </p>
                         <p class="text-sm mb-4">
                             You can pay for PTC ads with your main Coin balance, or you can

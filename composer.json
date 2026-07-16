@@ -1,8 +1,8 @@
 {
    
-    "name": "fonepo/fonepo",
+    "name": "Bifonex/Bifonex",
     "type": "project",
-    "description": "Fonepo Affiliate || Earn money infinetely.",
+    "description": "Bifonex Affiliate || Earn money infinetely.",
     "keywords": ["Earn", "Success"],
     "license": "MIT",
     "require": {
@@ -77,7 +77,7 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
-        "cache-dir": "/home/afonliww/fonepo.com/cache",
+        "cache-dir": "/home/afonliww/Bifonex.com/cache",
         "allow-plugins": {
             "php-http/discovery": true
         }

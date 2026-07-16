@@ -22,15 +22,12 @@ class contract
             return $next($request);
         }
 
-        // Free/standard users are allowed to use the dashboard without a
-        // contract. Do NOT auto-assign contract='Signed' for these users.
-        // They must sign only after activating/buying a real package.
+        // Free users (no active paid package) are allowed to use the dashboard without a
+        // contract. They must sign only after activating/buying their first real package.
         $paidPackage = strtolower(trim((string) $user->has_paid_package));
-        $isFreeStandard = $user->utype === 'USR'
-            && $user->has_free_package === 'yes'
-            && $paidPackage === 'standard';
+        $isFreeUser = ($paidPackage === 'no' || $paidPackage === 'standard' || $paidPackage === '');
 
-        if ($isFreeStandard || ($user->utype === 'USR' && $user->contract === 'Signed')) {
+        if ($isFreeUser || $user->contract === 'Signed') {
             return $next($request);
         }
 

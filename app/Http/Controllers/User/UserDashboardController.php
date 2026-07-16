@@ -98,7 +98,7 @@ class UserDashboardController extends Controller{
         $dailyIncome = (float) $user->DailyIncomes()->sum("amount");
 
         // ── Compute the PER-DAY breakdown for ALL active packages combined ──
-        // Per spec: Daily ROI = (package_amount × 80%) × (Adventures.percentage / 100)
+        // Per spec: Daily ROI = (package_amount × 80%) × (adventures.percentage / 100)
         //   → Cashout (25%): withdrawable anytime, min $10
         //   → Trading Voucher (75%): accumulates, used every 30 days for renewal
         $dailyIncomePerDay = 0.0;
@@ -136,8 +136,10 @@ class UserDashboardController extends Controller{
         $dailyCashout      = $dailyIncomePerDay * 25 / 100;
         $dailyTrading      = $dailyIncomePerDay * 75 / 100;
 
-        // Contract gate
-        if(($user->has_paid_package=='yes' || $user->has_paid_package=='ft' || $user->has_paid_package=='tm') && $user->contract != 'Signed'){
+        // Contract gate - aligned with contract middleware
+        $paidPackage = strtolower(trim((string) $user->has_paid_package));
+        $isFreeUser = ($paidPackage === 'no' || $paidPackage === 'standard' || $paidPackage === '');
+        if (!$isFreeUser && $user->contract !== 'Signed') {
             return redirect()->route("user.contract");
         }
 
@@ -290,6 +292,8 @@ class UserDashboardController extends Controller{
         return view('user.dashboard',
         [
             "mypackage"              => $package,
+            "active_packages_list"   => $activePackages,
+            "active_packages_count"  => $activePackages->count(),
             "show_timer"             => $show,
             "deposits"               => number_format($depositBalance,2),
             "deposit_raw"            => $depositBalance,
@@ -327,10 +331,10 @@ class UserDashboardController extends Controller{
             "credit_status"          => $credit_status,
             "right"                  => $right,
             "left"                   => $left,
-            "left_direct_uvp"        => 0,
-            "left_indirect_uvp"      => 0,
-            "right_direct_uvp"       => $comm['right_direct_uvp'],
-            "right_indirect_uvp"     => $comm['right_indirect_uvp'],
+            "left_direct_uvp"        => $comm['left_direct_uvp'] ?? 0,
+            "left_indirect_uvp"      => $comm['left_indirect_uvp'] ?? 0,
+            "right_direct_uvp"       => $comm['right_direct_uvp'] ?? 0,
+            "right_indirect_uvp"     => $comm['right_indirect_uvp'] ?? 0,
             "zoneAearning"           => $comm['zoneA'],
             "zoneBearning"           => $comm['zoneB'],
             "have_pending_deposit"   => $deposits_pending,

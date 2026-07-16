@@ -85,7 +85,7 @@ if ($user->update(['has_request' => 'confirmed']))
             $mail = new CreatedUser($email,$password,$username);
     Mail::to($email)->send($mail);
 
-        return redirect()->route('admin.requested')->with('created','new User '.$username.' has confirmed and welcomed in Fonepo');
+        return redirect()->route('admin.requested')->with('created','new User '.$username.' has confirmed and welcomed in Bifonex');
 
   }
 

@@ -36,7 +36,7 @@ public $email;public $password; public $username;
      */
     public function build()
     {
-        return $this->subject(' FONEPO REQUEST ACCEPTED')
+        return $this->subject(' Bifonex REQUEST ACCEPTED')
         ->view('emails.Created-User');
     }
 }

@@ -79,7 +79,7 @@
 
             <ul class="top-widget">
                 <!-- <li style="color: white"><i class="fa fa-phone"></i> +(250) 783524980</li> -->
-                <li style="color: white"><i class="fa fa-envelope"></i><a href="admin@fonepo.com" target="__blank">admin@fonepo.com</a></li>
+                <li style="color: white"><i class="fa fa-envelope"></i><a href="admin@Bifonex.com" target="__blank">admin@Bifonex.com</a></li>
             </ul>
         </div>
     </div>

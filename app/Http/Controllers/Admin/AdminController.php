@@ -399,7 +399,7 @@ class AdminController extends Controller
             return $this->isActivationPayment($payment);
         })->pluck('payable_id')->filter()->unique()->values();
 
-        $Adventures = $adventureIds->isNotEmpty()
+        $adventures = $adventureIds->isNotEmpty()
             ? \App\Models\Adventures::whereIn('id', $adventureIds)->get()->keyBy('id')
             : collect();
 
@@ -455,7 +455,7 @@ class AdminController extends Controller
         foreach ($users as $user) {
             $summary = $this->membershipSummaryForUser(
                 $user,
-                $Adventures,
+                $adventures,
                 $allAdventures,
                 $fcPackages,
                 $paymentActivations,
@@ -467,7 +467,7 @@ class AdminController extends Controller
         }
     }
 
-    private function membershipSummaryForUser(User $user, $Adventures, $allAdventures, $fcPackages, $paymentActivations, $positions, $teamLeaderLookup)
+    private function membershipSummaryForUser(User $user, $adventures, $allAdventures, $fcPackages, $paymentActivations, $positions, $teamLeaderLookup)
     {
         $payment = $user->investments->first();
         $activation = $this->isUsedPaidActivation($user->have_activation_code) ? $user->have_activation_code : null;
@@ -479,7 +479,7 @@ class AdminController extends Controller
 
         if ($payment) {
             if ($this->isVenturePayment($payment)) {
-                $packageModel = $Adventures->get($payment->payable_id)
+                $packageModel = $adventures->get($payment->payable_id)
                     ?: $this->resolveAdventurePackage($payment, $allAdventures);
             } elseif ($this->isFcPayment($payment)) {
                 $packageModel = $fcPackages->get($payment->payable_id);
@@ -1175,6 +1175,12 @@ public function check(Request $request) {
             'allow_free_dashboard_access' => (bool) $request->input('allow_free_dashboard_access'),
         ]);
         return back()->with('success', 'Registration dashboard access settings updated.');
+    }
+
+    public function withdrawalHistory()
+    {
+        $history = \App\Models\withdrawals::whereIn('status', ['completed', 'failed'])->latest()->paginate(25);
+        return view('admin.withdrawal-history', compact('history'));
     }
 
 }

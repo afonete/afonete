@@ -117,7 +117,7 @@ public function info(){
            $requested->phone=$phone;
         $requested->status='pending';
          if( $requested->save()){
-             return view('auth.register')->with('request','Thank u for requesting to become Fonepo member, You will be contacted very soon');
+             return view('auth.register')->with('request','Thank u for requesting to become Bifonex member, You will be contacted very soon');
          }
          else{
               return view('auth.register')->with('request','request failed, -->consult live chat');

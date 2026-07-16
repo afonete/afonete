@@ -769,7 +769,7 @@ img{ max-width:100%;}
     </div>
 
     
-    <?php if($user->has_free_package == 'no'): ?>
+    <?php if($active_packages_count > 0): ?>
     <h3 class="dash-section-title">Active Package Daily Yields (ROI)</h3>
     <div class="row">
         
@@ -785,18 +785,9 @@ img{ max-width:100%;}
 
                         <small style="font-size:0.75rem; opacity:.9;">/day</small>
                     </div>
-                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92;">
-                        Total earned: <strong><?php echo e($dailyIncome); ?></strong><br>
-                        Cashout 25%: <strong>$<?php echo e($daily_cashout); ?>/day</strong> ·
-                        Trading 75%: <strong>$<?php echo e($daily_trading); ?>/day</strong>
-                    </div>
-                    <div class="dash-card-footer d-flex justify-content-between align-items-center">
-                        <span>Rate: <?php echo e(isset($mypackage) && $mypackage ? '2%' : '0%'); ?> / day</span>
-                        <?php if($package_expired ?? true): ?>
-                            <span class="badge badge-danger">EXPIRED</span>
-                        <?php else: ?>
-                            <span class="badge badge-success">ACTIVE</span>
-                        <?php endif; ?>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
+                        Today available daily income: <strong>$<?php echo e($daily_income_per_day); ?></strong><br>
+                        Total available daily income: <strong><?php echo e($dailyIncome); ?></strong>
                     </div>
                 </div>
             </div>
@@ -807,29 +798,15 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Trading Voucher (75%)</span>
+                        <span class="dash-card-title">Trading Voucher</span>
                         <i class="dash-card-icon fas fa-shopping-bag"></i>
                     </div>
                     <div class="dash-card-value">
                         $<?php echo e($daily_trading); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
-                    <div class="dash-card-subtitle mt-1">
-                        Accumulated total: <strong><?php echo e($shooping); ?></strong>
-                    </div>
-                    <div class="dash-card-footer">
-                        <?php if($show_timer && !$package_expired): ?>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span>Expiry countdown:</span>
-                                <span id="countdown" class="badge badge-dark px-2 py-1 font-weight-bold"></span>
-                            </div>
-                        <?php endif; ?>
-                        <?php if($renewal_due && !$package_expired): ?>
-                            <div class="mt-2">
-                                <a href="<?php echo e(route('packageRenew')); ?>" class="btn btn-sm btn-block btn-warning font-weight-bold text-dark" style="border-radius:6px; font-size:11px;">
-                                    <i class="fas fa-sync-alt mr-1"></i> Renew Package (#<?php echo e($renewal_number); ?>/<?php echo e($max_renewals ?? 3); ?>)
-                                </a>
-                            </div>
-                        <?php endif; ?>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
+                        Today available Trading Voucher: <strong>$<?php echo e($daily_trading); ?></strong><br>
+                        Total available Trading Voucher: <strong>$<?php echo e(number_format($trading_raw, 2)); ?></strong>
                     </div>
                 </div>
             </div>
@@ -840,19 +817,19 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-success text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Cashout Wallet (25%)</span>
+                        <span class="dash-card-title">Cashout Wallet</span>
                         <i class="dash-card-icon fas fa-wallet"></i>
                     </div>
                     <div class="dash-card-value">
                         $<?php echo e($daily_cashout); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
-                    <div class="dash-card-subtitle mt-1">
-                        Accumulated total: <strong><?php echo e($cashout); ?></strong><br>
-                        <small style="opacity:.85;">Available to withdraw • Min $10</small>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
+                        Today available Cashout: <strong>$<?php echo e($daily_cashout); ?></strong><br>
+                        Total available Cashout: <strong>$<?php echo e(number_format($cashout_raw, 2)); ?></strong>
                     </div>
-                    <div class="dash-card-footer d-flex justify-content-between align-items-center">
+                    <div class="dash-card-footer d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 10px; margin-top: 10px;">
                         <span>Withdrawable funds</span>
-                        <a href="<?php echo e(route('user.dashboard.withdraw')); ?>" class="badge badge-light text-success px-2 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none;">
+                        <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="badge badge-light text-success px-2 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none;">
                             Withdraw →
                         </a>
                     </div>
@@ -998,11 +975,11 @@ img{ max-width:100%;}
                         <span class="text-success">Min withdrawal: $10.00</span>
                     </div>
                     <div class="dash-card-footer">
-                        <a href="<?php echo e(route('user.dashboard.withdraw')); ?>" class="btn btn-sm btn-danger btn-block font-weight-bold" style="border-radius:6px;">
+                        <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="btn btn-sm btn-danger btn-block font-weight-bold" style="border-radius:6px;">
                             <i class="fas fa-arrow-circle-up mr-1"></i> Withdraw Now
                         </a>
                         <div class="d-flex justify-content-between mt-2" style="font-size:0.72rem;">
-                            <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="text-muted">Withdrawal history →</a>
+                            <a href="<?php echo e(route('user.withdrawal-history')); ?>" class="text-muted">Withdrawal history →</a>
                             <span class="text-muted">Fee: 0%</span>
                         </div>
                     </div>
@@ -1941,311 +1918,231 @@ $user=db::SELECT("SELECT * from users");
              </div>
              <div class="row">
                  <div class="col-md-12 ">
-                     <div class="card card-secondary card-outline">
+                                  <div class="row">
+                 <div class="col-md-12">
+                     <div class="card card-secondary card-outline border-0 shadow-sm" style="border-radius: 12px; overflow: hidden; background-color: #f8fafc;">
 
-                         <div class="card-body card-warning">
-                             <div class="row">
-                                 <div class="col-md-4">
-                                     <h1 class="py-2 text-center">TOTAL VOLUME</h1>
-                                     <div class="row justify-content-between">
-                                         <div class="col">
-                                             <!-- Map card -->
-                                             <div class="card bg-gradient-primary">
-
-                                                 <div class="card-body"
-                                                     style="background-color:white;color:black;height: 180px; width: 100%; ">
-                                                     <h6>Right Team</h6>
-                                                     <h5><b class="text-warning">Members:</b> <?php echo e($right); ?></h5>
-
-                                                     <p>
-                                                     <h4><?php echo e($right_amount); ?> <small>Vp</small></h4>
-                                                     </p>
-
-
-                                                     <h3 class="text-success">
-                                                         <i class="fas fa-users mr-1"></i>
-                                                         Earn Bonus
-                                                     </h3>
-                                                     <hr>
+                         <div class="card-body card-warning p-4">
+                             
+                             
+                             <div class="row mb-4">
+                                 
+                                 
+                                 <div class="col-md-5 mb-4 mb-md-0 d-flex flex-column">
+                                     <h3 class="font-weight-bold text-dark mb-3" style="font-size: 1.4rem;"><i class="fas fa-chart-bar mr-2 text-info"></i> TOTAL VOLUME</h3>
+                                     <div class="card border-0 shadow-sm h-100 mb-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff;">
+                                         <div class="card-body p-4 d-flex align-items-center">
+                                             <div class="row w-100">
+                                                 
+                                                 <div class="col-6">
+                                                     <div class="p-3 text-center" style="border-radius: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                                                         <span class="badge badge-info px-2 py-1 mb-2 text-uppercase" style="font-size: 0.68rem; border-radius: 4px;">Left Team</span>
+                                                         <div class="text-muted small">Members</div>
+                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;"><?php echo e($left ?? 0); ?></div>
+                                                         <div class="text-muted small mt-2">Volume Points</div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;"><?php echo e(($left_direct_uvp ?? 0) + ($left_indirect_uvp ?? 0)); ?> <small class="text-muted">Vp</small></div>
+                                                         <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
+                                                     </div>
+                                                 </div>
+                                                 
+                                                 <div class="col-6">
+                                                     <div class="p-3 text-center" style="border-radius: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                                                         <span class="badge badge-primary px-2 py-1 mb-2 text-uppercase" style="font-size: 0.68rem; border-radius: 4px;">Right Team</span>
+                                                         <div class="text-muted small">Members</div>
+                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;"><?php echo e($right ?? 0); ?></div>
+                                                         <div class="text-muted small mt-2">Volume Points</div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;"><?php echo e(($right_direct_uvp ?? 0) + ($right_indirect_uvp ?? 0)); ?> <small class="text-muted">Vp</small></div>
+                                                         <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
+                                                     </div>
                                                  </div>
                                              </div>
                                          </div>
-
-
-
-
-                                        <div class="col ">
-                                            <div class="card bg-white rounded d-flex justify-content-center align-items-center py-2">
-                                                <i class="fas fa-wallet text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(238, 193, 71);font-size:2em !important"></i>
-                                                <h2 class="text-lg text-dark fw-bold py-2">$<?php echo e(number_format($referral_bonus_totals['total'] ?? 0, 2)); ?></h2>
-                                                <p class="py-1 px-2 text-center mb-0">Total Referral Bonus</p>
-                                                <small class="text-muted text-center px-2">
-                                                    <?php echo e($direct_referral_count); ?> referrals (<?php echo e($active_referral_count); ?> active)
-                                                </small>
-                                                <small class="text-success font-weight-bold">
-                                                    $<?php echo e(number_format($referral_bonus_totals['withdrawable'] ?? 0, 2)); ?> withdrawable
-                                                </small>
-                                                <small class="text-warning">
-                                                    $<?php echo e(number_format($referral_bonus_totals['pending'] ?? 0, 2)); ?> pending (next Monday)
-                                                </small>
-                                                <div class="d-flex gap-1 mt-1">
-                                                    <a href="<?php echo e(route('user.referral.bonus')); ?>" class="btn btn-xs btn-outline-warning" style="font-size:11px;">
-                                                        Bonus & Withdraw
-                                                    </a>
-                                                    <a href="<?php echo e(route('user.referral.downline')); ?>" class="btn btn-xs btn-outline-info" style="font-size:11px;">
-                                                        Downline
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        
-                                        <div class="col mt-3 mt-md-0">
-                                            <div class="card bg-white rounded d-flex justify-content-center align-items-center py-2">
-                                                <i class="fas fa-trophy text-white px-3 rounded-lg text-lg text-center py-3" style="background-color:rgb(167, 139, 250);font-size:2em !important"></i>
-                                                <?php if($current_rank): ?>
-                                                    <h2 class="text-lg text-dark fw-bold py-2">🏆 <?php echo e($current_rank->rank_name); ?></h2>
-                                                    <p class="py-1 px-2 text-center mb-0">Current Rank</p>
-                                                    <?php if($current_rank->congratulation_image): ?>
-                                                        <small class="text-success">Picture available</small>
-                                                    <?php endif; ?>
-                                                <?php else: ?>
-                                                    <h2 class="text-lg text-dark fw-bold py-2">🎯 No rank yet</h2>
-                                                    <p class="py-1 px-2 text-center mb-0">Build your network</p>
-                                                <?php endif; ?>
-                                                <?php if($next_rank): ?>
-                                                    <small class="text-muted">Next: <strong><?php echo e($next_rank->name); ?></strong> · <?php echo e($next_rank->rewardLabel()); ?></small>
-                                                <?php endif; ?>
-                                                <a href="<?php echo e(route('user.referral.rank')); ?>" class="btn btn-xs btn-outline-primary mt-1" style="font-size:11px;">
-                                                    View Ranks
-                                                </a>
-                                            </div>
-                                        </div>
-
-                                        </div>
-
-
-                                     <!-- solid sales graph -->
-                                     <div class="row justify-content-between">
-
-                                         <div class="col">
-                                             <!-- Map card -->
-                                             <div class="card bg-gradient-primary">
-
-                                                 <div class="card-body"
-                                                     style="background-color:white;color:black;height: 180px; width: 100%; ">
-                                                     <h6>Left Team</h6>
-                                                     <h5><b class="text-warning">Members:</b> <?php echo e($lift); ?> </h5>
-
-                                                     <p>
-                                                     <h4>0 <small>Vp</small></h4>
-                                                     </p>
-
-                                                     <h3 class="text-success">
-                                                         <i class="fas fa-users mr-1"></i>
-                                                         Earn Bonus
-                                                     </h3>
-                                                     <hr>
-                                                 </div>
-                                             </div>
-                                         </div>
-                                         <div class="col">
-                                         </div>
-
-                                         <!-- solid sales graph -->
                                      </div>
                                  </div>
+
                                  
-                                 <div class="col-md-8">
-                                     <h1 class="py-2 text-center">COMMISSIONS</h1>
-                                     <div class="card">
-
-                                         <div class="card-body">
+                                 <div class="col-md-7 d-flex flex-column">
+                                     <h3 class="font-weight-bold text-dark mb-3" style="font-size: 1.4rem;"><i class="fas fa-wallet mr-2 text-primary"></i> COMMISSIONS</h3>
+                                     <div class="card border-0 shadow-sm h-100 mb-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff;">
+                                         <div class="card-body p-4 d-flex flex-column justify-content-center">
                                              <div class="row">
-                                                 <div class="col-md-6">
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                           <div class="py-2">
-                                                                <h4 class="text-left p-0">LEFT TEAM</h4>
-                                                                <div>
-                                                                <p> <strong>Direct UVP: </strong><?php echo e($left_direct_uvp); ?></p>
-                                                                <p> <strong>Indirect UVP: </strong><?php echo e($left_indirect_uvp); ?></p>
-                                                                <p> <strong>Total Person Team: </strong>0</p>
-                                                                <div>
-                                                                        <strong>Total Team Ref</strong>
-                                                                        <div>
-                                                                            <p>VP: <strong><?php echo e($left_direct_uvp+$left_indirect_uvp); ?></strong></p>
-                                                                            <p>Subscriptions: <strong>0</strong></p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                 
+                                                 
+                                                 <div class="col-md-6 mb-4 mb-md-0 border-right" style="border-right-color: #f1f5f9 !important;">
+                                                     <div class="d-flex justify-content-between align-items-center mb-3">
+                                                         <h6 class="font-weight-bold text-dark mb-0" style="font-size: 0.95rem;"><i class="fas fa-chart-pie mr-1 text-primary"></i> Team Earnings Vp</h6>
+                                                         <span class="badge badge-light border border-secondary text-muted font-weight-bold" style="font-size: 0.72rem; padding: 2px 6px;"><i class="far fa-calendar-alt mr-1"></i> 09 Mar - 15 Mar</span>
+                                                     </div>
+                                                     
+                                                     <div class="row">
+                                                         
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone A</small>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;"><?php echo e($zoneAearning ?? 0); ?> <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                             </div>
+                                                         </div>
 
-                                                        <div class="col-6">
-                                                           <div class="py-2">
-                                                                <h4 class="text-left p-0">RIGHT TEAM</h4>
-                                                                <div>
-                                                                    <p> <strong>Direct UVP: </strong><?php echo e($right_direct_uvp); ?> </p>
-                                                                    <p> <strong>Indirect UVP: </strong><?php echo e($right_indirect_uvp); ?> </p>
-                                                                    <p> <strong>Total Person Team: </strong>
-                                                                        0
-                                                                        </p>
-                                                                    <div>
-                                                                        <strong>Total Team Ref</strong>
-                                                                        <div>
-                                                                            <p>VP: <strong><?php echo e($right_direct_uvp+$right_indirect_uvp); ?></strong></p>
-                                                                            <p>Subscriptions: <strong>soon</strong></p>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                         
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone B</small>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;"><?php echo e($zoneBearning ?? 0); ?> <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                             </div>
+                                                         </div>
+                                                     </div>
 
-                                                    </div>
-                                                 </div>
-                                                 <div class="col-md-6">
-                                                     <select name="" id="earnings-filter"
-                                                         class="form-control float-sm-right float-md-right">
-                                                         <option value="this_week">This week</option>
-                                                        <option value="last_week">Last week</option>
-                                                        <option value="this_month">This month</option>
-                                                        <option value="last_month">Last month</option>
-                                                        <option value="this_year">This year</option>
-                                                        <option value="last_year">Last year</option>
-                                                        <option value="all_time" selected>All time</option>
+                                                     <div class="row">
+                                                         
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 rounded text-center" style="border-radius: 8px; background-color: #fef3c7; border: 1px solid #fde68a;">
+                                                                 <small class="text-amber-800 text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Volume Bonus</small>
+                                                                 <h4 class="font-weight-bold text-amber-600 mb-0 mt-1" style="font-size: 1.15rem;">0 $</h4>
+                                                             </div>
+                                                         </div>
 
-                                                     </select>
-                                                    <div class="row py-2">
-                                                        <div class="col-6">
-                                                            <div class="card  bg-white rounded  d-flex justify-content-center align-items-center py-2">
-                                                                <i class="fa fa-bar-chart text-yellow-500 text-lg text-center" style="color:rgb(238, 193, 71);font-size:2em !important"></i>
-                                                                <h2 class="text-xl text-info" id='left-amount'>0.00 $</h2>
-                                                                <p class="py-2 text-xs" id='left-for'>Left Earning  <span></span></p>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="col-6">
-                                                            <div class="card  bg-white rounded  d-flex justify-content-center align-items-center py-2">
-                                                                <i class="fa fa-bar-chart text-yellow-500 text-lg text-center" style="color:rgb(238, 193, 71);font-size:2em !important"></i>
-                                                                <div>
-                                                                    <h2 class="text-xl text-info" id="right-amount">0.00 $</h2>
-                                                                    <p class="py-2 text-xs" id="right-for">Right Earning  <span></span></p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-
-
-
+                                                         
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 rounded text-center bg-light" style="border-radius: 8px;">
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Earn VP</small>
+                                                                 <h4 class="font-weight-bold text-success mb-0 mt-1" style="font-size: 1.15rem;">0 <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                             </div>
+                                                         </div>
+                                                     </div>
                                                  </div>
 
+                                                 
+                                                 <div class="col-md-6 pl-md-4">
+                                                     <div class="d-flex justify-content-between align-items-center mb-3">
+                                                         <h6 class="font-weight-bold text-dark mb-0" style="font-size: 0.95rem;"><i class="fas fa-filter mr-1 text-info"></i> Earnings</h6>
+                                                         <select name="" id="earnings-filter" class="form-control form-control-sm" style="width: 100px; border-radius: 6px; font-size: 0.8rem;">
+                                                             <option value="this_week">This week</option>
+                                                             <option value="last_week">Last week</option>
+                                                             <option value="this_month">This month</option>
+                                                             <option value="last_month">Last month</option>
+                                                             <option value="this_year">This year</option>
+                                                             <option value="last_year">Last year</option>
+                                                             <option value="all_time" selected>All time</option>
+                                                         </select>
+                                                     </div>
 
-                                             </div>
+                                                     <div class="row">
+                                                         
+                                                         <div class="col-6">
+                                                             <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
+                                                                 <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
+                                                                 <h3 class="font-weight-bold text-info mb-1" id="left-amount" style="font-size: 1.2rem;">0.00 $</h3>
+                                                                 <small class="text-muted font-weight-bold" id="left-for" style="font-size: 0.72rem;">Left Earning</small>
+                                                             </div>
+                                                         </div>
 
-                <script>
-                document.getElementById('earnings-filter').addEventListener('change', function() {
-                    const selectedOption = this.value;
-
-                    fetch(`/fetch-earnings?period=${selectedOption}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            // Do something with the fetched earnings data
-                            console.log(data);
-                            document.querySelector("#right-amount").innerHTML = data.right+".0 $"
-                            // document.querySelector("#right-for").innerHTML = data.right
-                            document.querySelector("#left-amount").innerHTML = data.left+".0 $"
-                            // document.querySelector("#right-amount").innerHTML = data.right
-
-                            // You can also update the UI with the earnings data here
-                        })
-                        .catch(error => console.error('Error:', error));
-                });
-                </script>
-
-                                             <div class="row">
-                                                 <div class="col-md-4"></div>
-
-                                                 <div class="col-md-6">
-                                                     <div class="col-6 text-center">
-                                                         <input type="text" class="knob" readonly value="0"
-                                                             data-width="90" data-height="90" data-fgColor="#39CCCC">
+                                                         
+                                                         <div class="col-6">
+                                                             <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
+                                                                 <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
+                                                                 <h3 class="font-weight-bold text-info mb-1" id="right-amount" style="font-size: 1.2rem;">0.00 $</h3>
+                                                                 <small class="text-muted font-weight-bold" id="right-for" style="font-size: 0.72rem;">Right Earning</small>
+                                                             </div>
+                                                         </div>
                                                      </div>
                                                  </div>
 
                                              </div>
 
+                                             <script>
+                                             document.getElementById('earnings-filter').addEventListener('change', function() {
+                                                 const selectedOption = this.value;
 
-                                             <div class="row">
-                                                 <div class="col-sm-3 col-6">
-                                                     <div class="description-block border-right">
-
-                                                        <div class="px-2">
-                                                            <span class="description-text"><b>ZONE A Earn vp</b></span><br>
-                                                            <h5 class="description-header">
-                                                                Vp
-                                                                <?php echo e($zoneAearning); ?>
-
-                                                            </h5>
-                                                        </div>
-
-                                                     </div>
-                                                     <!-- /.description-block -->
-                                                 </div>
-                                                 <div class="col-sm-3 col-6">
-                                                     <div class="description-block border-right">
-
-                                                        <div class="px-2">
-                                                            <span class="description-text"><b>ZONE B Earn vp</b></span><br>
-                                                            <h5 class="description-header">
-                                                                <?php echo e($zoneBearning); ?> Vp
-                                                            </h5>
-                                                        </div>
-
-                                                     </div>
-                                                     <!-- /.description-block -->
-                                                 </div>
-                                                 <!-- /.col -->
-                                                 <div class="col-sm-3 col-6">
-                                                     <div class="description-block border-right">
-                                                         <p class="description-text"> <b>Volume Bonus</b></p>
-                                                         <div class=" d-flex justify-content-center align-items-center" style="color:rgb(238, 193, 71);">
-                                                            <i class="fa fa-arrow-up text-success"></i>
-                                                            <span>0 $</span>
-                                                        </div>
-                                                        <p class="text-center p-0 m-0">Week 09 March - 15 March</p>
-                                                        <p class="text-center p-0 m-0">Volume Bonus</p>
-                                                        <h5 class="description-header" style="color:rgb(238, 193, 71);">0 $</h5>
-
-
-                                                     </div>
-                                                     <!-- /.description-block -->
-                                                 </div>
-                                                 <!-- /.col -->
-                                                 <div class="col-sm-3 col-6">
-                                                     <div class="description-block">
-                                                         <span class="description-text"><b>Earn vp</b></span><br>
-                                                         <h5 class="description-header">0 Vp</h5>
-                                                     </div>
-                                                 </div>
-
-
-                                             </div>
-
+                                                 fetch(`/fetch-earnings?period=${selectedOption}`)
+                                                     .then(response => response.json())
+                                                     .then(data => {
+                                                         console.log(data);
+                                                         document.querySelector("#right-amount").innerHTML = data.right+".0 $"
+                                                         document.querySelector("#left-amount").innerHTML = data.left+".0 $"
+                                                     })
+                                                     .catch(error => console.error('Error:', error));
+                                             });
+                                             </script>
 
                                          </div>
                                      </div>
-                                     <!-- END OF CARD -->
+                                 </div>
 
+                             </div>
+
+                             
+                             <div class="row">
+                                 
+                                 
+                                 <div class="col-md-6 mb-4 mb-md-0">
+                                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff; margin-bottom: 0;">
+                                         <div class="card-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                                             <i class="fas fa-wallet text-white px-3 rounded-lg py-3 mb-2" style="background-color: rgb(238, 193, 71); font-size: 1.8rem; border-radius: 10px; width: fit-content;"></i>
+                                             <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.6rem;">$<?php echo e(number_format($referral_bonus_totals['total'] ?? 0, 2)); ?></h3>
+                                             <span class="text-slate-600 font-weight-bold small d-block mb-1">Total Referral Bonus</span>
+                                             <small class="text-muted d-block mb-3">
+                                                 <?php echo e($direct_referral_count); ?> referrals (<?php echo e($active_referral_count); ?> active)
+                                             </small>
+                                             
+                                             <div class="w-100 p-3 rounded bg-light mb-3 text-left" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                                 <div class="d-flex justify-content-between mb-2">
+                                                     <span class="text-muted">Withdrawable:</span>
+                                                     <span class="text-success font-weight-bold" style="font-size: 0.95rem;">$<?php echo e(number_format($referral_bonus_totals['withdrawable'] ?? 0, 2)); ?></span>
+                                                 </div>
+                                                 <div class="d-flex justify-content-between">
+                                                     <span class="text-muted">Pending (next Monday):</span>
+                                                     <span class="text-warning font-weight-bold" style="font-size: 0.95rem;">$<?php echo e(number_format($referral_bonus_totals['pending'] ?? 0, 2)); ?></span>
+                                                 </div>
+                                             </div>
+                                             
+                                             <div class="d-flex justify-content-center gap-3 w-100 mt-2">
+                                                 <a href="<?php echo e(route('user.referral.bonus')); ?>" class="btn btn-warning font-weight-bold px-3 py-2 text-dark" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                                                     <i class="fas fa-coins mr-1"></i> Bonus &amp; Withdraw
+                                                 </a>
+                                                 <a href="<?php echo e(route('user.referral.downline')); ?>" class="btn btn-outline-info font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+                                                     <i class="fas fa-sitemap mr-1"></i> Downline
+                                                 </a>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+
+                                 
+                                 <div class="col-md-6">
+                                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff; margin-bottom: 0;">
+                                         <div class="card-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
+                                             <i class="fas fa-trophy text-white px-3 rounded-lg py-3 mb-2" style="background-color: rgb(167, 139, 250); font-size: 1.8rem; border-radius: 10px; width: fit-content;"></i>
+                                             <?php if($current_rank): ?>
+                                                 <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.4rem;">🏆 <?php echo e($current_rank->rank_name); ?></h3>
+                                                 <span class="text-slate-600 font-weight-bold small d-block mb-1">Current Rank</span>
+                                                 <?php if($current_rank->congratulation_image): ?>
+                                                     <small class="text-success font-weight-bold mb-3 d-block"><i class="fas fa-check-circle mr-1"></i> Picture available</small>
+                                                 <?php endif; ?>
+                                             <?php else: ?>
+                                                 <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.4rem;">🎯 No rank yet</h3>
+                                                 <span class="text-slate-600 font-weight-bold small d-block mb-3">Build your network</span>
+                                             <?php endif; ?>
+                                             
+                                             <?php if($next_rank): ?>
+                                                 <div class="w-100 p-3 rounded bg-light mb-3 text-left" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid #f1f5f9;">
+                                                     <span class="text-muted d-block mb-1">Next Rank Objective:</span>
+                                                     <strong class="text-primary d-block" style="font-size: 0.95rem;"><?php echo e($next_rank->name); ?></strong>
+                                                     <small class="text-muted d-block mt-1">Reward: <strong><?php echo e($next_rank->rewardLabel()); ?></strong></small>
+                                                 </div>
+                                             <?php endif; ?>
+                                             
+                                             <a href="<?php echo e(route('user.referral.rank')); ?>" class="btn btn-outline-primary font-weight-bold w-100 py-2 mt-2" style="border-radius: 8px; font-size: 12px;">
+                                                 <i class="fas fa-award mr-1"></i> View Ranks
+                                             </a>
+                                         </div>
+                                     </div>
                                  </div>
 
                              </div>
 
                          </div>
-                     <!-- END OF CARD -->
+                     </div>
                  </div>
-                 <!-- /.col-md-6 -->
              </div>
 
 

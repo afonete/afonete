@@ -14,7 +14,7 @@
             <li ><a  href="{{route('user.dashboard')}}">Purchased Packages</a></li>
           
           </ul> --><center>
-          <h3> Upload project : Advertise on Fonepo</h3></center>
+          <h3> Upload project : Advertise on Bifonex</h3></center>
       </div><!-- /.container-fluid -->
     </div>
     <!-- /.content-header -->

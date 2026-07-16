@@ -126,7 +126,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Package renew
     Route::post('user/package/renew/pay', [FinanceController::class, 'packageRenewPay'])->name('packageRenewPay');
-    Route::get("user/package/renew",[FinanceController::class,'packageRenewPage'])->name('packageRenew');
+    Route::get("user/package/renew/{payment_id?}",[FinanceController::class,'packageRenewPage'])->name('packageRenew');
 
 
     Route::get('user/teambuilding/team-structure', [FinanceController::class, 'teamStructure'])->name('team.structure');
@@ -290,8 +290,9 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
   
 
-    Route::get('user/dashboard/withdraw/', [Balance::class, 'withdraw'])->name('user.dashboard.withdraw');
     Route::get('user/dashboard/withdraw/user', [Balance::class, 'UserWithdrawal'])->name('user.dashboard.userwithdraw');
+    Route::get('user/dashboard/withdraw', [Balance::class, 'UserWithdrawal'])->name('user.dashboard.withdraw');
+    Route::get('user/withdrawal/history', [Balance::class, 'userWithdrawalHistory'])->name('user.withdrawal-history');
 
     Route::post('user/dashboard/withdraw-status/', [Balance::class, 'withdraw_money'])->name('user.withdraw');
     Route::post('user/dashboard/withdraw-manual', [Balance::class, 'requestManualWithdrawal'])->name('user.withdraw.manual');
@@ -300,7 +301,6 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::post('user/dashboard/withdraw/direct-blockchain', [Balance::class, 'directBlockchainWithdraw'])
           ->name('user.withdraw.direct_blockchain');
 
-    Route::get('user/dashboard/withdraw', [Balance::class, 'withdrawalHistory'])->name('user.dashboard.withdraw');
     Route::post('user/dashboard/apply', [Position::class, 'apply'])->name('user.position.apply');
 
 
@@ -379,6 +379,7 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::put('admin/token-settings', [\App\Http\Controllers\Admin\TokenSettingController::class, 'update'])->name('admin.token-settings.update');
     Route::post('admin/withdrawal/approve', [AdminController::class, 'approveWithdrawal'])->name('admin.withdrawal.approve');
     Route::post('admin/withdrawal/reject', [AdminController::class, 'rejectWithdrawal'])->name('admin.withdrawal.reject');
+    Route::get('admin/withdrawal-history', [AdminController::class, 'withdrawalHistory'])->name('admin.withdrawal-history');
     Route::get('admin/referral-bonuses', [AdminController::class, 'referralBonuses'])->name('admin.referral-bonuses');
     Route::get('admin/referral-bonuses/{userId}', [AdminController::class, 'referralBonusDetail'])->name('admin.referral-bonus-detail');
     Route::get('admin/token-withdrawals', [AdminController::class, 'tokenWithdrawals'])->name('admin.token-withdrawals');
@@ -412,6 +413,7 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/users/list', [AdminController::class, 'users'])->name('users.list');
     Route::get('admin/memberships-plan', [AdminController::class, 'plans'])->name('membership.plans');
 
+    Route::get('admin/adventures', [AdventureController::class, 'index'])->name('admin.adventures');
     Route::get('admin/Adventures', [AdventureController::class, 'index'])->name('admin.Adventures');
     Route::get('admin/campains', [CampainController::class, 'index'])->name('admin.campains');
     Route::get('admin/video-campains', [CampainController::class, 'VideoCampain'])->name('admin.video-campain');
@@ -419,11 +421,17 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/Banner-campains', [CampainController::class, 'BannerCampain'])->name('admin.banner-campain');
     Route::get('admin/Link-campains', [CampainController::class, 'LinkCampain'])->name('admin.link-campain');
 
+    Route::get('admin/adventures/create', [AdventureController::class, 'create'])->name('admin.adventures.create');
     Route::get('admin/Adventures/create', [AdventureController::class, 'create'])->name('admin.Adventures.create');
+    Route::post('admin/adventures/store', [AdventureController::class, 'store'])->name('admin.adventures.store');
     Route::post('admin/Adventures/store', [AdventureController::class, 'store'])->name('admin.Adventures.store');
-    Route::get('admin/Adventures/{adventure}/edit', [AdventureController::class, 'edit'])->name('admin.adventure.edit');
+    Route::get('admin/adventures/{adventure}/edit', [AdventureController::class, 'edit'])->name('admin.adventure.edit');
+    Route::get('admin/Adventures/{adventure}/edit', [AdventureController::class, 'edit'])->name('admin.Adventure.edit');
+    Route::put('admin/adventures/{adventure}/update', [AdventureController::class, 'update'])->name('adventures.update');
     Route::put('admin/Adventures/{adventure}/update', [AdventureController::class, 'update'])->name('Adventures.update');
+    Route::get('admin/adventures/{adventure}/investors', [AdventureController::class, 'investors'])->name('admin.adventures.investors');
     Route::get('admin/Adventures/{adventure}/investors', [AdventureController::class, 'investors'])->name('admin.Adventures.investors');
+    Route::delete('admin/adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.adventures.destroy');
     Route::delete('admin/Adventures/{adventure}/delete', [AdventureController::class, 'destroy'])->name('admin.Adventures.destroy');
     Route::get("admin/payments/deposited",[AdminController::class,'depositedPayment'])->name("admin.payments");
     Route::get("admin/payments/deposited/{id}",[AdminController::class,'depositDetail'])->name("admin.payments.show");

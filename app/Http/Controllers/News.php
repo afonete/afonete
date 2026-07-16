@@ -23,7 +23,7 @@ class News extends Controller
             $status="activate";
             $mail = new activate($status,$email);
     Mail::to($email)->send($mail);
-              $message = "You have been activated subscription for receiving updates and news of Fonepo. thank u you!";
+              $message = "You have been activated subscription for receiving updates and news of Bifonex. thank u you!";
 
         return view('emails.activate_complete', compact('message'));
 
@@ -44,7 +44,7 @@ class News extends Controller
                    $mail = new activate($status,$email);
     Mail::to($email)->send($mail);
              // return redirect()->back();
-              $message = "You have deactivated your subscription for receiving updates and news of Fonepo. We'll miss you!";
+              $message = "You have deactivated your subscription for receiving updates and news of Bifonex. We'll miss you!";
         
         // Redirect with a delay using JavaScript
         return view('emails.deactivate_complete', compact('message'));

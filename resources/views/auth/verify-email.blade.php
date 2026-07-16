@@ -40,7 +40,7 @@ $requested = $user->has_request;
 
                 </h5>
 
-                <p class="card-text"> Your request to join Fonepo on <u>{{$email}}</u> has been accepted and it is on waiting. You will receive acceptance email once you will be accepted. This action takes 2hr-48hr normal.
+                <p class="card-text"> Your request to join Bifonex on <u>{{$email}}</u> has been accepted and it is on waiting. You will receive acceptance email once you will be accepted. This action takes 2hr-48hr normal.
             </div>
 
 

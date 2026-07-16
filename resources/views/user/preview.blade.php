@@ -14,11 +14,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="FONEPO Template">
-    <meta name="keywords" content="FONEPO, unica, creative, html">
+    <meta name="description" content="Bifonex Template">
+    <meta name="keywords" content="Bifonex, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fonepo Affiliate || Earn money infinetely</title>
+    <title>Bifonex Affiliate || Earn money infinetely</title>
     <link rel="icon" href="{{asset('assets/front/img/small-logo.png')}}">
     <!-- Css Styles -->
     <link rel="stylesheet" href="{{asset('assets/front/css/jquery-ui.min.css')}}" type="text/css">
@@ -42,14 +42,14 @@
                                 </p>
 
                                  <p class="par">
-                                       These Terms of Service constitute the entire agreement between you and Fonepo and govern your use of the Services, superseding any prior agreements between you and FONEPO ltd with respect to the Services.
+                                       These Terms of Service constitute the entire agreement between you and Bifonex and govern your use of the Services, superseding any prior agreements between you and Bifonex ltd with respect to the Services.
                                 </p>
 
                                  <p class="par">
                                        THIS NON-DISCLOSURE AND CONFIDENTIALITY AGREEMENT [Here in after, this "Agreement"] is effective as of the date of show or acknowledgement of accepting the Agreement as provided through a registered office of the COMPANY, by and between:
                                 </p>
                                  <p class="par">
-                                     <span class="font-weight-bold">‘FONEPO ltd</span>  Here in after referred to as the (May Referred to as “FONEPO, COMPANY, ECOSYSTEM PLATFORM, “OUR”, “US”, “WE” Or Disclosing Party). (which expression shall refer to the context or meaning thereof, be deemed to mean and include its successors and assigns) of the First Part    
+                                     <span class="font-weight-bold">‘Bifonex ltd</span>  Here in after referred to as the (May Referred to as “Bifonex, COMPANY, ECOSYSTEM PLATFORM, “OUR”, “US”, “WE” Or Disclosing Party). (which expression shall refer to the context or meaning thereof, be deemed to mean and include its successors and assigns) of the First Part    
                                      <br>
                                      <span class="font-weight-bold">AND</span> 
                                 </p>
@@ -284,7 +284,7 @@
                                         </p>
 
                                         <p class="par">
-                                               <span class="two-num">2.1.6</span> <span class="font-weight-bold"> Registration Suspension Policy</span>The Notice of Warning will contain instructions to contact Fonepo ltd via an account-associated email at support@fonepo.com citing time limits.  If offending Founder does not respond to the Notice of Warning, does not respond to the Notice of Warning with allotted time, or does not produce vindicating evidence or explanation through valid a current, valid e-mail address that is associated with the offending Founders account, the Founder’s account [with full registration] shall be terminated without further notice.
+                                               <span class="two-num">2.1.6</span> <span class="font-weight-bold"> Registration Suspension Policy</span>The Notice of Warning will contain instructions to contact Bifonex ltd via an account-associated email at support@Bifonex.com citing time limits.  If offending Founder does not respond to the Notice of Warning, does not respond to the Notice of Warning with allotted time, or does not produce vindicating evidence or explanation through valid a current, valid e-mail address that is associated with the offending Founders account, the Founder’s account [with full registration] shall be terminated without further notice.
                                         </p>
 
                                          <li class="secondary-header">
@@ -307,10 +307,10 @@
                                         </li>  
 
                                           <p class="par">
-                                              By using fonepo you agree to receive advertising from numerous third party advertisers. Attempts to block or otherwise bypass the advertising will be considered a breach of these terms.
+                                              By using Bifonex you agree to receive advertising from numerous third party advertisers. Attempts to block or otherwise bypass the advertising will be considered a breach of these terms.
                                         </p>
                                         <p class="par">
-                                            Trademarks/Service Marks. IMAs shall not advertise FONEPO product or business opportunity in any way other than by use of authorized advertising or promotional materials made available to the IMA by the Company.
+                                            Trademarks/Service Marks. IMAs shall not advertise Bifonex product or business opportunity in any way other than by use of authorized advertising or promotional materials made available to the IMA by the Company.
                                         </p>
 
                                         <ol class="alpha-li-2">
@@ -322,7 +322,7 @@
 
                                                 <li>
                                                         <p class="par">
-                                                                No Reproduction. FONEPO materials, whether printed, on film or produced by audio or video recording are copyrighted and may not be reproduced in whole or in part by IMAs or any other person unless authorized in writing by the Company.
+                                                                No Reproduction. Bifonex materials, whether printed, on film or produced by audio or video recording are copyrighted and may not be reproduced in whole or in part by IMAs or any other person unless authorized in writing by the Company.
                                                         </p>
                                                 </li>
 
@@ -340,7 +340,7 @@
 
                                                 <li>
                                                         <p class="par">
-                                                                Repackaging. IMA may not re-label, repackage, or modify FONEPO’s packaged or virtual training materials in any way.
+                                                                Repackaging. IMA may not re-label, repackage, or modify Bifonex’s packaged or virtual training materials in any way.
                                                         </p>
 
                                                         <ol class="roman-li-2">
@@ -575,7 +575,7 @@
                                         </p>
 
                                          <p class="par">
-                                               You expressly understand and agree that, to the fullest extent permitted by applicable law, neither COMPANY nor its affiliates will be liable for any (a) indirect, incidental, special, consequential, punitive or exemplary damages, (b) damages for loss of profits, (c) damages for loss of goodwill, (d) damages for loss of use, (e) loss or corruption of data, or (f) other intangible losses (even if company  has been advised of the possibility of such damages), whether based on contract, tort, negligence, strict liability or otherwise, resulting from (i) the use or the inability to use the services; (ii) the cost of procurement of substitute goods and services resulting from any goods, data, information or services purchased or obtained or messages received or transactions entered into through or from the services; (iii) any promotions and related prizes or rewards made available through the services; (iv) unauthorized access to or alteration of your transmissions or data; (v) statements or conduct of any third party on the services; or (vi) any other matter relating to the services. To the fullest extent permitted by applicable law, in no event will FONEPO's total liability to you for all damages, losses (including contract, negligence, statutory liability or otherwise) or causes of action exceed the amount you have paid FONEPO in the last six (6) months.
+                                               You expressly understand and agree that, to the fullest extent permitted by applicable law, neither COMPANY nor its affiliates will be liable for any (a) indirect, incidental, special, consequential, punitive or exemplary damages, (b) damages for loss of profits, (c) damages for loss of goodwill, (d) damages for loss of use, (e) loss or corruption of data, or (f) other intangible losses (even if company  has been advised of the possibility of such damages), whether based on contract, tort, negligence, strict liability or otherwise, resulting from (i) the use or the inability to use the services; (ii) the cost of procurement of substitute goods and services resulting from any goods, data, information or services purchased or obtained or messages received or transactions entered into through or from the services; (iii) any promotions and related prizes or rewards made available through the services; (iv) unauthorized access to or alteration of your transmissions or data; (v) statements or conduct of any third party on the services; or (vi) any other matter relating to the services. To the fullest extent permitted by applicable law, in no event will Bifonex's total liability to you for all damages, losses (including contract, negligence, statutory liability or otherwise) or causes of action exceed the amount you have paid Bifonex in the last six (6) months.
                                         </p>
 
                                          <p class="par">
@@ -608,7 +608,7 @@
                                         </p>
 
                                         <p class="par">
-                                              The IMA may return purchased FONEPO products in the following circumstances (excluding personalized or customized items):
+                                              The IMA may return purchased Bifonex products in the following circumstances (excluding personalized or customized items):
                                         </p>
 
                                         <p class="par">
@@ -617,7 +617,7 @@
 
 
                                         <p class="par">
-                                              The Company will process the return promptly upon verifying that the IMA is eligible for a refund. In most cases, the IMA should expect to receive the refund within 30 working days of receipt of the products by the Company. The IMA hereby confirms that he understands that the Company return policy will NOT cover situations where the IMA has already received commission payouts, or other benefits, as a result of using the FONEPO’s products and/or services.
+                                              The Company will process the return promptly upon verifying that the IMA is eligible for a refund. In most cases, the IMA should expect to receive the refund within 30 working days of receipt of the products by the Company. The IMA hereby confirms that he understands that the Company return policy will NOT cover situations where the IMA has already received commission payouts, or other benefits, as a result of using the Bifonex’s products and/or services.
                                         </p>
 
 
@@ -764,7 +764,7 @@
                                         </p>
 
                                         <p class="par">
-                                             Fonepo accepts no responsibility for any kind costs connected to the medical insurance or any kind of insurance of Cofounder /customer.FONEPO does not cover the any kind costs of  medical evacuation of  IMA; or any other kind of damage, accident, fire, loss, or any kind of. They will not be held accountable or sued or prosecuted
+                                             Bifonex accepts no responsibility for any kind costs connected to the medical insurance or any kind of insurance of Cofounder /customer.Bifonex does not cover the any kind costs of  medical evacuation of  IMA; or any other kind of damage, accident, fire, loss, or any kind of. They will not be held accountable or sued or prosecuted
                                         </p>
 
 

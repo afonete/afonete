@@ -16,7 +16,7 @@ $name = $user->name??'';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-    <title>Fonepo Admin</title>
+    <title>Bifonex Admin</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="{{asset('assets/a/dist/js/adminlte.min.js')}}"></script>

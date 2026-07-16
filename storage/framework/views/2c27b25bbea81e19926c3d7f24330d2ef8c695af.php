@@ -318,7 +318,7 @@ ul li a{
 
 
             <li>
-                <a  href="<?php echo e(route('admin.Adventures')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a  href="<?php echo e(route('admin.adventures')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-box"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Manage UVP</span>
                 </a>
@@ -379,7 +379,13 @@ ul li a{
                 <li>
                     <a href="<?php echo e(route('admin.withdrawal')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-money-bill-transfer"></i>
-                       <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal</span>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Withdrwal</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?php echo e(route('admin.withdrawal-history')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                      <i class="fa-solid fa-history"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal History</span>
                     </a>
                 </li>
                 <li>

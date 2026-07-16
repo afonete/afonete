@@ -1,3 +1,4 @@
+<div class="wrapper">
 @include('user.user-dashboard-base')
 <div class="content-wrapper">
 <div class="container-fluid py-4">
@@ -107,5 +108,6 @@
         </div>
     </div>
 
+</div>
 </div>
 </div>

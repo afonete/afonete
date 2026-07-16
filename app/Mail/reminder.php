@@ -30,6 +30,6 @@ public $email;public $username;
      */
     public function build()
     {
-        return $this->subject('FONEPO - QUICK ACCOUNT REMINDER')->view('reminder');
+        return $this->subject('Bifonex - QUICK ACCOUNT REMINDER')->view('reminder');
     }
 }

@@ -1,3 +1,4 @@
+<div class="wrapper">
 @include('user.user-dashboard-base')
 <div class="content-wrapper">
 <div class="container-fluid py-4">
@@ -83,7 +84,7 @@
                 <small class="text-muted">Every 30 days · renewal_price = ${{ number_format($renewalPrice, 4) }}</small>
                 @if($payment->status == 1 && !$expired && $renewalsCount < $maxRenewals)
                     <div class="mt-2">
-                        <a href="{{ route('packageRenew') }}" class="btn btn-sm btn-warning">
+                        <a href="{{ route('packageRenew', $payment->id) }}" class="btn btn-sm btn-warning">
                             <i class="fas fa-redo mr-1"></i> Renew Now
                         </a>
                     </div>
@@ -153,6 +154,15 @@
 
     {{-- ── Daily income history ── --}}
     @if($dailyIncomes->isNotEmpty())
+    @php
+        $runningSum = 0.0;
+        $dailyIncomesAsc = $dailyIncomes->reverse();
+        $cumulativeList = [];
+        foreach ($dailyIncomesAsc as $d) {
+            $runningSum += (float) $d->amount;
+            $cumulativeList[$d->id] = $runningSum;
+        }
+    @endphp
     <div class="card shadow-sm border-0 mt-3">
         <div class="card-header bg-light font-weight-bold"><i class="fas fa-chart-line mr-1"></i> Daily Income History</div>
         <div class="card-body p-0">
@@ -166,7 +176,7 @@
                         <tr>
                             <td><small>{{ \Carbon\Carbon::parse($d->earned_at)->format('d M Y') }}</small></td>
                             <td class="font-weight-bold text-success">${{ number_format($d->amount, 4) }}</td>
-                            <td>${{ number_format($d->cumulative ?? 0, 2) }}</td>
+                            <td class="font-weight-bold text-primary">${{ number_format($cumulativeList[$d->id] ?? 0, 2) }}</td>
                             <td><small class="text-muted">{{ $d->notes ?? '—' }}</small></td>
                         </tr>
                         @endforeach
@@ -204,5 +214,6 @@
     </div>
     @endif
 
+</div>
 </div>
 </div>

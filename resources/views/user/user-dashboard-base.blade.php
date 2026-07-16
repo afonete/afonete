@@ -65,7 +65,7 @@ s0.parentNode.insertBefore(s1,s0);
 <style>
 
 /* Customized Alert Styles */
-.alert {
+#customAlert {
   position: fixed;
   top: 50px;
   left: 700px;
@@ -80,7 +80,7 @@ s0.parentNode.insertBefore(s1,s0);
 
 }
 
-.alert p {
+#customAlert p {
   margin: 0;
 }
 
@@ -244,7 +244,10 @@ function hideAlert() {
   customAlert.classList.remove("show");
 }
 
-document.getElementById("showAlertBtn").addEventListener("click", showCustomAlert);
+const showAlertBtn = document.getElementById("showAlertBtn");
+if (showAlertBtn) {
+  showAlertBtn.addEventListener("click", showCustomAlert);
+}
 
  </script>
 
@@ -444,8 +447,8 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                     </li>
 
                     {{-- Wallets --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.withdraw','user.dashboard.payments') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.withdraw','user.dashboard.payments') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-wallet"></i>
                             <p>Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -461,8 +464,13 @@ document.getElementById("showAlertBtn").addEventListener("click", showCustomAler
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.withdraw') }}" class="nav-link {{ request()->routeIs('user.dashboard.withdraw') ? 'active' : '' }}">
+                                <a href="{{ route('user.dashboard.userwithdraw') }}" class="nav-link {{ request()->routeIs('user.dashboard.userwithdraw') ? 'active' : '' }}">
                                     <i class="fas fa-arrow-up nav-icon"></i><p>Withdraw</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.withdrawal-history') }}" class="nav-link {{ request()->routeIs('user.withdrawal-history') ? 'active' : '' }}">
+                                    <i class="fas fa-history nav-icon"></i><p>Withdrawal History</p>
                                 </a>
                             </li>
                             <li class="nav-item">

@@ -350,13 +350,13 @@ if (count($earning))
 
                                             <div class="input-group">
                                                   @if($package!='standard')
-                                                <input type="text" id="link"value="http://fonepo.com/register?referral=*********"
+                                                <input type="text" id="link"value="http://Bifonex.com/register?referral=*********"
                                               class="form-control" readonly class="form-control">
                                              <button class="btn btn-default" type="submit" id="btn">
                                                     <i class="las la-link" style="font-size: 20px;"></i>
                                                   </button>
                                               @else
-                                                <input type="text" id="link"value="http://fonepo.com/register?referral=*******"
+                                                <input type="text" id="link"value="http://Bifonex.com/register?referral=*******"
                                               class="form-control" readonly class="form-control">@endif
                                                 
                                             </div>
@@ -833,7 +833,7 @@ $user=db::SELECT("SELECT * from users");
     // Function to handle the Facebook sharing
    function shareOnFacebook() {
     // Replace "YOUR_SHARE_URL" with the URL you want to share
-    var shareUrl = 'https://www.fonepo.com/register?referral={{$ref_code}}';
+    var shareUrl = 'https://www.Bifonex.com/register?referral={{$ref_code}}';
 
     // Open the Facebook share dialog
     window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl), '_blank');
@@ -842,7 +842,7 @@ $user=db::SELECT("SELECT * from users");
   // Function to handle the WhatsApp sharing
     function shareOnWhatsApp() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = encodeURIComponent('Infinite earning: https:www.fonepo.com/register?referral={{$ref_code}}');
+      var shareText = encodeURIComponent('Infinite earning: https:www.Bifonex.com/register?referral={{$ref_code}}');
       var whatsappURL = 'https://api.whatsapp.com/send?text=' + shareText;
       window.open(whatsappURL, '_blank');
     }
@@ -850,7 +850,7 @@ $user=db::SELECT("SELECT * from users");
    // Function to handle the Twitter sharing
     function shareOnTwitter() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = 'Infinite earning: https:www.fonepo.com/register?referral={{$ref_code}}';
+      var shareText = 'Infinite earning: https:www.Bifonex.com/register?referral={{$ref_code}}';
 
       // Open the Twitter share popup
       window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText), '_blank');

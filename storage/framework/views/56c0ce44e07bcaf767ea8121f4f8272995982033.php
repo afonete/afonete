@@ -4,7 +4,7 @@
       <div class="float-left d-none d-sm-block">
 
       </div>
-      <strong>Copyright &copy;<?php echo e(date('Y')); ?> <a href="https://muhahe.com"> fonepo
+      <strong>Copyright &copy;<?php echo e(date('Y')); ?> <a href="https://muhahe.com"> Bifonex
               Ltd</a>.</strong>
       All
       rights

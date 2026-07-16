@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Fonepo!</title>
+    <title>Welcome to Bifonex!</title>
     <style>
         /* Add your custom CSS styles here */
         body {
@@ -47,17 +47,17 @@
 <body>
     <div class="container">
         <h1>Hello!</h1>
-        <p>Congratulations! Your registration with <strong>FONEPO</strong> was successful.</p>
+        <p>Congratulations! Your registration with <strong>Bifonex</strong> was successful.</p>
         <div class="message">
             <p>Your registration details in our system is:</p>
             <p><strong>Email:</strong> {{$email}}</p>
             <p><strong>Password:</strong> {{$password}}</p>
             <p><strong>username:</strong> {{$username}}</p>
         </div>
-        <p>You can access your account from <a class="button" style="color:black" href="https://fonepo.com/login">https://fonepo.com/login</a></p>
+        <p>You can access your account from <a class="button" style="color:black" href="https://Bifonex.com/login">https://Bifonex.com/login</a></p>
         <p>Remember to change password after login.</p>
         <div class="details">
-            <p>If you have any questions, feel free to contact our support team via <a href="mailto:admin@fonepo.com"> admin@fonepo.com</a><br> They are always happy to help! </p>
+            <p>If you have any questions, feel free to contact our support team via <a href="mailto:admin@Bifonex.com"> admin@Bifonex.com</a><br> They are always happy to help! </p>
             <p>Good luck!</p>
         </div>
     </div>

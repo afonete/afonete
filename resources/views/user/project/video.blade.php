@@ -327,7 +327,7 @@ if (id=='link')
                  <p id="descriptions"></p>
                 </div>
                 <div class="font-size-14 " style="color:#e7e7e7">
-<p >You can create a video advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your video is approved, Fonepo users will view your ads for the amount of time you have chosen. Every time a user views your ad they will receive a small number of money.</p>
+<p >You can create a video advertisement and purchase traffic for any website that does not break our rules. After your purchase is complete and your video is approved, Bifonex users will view your ads for the amount of time you have chosen. Every time a user views your ad they will receive a small number of money.</p>
 
 <p>You can pay VIDEO ads with your ammount on balance, or you can <a href="{{route('user.dashboard.deposit')}}" style="color:red">Deposit</a> to add ammount to your balance.</p>
                 </div>

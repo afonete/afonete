@@ -71,7 +71,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -112,7 +112,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -151,7 +151,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -190,7 +190,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -229,7 +229,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -266,7 +266,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -304,7 +304,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -341,7 +341,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -380,7 +380,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -418,7 +418,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -455,7 +455,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
@@ -492,7 +492,7 @@
                                                 <div class="m-1">
                                                     <p class="text-danger text-center" style="fon-size:10px;">UVP</p>
                                                     <div class="d-flex justify-content-center">
-                                                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIzaXwUkgU_WXIK-KyUumnaWPkhnOz4zA4kg&s" style="width:40px;">
+                                                    <img src="{{ asset('image/ai-package.png') }}" style="width:40px;">
                                                     </div>
                                                 </div>
                                                     <div class="text-center" style="background-color:black;">
