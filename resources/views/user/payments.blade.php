@@ -100,12 +100,12 @@
                 <div class="flex items-center gap-3">
                     <select id="acc_choice" class="form-select block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                         <option>CHOOSE ACCOUNT</option>
-                        <option value="REDEEM_PACKAGE">Redeem Package</option>
-                        <option value="UPGRADE">Upgrade</option>
-                        <option value="PAID_ADS">Paid Ads</option>
-                        <option value="USDT_TRON">USDT TRON</option>
-                        <option value="PERFECT_MONEY">Perfect Money</option>
-                        <option value="VOLE">Vole</option>
+                        <option value="Payout Wallet">Payout Wallet</option>
+                        <option value="UPurchase Wallet">Purchase Wallet</option>
+                        <option value="Reward Wallet">Reward Wallet</option>
+                        <option value="Fund Wallet">Fund Wallet</option>
+                        <option value="FOMO Wallet">FOMO Wallet</option>
+                        <option value="radind Wallet">Trading Wallet</option>
                     </select>
                 </div>
                 <div class="text-right">

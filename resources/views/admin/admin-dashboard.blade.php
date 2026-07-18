@@ -48,6 +48,17 @@ $ftt = User::where('utype', '!=', 'ADM')
     $refTotals = \App\Services\ReferralService::platformTotals();
     $pendingWithdrawals = \App\Models\WeeklyWithdrawal::where('status','pending')->count();
     $pendingRanks       = \App\Models\UserRank::where('status','pending')->count();
+
+    // ── Real Token Calculations ──
+    $uvpPrice = \App\Models\TokenSetting::uvpPrice() ?: 0.0025;
+    $totalUvpAmount = (float) \App\Models\Payment::where('category', 'VENTURE')->where('status', '1')->sum('amount');
+    $uvpTokensSold = $uvpPrice > 0 ? ($totalUvpAmount / $uvpPrice) : 0.0;
+    
+    $renewalTokensSold = (float) \App\Models\PackageRenewal::where('status', 'completed')->sum('tokens_received');
+    
+    $totalCoinSales = $uvpTokensSold + $renewalTokensSold;
+    $remainingTotalSupply = \App\Models\TokenSetting::initialSupply() - $totalCoinSales;
+    $remainingLiquidityPool = \App\Models\TokenSetting::initialLiquidity() - $totalCoinSales;
 ?>
 <section>
 <div class="px-2">
@@ -130,7 +141,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                 <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Liquidity Pool(UVP)
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2"> 40 000 000 000 Token</h1>
+                <h1 class="text-slate-500 font-bold pt-2">{{ number_format($remainingLiquidityPool, 0, '.', ' ') }} Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -162,7 +173,7 @@ $ftt = User::where('utype', '!=', 'ADM')
             <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Total Coin Sales
             </h1>
-            <h1 class="text-slate-500 font-bold pt-2">$ 00,000</h1>
+            <h1 class="text-slate-500 font-bold pt-2">{{ number_format($totalCoinSales, 0, '.', ' ') }} Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">
@@ -177,7 +188,7 @@ $ftt = User::where('utype', '!=', 'ADM')
                 <h1 class="text-blue-500 uppercase text-sm  text-center font-semibold">
                 Total Supply
                 </h1>
-                <h1 class="text-slate-500 font-bold pt-2">$120 000 000 000 Token</h1>
+                <h1 class="text-slate-500 font-bold pt-2">{{ number_format($remainingTotalSupply, 0, '.', ' ') }} Token</h1>
             </div>
 
             <div class="card-body flex items-center px-2">

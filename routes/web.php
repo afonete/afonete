@@ -292,6 +292,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     Route::get('user/dashboard/withdraw/user', [Balance::class, 'UserWithdrawal'])->name('user.dashboard.userwithdraw');
     Route::get('user/dashboard/withdraw', [Balance::class, 'UserWithdrawal'])->name('user.dashboard.withdraw');
+    Route::get('user/dashboard/withdraw/manual', [Balance::class, 'withdraw'])->name('user.dashboard.manual_withdraw');
     Route::get('user/withdrawal/history', [Balance::class, 'userWithdrawalHistory'])->name('user.withdrawal-history');
 
     Route::post('user/dashboard/withdraw-status/', [Balance::class, 'withdraw_money'])->name('user.withdraw');

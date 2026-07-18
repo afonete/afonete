@@ -21,6 +21,8 @@ class TokenSetting extends Model
         'token_symbol',
         'notes',
         'updated_by',
+        'initial_supply',
+        'initial_liquidity',
     ];
 
     /**
@@ -39,13 +41,15 @@ class TokenSetting extends Model
         static $cached = null;
         if ($cached === null) {
             $cached = self::first() ?? new self([
-                'uvp_price'     => 0.0025,
-                'renewal_price' => 0.0025,
-                'swap_price'    => 0.002,
-                'trading_price' => 0.0025,
-                'package_price' => 0.0025,
-                'coin_value'    => 0.002,
-                'token_symbol'  => 'FONE',
+                'uvp_price'         => 0.0025,
+                'renewal_price'     => 0.0025,
+                'swap_price'        => 0.002,
+                'trading_price'     => 0.0025,
+                'package_price'     => 0.0025,
+                'coin_value'        => 0.002,
+                'token_symbol'      => 'FONE',
+                'initial_supply'    => 120000000000,
+                'initial_liquidity' => 40000000000,
             ]);
         }
         return $cached;
@@ -64,6 +68,20 @@ class TokenSetting extends Model
     public static function coinValue(): float  { return (float) self::settings()->coin_value; }
 
     public static function currentSymbol(): string { return self::settings()->token_symbol ?? 'FONE'; }
+
+    /** Get the configurable initial supply (fallback to 120 Billion) */
+    public static function initialSupply(): float
+    {
+        $settings = self::settings();
+        return (float) (isset($settings->initial_supply) ? $settings->initial_supply : 120000000000);
+    }
+
+    /** Get the configurable initial liquidity pool (fallback to 40 Billion) */
+    public static function initialLiquidity(): float
+    {
+        $settings = self::settings();
+        return (float) (isset($settings->initial_liquidity) ? $settings->initial_liquidity : 40000000000);
+    }
 
     /** Legacy — maps to uvpPrice for backward compatibility */
     public static function currentPrice(): float { return self::uvpPrice(); }

@@ -18,48 +18,60 @@
     </style>
     <div class="container privacy">
         <div class="text-center">   
-             <h2 style="font-size: 25px; font-weight: bold;">Are You Ready become FC ? Registration is open</h2>
-            <p>Dear partners and users</p>
+             <h2 style="font-size: 25px; font-weight: bold;">Are You Ready to Become an UVP Member? Registration Is Open</h2>
+            <p>Dear Partners and Users,</p>
         </div>
 
-        <p class="">We congratulate you to decided   to join  the Bifonex in the pre-launch period and opening fc account registration on our platform. <span class="">only one who interesting to contribute to constructing  or put stone on this infrastructure the projects    we  called  pioneer members all complete active account automatic join  founder club member Get  super  account  now because  fc </span>has specific limit  number worldwide mix 200 000 <span class="">fc account only</span></p>
-    
-        <p>Are you in Thousands of people around the worldwide  are yet to join us please the opening of fc account registration on the platform  <span class=""> Only payment through on website <a href="#" style="color:blue;">www.Bifonex.com</a>  and after complete pay get activation code immediately and activate after see your fc account activated on Backoffice , you get confirmation email from admin   and no other way for payment beyond site .
+        <p class="">We congratulate you to decided   to join  the Bifonex during its pre-launch period and participate in the opening uvp account registration on our platform.
+             only one who interesting to contribute to constructing or put stone on this infrastructure the projects we called pioneer members all complete active account automatic join founder club member 
+         <p> The Founder Club (FC/UVP) is designed for individuals who are interested in contributing to the development and growth of the Bifonex ecosystem. These early supporters are recognized as our Pioneer Members. 
+            Every fully activated uvp account automatically joins the Founder Club membership program </p>
+         <P> Get your Super Account now, as UVP membership is limited worldwide to a maximum of 200,000  accounts only.</P>   
+
+        <p>Thousands of people around the worldwide have yet to join us.Uvp account registration is now open on the platform  <span class=""> payments can only be made through our website <a href="#" style="color:blue;">www.Bifonex.com</a>  after completing your payment get activation  immediately. Once activate  your uvp account will appear in your  Backoffice , and you will confirmation email from administration team.
+            Please note that no payment methods other than those available on the official website are accepted.
+          
  </span></p>
 
         <ul>
             <li>
+               
+            <p> We are looking for enthusiastic FC/TM Leaders, Resellers, Agents, Distributors, Staff Members, and Partners who share our vision, think big, embrace challenges, and believe in the long-term success of the project.
+                We are continuously developing the Bifonex ecosystem. While some services and products are still under development, we are actively preparing for future growth and expansion.
+            We need community builders who are willing to work with us to expand our global network and establish local points of presence that support the growth of the Bifonex ecosystem.
+            </p>   
+            </li>
+       <p> We need local and international partners who are ready to help transform Bifonex into one of the most recognized platforms globally.
+    Another important benefit is that Uvp members will receive priority access to selected features, services, and opportunities as they are released throughout the different launch phases. Significant benefits await Founder Club members as the ecosystem continues to expand.    
+    </p>     
+
+            <li>
                 <p>
-                     We need you <a href="#" style="color:blue;">enthusiasm</a>  countries fc leaders, Resellers, agent, distributors , staffs    who with the same vision and big thinking, accept challenges, believe in the success of project in the next 5 years because we are  preparing all our services and products they are not work fully we are still developing ecosystem.
+                     Please remember that registration is available through affiliate referral links to ensure a fair and transparent allocation of new users within the global Bifonex community.
                 </p>
+
+               <h5>CONNECT WITH US</h5> 
                
 
             </li>
             <li>
                 <p>
-                     WE NEED accompanies join hands to expand us community, build up point of sales that accept this challenges everywhere.
-                </p>
-               
-
-            </li>
-            <li>
-                <p>
-                    WE NEED local and worldwide   partners to live the dreams, transform Bifonex   into one of the most popular platform globally.
+                    Work the way you want. Earn the way you want. Most importantly, live the way you want.
+                    Remember, this is your business too. By building together, we create greater opportunities for everyone.
                 </p>
               
             </li>
         </ul>
 
         <p >
-            Another important thing those activate fc account
+            Another important thing those activate Uvp account
 Has priority for other feature after launch according step of part launched huge benefits after full launch feature waiting you.
-
         </p>
+
         <p>Don't forget that registration is only available via affiliate links to ensure the most fair allocation allowed of new users in the Bifonex global.
 </p>
-        <p style="text-transform: lowercase;">CONNECT WITH US  Work the way you want, earn the way you want and most importantly , live the way you want</p>
-
-        <p > Take well This is your own business, Building together, WE WILL LIVE    DREAMS TOGETHER
+      
+        <p > Remember, This is your own business, WE WILL BUILD THE FUTURE TOGETHER ,and  WE WILL LIVE OUR  DREAMS TOGETHER
 </p>
     <p class="font-weight-bold">Regards, Bifonex Team</p>
     </di>

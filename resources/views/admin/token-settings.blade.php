@@ -86,6 +86,20 @@
                             </div>
                         </div>
 
+                        <div class="pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-3">Token Supply Pools</span>
+                            <div class="space-y-2.5 text-sm">
+                                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-lg dark:bg-gray-700/50">
+                                    <span class="text-gray-600 dark:text-gray-300">Configured Total Supply</span>
+                                    <span class="font-bold font-mono text-gray-900 dark:text-white">{{ number_format($s->initial_supply ?? 120000000000, 0, '.', ' ') }}</span>
+                                </div>
+                                <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-lg dark:bg-gray-700/50">
+                                    <span class="text-gray-600 dark:text-gray-300">Configured Liquidity Pool</span>
+                                    <span class="font-bold font-mono text-gray-900 dark:text-white">{{ number_format($s->initial_liquidity ?? 40000000000, 0, '.', ' ') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="pt-2">
                             <span class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block mb-2">Reference Valuation</span>
                             <div class="flex justify-between items-center bg-emerald-50 p-3 rounded-xl border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800">
@@ -227,6 +241,33 @@
                                     <p class="mt-1.5 text-xs text-gray-400 flex items-center gap-1">
                                         <i class="fas fa-clock"></i> Reserved for future referral-package purchase flow.
                                     </p>
+                                </div>
+
+                                {{-- ── Configurable Token Supply Pools ── --}}
+                                <div class="sm:col-span-2 bg-indigo-50/40 p-4 rounded-xl border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-800/50 mt-4">
+                                    <h5 class="text-base font-bold text-indigo-950 dark:text-indigo-300 mb-3 flex items-center gap-2">
+                                        <i class="fas fa-cubes text-indigo-600"></i> Configurable Token Supply Pools
+                                    </h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+                                                Default Total Supply <span class="text-red-500">*</span>
+                                            </label>
+                                            <div class="flex rounded-xl shadow-sm">
+                                                <input type="number" name="initial_supply" min="0" step="1" value="{{ old('initial_supply', $setting->initial_supply ?? '120000000000') }}" required class="rounded-xl bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block w-full text-sm p-3 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white transition duration-150">
+                                            </div>
+                                            <p class="mt-1.5 text-xs text-gray-500">Starting pool of total tokens (default: 120 Billion).</p>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">
+                                                Default Liquidity Pool (UVP) <span class="text-red-500">*</span>
+                                            </label>
+                                            <div class="flex rounded-xl shadow-sm">
+                                                <input type="number" name="initial_liquidity" min="0" step="1" value="{{ old('initial_liquidity', $setting->initial_liquidity ?? '40000000000') }}" required class="rounded-xl bg-gray-50 border border-gray-300 text-gray-900 focus:ring-blue-500 focus:border-blue-500 block w-full text-sm p-3 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white transition duration-150">
+                                            </div>
+                                            <p class="mt-1.5 text-xs text-gray-500">Starting pool for UVP packages (default: 40 Billion).</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -43,6 +43,19 @@
             </div>
         <?php endif; ?>
 
+        
+        <?php if(isset($settings->auto_withdrawals_enabled) && $settings->auto_withdrawals_enabled): ?>
+            <div class="bg-indigo-950/40 border border-indigo-800/40 text-indigo-300 p-3.5 rounded-xl mb-6 flex justify-between items-center text-sm shadow-sm max-w-2xl mx-auto">
+                <span>
+                    <i class="fas fa-info-circle mr-2 text-indigo-400"></i>
+                    <strong>Alternative Methods:</strong> Want to withdraw using Advcash, Perfect Money, or manual Crypto instead of automatic TRC-20?
+                </span>
+                <a href="<?php echo e(route('user.dashboard.manual_withdraw')); ?>" class="text-xs bg-indigo-800 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg ml-3 transition-all flex-shrink-0" style="text-decoration:none;">
+                    <i class="fas fa-hand-holding-usd mr-1"></i> Manual Methods
+                </a>
+            </div>
+        <?php endif; ?>
+
         <!-- Wallet Balance and Actions -->
         <div class="text-center mb-8">
             <h2 class="text-3xl font-semibold text-gray-200">Wallet Balance</h2>
@@ -255,6 +268,15 @@
                                 <i class="fas fa-paper-plane mr-1"></i> Send USDT Instantly
                             </button>
                         </form>
+
+                        
+                        <div class="mt-4 pt-3 border-t border-gray-700 text-center text-xs">
+                            <span class="text-gray-400">Prefer an alternative payment method?</span>
+                            <a href="<?php echo e(route('user.dashboard.manual_withdraw')); ?>" class="block text-yellow-500 hover:text-yellow-400 font-bold mt-1 underline">
+                                <i class="fas fa-hand-holding-usd mr-1"></i> Switch to Manual Withdrawal Page
+                            </a>
+                            <small class="text-[10px] text-gray-500 d-block mt-0.5">(Supports Crypto, Advcash, and Perfect Money · Processed within 3 days)</small>
+                        </div>
                     </div>
 
                 <?php else: ?>
