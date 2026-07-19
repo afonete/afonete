@@ -1183,4 +1183,122 @@ public function check(Request $request) {
         return view('admin.withdrawal-history', compact('history'));
     }
 
+    public function teamLeadersList()
+    {
+        $pending = \App\Models\TeamLeader::where('status', 'pending')->latest()->get();
+        $confirmed = \App\Models\TeamLeader::where('status', 'confirmed')->latest()->get();
+        $rejected = \App\Models\TeamLeader::where('status', 'rejected')->latest()->get();
+        $suspended = \App\Models\TeamLeader::where('status', 'suspended')->latest()->get();
+
+        // Auditing collections
+        $pendingEvents = \App\Models\TeamLeaderEvent::where('status', 'pending')->latest()->get();
+        $pendingProofs = \App\Models\TeamLeaderEvent::where('proof_submitted', true)->where('proof_status', 'pending')->latest()->get();
+        $pendingSocials = \App\Models\TeamLeaderSocial::where('status', 'pending')->latest()->get();
+
+        return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials'));
+    }
+
+    public function approveEventPlan($id)
+    {
+        $event = \App\Models\TeamLeaderEvent::findOrFail($id);
+        $event->update(['status' => 'approved']);
+        return redirect()->back()->with('message', "Event plan '{$event->title}' has been APPROVED.");
+    }
+
+    public function rejectEventPlan($id)
+    {
+        $event = \App\Models\TeamLeaderEvent::findOrFail($id);
+        $event->update(['status' => 'rejected']);
+        return redirect()->back()->with('message', "Event plan '{$event->title}' has been REJECTED.");
+    }
+
+    public function approveEventProof($id)
+    {
+        $event = \App\Models\TeamLeaderEvent::findOrFail($id);
+        $event->update(['proof_status' => 'approved']);
+        return redirect()->back()->with('message', "Performance proof for '{$event->title}' has been APPROVED.");
+    }
+
+    public function rejectEventProof($id)
+    {
+        $event = \App\Models\TeamLeaderEvent::findOrFail($id);
+        $event->update(['proof_status' => 'rejected']);
+        return redirect()->back()->with('message', "Performance proof for '{$event->title}' has been REJECTED.");
+    }
+
+    public function approveSocialProfile($id)
+    {
+        $social = \App\Models\TeamLeaderSocial::findOrFail($id);
+        $social->update(['status' => 'approved']);
+        return redirect()->back()->with('message', "Social ambassador link has been APPROVED.");
+    }
+
+    public function rejectSocialProfile($id)
+    {
+        $social = \App\Models\TeamLeaderSocial::findOrFail($id);
+        $social->update(['status' => 'rejected']);
+        return redirect()->back()->with('message', "Social ambassador link has been REJECTED.");
+    }
+
+    public function approveTeamLeader(Request $request, $id)
+    {
+        $request->validate([
+            'activation_code' => 'required|string|unique:activations,code',
+            'duration'        => 'required|integer|min:1',
+            'tasks'           => 'required|string|max:1000',
+            'tokens'          => 'required|numeric|min:0',
+        ]);
+
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $leader->update(['status' => 'confirmed']);
+
+        // Create the unique Activation Code inside activations table
+        \App\Models\Activations::create([
+            'code'        => strtoupper($request->activation_code),
+            'package'     => 'TEAM_LEADER', // special package name
+            'stutus'      => 'not', // unconsumed
+            'token'       => $request->tokens,
+            'price'       => 0.0, // free activation code
+            'task'        => $request->tasks,
+            'period'      => $request->duration, // set custom duration
+            'percentage'  => 0.0, // no daily ROI percentage!
+            'withdrawmax' => 999999.0,
+            'email'       => $leader->Email, // link to the leader's email!
+        ]);
+
+        // Update the associated User
+        $user = \App\Models\User::where('user', $leader->User_name)->first();
+        if ($user) {
+            $user->update([
+                'has_request' => 'approved',
+            ]);
+        }
+
+        return redirect()->back()->with('message', "Team Leader {$leader->Names} has been approved. Unique activation code generated: " . strtoupper($request->activation_code));
+    }
+
+    public function rejectTeamLeader($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $leader->update(['status' => 'rejected']);
+
+        return redirect()->back()->with('message', "Team Leader {$leader->Names} application has been rejected.");
+    }
+
+    public function suspendTeamLeader($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $leader->update(['status' => 'suspended']);
+
+        return redirect()->back()->with('message', "Team Leader {$leader->Names} has been suspended.");
+    }
+
+    public function reactivateTeamLeader($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $leader->update(['status' => 'confirmed']);
+
+        return redirect()->back()->with('message', "Team Leader {$leader->Names} has been reactivated.");
+    }
+
 }

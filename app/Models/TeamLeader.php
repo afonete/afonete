@@ -15,6 +15,8 @@ class TeamLeader extends Model
         'Phone',
         'Country',
         'status',
+        'whatsapp',
+        'instagram',
     ];
     public function uniqueIds()
     {

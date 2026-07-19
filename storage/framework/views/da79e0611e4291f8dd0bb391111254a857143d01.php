@@ -370,6 +370,12 @@ All Team Leaders are expected to act in line with the values, policies, and stan
                         <button class="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-4 px-12 rounded-full transition duration-300 transform hover:scale-105 shadow-xl" onclick="openModal()">
                             <i class="fas fa-crown mr-2"></i>Claim Your Leadership Position
                         </button>
+                        <div class="mt-4">
+                            <span class="text-gray-300">Already applied as a Team Leader?</span>
+                            <a href="<?php echo e(route('team-leader.login')); ?>" class="text-yellow-400 hover:text-yellow-300 font-bold ml-1 underline" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">
+                                <i class="fas fa-sign-in-alt mr-1"></i> Sign In Here
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -502,35 +508,42 @@ All Team Leaders are expected to act in line with the values, policies, and stan
                 const countrySelect = document.getElementById("countrySelect");
                 const phoneInput = document.getElementById("phone");
                 
-                data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+                // Exclude Chile and Israel
+                const excludedCountries = ['Chile', 'Israel'];
+                const filteredData = data.filter(country => !excludedCountries.includes(country.name.common));
                 
-                data.forEach(country => {
+                filteredData.sort((a, b) => a.name.common.localeCompare(b.name.common));
+                
+                filteredData.forEach(country => {
                     const option = document.createElement("option");
                     option.value = country.name.common;
                     option.textContent = country.name.common;
                     countrySelect.appendChild(option);
                 });
 
+                let activeCountryCode = "";
+
                 countrySelect.addEventListener('change', function() {
-                    const selectedCountry = data.find(country => country.name.common === this.value);
-                    const countryCode = selectedCountry?.idd?.root + (selectedCountry?.idd?.suffixes?.[0] || '');
-                    phoneInput.value = countryCode;
+                    const selectedCountry = filteredData.find(country => country.name.common === this.value);
+                    activeCountryCode = selectedCountry?.idd?.root + (selectedCountry?.idd?.suffixes?.[0] || '');
+                    phoneInput.value = activeCountryCode;
+                });
+
+                phoneInput.addEventListener('input', function(e) {
+                    if (!activeCountryCode) return;
+                    let cursorPosition = this.selectionStart;
+                    let inputValue = this.value;
                     
-                    phoneInput.addEventListener('input', function(e) {
-                        let cursorPosition = this.selectionStart;
-                        let inputValue = this.value;
-                        
-                        if (inputValue.length < countryCode.length) {
-                            this.value = countryCode;
-                            cursorPosition = countryCode.length;
-                        } else {
-                            let numbers = inputValue.slice(countryCode.length).replace(/\D/g, '');
-                            this.value = countryCode + numbers;
-                            cursorPosition = Math.min(cursorPosition, this.value.length);
-                        }
-                        
-                        this.setSelectionRange(cursorPosition, cursorPosition);
-                    });
+                    if (inputValue.length < activeCountryCode.length) {
+                        this.value = activeCountryCode;
+                        cursorPosition = activeCountryCode.length;
+                    } else {
+                        let numbers = inputValue.slice(activeCountryCode.length).replace(/\D/g, '');
+                        this.value = activeCountryCode + numbers;
+                        cursorPosition = Math.min(cursorPosition, this.value.length);
+                    }
+                    
+                    this.setSelectionRange(cursorPosition, cursorPosition);
                 });
             })
             .catch(error => console.error("Error fetching countries:", error));
@@ -610,22 +623,6 @@ window.onclick = function(event) {
         closeModal();
     }
 }
-
-// Initialize country select
-document.addEventListener('DOMContentLoaded', function() {
-    const countries = [
-        "United States", "United Kingdom", "Canada", "Australia", 
-        // Add more countries as needed
-    ];
-    
-    const select = document.getElementById('countrySelect');
-    countries.forEach(country => {
-        const option = document.createElement('option');
-        option.value = country;
-        option.text = country;
-        select.appendChild(option);
-    });
-});
 
     </script>
 

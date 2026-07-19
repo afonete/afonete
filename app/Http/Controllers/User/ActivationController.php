@@ -24,7 +24,28 @@ public function index(){
     $user = User::find($userId);
     $package = Paymodel::where("user",$userId)->get();
 
-          return view('user.activation-controller',['user'=>$user,"packages"=>$package]);
+    // Check if the user exists in the TeamLeader table
+    $teamLeader = TeamLeader::where('User_name', $user->user)
+        ->orWhere('Email', $user->email)
+        ->orWhere('Phone', $user->phone)
+        ->first();
+
+    if ($teamLeader) {
+        if ($teamLeader->status === 'confirmed') {
+            if ($user->has_paid_package === 'TEAM_LEADER') {
+                return redirect()->route('team-leader.dashboard');
+            }
+            return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
+        }
+        if ($teamLeader->status === 'pending') {
+            return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
+        }
+        if ($teamLeader->status === 'rejected') {
+            return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
+        }
+    }
+
+    return view('user.activation-controller',['user'=>$user,"packages"=>$package]);
 }
 
 public function upgrade(Request $request){
@@ -123,7 +144,7 @@ public function upgrade(Request $request){
                     $user->refresh();
                     $target = $this->dashboardRouteForUser($user);
                     $message = $target === 'user.dashboard'
-                        ? 'You have been activated Bifonex account. Enjoy unlimited earning on Bifonex!'
+                        ? 'You have been activated Fonepo account. Enjoy unlimited earning on Fonepo!'
                         : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                     return redirect()->route($target)->with('message', $message);
@@ -172,6 +193,13 @@ public function g_upgrade(Request $request){
     \Log::info($teamLeader);
 
     if ($teamLeader) {
+        if ($teamLeader->status === 'confirmed') {
+            if ($user->has_paid_package === 'TEAM_LEADER') {
+                return redirect()->route('team-leader.dashboard');
+            }
+            return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
+        }
+
         if ($teamLeader->status === 'pending') {
             // Logout the user and redirect to the "leader pending" page
 //                Auth::logout();
@@ -183,6 +211,10 @@ public function g_upgrade(Request $request){
 //                Auth::logout();
             return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
 
+        }
+
+        if ($teamLeader->status === 'suspended') {
+            return redirect()->route('team.leader')->with('message', 'Your Team Leader account is suspended.');
         }
     }
 
@@ -261,7 +293,7 @@ public function g_upgrade(Request $request){
                             $user = User::find($userA->id);
                             $target = $this->dashboardRouteForUser($user);
                             $message = $target === 'user.dashboard'
-                                ? 'You have been activated Bifonex account, Enjoy unlimited earning on Bifonex'
+                                ? 'You have been activated Fonepo account, Enjoy unlimited earning on Fonepo'
                                 : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                             return redirect()->route($target)->with('message', $message);

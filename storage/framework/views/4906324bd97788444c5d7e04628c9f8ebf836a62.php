@@ -1,4 +1,4 @@
-@php
+<?php
 use App\Models\TeamLeader;
 use App\Models\Activations;
 $username = session('team_leader_Usen_Name');
@@ -16,13 +16,13 @@ $activation = null;
 if ($status === 'confirmed') {
     $activation = Activations::where('email', $email)->where('package', 'TEAM_LEADER')->first();
 }
-@endphp
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Status | {{ env('APP_NAME') }}</title>
+    <title>Application Status | <?php echo e(env('APP_NAME')); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -135,15 +135,15 @@ if ($status === 'confirmed') {
 
 <body>
     
-    {{-- Header / Navbar with Logout --}}
+    
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3 shadow-sm">
         <div class="container">
             <a class="navbar-brand font-weight-bold uppercase tracking-wider" href="#">
-                <i class="fas fa-users-cog text-info mr-1"></i> {{ env('APP_NAME') }} Team Leaders
+                <i class="fas fa-users-cog text-info mr-1"></i> <?php echo e(env('APP_NAME')); ?> Team Leaders
             </a>
             <div class="d-flex gap-2">
-                <form action="{{ route('team-leader.logout') }}" method="POST" class="m-0">
-                    @csrf
+                <form action="<?php echo e(route('team-leader.logout')); ?>" method="POST" class="m-0">
+                    <?php echo csrf_field(); ?>
                     <button type="submit" class="btn btn-outline-light btn-sm font-weight-bold" style="border-radius: 20px; padding: 6px 16px;">
                         <i class="fas fa-sign-out-alt mr-1"></i> Log Out
                     </button>
@@ -154,22 +154,23 @@ if ($status === 'confirmed') {
 
     <div class="container py-5">
         
-        {{-- Session Feedback Alerts --}}
-        @if(session('success'))
+        
+        <?php if(session('success')): ?>
             <div class="alert alert-success alert-dismissible fade show shadow-sm rounded-xl mb-4 p-3" role="alert">
-                <i class="fas fa-check-circle mr-2 text-success"></i> <strong>Success!</strong> {{ session('success') }}
+                <i class="fas fa-check-circle mr-2 text-success"></i> <strong>Success!</strong> <?php echo e(session('success')); ?>
+
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-        @endif
+        <?php endif; ?>
 
         <div class="row">
             <div class="col-lg-8 order-lg-1 order-2">
                 <div class="flex-container">
                     
-                    {{-- 1. Status Overview Card --}}
+                    
                     <div class="w-100 bg-white shadow-sm rounded-xl p-5 border border-light">
                         <div class="status-card text-center">
-                            @if($status === 'confirmed')
+                            <?php if($status === 'confirmed'): ?>
                                 <i class="fas fa-check-circle text-success status-icon" style="font-size: 4rem;"></i>
                                 <h2 class="mb-3 font-weight-bold text-success">Application Approved! 🎉</h2>
                                 <p class="lead text-muted">Congratulations! Your Team Leader application has been approved by the administration.</p>
@@ -177,28 +178,28 @@ if ($status === 'confirmed') {
                                     <i class="fas fa-info-circle me-2"></i>
                                     <strong>Ready to Activate:</strong> Copy your unique activation code below, click the green <strong>Activate Now</strong> button, and enter it to activate your Team Leader account!
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <i class="fas fa-clock status-icon"></i>
                                 <h2 class="mb-3 font-weight-bold text-dark">Application Under Review</h2>
                                 <p class="lead text-muted">Thank you for applying to become a Team Leader!</p>
                                 
-                                @if(empty($whatsapp) || empty($instagram))
+                                <?php if(empty($whatsapp) || empty($instagram)): ?>
                                     <div class="alert alert-warning mt-4 text-start" style="border-radius: 10px;">
                                         <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
                                         <strong>Application Incomplete:</strong> To help us expedite your review, please complete your application by adding your active WhatsApp Group Link and Telegram Group Link in the section below.
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <div class="alert alert-success mt-4 text-start" style="border-radius: 10px;">
                                         <i class="fas fa-check-circle me-2 text-success"></i>
                                         <strong>Application Complete!</strong> Your WhatsApp and Telegram group links are loaded. Your profile is currently placed in our active administrator review queue.
                                     </div>
-                                @endif
-                            @endif
+                                <?php endif; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
 
-                    {{-- 2. Activation Code & Tasks (Only for Confirmed Leaders) --}}
-                    @if($status === 'confirmed' && $activation)
+                    
+                    <?php if($status === 'confirmed' && $activation): ?>
                         <div class="w-100 bg-white shadow-sm rounded-xl p-4 border border-light">
                             <div class="claim-details mt-2 text-center">
                                 <h4 class="mb-3 font-weight-bold text-dark"><i class="fas fa-key text-warning me-2"></i>Your Unique Activation Code</h4>
@@ -206,7 +207,7 @@ if ($status === 'confirmed') {
                                 
                                 <div id="alertPlaceholder"></div>
                                 <div class="activation-code position-relative mb-4" style="max-width: 400px; margin: 0 auto;">
-                                    <input type="text" id="activationCode" class="form-control text-center font-bold" value="{{ $activation->code }}" readonly style="font-family: monospace; font-size: 1.3rem; padding-right: 80px; letter-spacing: 2px;">
+                                    <input type="text" id="activationCode" class="form-control text-center font-bold" value="<?php echo e($activation->code); ?>" readonly style="font-family: monospace; font-size: 1.3rem; padding-right: 80px; letter-spacing: 2px;">
                                     <button class="btn btn-link position-absolute" style="right: 40px; top: 50%; transform: translateY(-50%);" onclick="togglePassword()">
                                         <i class="fas fa-eye text-secondary" id="toggleIcon"></i>
                                     </button>
@@ -215,7 +216,7 @@ if ($status === 'confirmed') {
                                     </button>
                                 </div>
 
-                                {{-- Assigned Tasks & Reward Info --}}
+                                
                                 <div class="p-4 rounded-xl border mb-4 text-start" style="background-color: #f8fafc; border-color: #e2e8f0;">
                                     <h5 class="font-weight-bold text-dark border-bottom pb-2 mb-3">
                                         <i class="fas fa-list-check text-indigo-600 me-2"></i>Your Assigned Leadership Plan
@@ -223,19 +224,19 @@ if ($status === 'confirmed') {
                                     <div class="row text-sm mb-3">
                                         <div class="col-6">
                                             <span class="text-muted d-block">Timeline Duration:</span>
-                                            <strong class="text-dark" style="font-size: 1.05rem;">{{ (int)$activation->period }} Days</strong>
+                                            <strong class="text-dark" style="font-size: 1.05rem;"><?php echo e((int)$activation->period); ?> Days</strong>
                                         </div>
                                         <div class="col-6">
                                             <span class="text-muted d-block">Token Reward:</span>
-                                            <strong class="text-success" style="font-size: 1.05rem;">{{ number_format($activation->token, 0) }} Tokens</strong>
+                                            <strong class="text-success" style="font-size: 1.05rem;"><?php echo e(number_format($activation->token, 0)); ?> Tokens</strong>
                                         </div>
                                     </div>
                                     <div class="text-sm">
                                         <span class="text-muted d-block mb-1.5 font-bold">Written Tasks To Complete:</span>
-                                        <div class="p-3 bg-white rounded border text-slate-700" style="font-family: inherit; white-space: pre-line; border-color: #e2e8f0; line-height: 1.5;">{{ $activation->task }}</div>
+                                        <div class="p-3 bg-white rounded border text-slate-700" style="font-family: inherit; white-space: pre-line; border-color: #e2e8f0; line-height: 1.5;"><?php echo e($activation->task); ?></div>
                                     </div>
                                     <small class="text-muted d-block mt-3" style="font-size: 0.78rem; line-height: 1.4;">
-                                        <i class="fas fa-info-circle text-info mr-1"></i> Note: These tokens will be credited as locked tokens during your {{ (int)$activation->period }} days timeline, and automatically release to your Available Token balance upon completion.
+                                        <i class="fas fa-info-circle text-info mr-1"></i> Note: These tokens will be credited as locked tokens during your <?php echo e((int)$activation->period); ?> days timeline, and automatically release to your Available Token balance upon completion.
                                     </small>
                                 </div>
 
@@ -289,25 +290,25 @@ if ($status === 'confirmed') {
                                 }
                             </script>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    {{-- 3. Social Links Form (COMPLETE APPLICATION) --}}
-                    @if($status === 'pending')
+                    
+                    <?php if($status === 'pending'): ?>
                         <div class="w-100 bg-white shadow-sm rounded-xl p-4 border border-light">
                             <h4 class="mb-3 font-weight-bold text-slate-800 border-bottom pb-2">
                                 <i class="fas fa-id-card-clip text-primary me-2"></i>Complete Your Application
                             </h4>
                             <p class="text-muted text-sm">Please provide your active WhatsApp Group Link and Telegram Group Link. Administrators will check these before making a final decision.</p>
                             
-                            <form action="{{ route('team-leader.complete') }}" method="POST" class="mt-3">
-                                @csrf
-                                <input type="hidden" name="username" value="{{ $username }}">
+                            <form action="<?php echo e(route('team-leader.complete')); ?>" method="POST" class="mt-3">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="username" value="<?php echo e($username); ?>">
                                 
                                 <div class="mb-3">
                                     <label class="form-label font-weight-bold text-slate-700">WhatsApp Group Link <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fab fa-whatsapp text-success"></i></span>
-                                        <input type="text" name="whatsapp" required value="{{ old('whatsapp', $whatsapp) }}" class="form-control" placeholder="e.g. https://chat.whatsapp.com/...">
+                                        <input type="text" name="whatsapp" required value="<?php echo e(old('whatsapp', $whatsapp)); ?>" class="form-control" placeholder="e.g. https://chat.whatsapp.com/...">
                                     </div>
                                     <small class="text-muted">Enter the direct invite URL to your WhatsApp group.</small>
                                 </div>
@@ -316,7 +317,7 @@ if ($status === 'confirmed') {
                                     <label class="form-label font-weight-bold text-slate-700">Telegram Group Link <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fab fa-telegram text-primary"></i></span>
-                                        <input type="url" name="instagram" required value="{{ old('instagram', $instagram) }}" class="form-control" placeholder="e.g. https://t.me/your_group">
+                                        <input type="url" name="instagram" required value="<?php echo e(old('instagram', $instagram)); ?>" class="form-control" placeholder="e.g. https://t.me/your_group">
                                     </div>
                                     <small class="text-muted">Direct invite link to your Telegram channel or group.</small>
                                 </div>
@@ -326,9 +327,9 @@ if ($status === 'confirmed') {
                                 </button>
                             </form>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    {{-- 4. Application Progress Timeline --}}
+                    
                     <div class="w-100 bg-white shadow-sm rounded-xl p-4 border border-light">
                         <h4 class="mb-3 font-weight-bold text-slate-800 border-bottom pb-2">
                             <i class="fas fa-tasks text-primary me-2"></i>Application Progress
@@ -340,24 +341,24 @@ if ($status === 'confirmed') {
                             </div>
                             <div class="progress-step active">
                                 <h5 class="font-weight-bold">
-                                    @if($status === 'confirmed')
+                                    <?php if($status === 'confirmed'): ?>
                                         <i class="fas fa-check-circle text-success me-2"></i>
-                                    @elseif(!empty($whatsapp) && !empty($instagram))
+                                    <?php elseif(!empty($whatsapp) && !empty($instagram)): ?>
                                         <i class="fas fa-spinner fa-spin text-info me-2"></i>
-                                    @else
+                                    <?php else: ?>
                                         <i class="fas fa-exclamation-circle text-warning me-2"></i>
-                                    @endif
+                                    <?php endif; ?>
                                     Under Review
                                 </h5>
                                 <p class="text-muted text-sm">Our team is reviewing your details and social media pages.</p>
                             </div>
-                            <div class="progress-step {{ $status === 'confirmed' ? 'active' : '' }}">
+                            <div class="progress-step <?php echo e($status === 'confirmed' ? 'active' : ''); ?>">
                                 <h5 class="font-weight-bold">
-                                    @if($status === 'confirmed')
+                                    <?php if($status === 'confirmed'): ?>
                                         <i class="fas fa-trophy text-warning me-2"></i>Approved
-                                    @else
+                                    <?php else: ?>
                                         <i class="fas fa-flag-checkered me-2"></i>Final Decision
-                                    @endif
+                                    <?php endif; ?>
                                 </h5>
                                 <p class="text-muted text-sm">Your profile status will be updated immediately upon review.</p>
                             </div>
@@ -367,45 +368,45 @@ if ($status === 'confirmed') {
                 </div>
             </div>
             
-            {{-- Right Column (Profile & Support) --}}
+            
             <div class="col-lg-4 order-lg-2 order-1 mb-4 mb-lg-0">
                 
-                {{-- Profile Details --}}
+                
                 <div class="profile-card shadow-sm mb-4">
                     <div class="text-center">
                         <i class="fas fa-user-circle status-icon"></i>
                         <h3 class="mb-4 font-weight-bold text-dark">Profile Details</h3>
                         <div class="profile-info text-start">
-                            <p class="mb-0 text-sm"><i class="fas fa-user text-primary me-2" style="width: 16px;"></i><strong>Names:</strong> {{ $name }}</p>
+                            <p class="mb-0 text-sm"><i class="fas fa-user text-primary me-2" style="width: 16px;"></i><strong>Names:</strong> <?php echo e($name); ?></p>
                         </div>
                         <div class="profile-info text-start">
-                            <p class="mb-0 text-sm"><i class="fas fa-envelope text-primary me-2" style="width: 16px;"></i><strong>Email:</strong> {{ $email }}</p>
+                            <p class="mb-0 text-sm"><i class="fas fa-envelope text-primary me-2" style="width: 16px;"></i><strong>Email:</strong> <?php echo e($email); ?></p>
                         </div>
                         <div class="profile-info text-start">
-                            <p class="mb-0 text-sm"><i class="fas fa-id-badge text-primary me-2" style="width: 16px;"></i><strong>Username:</strong> {{ $username }}</p>
+                            <p class="mb-0 text-sm"><i class="fas fa-id-badge text-primary me-2" style="width: 16px;"></i><strong>Username:</strong> <?php echo e($username); ?></p>
                         </div>
                         <div class="profile-info text-start">
-                            <p class="mb-0 text-sm"><i class="fas fa-phone text-primary me-2" style="width: 16px;"></i><strong>Phone:</strong> {{ $phone }}</p>
+                            <p class="mb-0 text-sm"><i class="fas fa-phone text-primary me-2" style="width: 16px;"></i><strong>Phone:</strong> <?php echo e($phone); ?></p>
                         </div>
                         <div class="profile-info text-start">
-                            <p class="mb-0 text-sm"><i class="fas fa-globe text-primary me-2" style="width: 16px;"></i><strong>Country:</strong> {{ $country }}</p>
+                            <p class="mb-0 text-sm"><i class="fas fa-globe text-primary me-2" style="width: 16px;"></i><strong>Country:</strong> <?php echo e($country); ?></p>
                         </div>
                     </div>
                 </div>
 
-                {{-- Support & Info Cards --}}
+                
                 <div class="w-100">
                     <div class="help-card p-4 shadow-sm mb-4 border border-light">
                         <h5 class="text-primary font-weight-bold"><i class="fas fa-info-circle me-2"></i>What's Next?</h5>
                         <ul class="mt-3 list-unstyled text-sm text-slate-600">
-                            @if($status === 'confirmed')
+                            <?php if($status === 'confirmed'): ?>
                                 <li class="mb-2.5"><i class="fas fa-check text-success me-2"></i>Copy your custom code and activate your package now!</li>
                                 <li class="mb-2.5"><i class="fas fa-check text-success me-2"></i>You earn referral commission bonuses on all direct recruit purchases.</li>
-                            @else
+                            <?php else: ?>
                                 <li class="mb-2.5"><i class="fas fa-check text-success me-2"></i>Application auditing takes 1-2 business days.</li>
                                 <li class="mb-2.5"><i class="fas fa-check text-success me-2"></i>You can log in anytime to check your live approval status.</li>
                                 <li class="mb-2.5"><i class="fas fa-check text-success me-2"></i>Double-check your WhatsApp and Telegram group links are valid!</li>
-                            @endif
+                            <?php endif; ?>
                         </ul>
                     </div>
                     
@@ -425,3 +426,4 @@ if ($status === 'confirmed') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/team-leader/pending-approval.blade.php ENDPATH**/ ?>

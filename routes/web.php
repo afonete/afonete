@@ -381,6 +381,22 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post('admin/withdrawal/approve', [AdminController::class, 'approveWithdrawal'])->name('admin.withdrawal.approve');
     Route::post('admin/withdrawal/reject', [AdminController::class, 'rejectWithdrawal'])->name('admin.withdrawal.reject');
     Route::get('admin/withdrawal-history', [AdminController::class, 'withdrawalHistory'])->name('admin.withdrawal-history');
+    
+    // ── TEAM LEADERS MANAGEMENT (admin) ──
+    Route::get('admin/team-leaders', [AdminController::class, 'teamLeadersList'])->name('admin.team-leaders.index');
+    Route::post('admin/team-leaders/{id}/approve', [AdminController::class, 'approveTeamLeader'])->name('admin.team-leaders.approve');
+    Route::post('admin/team-leaders/{id}/reject', [AdminController::class, 'rejectTeamLeader'])->name('admin.team-leaders.reject');
+    Route::post('admin/team-leaders/{id}/suspend', [AdminController::class, 'suspendTeamLeader'])->name('admin.team-leaders.suspend');
+    Route::post('admin/team-leaders/{id}/reactivate', [AdminController::class, 'reactivateTeamLeader'])->name('admin.team-leaders.reactivate');
+    
+    // Auditing Routes
+    Route::post('admin/team-leaders/events/{id}/approve', [AdminController::class, 'approveEventPlan'])->name('admin.team-leaders.events.approve');
+    Route::post('admin/team-leaders/events/{id}/reject', [AdminController::class, 'rejectEventPlan'])->name('admin.team-leaders.events.reject');
+    Route::post('admin/team-leaders/proofs/{id}/approve', [AdminController::class, 'approveEventProof'])->name('admin.team-leaders.proofs.approve');
+    Route::post('admin/team-leaders/proofs/{id}/reject', [AdminController::class, 'rejectEventProof'])->name('admin.team-leaders.proofs.reject');
+    Route::post('admin/team-leaders/socials/{id}/approve', [AdminController::class, 'approveSocialProfile'])->name('admin.team-leaders.socials.approve');
+    Route::post('admin/team-leaders/socials/{id}/reject', [AdminController::class, 'rejectSocialProfile'])->name('admin.team-leaders.socials.reject');
+
     Route::get('admin/referral-bonuses', [AdminController::class, 'referralBonuses'])->name('admin.referral-bonuses');
     Route::get('admin/referral-bonuses/{userId}', [AdminController::class, 'referralBonusDetail'])->name('admin.referral-bonus-detail');
     Route::get('admin/token-withdrawals', [AdminController::class, 'tokenWithdrawals'])->name('admin.token-withdrawals');
@@ -521,27 +537,31 @@ Route::get('deactivate', [News::class, 'deactivate']);
 
 Route::get('project', [HomeController::class, 'project'])->name('project');
 Route::get('team-leader', [TeamLeaderController::class, 'index'])->name('team.leader');
+Route::get('team-leader/login', [TeamLeaderController::class, 'showLoginForm'])->name('team-leader.login');
+Route::post('team-leader/login', [TeamLeaderController::class, 'loginLeader'])->name('team-leader.login.post');
+Route::post('team-leader/logout', [TeamLeaderController::class, 'logoutLeader'])->name('team-leader.logout');
 Route::post('/team-leader/apply', [TeamLeaderController::class, 'apply'])->name('team-leader.apply');
+Route::post('/team-leader/complete-application', [TeamLeaderController::class, 'completeApplication'])->name('team-leader.complete');
 
-    // Protected Routes with Team Leader Middleware
-    Route::middleware('team-leader')->group(function () {
-// pending request
-Route::get('team-leader/pending-approval', function () {
-    return view('team-leader.pending-approval');
-})->name('team-leader.pending-approval');
+// Protected Routes with Team Leader Middleware
+Route::middleware('team-leader')->group(function () {
+    // pending request
+    Route::get('team-leader/pending-approval', function () {
+        return view('team-leader.pending-approval');
+    })->name('team-leader.pending-approval');
 
-// rejected approval
-        Route::get('team-leader/rejected', function () {
-            return view('team-leader.rejected');
-        })->name('team-leader.rejected');
-        
-        // confirmed approval
-        Route::get('team-leader/dashboard', function () {
-            return view('team-leader.dashboard');
-        })->name('team-leader.dashboard');
+    // rejected approval
+    Route::get('team-leader/rejected', function () {
+        return view('team-leader.rejected');
+    })->name('team-leader.rejected');
 
-        
-    });
+    // confirmed approval
+    Route::get('team-leader/dashboard', [TeamLeaderController::class, 'dashboard'])->name('team-leader.dashboard');
+    Route::post('team-leader/events', [TeamLeaderController::class, 'storeEvent'])->name('team-leader.events.store');
+    Route::post('team-leader/events/{id}/proof', [TeamLeaderController::class, 'submitEventProof'])->name('team-leader.events.proof');
+    Route::post('team-leader/socials', [TeamLeaderController::class, 'storeSocial'])->name('team-leader.socials.store');
+          
+});
 
 
 

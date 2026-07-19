@@ -28,6 +28,7 @@
             <a href="{{route('team.leader')}}" class="block px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white ">LEADER</a>
             <a href="/home/ambassador" class="block px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white ">AMBASSADOR</a>
             <a href="/home/bestreferral" class="block px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white ">BEST REFERRAL</a>
+            <a href="{{ route('team-leader.login') }}" class="bg-white hover:bg-slate-100 text-blue-800 font-bold px-4 py-2 rounded-full text-sm" style="text-decoration: none;">Leader Login</a>
             </div>
 
             <!-- Mobile menu button -->
@@ -43,6 +44,7 @@
             <a href="/" class="block py-2 px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white ">HOME</a>
             <a href="/about" class="block py-2 px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white ">ABOUT</a>
             <a href="/contact" class="block py-2 px-4 text-white text-lg font-medium hover:border-b-2 hover:border-white">CONTACT</a>
+            <a href="{{ route('team-leader.login') }}" class="block py-2 px-4 text-yellow-300 text-lg font-bold">LEADER LOGIN</a>
         </div>
     </div>
 </nav>
