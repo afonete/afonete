@@ -1,11 +1,44 @@
 <div class="wrapper">
     <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- AGGRESSIVE FIX FOR SIDEBAR OVERLAP -->
     <style>
-        /* ══════════════════════════════════════════════════════════
-           DESIGN SYSTEM — 8px grid, Inter font, 3-tier shadows
-           ══════════════════════════════════════════════════════════ */
+        /* Force the content to the right of the sidebar */
+        body .content-wrapper,
+        body .wrapper > .content-wrapper {
+            margin-left: 260px !important;
+            padding-top: 70px !important;
+            min-height: 100vh;
+            padding-right: 20px;
+        }
+        
+        /* Mobile fix */
+        @media (max-width: 991.98px) {
+            body .content-wrapper {
+                margin-left: 0 !important;
+            }
+        }
+        
+        .tl-dashboard {
+            padding: 20px;
+        }
+        
+        /* Make sure sidebar doesn't bleed */
+        .main-sidebar {
+            z-index: 1030 !important;
+        }
+        
+        /* Extra safety for this specific page */
+        .tl-dashboard {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+
+    <style>
         :root {
             --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
             --space-5: 20px; --space-6: 24px; --space-8: 32px;
@@ -13,285 +46,739 @@
             --shadow-1: 0 1px 2px rgba(0,0,0,.05);
             --shadow-2: 0 2px 8px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
             --shadow-3: 0 8px 24px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
-            --color-bg: #f3f4f6;
-            --color-surface: #ffffff;
-            --color-text: #111827;
-            --color-text-secondary: #6b7280;
-            --color-accent: #ef4444;
-            --color-primary: #3b82f6;
-            --color-success: #10b981;
-            --color-warning: #f59e0b;
         }
-        .all-page *{box-sizing:border-box;margin:0;padding:0}
-        .all-page{font-family:'Inter',system-ui,sans-serif;background:var(--color-bg);color:var(--color-text);line-height:1.5;-webkit-font-smoothing:antialiased}
 
-        /* ── HEADER ─ */
-        .all-header{background:linear-gradient(135deg,#64748b,#94a3b8);padding:var(--space-5) var(--space-6);position:relative}
-        .all-header h1{color:var(--color-accent);font-size:clamp(1.4rem,3vw,2.4rem);font-weight:900;letter-spacing:1.5px;text-shadow:0 2px 4px rgba(0,0,0,.2)}
+        .tl-dashboard {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            line-height: 1.5;
+        }
 
-        /* ── PAGE GRID: main + sidebar ── */
-        .page-grid{display:grid;grid-template-columns:1fr 150px;gap:var(--space-3);padding:var(--space-3);align-items:start}
+        .tl-header {
+            background: linear-gradient(135deg, #0f172a, #1e2937);
+            color: white;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
 
-        /* ── CONTENT AREA: stacks rows ── */
-        .content-area{display:flex;flex-direction:column;gap:var(--space-3)}
+        .tl-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #f87171;
+            margin: 0;
+        }
 
-        /* ── ROW LAYOUTS ── */
-        .row{display:grid;gap:var(--space-3)}
-        .row-1{grid-template-columns:minmax(200px,1fr) minmax(220px,1.1fr) minmax(320px,2fr)}
-        .row-2{grid-template-columns:minmax(280px,2fr) minmax(300px,3fr)}
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
 
-        /* ── CARD BASE ── */
-        .card{background:var(--color-surface);border-radius:var(--radius-md);box-shadow:var(--shadow-2);overflow:hidden;display:flex;flex-direction:column}
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
 
-        /* ── CARD HEADER ── */
-        .card-head{padding:var(--space-3) var(--space-4);border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:var(--space-2)}
-        .card-head h3{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-secondary)}
-        .card-head .icon{width:28px;height:28px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.75rem}
-        .card-body{padding:var(--space-4);flex:1;display:flex;flex-direction:column;gap:var(--space-3)}
+        .card-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f1e7ff;
+            background: #faf5ff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #581c87;
+        }
 
-        /* ═══ SECTION 1: Status & Countdown ═══ */
-        .countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-2)}
-        .cd-cell{background:linear-gradient(145deg,#1e293b,#0f172a);color:#fff;text-align:center;padding:var(--space-3) var(--space-2);border-radius:var(--radius-sm)}
-        .cd-cell .n{font-size:1.4rem;font-weight:900;line-height:1;display:block}
-        .cd-cell .l{font-size:.5rem;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin-top:var(--space-1);display:block}
-        .badges{display:flex;gap:var(--space-2);flex-wrap:wrap}
-        .badge-pill{padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-        .badge-tm{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
-        .badge-fc{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
-        .credit-box{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;padding:var(--space-4);border-radius:var(--radius-sm);font-size:.72rem}
-        .credit-box h4{font-size:.8rem;color:#fbbf24;font-weight:700;margin-bottom:var(--space-2);display:flex;align-items:center;gap:var(--space-2)}
-        .credit-box .row-stat{display:flex;justify-content:space-between;padding:var(--space-1) 0;border-bottom:1px solid rgba(255,255,255,.08)}
-        .credit-box .row-stat:last-child{border:none}
-        .credit-box .val{font-weight:700;color:#a5b4fc}
-        .zoom-cta{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);background:#0f172a;border-radius:var(--radius-sm);border:2px solid #dc2626;cursor:pointer;transition:all .2s}
-        .zoom-cta:hover{border-color:#ef4444;box-shadow:0 0 16px rgba(220,38,38,.2)}
-        .zoom-cta i{color:#dc2626;font-size:1.2rem}
-        .zoom-cta .t{color:#22c55e;font-weight:800;font-size:.7rem}
-        .zoom-cta .s{color:#94a3b8;font-size:.6rem}
+        .countdown-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
 
-        /* ═══ SECTION 2: Tasks & Analytics ═══ */
-        .task-block{background:linear-gradient(145deg,#92400e,#78350f);color:#fff;padding:var(--space-4);border-radius:var(--radius-sm);font-size:.7rem;line-height:1.7;flex:1;overflow-y:auto;max-height:200px}
-        .task-block::-webkit-scrollbar{width:3px}
-        .task-block::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:3px}
-        .task-block h4{color:#fcd34d;font-size:.8rem;font-weight:700;margin-bottom:var(--space-2)}
-        .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);flex:1}
-        .chart-cell{background:#f9fafb;border-radius:var(--radius-sm);padding:var(--space-2);border:1px solid #e5e7eb;min-height:120px}
+        .countdown-box {
+            background: #1e2937;
+            color: white;
+            text-align: center;
+            padding: 10px 6px;
+            border-radius: 8px;
+        }
 
-        /* ═══ SECTION 3: Events ═══ */
-        .events-layout{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);flex:1}
-        .history-panel{background:#f9fafb;border-radius:var(--radius-sm);border:1px solid #e5e7eb;padding:var(--space-3);overflow-y:auto;max-height:280px}
-        .history-panel h4{font-size:.8rem;font-weight:800;text-align:center;color:var(--color-text);padding-bottom:var(--space-2);border-bottom:2px solid var(--color-accent);margin-bottom:var(--space-2)}
-        .form-panel{background:linear-gradient(160deg,#000033,#0c0c52);border-radius:var(--radius-sm);padding:var(--space-3);color:#fff}
-        .form-panel h4{font-size:.8rem;font-weight:800;text-align:center;color:var(--color-accent);padding-bottom:var(--space-2);border-bottom:2px solid var(--color-accent);margin-bottom:var(--space-2)}
-        .form-panel label{font-size:.65rem;font-weight:600;display:block;margin:var(--space-2) 0 var(--space-1);color:#cbd5e1}
-        .form-panel label .r{color:#fca5a5;font-weight:400}
-        .form-panel label .o{color:#64748b;font-weight:400}
-        .form-panel input,.form-panel textarea{width:100%;padding:var(--space-2) var(--space-3);border:1px solid rgba(255,255,255,.12);border-radius:6px;font-size:.72rem;background:rgba(255,255,255,.95);color:#1f2937}
-        .form-panel input:focus,.form-panel textarea:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-        .form-panel textarea{height:56px;resize:vertical}
-        .form-submit{width:100%;padding:var(--space-2) var(--space-3);background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:.75rem;cursor:pointer;margin-top:var(--space-3);transition:all .15s}
-        .form-submit:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(14,165,233,.3)}
-        .carousel-strip{display:flex;gap:var(--space-2);overflow-x:auto;padding:var(--space-1) 0}
-        .carousel-strip::-webkit-scrollbar{height:3px}
-        .carousel-strip::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
-        .carousel-strip img{height:80px;width:120px;object-fit:cover;border-radius:var(--radius-sm);border:2px solid #fff;flex-shrink:0;box-shadow:var(--shadow-1)}
-        .toggle-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
-        .toggle-btn{padding:var(--space-4) var(--space-3);text-align:center;border-radius:var(--radius-sm);font-weight:800;font-size:1rem;color:var(--color-accent);cursor:pointer;border:3px solid transparent;transition:all .2s;background:linear-gradient(145deg,#475569,#334155)}
-        .toggle-btn.active{border-color:var(--color-accent);background:linear-gradient(145deg,#334155,#1e293b);box-shadow:0 0 16px rgba(239,68,68,.2)}
-        .toggle-btn:hover{transform:translateY(-1px)}
-        .eh-item{padding:var(--space-2) 0;border-bottom:1px solid #f3f4f6;font-size:.7rem}
-        .eh-item:last-child{border:none}
-        .eh-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.55rem;font-weight:700;text-transform:uppercase}
-        .eh-badge.pending{background:#fef3c7;color:#92400e}
-        .eh-badge.approved{background:#d1fae5;color:#065f46}
-        .eh-badge.rejected{background:#fee2e2;color:#991b1b}
-        .eh-empty{text-align:center;color:#9ca3af;padding:var(--space-6) var(--space-2);font-size:.75rem}
+        .countdown-box .number {
+            font-size: 1.6rem;
+            font-weight: 900;
+            line-height: 1;
+        }
 
-        /* ═══ SECTION 4: Ambassador ═══ */
-        .amb-hero{background:linear-gradient(135deg,#0f0a2e,#1a1650);color:#fff;text-align:center;padding:var(--space-4);border-radius:var(--radius-sm);font-weight:900;font-size:1rem;letter-spacing:.5px;text-transform:uppercase}
-        .amb-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2);flex:1}
-        .amb-item{background:linear-gradient(145deg,#2563eb,#1d4ed8);color:#fff;border-radius:var(--radius-sm);padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-2);transition:all .2s}
-        .amb-item:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,99,235,.3)}
-        .amb-item h5{font-size:.7rem;font-weight:800;text-transform:uppercase}
-        .amb-item p{font-size:.55rem;line-height:1.4;opacity:.8;flex:1}
-        .amb-item button{background:rgba(0,0,0,.25);border:none;color:#fff;padding:var(--space-2);border-radius:6px;font-size:.6rem;font-weight:700;cursor:pointer;transition:background .15s}
-        .amb-item button:hover{background:rgba(0,0,0,.4)}
+        .countdown-box .label {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
 
-        /* ═══ SECTION 5: Videos ═══ */
-        .video-hero{background:#0f172a;border-radius:var(--radius-sm);overflow:hidden}
-        .video-hero iframe,.video-hero video{width:100%;height:260px;border:none;display:block}
-        .video-strip{display:flex;gap:var(--space-2);overflow-x:auto;padding:var(--space-1) 0}
-        .video-strip::-webkit-scrollbar{height:3px}
-        .video-strip::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
-        .v-thumb{width:140px;height:78px;border-radius:6px;overflow:hidden;flex-shrink:0;cursor:pointer;border:2px solid transparent;transition:all .15s;background:#1e293b}
-        .v-thumb.active{border-color:var(--color-primary);box-shadow:0 0 10px rgba(59,130,246,.3)}
-        .v-thumb:hover{transform:scale(1.03)}
-        .v-thumb img{width:100%;height:100%;object-fit:cover}
+        .badges {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+        }
 
-        /* ═══ RIGHT SIDEBAR ═══ */
-        .sidebar-ads{display:flex;flex-direction:column;gap:var(--space-2)}
-        .ad-slot{background:linear-gradient(145deg,#475569,#334155);border-radius:var(--radius-sm);flex:1;min-height:90px;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:all .2s}
-        .ad-slot:hover{transform:scale(1.02);box-shadow:var(--shadow-3)}
-        .ad-slot img{width:100%;height:100%;object-fit:cover}
-        .ad-slot .empty{color:rgba(255,255,255,.3);font-size:.65rem;font-weight:600}
+        .badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
 
-        /* ═══ MODAL ═══ */
-        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-        .modal-overlay.open{display:flex}
-        .modal-box{background:#fff;border-radius:var(--radius-lg);padding:var(--space-6);width:380px;max-width:92vw;box-shadow:0 24px 48px rgba(0,0,0,.2);animation:popIn .2s ease}
-        @keyframes  popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-        .modal-box h4{font-size:1rem;font-weight:800;margin-bottom:var(--space-4)}
-        .modal-box label{font-size:.72rem;font-weight:700;display:block;margin:var(--space-3) 0 var(--space-1);color:#374151}
-        .modal-box select,.modal-box input{width:100%;padding:var(--space-2) var(--space-3);border:2px solid #e5e7eb;border-radius:var(--radius-sm);font-size:.82rem}
-        .modal-box select:focus,.modal-box input:focus{outline:none;border-color:var(--color-primary)}
-        .modal-actions{display:flex;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-5)}
-        .modal-actions button{padding:var(--space-2) var(--space-4);border:none;border-radius:var(--radius-sm);font-weight:700;font-size:.8rem;cursor:pointer}
-        .modal-actions .cancel{background:#f3f4f6;color:#374151}
-        .modal-actions .confirm{background:var(--color-primary);color:#fff}
+        .badge-tm { background: #fee2e2; color: #b91c1c; }
+        .badge-fc { background: #dcfce7; color: #166534; }
 
-        /* ═══ RESPONSIVE ═══ */
-        @media(max-width:1200px){.row-1{grid-template-columns:1fr 1fr}.card-sec3{grid-column:1/-1}}
-        @media(max-width:992px){.page-grid{grid-template-columns:1fr}.sidebar-ads{flex-direction:row;flex-wrap:wrap}.ad-slot{min-height:70px;flex:1 1 calc(33% - 8px)}.row-1,.row-2{grid-template-columns:1fr}.amb-cards{grid-template-columns:repeat(2,1fr)}}
-        @media(max-width:768px){.events-layout{grid-template-columns:1fr}.history-panel{max-height:160px}.toggle-row{grid-template-columns:1fr}.amb-cards{grid-template-columns:1fr}.sidebar-ads{flex-direction:column}.ad-slot{min-height:60px}.video-hero iframe,.video-hero video{height:180px}.charts-grid{grid-template-columns:1fr}.countdown{grid-template-columns:repeat(4,1fr)}}
-        @media(max-width:480px){.all-header h1{font-size:1.1rem}.badges{flex-direction:column}.cd-cell .n{font-size:1.1rem}}
+        .zoom-live {
+            background: #450a0a;
+            color: #f87171;
+            padding: 10px 14px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            border: 2px solid #f87171;
+        }
+
+        .rules-box {
+            background: #7f1d1d;
+            color: #fee2e2;
+            padding: 18px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .event-history {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        .report-form {
+            background: #0f172a;
+            color: white;
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .report-form label {
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 4px;
+            color: #94a3b8;
+        }
+
+        .report-form input, .report-form textarea, .report-form select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #1e2937;
+            color: white;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .amb-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .amb-card {
+            background: #1e40af;
+            color: white;
+            padding: 14px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .amb-card button {
+            margin-top: 8px;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .video-strip {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .v-thumb {
+            width: 110px;
+            height: 62px;
+            border-radius: 6px;
+            overflow: hidden;
+            flex-shrink: 0;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .v-thumb.active {
+            border-color: #3b82f6;
+        }
+
+        .toggle-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: #1e40af;
+            color: white;
+        }
+
+        .toggle-btn:not(.active) {
+            background: #e0e7ff;
+            color: #1e40af;
+        }
+
+        .sidebar-right {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-2);
+        }
+
+        .sidebar-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .sidebar-item.rewards { background: #581c87; color: white; }
+        .sidebar-item.checkin { background: #f59e0b; color: white; }
+        .sidebar-item.refer { background: #ea580c; color: white; }
     </style>
 
-    <div class="all-page">
-        <div class="all-header"><h1>Team apply dashboard</h1></div>
+    <!-- PROPER ADMINLTE WRAPPER -->
+    <div class="content-wrapper" style="margin-left: 260px !important; padding-top: 70px !important;">
+        <section class="content">
+            
+            <div class="tl-dashboard">
+                <!-- HEADER -->
+                <div class="tl-header">
+                    <h1>Team apply dashboard</h1>
+                </div>
 
-        <div class="page-grid">
-            <div class="content-area">
+                <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 180px; gap: 20px;">
 
+            <!-- MAIN CONTENT -->
+            <div>
+
+            <!-- TOP ROW: COUNTDOWN + RULES -->
+            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; margin-bottom: 24px;">
                 
-                <div class="row row-1">
-                    
-                    <div class="card">
-                        <div class="card-head"><div class="icon" style="background:#fef2f2;color:#dc2626"><i class="fas fa-clock"></i></div><h3>Duration & Status</h3></div>
-                        <div class="card-body">
-                            <div class="countdown">
-                                <div class="cd-cell"><span class="n" id="cd-d">0</span><span class="l">Days</span></div>
-                                <div class="cd-cell"><span class="n" id="cd-h">0</span><span class="l">Hours</span></div>
-                                <div class="cd-cell"><span class="n" id="cd-m">0</span><span class="l">Min</span></div>
-                                <div class="cd-cell"><span class="n" id="cd-s">0</span><span class="l">Sec</span></div>
-                            </div>
-                            <div class="badges">
-                                <span class="badge-pill badge-tm">TM Super Leader</span>
-                                <span class="badge-pill badge-fc">FC Leader</span>
-                            </div>
-                            <?php if($credit && $credit->credit_amount > 0): ?>
-                            <div class="credit-box">
-                                <h4><i class="fas fa-credit-card"></i> Credit Wallet</h4>
-                                <div class="row-stat"><span>Total</span><span class="val">$<?php echo e(number_format($credit->credit_amount,2)); ?></span></div>
-                                <div class="row-stat"><span>Remaining</span><span class="val">$<?php echo e(number_format($credit->remaining_credit,2)); ?></span></div>
-                                <div class="row-stat"><span>Cashout</span><span class="val">$<?php echo e(number_format($credit->cashout_amount,2)); ?></span></div>
-                                <div class="row-stat"><span>Status</span><span class="val" style="color:<?php echo e($credit->status==='active'?'#34d399':'#fbbf24'); ?>"><?php echo e(strtoupper($credit->status)); ?></span></div>
-                            </div>
+                <!-- Countdown + Badges -->
+                <div class="card">
+                    <div class="card-header">DURATION &amp; STATUS</div>
+                    <div style="padding: 18px;">
+                        <div class="countdown-grid">
+                            <div class="countdown-box"><div class="number" id="cd-d">57</div><div class="label">Days</div></div>
+                            <div class="countdown-box"><div class="number" id="cd-h">21</div><div class="label">Hours</div></div>
+                            <div class="countdown-box"><div class="number" id="cd-m">43</div><div class="label">Min</div></div>
+                            <div class="countdown-box"><div class="number" id="cd-s">52</div><div class="label">Sec</div></div>
+                        </div>
+
+                        <div class="badges">
+                            <?php
+                                $userLevel = $activation->package ?? ($teamLeader->leadership_level ?? 'TEAM_LEADER');
+                                $isSuperLeader = strtoupper($userLevel) === 'SUPER_LEADER';
+                            ?>
+
+                            <?php if($isSuperLeader): ?>
+                                <span class="badge badge-tm">TM SUPER LEADER</span>
+                            <?php else: ?>
+                                <span class="badge badge-fc">FC LEADER</span>
                             <?php endif; ?>
-                            <div class="zoom-cta">
-                                <i class="fas fa-video"></i>
-                                <div><div class="t">WE ARE LIVE NOW ON ZOOM</div><div class="s">CLICK HERE TO JOIN US</div></div>
+                        </div>
+
+                        <?php if($credit && $credit->credit_amount > 0): ?>
+                        <div style="background:#1e1b4b;color:white;padding:12px;border-radius:8px;font-size:0.8rem;margin-top:12px;">
+                            <div style="display:flex;justify-content:space-between;"><span>Total</span><strong>$<?php echo e(number_format($credit->credit_amount,2)); ?></strong></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Remaining</span><strong>$<?php echo e(number_format($credit->remaining_credit,2)); ?></strong></div>
+                            <div style="display:flex;justify-content:space-between;"><span>Cashout</span><strong>$<?php echo e(number_format($credit->cashout_amount,2)); ?></strong></div>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="zoom-live" onclick="window.location='https://zoom.us'">
+                            <i class="fas fa-video fa-lg"></i>
+                            <div>
+                                <div style="font-weight:800;color:#f87171;">WE ARE LIVE NOW ON ZOOM</div>
+                                <div style="font-size:0.7rem;color:#94a3b8;">CLICK HERE TO JOIN US</div>
                             </div>
                         </div>
-                    </div>
 
-                    
-                    <div class="card">
-                        <div class="card-head"><div class="icon" style="background:#fef3c7;color:#d97706"><i class="fas fa-tasks"></i></div><h3>Tasks & Analytics</h3></div>
-                        <div class="card-body">
-                            <div class="task-block">
-                                <h4><i class="fas fa-clipboard-list"></i> Assigned Tasks</h4>
-                                <?php if($tasks): ?><div style="white-space:pre-line"><?php echo e($tasks); ?></div><?php else: ?><p style="opacity:.6">No tasks assigned.</p><?php endif; ?>
+                        <!-- PITCH TASK RULES (Compliance) -->
+                        <div style="margin-top:16px;border:1px solid #fed7aa;border-radius:8px;background:#fff7ed;padding:14px;">
+                            <div style="font-weight:700;color:#c2410f;font-size:0.8rem;margin-bottom:6px;">
+                                <i class="fas fa-exclamation-triangle"></i> PITCH TASK RULES
                             </div>
-                            <div class="charts-grid">
-                                <div class="chart-cell"><canvas id="lineChart"></canvas></div>
-                                <div class="chart-cell"><canvas id="donutChart"></canvas></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card card-sec3">
-                        <div class="card-head"><div class="icon" style="background:#eff6ff;color:#2563eb"><i class="fas fa-calendar-alt"></i></div><h3>Events & Reports</h3></div>
-                        <div class="card-body">
-                            <div class="events-layout">
-                                <div class="history-panel">
-                                    <h4>My Event History</h4>
-                                    <div id="history-plan"><?php $__empty_1 = true; $__currentLoopData = $planEvents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><div class="eh-item"><strong><?php echo e($e->title); ?></strong> <span class="eh-badge <?php echo e($e->status); ?>"><?php echo e($e->status); ?></span></div><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><div class="eh-empty">No event plan history.</div><?php endif; ?></div>
-                                    <div id="history-zoom" style="display:none"><?php $__empty_1 = true; $__currentLoopData = $zoomEvents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><div class="eh-item"><strong><?php echo e($e->title); ?></strong> <span class="eh-badge <?php echo e($e->status); ?>"><?php echo e($e->status); ?></span></div><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><div class="eh-empty">No zoom history.</div><?php endif; ?></div>
-                                </div>
-                                <div class="form-panel">
-                                    <h4>Report Event</h4>
-                                    <form action="<?php echo e(route('team-leader.event-report')); ?>" method="POST" enctype="multipart/form-data">
-                                        <?php echo csrf_field(); ?><input type="hidden" name="event_type" id="form-type" value="plan">
-                                        <div id="fp"><label>Image 1 <span class="r">required</span></label><input type="file" name="event_image_1" accept="image/*" required id="ri1"><label>Image 2 <span class="o">optional</span></label><input type="file" name="event_image_2" accept="image/*"><label>Description <span class="r">required</span></label><textarea name="description" required id="rd"></textarea><label>Event done on <span class="r">required</span></label><input type="date" name="event_done_on" required id="rdt"><label>Hotel/Location <span class="o">optional</span></label><input type="text" name="hotel_location"></div>
-                                        <div id="fz" style="display:none"><label>Zoom Link <span class="r">required</span></label><input type="url" name="zoom_link" id="rz"><label>Country <span class="r">required</span></label><input type="text" name="country" id="rc"><label>Place <span class="r">required</span></label><input type="text" name="place" id="rp"><label>Location <span class="o">optional</span></label><input type="text" name="location"><label>Date <span class="r">required</span></label><input type="date" name="event_date" id="rdt2"></div>
-                                        <button type="submit" class="form-submit">Submit Report</button>
-                                    </form>
-                                </div>
-                            </div>
-                            <div class="carousel-strip" id="carousel"><?php $__currentLoopData = $eventImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $img): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><img src="<?php echo e(asset('storage/'.$img)); ?>" alt=""><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?> <?php if($eventImages->isEmpty()): ?><span style="color:#9ca3af;font-size:.7rem;padding:12px">No event photos yet.</span><?php endif; ?></div>
-                            <div class="toggle-row">
-                                <div class="toggle-btn active" id="tb-plan" onclick="toggle('plan')">Upload Event plan</div>
-                                <div class="toggle-btn" id="tb-zoom" onclick="toggle('zoom')">Upload zoom</div>
+                            <div style="font-size:0.78rem;color:#854d0e;line-height:1.45;">
+                                <strong>7.</strong> Validity period: You can claim coupons within 14 days of coupon issuance, and the coupons will be valid for 14 days after they're claimed.<br><br>
+                                <strong>8.</strong> Invitations from the same IP address or device will be deemed as self-invitations, which will subsequently lead to the user losing eligibility for both previously acquired and potential future rewards.
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ASSIGNED TASKS (from Admin) -->
+                <div class="card">
+                    <div class="card-header" style="background:#1e40af;color:white;">
+                        <i class="fas fa-tasks mr-2"></i> ASSIGNED TASKS
+                    </div>
+                    <div style="padding: 20px;">
+                        <?php if($tasks): ?>
+                            <div style="margin-bottom: 12px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="font-weight:700;color:#1e40af;">Your Tasks</span>
+                                    <span style="font-size:0.75rem;background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:999px;"><?php echo e(count(explode("\n", $tasks))); ?> tasks</span>
+                                </div>
+
+                                <!-- Interactive Task List -->
+                                <div id="task-list" style="display:flex;flex-direction:column;gap:10px;">
+                                    <?php $__currentLoopData = explode("\n", trim($tasks)); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php if(trim($task)): ?>
+                                        <div class="task-item" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border:1px solid #e0e7ff;border-radius:10px;">
+                                            <input type="checkbox" id="task-<?php echo e($index); ?>" 
+                                                   onchange="markTaskComplete(this, <?php echo e($index); ?>)"
+                                                   style="width:20px;height:20px;accent-color:#1e40af;cursor:pointer;">
+                                            <label for="task-<?php echo e($index); ?>" style="flex:1;cursor:pointer;font-size:0.92rem;line-height:1.4;">
+                                                <?php echo e(trim($task)); ?>
+
+                                            </label>
+                                            <span class="task-status" style="font-size:0.7rem;color:#64748b;white-space:nowrap;">Pending</span>
+                                        </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+
+                                <!-- Progress Bar -->
+                                <div style="margin-top:16px;">
+                                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px;">
+                                        <span style="color:#64748b;">Progress</span>
+                                        <span id="task-progress-text">0/<?php echo e(count(explode("\n", trim($tasks)))); ?></span>
+                                    </div>
+                                    <div style="background:#e0e7ff;height:8px;border-radius:999px;overflow:hidden;">
+                                        <div id="task-progress-bar" 
+                                             style="height:100%;width:0%;background:linear-gradient(to right,#1e40af,#3b82f6);transition:width 0.3s;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div style="padding:20px;text-align:center;color:#64748b;">
+                                <i class="fas fa-clipboard-list fa-2x mb-2" style="opacity:0.4;"></i><br>
+                                <strong>No tasks assigned yet.</strong><br>
+                                <small>Admin will assign tasks soon.</small>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EVENTS SECTION -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">EVENTS &amp; REPORTS</div>
+                <div style="padding: 20px;">
+                    <div class="events-grid">
+                        
+                        <!-- Event History -->
+                        <div>
+                            <div class="section-title">My Event History</div>
+                            <div class="event-history" style="min-height: 180px;">
+                                <?php $__empty_1 = true; $__currentLoopData = $planEvents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <div style="padding:6px 0;border-bottom:1px solid #e2e8f0;font-size:0.85rem;">
+                                        <strong><?php echo e($e->title); ?></strong> 
+                                        <span style="font-size:0.7rem;padding:1px 8px;border-radius:999px;background:#fef3c7;color:#854d0e;"><?php echo e($e->status); ?></span>
+                                    </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <div style="color:#64748b;text-align:center;padding:40px 0;">No event plan history.</div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Report Event Form -->
+                        <div>
+                            <div class="section-title">Report Event</div>
+                            <div class="report-form">
+                                <form action="<?php echo e(route('team-leader.event-report')); ?>" method="POST" enctype="multipart/form-data">
+                                    <?php echo csrf_field(); ?>
+                                    <input type="hidden" name="event_type" id="form-type" value="plan">
+
+                                    <div id="fp">
+                                        <label>Image 1 <span style="color:#f87171;">required</span></label>
+                                        <input type="file" name="event_image_1" accept="image/*" required>
+
+                                        <label>Image 2 <span style="color:#64748b;">optional</span></label>
+                                        <input type="file" name="event_image_2" accept="image/*">
+
+                                        <label>Description <span style="color:#f87171;">required</span></label>
+                                        <textarea name="description" required rows="2"></textarea>
+
+                                        <label>Event done on <span style="color:#f87171;">required</span></label>
+                                        <input type="date" name="event_done_on" required>
+
+                                        <label>Hotel/Location <span style="color:#64748b;">optional</span></label>
+                                        <input type="text" name="hotel_location">
+                                    </div>
+
+                                    <div id="fz" style="display:none;">
+                                        <label>Zoom Link <span style="color:#f87171;">required</span></label>
+                                        <input type="url" name="zoom_link">
+
+                                        <label>Country <span style="color:#f87171;">required</span></label>
+                                        <input type="text" name="country">
+
+                                        <label>Place <span style="color:#f87171;">required</span></label>
+                                        <input type="text" name="place">
+
+                                        <label>Date <span style="color:#f87171;">required</span></label>
+                                        <input type="date" name="event_date">
+                                    </div>
+
+                                    <button type="submit" style="width:100%;margin-top:12px;background:#3b82f6;color:white;padding:10px;border:none;border-radius:8px;font-weight:700;">
+                                        Submit Report
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Images Carousel -->
+                    <div style="margin-top:16px;">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <?php $__currentLoopData = $eventImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $img): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <img src="<?php echo e(asset('storage/'.$img)); ?>" style="width:90px;height:70px;object-fit:cover;border-radius:6px;border:2px solid #e2e8f0;">
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php if($eventImages->isEmpty()): ?>
+                                <span style="color:#94a3b8;font-size:0.8rem;">No event photos yet.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Buttons -->
+                    <div class="toggle-buttons">
+                        <div onclick="toggle('plan')" id="tb-plan" class="toggle-btn active">Upload Event plan</div>
+                        <div onclick="toggle('zoom')" id="tb-zoom" class="toggle-btn">Upload zoom</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AMBASSADOR + VIDEOS ROW -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                 
-                <div class="row row-2">
-                    
-                    <div class="card">
-                        <div class="card-head"><div class="icon" style="background:#f0f9ff;color:#0284c7"><i class="fas fa-users"></i></div><h3>Ambassador Program</h3></div>
-                        <div class="card-body">
-                            <div class="amb-hero">🌟 Become a Bifonex Ambassador</div>
-                            <div class="amb-cards">
-                                <?php $__currentLoopData = ['Instagram'=>'Promote Bifonex through posts and reels.','Twitter'=>'Promote through Retweets, Tweets, and Threads.','TikTok'=>'Promote Bifonex through short-form videos.','YouTube'=>'Promote through long-form video content.','Support'=>'Provide support via likes, comments and reposts.','Creator'=>'Create original content promoting Bifonex.']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p => $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="amb-item"><h5><?php echo e($p); ?></h5><p><?php echo e($d); ?></p><button onclick="openModal('<?php echo e($p); ?>')">Apply now</button></div>
+                <!-- Ambassador Program -->
+                <div class="card">
+                    <div class="card-header">AMBASSADOR PROGRAM</div>
+                    <div style="padding: 18px;">
+                        <div style="background:#1e3a8a;color:white;padding:10px 14px;border-radius:8px;text-align:center;margin-bottom:14px;font-weight:700;">
+                            BECOME A BIFONEX AMBASSADOR
+                        </div>
+
+                        <div class="amb-grid">
+                            <?php $__currentLoopData = ['Instagram','Twitter','TikTok','YouTube','Support','Creator']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $platform): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="amb-card">
+                                    <div style="font-weight:700;margin-bottom:4px;"><?php echo e($platform); ?></div>
+                                    <div style="font-size:0.7rem;opacity:0.85;">Promote Bifonex</div>
+                                    <button onclick="openModal('<?php echo e($platform); ?>')">Apply now</button>
+                                </div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Official Videos -->
+                <div class="card">
+                    <div class="card-header">OFFICIAL VIDEOS</div>
+                    <div style="padding: 18px;">
+                        <?php if($adminVideos->isNotEmpty()): ?>
+                            <?php $fv = $adminVideos->first(); ?>
+                            <div id="vMain" style="border-radius:8px;overflow:hidden;margin-bottom:12px;">
+                                <?php if($fv->video_type === 'youtube' && $fv->youtubeId()): ?>
+                                    <iframe width="100%" height="200" src="https://www.youtube.com/embed/<?php echo e($fv->youtubeId()); ?>" allowfullscreen></iframe>
+                                <?php else: ?>
+                                    <video controls style="width:100%;"><source src="<?php echo e(asset('storage/'.$fv->video_url)); ?>"></video>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="video-strip">
+                                <?php $__currentLoopData = $adminVideos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="v-thumb <?php echo e($i===0 ? 'active' : ''); ?>" onclick="playV(this,'<?php echo e($v->video_type); ?>','<?php echo e($v->video_type==='youtube' ? $v->youtubeId() : asset('storage/'.$v->video_url)); ?>')">
+                                        <?php if($v->video_type === 'youtube' && $v->youtubeId()): ?>
+                                            <img src="https://img.youtube.com/vi/<?php echo e($v->youtubeId()); ?>/mqdefault.jpg" style="width:100%;height:100%;object-fit:cover;">
+                                        <?php else: ?>
+                                            <div style="background:#1e2937;height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:0.65rem;">Video</div>
+                                        <?php endif; ?>
+                                    </div>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-head"><div class="icon" style="background:#faf5ff;color:#7c3aed"><i class="fas fa-play-circle"></i></div><h3>Official Videos</h3></div>
-                        <div class="card-body">
-                            <?php if($adminVideos->isNotEmpty()): ?>
-                                <?php $fv=$adminVideos->first(); ?>
-                                <div class="video-hero" id="vMain"><?php if($fv->video_type==='youtube'&&$fv->youtubeId()): ?><iframe src="https://www.youtube.com/embed/<?php echo e($fv->youtubeId()); ?>" allowfullscreen></iframe><?php elseif($fv->video_url): ?><video controls><source src="<?php echo e(asset('storage/'.$fv->video_url)); ?>" type="video/mp4"></video><?php endif; ?></div>
-                                <div class="video-strip"><?php $__currentLoopData = $adminVideos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i=>$v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><div class="v-thumb <?php echo e($i===0?'active':''); ?>" onclick="playV(this,'<?php echo e($v->video_type); ?>','<?php echo e($v->video_type==='youtube'?$v->youtubeId():asset('storage/'.$v->video_url)); ?>')"><?php if($v->video_type==='youtube'&&$v->youtubeId()): ?><img src="https://img.youtube.com/vi/<?php echo e($v->youtubeId()); ?>/mqdefault.jpg" alt=""><?php else: ?><div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:.55rem;padding:4px;text-align:center"><?php echo e($v->title); ?></div><?php endif; ?></div><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div>
-                            <?php else: ?><div style="background:#f9fafb;border-radius:8px;padding:40px;text-align:center;color:#9ca3af;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><i class="fas fa-video fa-2x" style="margin-bottom:8px"></i><span style="font-size:.75rem">No videos available</span></div><?php endif; ?>
-                        </div>
+                        <?php else: ?>
+                            <div style="text-align:center;padding:40px;color:#64748b;">No videos available</div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
 
-            
-            <div class="sidebar-ads">
-                <?php $__empty_1 = true; $__currentLoopData = $adminBanners; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $b): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><div class="ad-slot"><?php if($b->image_path): ?><img src="<?php echo e(asset('storage/'.$b->image_path)); ?>" alt="<?php echo e($b->title); ?>"><?php else: ?><span class="empty"><?php echo e($b->title); ?></span><?php endif; ?></div><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                <div class="ad-slot"><span class="empty">Ad Space</span></div><div class="ad-slot"><span class="empty">Ad Space</span></div><div class="ad-slot"><span class="empty">Ad Space</span></div><div class="ad-slot"><span class="empty">Ad Space</span></div><div class="ad-slot"><span class="empty">Ad Space</span></div><div class="ad-slot"><span class="empty">Ad Space</span></div><?php endif; ?>
+            </div> <!-- END MAIN CONTENT -->
+
+            <!-- RIGHT SIDEBAR: AD BANNERS -->
+            <div style="display:flex;flex-direction:column;gap:14px;">
+                <?php $__empty_1 = true; $__currentLoopData = $adminBanners; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $banner): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow-2);overflow:hidden;">
+                        <?php if($banner->image_path): ?>
+                            <img src="<?php echo e(asset('storage/'.$banner->image_path)); ?>" 
+                                 alt="<?php echo e($banner->title ?? 'Ad Banner'); ?>"
+                                 style="width:100%;height:auto;display:block;object-fit:cover;">
+                        <?php else: ?>
+                            <div style="padding:40px 20px;text-align:center;background:#f1e7ff;color:#581c87;">
+                                <i class="fas fa-image fa-2x mb-2"></i>
+                                <div style="font-weight:600;"><?php echo e($banner->title ?? 'Ad Banner'); ?></div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                    <!-- Default placeholder banners -->
+                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
+                        <i class="fas fa-ad fa-2x mb-2"></i>
+                        <div style="font-size:0.85rem;">Ad Space</div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
+                        <i class="fas fa-ad fa-2x mb-2"></i>
+                        <div style="font-size:0.85rem;">Ad Space</div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
+                        <i class="fas fa-ad fa-2x mb-2"></i>
+                        <div style="font-size:0.85rem;">Ad Space</div>
+                    </div>
+                <?php endif; ?>
             </div>
+
+                </div> <!-- END MAIN CONTENT -->
+
+            </div> <!-- END GRID -->
+
+        </div> <!-- END .tl-dashboard -->
+        
+        </section>
+    </div> <!-- END .content-wrapper -->
+
+    <!-- Ambassador Modal -->
+    <div id="ambModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:99999;">
+        <div style="background:white;border-radius:12px;width:380px;max-width:92vw;padding:24px;">
+            <h4 style="margin-bottom:16px;">Apply for Ambassador Program</h4>
+            <form action="<?php echo e(route('team-leader.socials.store')); ?>" method="POST">
+                <?php echo csrf_field(); ?>
+                <label>Platform</label>
+                <select name="platform" id="mPlat" style="width:100%;padding:8px;margin-bottom:12px;">
+                    <option>Instagram</option>
+                    <option>Twitter</option>
+                    <option>TikTok</option>
+                    <option>YouTube</option>
+                    <option>Support</option>
+                    <option>Creator</option>
+                </select>
+
+                <label>Follower Count</label>
+                <input type="number" name="views" value="0" style="width:100%;padding:8px;margin-bottom:12px;">
+
+                <label>Profile URL</label>
+                <input type="url" name="profile_link" required placeholder="https://..." style="width:100%;padding:8px;margin-bottom:20px;">
+
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" onclick="closeModal()" style="padding:8px 18px;background:#f1e7ff;color:#581c87;border:none;border-radius:6px;">Cancel</button>
+                    <button type="submit" style="padding:8px 18px;background:#1e40af;color:white;border:none;border-radius:6px;">Submit Application</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    
-    <div class="modal-overlay" id="ambModal"><div class="modal-box"><h4>Apply for Ambassador Program</h4><form action="<?php echo e(route('team-leader.socials.store')); ?>" method="POST"><?php echo csrf_field(); ?><label>Platform</label><select name="platform" id="mPlat"><option>Instagram</option><option>Twitter</option><option>TikTok</option><option>YouTube</option><option>Support</option><option>Creator</option></select><label>Follower Count</label><input type="number" name="views" min="0" value="0"><label>Profile URL</label><input type="url" name="profile_link" required placeholder="https://..."><div class="modal-actions"><button type="button" class="cancel" onclick="closeModal()">Cancel</button><button type="submit" class="confirm">Submit Application</button></div></form></div></div>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    // Countdown
-    !function(){<?php if($expiryDate): ?>var e=new Date('<?php echo e($expiryDate->toIso8601String()); ?>').getTime();<?php else: ?> var e=Date.now()+60*864e5;<?php endif; ?>
-    function t(){var d=Math.max(0,e-Date.now());document.getElementById('cd-d').textContent=Math.floor(d/864e5);document.getElementById('cd-h').textContent=Math.floor(d%864e5/36e5);document.getElementById('cd-m').textContent=Math.floor(d%36e5/6e4);document.getElementById('cd-s').textContent=Math.floor(d%6e4/1e3)}t();setInterval(t,1e3)}();
-    // Toggle
-    function toggle(t){document.getElementById('form-type').value=t;document.getElementById('fp').style.display=t==='plan'?'block':'none';document.getElementById('fz').style.display=t==='zoom'?'block':'none';document.getElementById('history-plan').style.display=t==='plan'?'block':'none';document.getElementById('history-zoom').style.display=t==='zoom'?'block':'none';document.getElementById('tb-plan').classList.toggle('active',t==='plan');document.getElementById('tb-zoom').classList.toggle('active',t==='zoom');['ri1','rd','rdt'].forEach(function(i){var e=document.getElementById(i);if(e)e.required=t==='plan'});['rz','rc','rp','rdt2'].forEach(function(i){var e=document.getElementById(i);if(e)e.required=t==='zoom'})}
-    // Modal
-    function openModal(p){document.getElementById('mPlat').value=p;document.getElementById('ambModal').classList.add('open')}
-    function closeModal(){document.getElementById('ambModal').classList.remove('open')}
-    document.getElementById('ambModal').onclick=function(e){if(e.target===this)closeModal()};
-    // Video
-    function playV(el,t,s){document.querySelectorAll('.v-thumb').forEach(function(x){x.classList.remove('active')});el.classList.add('active');document.getElementById('vMain').innerHTML=t==='youtube'?'<iframe src="https://www.youtube.com/embed/'+s+'" allowfullscreen></iframe>':'<video controls autoplay><source src="'+s+'" type="video/mp4"></video>'}
-    // Charts
-    document.addEventListener('DOMContentLoaded',function(){var a=document.getElementById('lineChart');if(a)new Chart(a,{type:'line',data:{labels:['W1','W2','W3','W4','W5','W6'],datasets:[{data:[<?php echo e(rand(0,max(1,$directReferrals))); ?>,<?php echo e(rand(0,max(1,$directReferrals))); ?>,<?php echo e($directReferrals); ?>,<?php echo e($activeReferrals); ?>,<?php echo e($directReferrals); ?>,<?php echo e($activeReferrals); ?>],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.08)',fill:true,tension:.4,pointRadius:2,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f3f4f6'},ticks:{font:{size:8}}},x:{grid:{display:false},ticks:{font:{size:8}}}}}});var b=document.getElementById('donutChart');if(b)new Chart(b,{type:'doughnut',data:{labels:['Active','Inactive'],datasets:[{data:[<?php echo e($activeReferrals); ?>,<?php echo e(max(0,$directReferrals-$activeReferrals)); ?>],backgroundColor:['#6366f1','#e5e7eb'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{size:8},padding:6}}}}})});
+        // Countdown Timer
+        function startCountdown() {
+            <?php if($expiryDate): ?>
+                var endDate = new Date('<?php echo e($expiryDate->toIso8601String()); ?>').getTime();
+            <?php else: ?>
+                var endDate = Date.now() + (60 * 86400000);
+            <?php endif; ?>
+
+            function update() {
+                var now = Date.now();
+                var distance = Math.max(0, endDate - now);
+
+                document.getElementById('cd-d').innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
+                document.getElementById('cd-h').innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                document.getElementById('cd-m').innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                document.getElementById('cd-s').innerText = Math.floor((distance % (1000 * 60)) / 1000);
+            }
+            update();
+            setInterval(update, 1000);
+        }
+        startCountdown();
+
+        // Toggle between Plan and Zoom
+        function toggle(type) {
+            document.getElementById('form-type').value = type;
+            document.getElementById('fp').style.display = (type === 'plan') ? 'block' : 'none';
+            document.getElementById('fz').style.display = (type === 'zoom') ? 'block' : 'none';
+            
+            document.getElementById('tb-plan').classList.toggle('active', type === 'plan');
+            document.getElementById('tb-zoom').classList.toggle('active', type === 'zoom');
+        }
+
+        // Ambassador Modal
+        function openModal(platform) {
+            document.getElementById('mPlat').value = platform;
+            document.getElementById('ambModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('ambModal').style.display = 'none';
+        }
+
+        // Video player
+        function playV(el, type, src) {
+            document.querySelectorAll('.v-thumb').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+
+            const container = document.getElementById('vMain');
+            if (type === 'youtube') {
+                container.innerHTML = `<iframe width="100%" height="200" src="https://www.youtube.com/embed/${src}" allowfullscreen></iframe>`;
+            } else {
+                container.innerHTML = `<video controls autoplay style="width:100%;"><source src="${src}"></video>`;
+            }
+        }
+
+        // Initialize default toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const fp = document.getElementById('fp');
+            const fz = document.getElementById('fz');
+            if (fp && fz) {
+                fp.style.display = 'block';
+                fz.style.display = 'none';
+            }
+
+            // Initialize Task Progress
+            initTaskProgress();
+        });
+
+        // ===== INTERACTIVE TASK SYSTEM =====
+        function initTaskProgress() {
+            const taskItems = document.querySelectorAll('#task-list .task-item');
+            if (!taskItems.length) return;
+
+            // Load saved state from localStorage
+            const savedState = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
+
+            let completed = 0;
+            const total = taskItems.length;
+
+            taskItems.forEach((item, index) => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                const statusEl = item.querySelector('.task-status');
+
+                if (savedState[index]) {
+                    checkbox.checked = true;
+                    item.style.opacity = '0.75';
+                    statusEl.innerHTML = `<span style="color:#16a34a;font-weight:600;">✓ Done</span>`;
+                    completed++;
+                }
+
+                // Click anywhere on the task row to toggle
+                item.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'INPUT') return;
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+            });
+
+            updateProgressBar(completed, total);
+        }
+
+        function markTaskComplete(checkbox, index) {
+            const item = checkbox.closest('.task-item');
+            const statusEl = item.querySelector('.task-status');
+
+            if (checkbox.checked) {
+                item.style.transition = 'all 0.3s';
+                item.style.opacity = '0.75';
+                statusEl.innerHTML = `<span style="color:#16a34a;font-weight:600;">✓ Done</span>`;
+
+                // Save to localStorage
+                const saved = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
+                saved[index] = true;
+                localStorage.setItem('teamLeaderTasks', JSON.stringify(saved));
+            } else {
+                item.style.opacity = '1';
+                statusEl.innerHTML = `Pending`;
+
+                const saved = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
+                delete saved[index];
+                localStorage.setItem('teamLeaderTasks', JSON.stringify(saved));
+            }
+
+            // Update progress
+            const allCheckboxes = document.querySelectorAll('#task-list input[type="checkbox"]');
+            let done = 0;
+            allCheckboxes.forEach(cb => { if (cb.checked) done++; });
+
+            updateProgressBar(done, allCheckboxes.length);
+        }
+
+        function updateProgressBar(completed, total) {
+            const progressBar = document.getElementById('task-progress-bar');
+            const progressText = document.getElementById('task-progress-text');
+
+            if (!progressBar || !progressText) return;
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            progressBar.style.width = percentage + '%';
+            progressText.innerHTML = `${completed}/${total}`;
+
+            // Color change when all complete
+            if (completed === total && total > 0) {
+                progressBar.style.background = 'linear-gradient(to right, #16a34a, #4ade80)';
+                progressText.style.color = '#16a34a';
+                progressText.style.fontWeight = '700';
+            }
+        }
     </script>
-</div>
-<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/team-leader/all.blade.php ENDPATH**/ ?>
+</div><?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/team-leader/all.blade.php ENDPATH**/ ?>
