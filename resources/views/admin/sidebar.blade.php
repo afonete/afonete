@@ -760,6 +760,56 @@ ul li a{
         </ul>
     </li>
 
+    {{-- ═══ Official Video Promotions & Tutorials ═══ --}}
+    <li>
+        <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+          <i class="fa-solid fa-video"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">Video Promotions</span>
+           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+            <i class="fa-solid fa-angle-right"></i>
+         </span>
+        </a>
+        <ul class="submenu ml-2 py-2">
+            <li>
+                <a href="{{ route('admin.leader-videos') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-list"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">All Videos</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.leader-videos.upload') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-cloud-upload-alt"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Upload Video</span>
+                </a>
+            </li>
+        </ul>
+    </li>
+
+    {{-- ═══ Marketing Banners & Creatives ═══ --}}
+    <li>
+        <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+          <i class="fa-solid fa-images"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">Banners & Creatives</span>
+           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+            <i class="fa-solid fa-angle-right"></i>
+         </span>
+        </a>
+        <ul class="submenu ml-2 py-2">
+            <li>
+                <a href="{{ route('admin.leader-banners') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-th-large"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">All Banners</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.leader-banners.upload') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-cloud-upload-alt"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Upload Banner</span>
+                </a>
+            </li>
+        </ul>
+    </li>
+
        <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-table"></i>

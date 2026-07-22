@@ -31,11 +31,10 @@ public function index(){
         ->first();
 
     if ($teamLeader) {
-        if ($teamLeader->status === 'confirmed') {
-            if ($user->has_paid_package === 'TEAM_LEADER') {
-                return redirect()->route('team-leader.dashboard');
-            }
-            return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
+        $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
+
+        if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
+            return redirect()->route('team-leader.dashboard');
         }
         if ($teamLeader->status === 'pending') {
             return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
@@ -43,6 +42,7 @@ public function index(){
         if ($teamLeader->status === 'rejected') {
             return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
         }
+        // confirmed && NOT activated → fall through to show activation form
     }
 
     return view('user.activation-controller',['user'=>$user,"packages"=>$package]);
@@ -193,29 +193,27 @@ public function g_upgrade(Request $request){
     \Log::info($teamLeader);
 
     if ($teamLeader) {
-        if ($teamLeader->status === 'confirmed') {
-            if ($user->has_paid_package === 'TEAM_LEADER') {
-                return redirect()->route('team-leader.dashboard');
-            }
-            return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
+        // Only block if NOT yet activated — let confirmed leaders
+        // who haven't activated yet continue through the activation flow.
+        $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
+
+        if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
+            return redirect()->route('team-leader.dashboard');
         }
 
         if ($teamLeader->status === 'pending') {
-            // Logout the user and redirect to the "leader pending" page
-//                Auth::logout();
             return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
         }
 
         if ($teamLeader->status === 'rejected') {
-            // Logout the user and redirect to the "leader rejected" page
-//                Auth::logout();
             return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
-
         }
 
         if ($teamLeader->status === 'suspended') {
             return redirect()->route('team.leader')->with('message', 'Your Team Leader account is suspended.');
         }
+
+        // status === 'confirmed' && NOT activated → fall through to activation flow below
     }
 
         // dd($activation);

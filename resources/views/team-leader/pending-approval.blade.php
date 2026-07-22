@@ -14,7 +14,7 @@ $instagram = $teamLeader->instagram ?? '';
 // Fetch Team Leader Activation Code if they are confirmed
 $activation = null;
 if ($status === 'confirmed') {
-    $activation = Activations::where('email', $email)->where('package', 'TEAM_LEADER')->first();
+    $activation = Activations::where('email', $email)->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])->first();
 }
 @endphp
 <!DOCTYPE html>
@@ -303,6 +303,19 @@ if ($status === 'confirmed') {
                                 @csrf
                                 <input type="hidden" name="username" value="{{ $username }}">
                                 
+                                {{-- Leadership Level Selector --}}
+                                <div class="mb-3">
+                                    <label class="form-label font-weight-bold text-slate-700">Choose Your Leadership Level <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-crown text-warning"></i></span>
+                                        <select name="leadership_level" required class="form-select" id="leadershipLevel">
+                                            <option value="TEAM_LEADER" {{ old('leadership_level', $teamLeader->leadership_level ?? 'TEAM_LEADER') === 'TEAM_LEADER' ? 'selected' : '' }}>TEAM LEADER</option>
+                                            <option value="SUPER_LEADER" {{ old('leadership_level', $teamLeader->leadership_level ?? '') === 'SUPER_LEADER' ? 'selected' : '' }}>SUPER LEADER</option>
+                                        </select>
+                                    </div>
+                                    <small class="text-muted">Select the leadership tier you are applying for.</small>
+                                </div>
+
                                 <div class="mb-3">
                                     <label class="form-label font-weight-bold text-slate-700">WhatsApp Group Link <span class="text-danger">*</span></label>
                                     <div class="input-group">

@@ -17,37 +17,39 @@ class TeamLeaderMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-      
-        // Get team leader status for current user
+        // Get team leader status — from query param or authenticated user
         $username = $request->query('username');
-        $teamLeader = TeamLeader::where('User_name', $username)->first();
-        
-    
+
+        if (!$username && $request->user()) {
+            $username = $request->user()->user;
+        }
+
+        $teamLeader = $username ? TeamLeader::where('User_name', $username)->first() : null;
+
         if (!$teamLeader) {
             return redirect()->route('team.leader');
         }
-    
+
         // Store team leader data in session for easy access
         session(['team_leader_status' => $teamLeader->status]);
         session(['team_leader_Usen_Name' => $username]);
-    
+
         // Route based on application status
         switch ($teamLeader->status) {
             case 'pending':
-                // return redirect()->route('team-leader.pending-approval');
                 return $next($request);
-            
+
             case 'confirmed':
                 return $next($request);
-                
+
             case 'rejected':
                 return redirect()->route('team-leader.rejected')
                                ->with('message', 'Your application was not approved.');
-                
+
             case 'suspended':
-                return redirect()->route('team-leader.suspended')
+                return redirect()->route('team.leader')
                                ->with('message', 'Your account has been suspended.');
-                
+
             default:
                 return redirect()->route('team.leader');
         }

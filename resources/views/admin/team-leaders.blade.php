@@ -82,6 +82,7 @@
                                 <th class="px-6 py-3 text-left">Leader Profile</th>
                                 <th class="px-6 py-3 text-left">Contact Info</th>
                                 <th class="px-6 py-3 text-left">Country</th>
+                                <th class="px-6 py-3 text-left">Social Group Links <span class="text-red-500">*</span></th>
                                 <th class="px-6 py-3 text-left">Date Applied</th>
                                 <th class="px-6 py-3 text-right">Actions</th>
                             </tr>
@@ -90,20 +91,54 @@
                             @foreach($pending as $leader)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <div class="font-bold text-gray-900">{{ $leader->Names }}</div>
+                                        <a href="{{ route('admin.team-leaders.show', $leader->id) }}" class="font-bold text-gray-900 hover:text-blue-600 transition duration-150">
+                                            {{ $leader->Names }} <i class="fas fa-external-link-alt text-[10px] text-gray-400 ml-1"></i>
+                                        </a>
                                         <div class="text-xs font-mono text-gray-500 mt-0.5">&#64;{{ $leader->User_name }}</div>
+                                        <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ ($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $leader->leadership_level ?? 'TEAM_LEADER' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="font-semibold text-gray-700">{{ $leader->Email }}</div>
                                         <div class="text-xs text-gray-500 mt-0.5">{{ $leader->Phone }}</div>
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-700">{{ $leader->Country }}</td>
+                                    <td class="px-6 py-4">
+                                        @if($leader->whatsapp || $leader->instagram)
+                                            <div class="space-y-1.5">
+                                                @if($leader->whatsapp)
+                                                    <a href="{{ $leader->whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 font-bold px-2.5 py-1 rounded-lg border border-green-200 hover:bg-green-100 transition duration-150">
+                                                        <i class="fab fa-whatsapp"></i> WhatsApp
+                                                    </a>
+                                                @endif
+                                                @if($leader->instagram)
+                                                    <a href="{{ $leader->instagram }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition duration-150">
+                                                        <i class="fab fa-telegram"></i> Telegram
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 font-bold px-2.5 py-1 rounded-lg border border-red-200">
+                                                <i class="fas fa-exclamation-triangle"></i> Links Not Submitted
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-gray-500 text-xs font-medium">{{ $leader->created_at->format('d M Y, H:i') }}</td>
                                     <td class="px-6 py-4 text-right space-x-2">
-                                        {{-- Trigger Approval Modal --}}
-                                        <button type="button" @click="openModal = '{{ $leader->id }}'" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
-                                            <i class="fas fa-check mr-1"></i> Approve
-                                        </button>
+                                        <a href="{{ route('admin.team-leaders.show', $leader->id) }}" class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+                                        @if($leader->whatsapp && $leader->instagram)
+                                            {{-- Trigger Approval Modal --}}
+                                            <button type="button" @click="openModal = '{{ $leader->id }}'" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                                <i class="fas fa-check mr-1"></i> Approve
+                                            </button>
+                                        @else
+                                            <button type="button" disabled class="bg-gray-300 text-gray-500 font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs cursor-not-allowed" title="Cannot approve until WhatsApp & Telegram links are submitted">
+                                                <i class="fas fa-lock mr-1"></i> Approve
+                                            </button>
+                                        @endif
                                         <form action="{{ route('admin.team-leaders.reject', $leader->id) }}" method="POST" class="inline">
                                             @csrf
                                             <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150" onclick="return confirm('Are you sure you want to reject this team leader application?')">
@@ -130,6 +165,13 @@
                                                 <small class="text-gray-400 text-xs mt-1 block">Default code generated. You can customize this code.</small>
                                             </div>
 
+                                            {{-- 1b. Price --}}
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Price ($) <span class="text-red-500">*</span></label>
+                                                <input type="number" name="price" min="0" step="0.01" required value="0" class="w-full bg-gray-50 border border-gray-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500 font-bold">
+                                                <small class="text-gray-400 text-xs mt-1 block">Correspondence price for the activation code.</small>
+                                            </div>
+
                                             <div class="grid grid-cols-2 gap-4">
                                                 {{-- 2. Duration --}}
                                                 <div>
@@ -152,6 +194,15 @@
                                                 <textarea name="tasks" rows="4" required class="w-full bg-gray-50 border border-gray-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Describe the specific tasks the Team Leader must do..."></textarea>
                                                 <small class="text-gray-400 text-xs mt-1 block">Write clear tasks for the team leader to achieve in the timeline.</small>
                                             </div>
+
+                                            {{-- Credits — SUPER LEADER only --}}
+                                            @if(($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER')
+                                            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                                                <label class="block text-xs font-bold text-yellow-800 uppercase mb-1"><i class="fas fa-credit-card mr-1"></i> Credit Amount ($) <span class="text-red-500">*</span></label>
+                                                <input type="number" name="credit_amount" min="0" step="0.01" value="0" class="w-full bg-white border border-yellow-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-yellow-500 focus:border-yellow-500 font-bold">
+                                                <small class="text-yellow-600 text-xs mt-1 block">SUPER LEADER credit wallet amount.</small>
+                                            </div>
+                                            @endif
 
                                             <div class="flex justify-end gap-3 pt-3 border-t">
                                                 <button type="button" @click="openModal = null" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
@@ -183,24 +234,71 @@
                                 <th class="px-6 py-3 text-left">Leader Profile</th>
                                 <th class="px-6 py-3 text-left">Contact Info</th>
                                 <th class="px-6 py-3 text-left">Country</th>
-                                <th class="px-6 py-3 text-left">Date Confirmed</th>
+                                <th class="px-6 py-3 text-left">Social Links</th>
+                                <th class="px-6 py-3 text-left">Referrals</th>
+                                <th class="px-6 py-3 text-left">Duration</th>
                                 <th class="px-6 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @foreach($confirmed as $leader)
+                                @php
+                                    $cUser = \App\Models\User::where('user', $leader->User_name)->first();
+                                    $cReferrals = $cUser ? $cUser->referrals()->count() : 0;
+                                    $cActivation = \App\Models\Activations::where('email', $leader->Email)->whereIn('package', ['TEAM_LEADER','SUPER_LEADER'])->first();
+                                    $cPeriod = $cActivation ? (int)($cActivation->period ?? 60) : 60;
+                                    $cStart = $cActivation ? \Carbon\Carbon::parse($cActivation->updated_at) : null;
+                                    $cDaysLeft = $cStart ? max(0, \Carbon\Carbon::now()->diffInDays($cStart->copy()->addDays($cPeriod), false)) : 0;
+                                    $cExpired = $cStart ? \Carbon\Carbon::now()->greaterThan($cStart->copy()->addDays($cPeriod)) : false;
+                                @endphp
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4">
-                                        <div class="font-bold text-gray-900">{{ $leader->Names }}</div>
+                                        <a href="{{ route('admin.team-leaders.show', $leader->id) }}" class="font-bold text-gray-900 hover:text-blue-600 transition duration-150">
+                                            {{ $leader->Names }} <i class="fas fa-external-link-alt text-[10px] text-gray-400 ml-1"></i>
+                                        </a>
                                         <div class="text-xs font-mono text-gray-500 mt-0.5">&#64;{{ $leader->User_name }}</div>
+                                        <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ ($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $leader->leadership_level ?? 'TEAM_LEADER' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="font-semibold text-gray-700">{{ $leader->Email }}</div>
                                         <div class="text-xs text-gray-500 mt-0.5">{{ $leader->Phone }}</div>
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-700">{{ $leader->Country }}</td>
-                                    <td class="px-6 py-4 text-gray-500 text-xs font-medium">{{ $leader->updated_at->format('d M Y, H:i') }}</td>
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-1.5">
+                                            @if($leader->whatsapp)
+                                                <a href="{{ $leader->whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 font-bold px-2.5 py-1 rounded-lg border border-green-200 hover:bg-green-100 transition duration-150">
+                                                    <i class="fab fa-whatsapp"></i> WA
+                                                </a>
+                                            @endif
+                                            @if($leader->instagram)
+                                                <a href="{{ $leader->instagram }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition duration-150">
+                                                    <i class="fab fa-telegram"></i> TG
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <span class="inline-block bg-green-100 text-green-800 font-extrabold text-sm px-3 py-1 rounded-full">{{ $cReferrals }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if($cExpired)
+                                            <span class="inline-block bg-red-100 text-red-700 font-bold text-xs px-2.5 py-1 rounded-full">EXPIRED</span>
+                                        @else
+                                            <span class="inline-block bg-green-100 text-green-700 font-bold text-xs px-2.5 py-1 rounded-full">{{ $cDaysLeft }}d left</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-right space-x-2">
+                                        <a href="{{ route('admin.team-leaders.show', $leader->id) }}" class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+                                        @if(($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER')
+                                            <a href="{{ route('admin.team-leaders.show', $leader->id) }}#credit-panel" class="inline-flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                                <i class="fas fa-credit-card mr-1"></i> Credits
+                                            </a>
+                                        @endif
                                         <form action="{{ route('admin.team-leaders.suspend', $leader->id) }}" method="POST" class="inline">
                                             @csrf
                                             <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150" onclick="return confirm('Are you sure you want to suspend this team leader account?')">
@@ -392,6 +490,7 @@
                                 <th class="px-6 py-3 text-left">Leader Profile</th>
                                 <th class="px-6 py-3 text-left">Contact Info</th>
                                 <th class="px-6 py-3 text-left">Country</th>
+                                <th class="px-6 py-3 text-left">Social Group Links</th>
                                 <th class="px-6 py-3 text-left">Date Suspended</th>
                                 <th class="px-6 py-3 text-right">Actions</th>
                             </tr>
@@ -402,12 +501,29 @@
                                     <td class="px-6 py-4">
                                         <div class="font-bold text-gray-900">{{ $leader->Names }}</div>
                                         <div class="text-xs font-mono text-gray-500 mt-0.5">&#64;{{ $leader->User_name }}</div>
+                                        <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ ($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $leader->leadership_level ?? 'TEAM_LEADER' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="font-semibold text-gray-700">{{ $leader->Email }}</div>
                                         <div class="text-xs text-gray-500 mt-0.5">{{ $leader->Phone }}</div>
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-700">{{ $leader->Country }}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="space-y-1.5">
+                                            @if($leader->whatsapp)
+                                                <a href="{{ $leader->whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 font-bold px-2.5 py-1 rounded-lg border border-green-200 hover:bg-green-100 transition duration-150">
+                                                    <i class="fab fa-whatsapp"></i> WhatsApp
+                                                </a>
+                                            @endif
+                                            @if($leader->instagram)
+                                                <a href="{{ $leader->instagram }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition duration-150">
+                                                    <i class="fab fa-telegram"></i> Telegram
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </td>
                                     <td class="px-6 py-4 text-gray-500 text-xs font-medium">{{ $leader->updated_at->format('d M Y, H:i') }}</td>
                                     <td class="px-6 py-4 text-right">
                                         <form action="{{ route('admin.team-leaders.reactivate', $leader->id) }}" method="POST" class="inline">
@@ -437,6 +553,7 @@
                                 <th class="px-6 py-3 text-left">Leader Profile</th>
                                 <th class="px-6 py-3 text-left">Contact Info</th>
                                 <th class="px-6 py-3 text-left">Country</th>
+                                <th class="px-6 py-3 text-left">Social Group Links</th>
                                 <th class="px-6 py-3 text-left">Date Rejected</th>
                                 <th class="px-6 py-3 text-right">Actions</th>
                             </tr>
@@ -447,18 +564,46 @@
                                     <td class="px-6 py-4">
                                         <div class="font-bold text-gray-900">{{ $leader->Names }}</div>
                                         <div class="text-xs font-mono text-gray-500 mt-0.5">&#64;{{ $leader->User_name }}</div>
+                                        <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ ($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $leader->leadership_level ?? 'TEAM_LEADER' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="font-semibold text-gray-700">{{ $leader->Email }}</div>
                                         <div class="text-xs text-gray-500 mt-0.5">{{ $leader->Phone }}</div>
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-700">{{ $leader->Country }}</td>
+                                    <td class="px-6 py-4">
+                                        @if($leader->whatsapp || $leader->instagram)
+                                            <div class="space-y-1.5">
+                                                @if($leader->whatsapp)
+                                                    <a href="{{ $leader->whatsapp }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-green-50 text-green-700 font-bold px-2.5 py-1 rounded-lg border border-green-200 hover:bg-green-100 transition duration-150">
+                                                        <i class="fab fa-whatsapp"></i> WhatsApp
+                                                    </a>
+                                                @endif
+                                                @if($leader->instagram)
+                                                    <a href="{{ $leader->instagram }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-1 rounded-lg border border-blue-200 hover:bg-blue-100 transition duration-150">
+                                                        <i class="fab fa-telegram"></i> Telegram
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 font-bold px-2.5 py-1 rounded-lg border border-red-200">
+                                                <i class="fas fa-exclamation-triangle"></i> Links Not Submitted
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4 text-gray-500 text-xs font-medium">{{ $leader->updated_at->format('d M Y, H:i') }}</td>
                                     <td class="px-6 py-4 text-right">
-                                        {{-- Trigger Approval Modal --}}
-                                        <button type="button" @click="openModal = '{{ $leader->id }}'" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
-                                            <i class="fas fa-undo mr-1"></i> Re-Approve
-                                        </button>
+                                        @if($leader->whatsapp && $leader->instagram)
+                                            <button type="button" @click="openModal = '{{ $leader->id }}'" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                                <i class="fas fa-undo mr-1"></i> Re-Approve
+                                            </button>
+                                        @else
+                                            <button type="button" disabled class="bg-gray-300 text-gray-500 font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs cursor-not-allowed" title="Cannot re-approve until WhatsApp & Telegram links are submitted">
+                                                <i class="fas fa-lock mr-1"></i> Re-Approve
+                                            </button>
+                                        @endif
                                     </td>
                                 </tr>
 
@@ -477,6 +622,13 @@
                                                 @php $randomCode = 'TL-' . strtoupper(\Illuminate\Support\Str::random(8)); @endphp
                                                 <input type="text" name="activation_code" required value="{{ $randomCode }}" class="w-full bg-gray-50 border border-gray-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500 font-mono font-bold uppercase tracking-wider">
                                                 <small class="text-gray-400 text-xs mt-1 block">Default code generated. You can customize this code.</small>
+                                            </div>
+
+                                            {{-- 1b. Price --}}
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Price ($) <span class="text-red-500">*</span></label>
+                                                <input type="number" name="price" min="0" step="0.01" required value="0" class="w-full bg-gray-50 border border-gray-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500 font-bold">
+                                                <small class="text-gray-400 text-xs mt-1 block">Correspondence price for the activation code.</small>
                                             </div>
 
                                             <div class="grid grid-cols-2 gap-4">
@@ -501,6 +653,15 @@
                                                 <textarea name="tasks" rows="4" required class="w-full bg-gray-50 border border-gray-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Describe the specific tasks the Team Leader must do..."></textarea>
                                                 <small class="text-gray-400 text-xs mt-1 block">Write clear tasks for the team leader to achieve in the timeline.</small>
                                             </div>
+
+                                            {{-- Credits — SUPER LEADER only --}}
+                                            @if(($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER')
+                                            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
+                                                <label class="block text-xs font-bold text-yellow-800 uppercase mb-1"><i class="fas fa-credit-card mr-1"></i> Credit Amount ($) <span class="text-red-500">*</span></label>
+                                                <input type="number" name="credit_amount" min="0" step="0.01" value="0" class="w-full bg-white border border-yellow-300 text-slate-900 rounded-xl p-3 text-sm focus:ring-yellow-500 focus:border-yellow-500 font-bold">
+                                                <small class="text-yellow-600 text-xs mt-1 block">SUPER LEADER credit wallet amount.</small>
+                                            </div>
+                                            @endif
 
                                             <div class="flex justify-end gap-3 pt-3 border-t">
                                                 <button type="button" @click="openModal = null" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition duration-150">

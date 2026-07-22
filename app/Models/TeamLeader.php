@@ -15,9 +15,15 @@ class TeamLeader extends Model
         'Phone',
         'Country',
         'status',
+        'leadership_level',
         'whatsapp',
         'instagram',
     ];
+
+    public function superLeaderCredit()
+    {
+        return $this->hasOne(\App\Models\SuperLeaderCredit::class, 'team_leader_id');
+    }
     public function uniqueIds()
     {
         return [

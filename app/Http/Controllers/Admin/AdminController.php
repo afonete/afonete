@@ -1198,6 +1198,97 @@ public function check(Request $request) {
         return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials'));
     }
 
+    /**
+     * Show full detail page for a single team leader application.
+     * Admin can view / click / copy WhatsApp & Telegram links here,
+     * then approve or reject.
+     */
+    public function showTeamLeader($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+
+        // ── Performance / monitoring data ──
+        $user = \App\Models\User::where('user', $leader->User_name)->first();
+        $activation = \App\Models\Activations::where('email', $leader->Email)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->first();
+
+        $performance = [
+            'duration_days'     => $activation ? (int)($activation->period ?? 60) : 60,
+            'activation_date'   => $activation ? $activation->updated_at : null,
+            'expiry_date'       => null,
+            'days_elapsed'      => 0,
+            'days_remaining'    => 0,
+            'is_expired'        => false,
+            'direct_referrals'  => 0,
+            'indirect_referrals'=> 0,
+            'total_referrals'   => 0,
+            'active_referrals'  => 0,
+            'active_indirect_referrals' => 0,
+            'total_active_referrals'    => 0,
+            'referral_bonuses'  => 0,
+            'tasks'             => $activation ? $activation->task : '',
+            'price'             => $activation ? (float)($activation->price ?? 0) : 0,
+            'tokens'            => $activation ? (float)($activation->token ?? 0) : 0,
+        ];
+
+        if ($performance['activation_date']) {
+            $start = \Carbon\Carbon::parse($performance['activation_date']);
+            $end   = $start->copy()->addDays($performance['duration_days']);
+            $now   = \Carbon\Carbon::now();
+            $performance['expiry_date']    = $end;
+            $performance['days_elapsed']   = $start->diffInDays($now);
+            $performance['days_remaining'] = max(0, $now->diffInDays($end, false));
+            $performance['is_expired']     = $now->greaterThan($end);
+        }
+
+        if ($user) {
+            $performance['direct_referrals'] = $user->referrals()->count();
+
+            // ── Indirect referrals: walk the ENTIRE referral tree (no depth limit) ──
+            $indirectCount = 0;
+            $activeIndirectCount = 0;
+            $visited = [$user->id];
+            $currentLevelIds = $user->referrals()->pluck('id')->all();
+
+            while (!empty($currentLevelIds)) {
+                $visited = array_merge($visited, $currentLevelIds);
+                $indirectCount += count($currentLevelIds);
+
+                // Count active (with paid package) at this level
+                $activeIndirectCount += (int) \App\Models\User::whereIn('id', $currentLevelIds)
+                    ->where('has_paid_package', '!=', 'no')
+                    ->where('has_paid_package', '!=', '')
+                    ->count();
+
+                // Next level
+                $currentLevelIds = \App\Models\User::whereIn('referee_id', $currentLevelIds)
+                    ->whereNotIn('id', $visited)
+                    ->pluck('id')->all();
+            }
+
+            $performance['indirect_referrals']       = $indirectCount;
+            $performance['total_referrals']           = $performance['direct_referrals'] + $indirectCount;
+            $performance['active_referrals']          = $performance['active_referrals_direct'] ?? 0;
+            $performance['active_indirect_referrals'] = $activeIndirectCount;
+            $performance['total_active_referrals']    = ($performance['active_referrals_direct'] ?? 0) + $activeIndirectCount;
+
+            // Direct active referrals
+            $performance['active_referrals'] = (int) \App\Models\User::whereIn('id', $user->referrals()->pluck('id'))
+                ->where('has_paid_package', '!=', 'no')
+                ->where('has_paid_package', '!=', '')
+                ->count();
+
+            $performance['referral_bonuses'] = (float) \App\Models\ReferralBonus::where('user_id', $user->id)
+                ->where('status', '!=', 'reversed')
+                ->sum('bonus_amount');
+        }
+
+        $credit = $leader->superLeaderCredit;
+
+        return view('admin.team-leader-detail', compact('leader', 'performance', 'credit', 'user'));
+    }
+
     public function approveEventPlan($id)
     {
         $event = \App\Models\TeamLeaderEvent::findOrFail($id);
@@ -1242,39 +1333,279 @@ public function check(Request $request) {
 
     public function approveTeamLeader(Request $request, $id)
     {
-        $request->validate([
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $level  = $leader->leadership_level ?? 'TEAM_LEADER';
+
+        $rules = [
             'activation_code' => 'required|string|unique:activations,code',
             'duration'        => 'required|integer|min:1',
             'tasks'           => 'required|string|max:1000',
             'tokens'          => 'required|numeric|min:0',
-        ]);
+            'price'           => 'required|numeric|min:0',
+        ];
 
-        $leader = \App\Models\TeamLeader::findOrFail($id);
+        if ($level === 'SUPER_LEADER') {
+            $rules['credit_amount'] = 'required|numeric|min:0';
+        }
+
+        $request->validate($rules);
+
         $leader->update(['status' => 'confirmed']);
 
-        // Create the unique Activation Code inside activations table
-        \App\Models\Activations::create([
+        // Create the unique Activation Code
+        $activation = \App\Models\Activations::create([
             'code'        => strtoupper($request->activation_code),
-            'package'     => 'TEAM_LEADER', // special package name
-            'stutus'      => 'not', // unconsumed
+            'package'     => $level === 'SUPER_LEADER' ? 'SUPER_LEADER' : 'TEAM_LEADER',
+            'stutus'      => 'not',
             'token'       => $request->tokens,
-            'price'       => 0.0, // free activation code
+            'price'       => $request->price,
             'task'        => $request->tasks,
-            'period'      => $request->duration, // set custom duration
-            'percentage'  => 0.0, // no daily ROI percentage!
+            'period'      => $request->duration,
+            'percentage'  => 0.0,
             'withdrawmax' => 999999.0,
-            'email'       => $leader->Email, // link to the leader's email!
+            'email'       => $leader->Email,
         ]);
 
         // Update the associated User
         $user = \App\Models\User::where('user', $leader->User_name)->first();
         if ($user) {
-            $user->update([
-                'has_request' => 'approved',
+            $user->update(['has_request' => 'approved']);
+        }
+
+        // Create SUPER LEADER credit record (always, even if amount is 0)
+        if ($level === 'SUPER_LEADER') {
+            $creditAmount = $request->credit_amount ?? 0;
+
+            \App\Models\SuperLeaderCredit::create([
+                'team_leader_id'        => $leader->id,
+                'user_id'               => $user ? $user->id : null,
+                'activation_id'         => $activation->id,
+                'credit_amount'         => $creditAmount,
+                'remaining_credit'      => $creditAmount,
+                'cashout_amount'        => 0,
+                'sales_turnover_target' => 10000,
+                'turnover_target_percent' => 0,
+                'turnover_reward_percent' => 0,
+                'auto_withdrawal_percent' => 0,
+                'status'                => 'pending',
+            ]);
+
+            // Also sync to the legacy `credits` table so the existing
+            // user dashboard credit box ($activation->myCredit) works.
+            \App\Models\Credit::create([
+                'activation_id' => $activation->id,
+                'amount'        => $creditAmount,
+                'status'        => 'pending',
             ]);
         }
 
-        return redirect()->back()->with('message', "Team Leader {$leader->Names} has been approved. Unique activation code generated: " . strtoupper($request->activation_code));
+        return redirect()->route('admin.team-leaders.show', $leader->id)
+            ->with('message', "{$level} {$leader->Names} has been approved. Code: " . strtoupper($request->activation_code));
+    }
+
+    /**
+     * Create a SUPER LEADER credit record (fallback if not created during approval).
+     */
+    public function createCredit(Request $request, $leaderId)
+    {
+        $request->validate([
+            'credit_amount'             => 'required|numeric|min:0',
+            'sales_turnover_target'     => 'required|numeric|min:0',
+            'turnover_target_percent'   => 'required|numeric|min:0|max:100',
+            'turnover_reward_percent'   => 'required|numeric|min:0|max:100',
+            'auto_withdrawal_percent'   => 'required|numeric|min:0|max:100',
+        ]);
+
+        $leader = \App\Models\TeamLeader::findOrFail($leaderId);
+        $user = \App\Models\User::where('user', $leader->User_name)->first();
+        $activation = \App\Models\Activations::where('email', $leader->Email)->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])->first();
+
+        $superCredit = \App\Models\SuperLeaderCredit::create([
+            'team_leader_id'          => $leader->id,
+            'user_id'                 => $user ? $user->id : null,
+            'activation_id'           => $activation ? $activation->id : null,
+            'credit_amount'           => $request->credit_amount,
+            'remaining_credit'        => $request->credit_amount,
+            'cashout_amount'          => 0,
+            'sales_turnover_target'   => $request->sales_turnover_target,
+            'turnover_target_percent' => $request->turnover_target_percent,
+            'turnover_reward_percent' => $request->turnover_reward_percent,
+            'auto_withdrawal_percent' => $request->auto_withdrawal_percent,
+            'status'                  => 'pending',
+        ]);
+
+        // Sync to legacy credits table for dashboard compatibility
+        if ($activation) {
+            \App\Models\Credit::create([
+                'activation_id' => $activation->id,
+                'amount'        => $request->credit_amount,
+                'status'        => 'pending',
+            ]);
+        }
+
+        return redirect()->back()->with('message', 'SUPER LEADER credit record created successfully.');
+    }
+
+    /**
+     * Update SUPER LEADER credit details & toggle active/pending.
+     */
+    public function updateCredit(Request $request, $creditId)
+    {
+        $request->validate([
+            'sales_turnover_target'     => 'required|numeric|min:0',
+            'turnover_target_percent'   => 'required|numeric|min:0|max:100',
+            'turnover_reward_percent'   => 'required|numeric|min:0|max:100',
+            'auto_withdrawal_percent'   => 'required|numeric|min:0|max:100',
+            'credit_status'             => 'required|string|in:active,pending',
+        ]);
+
+        $credit = \App\Models\SuperLeaderCredit::findOrFail($creditId);
+
+        $credit->update([
+            'sales_turnover_target'     => $request->sales_turnover_target,
+            'turnover_target_percent'   => $request->turnover_target_percent,
+            'turnover_reward_percent'   => $request->turnover_reward_percent,
+            'auto_withdrawal_percent'   => $request->auto_withdrawal_percent,
+            'status'                    => $request->credit_status,
+            'activated_at'              => $request->credit_status === 'active' && !$credit->activated_at ? now() : $credit->activated_at,
+        ]);
+
+        // Sync status to legacy credits table for dashboard compatibility
+        if ($credit->activation_id) {
+            \App\Models\Credit::where('activation_id', $credit->activation_id)
+                ->update(['status' => $request->credit_status]);
+        }
+
+        return redirect()->back()->with('message', 'SUPER LEADER credit details updated. Status: ' . strtoupper($request->credit_status));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  OFFICIAL VIDEO PROMOTIONS & TUTORIALS
+    // ═══════════════════════════════════════════════════════════
+    public function leaderVideos()
+    {
+        return view('admin.leader-videos');
+    }
+
+    public function leaderVideoUpload()
+    {
+        return view('admin.leader-video-upload');
+    }
+
+    public function leaderVideoStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $videoUrl = null;
+        $videoType = 'youtube';
+
+        // Handle file upload
+        if ($request->hasFile('video_file')) {
+            $videoUrl = $request->file('video_file')->store('team_leader_videos', 'public');
+            $videoType = 'mp4';
+        }
+
+        // Or use YouTube URL
+        if ($request->filled('video_url')) {
+            $videoUrl = $request->video_url;
+            $videoType = 'youtube';
+        }
+
+        if (!$videoUrl) {
+            return redirect()->back()->with('error', 'Please upload a video file or provide a YouTube URL.');
+        }
+
+        \App\Models\TeamLeaderVideo::create([
+            'title'            => $request->title,
+            'video_url'        => $videoUrl,
+            'video_type'       => $videoType,
+            'description'      => $request->description ?? '',
+            'duration_seconds' => $request->duration_seconds ?? 60,
+            'target_region'    => $request->target_region ?? '',
+            'status'           => 'approved',
+            'uploaded_by'      => 'admin',
+        ]);
+
+        return redirect()->route('admin.leader-videos')->with('message', 'Video uploaded and approved successfully!');
+    }
+
+    public function leaderVideoApprove($id)
+    {
+        \App\Models\TeamLeaderVideo::where('id', $id)->update(['status' => 'approved']);
+        return redirect()->back()->with('message', 'Video approved.');
+    }
+
+    public function leaderVideoReject(Request $request, $id)
+    {
+        \App\Models\TeamLeaderVideo::where('id', $id)->update([
+            'status' => 'rejected',
+            'rejected_reason' => $request->reason ?? '',
+        ]);
+        return redirect()->back()->with('message', 'Video rejected.');
+    }
+
+    public function leaderVideoDelete($id)
+    {
+        \App\Models\TeamLeaderVideo::where('id', $id)->delete();
+        return redirect()->back()->with('message', 'Video deleted.');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  MARKETING BANNERS & CREATIVES
+    // ═══════════════════════════════════════════════════════════
+    public function leaderBanners()
+    {
+        return view('admin.leader-banners');
+    }
+
+    public function leaderBannerUpload()
+    {
+        return view('admin.leader-banner-upload');
+    }
+
+    public function leaderBannerStore(Request $request)
+    {
+        $request->validate([
+            'title'       => 'required|string|max:255',
+            'banner_file' => 'required|image|max:10240',
+        ]);
+
+        $imagePath = $request->file('banner_file')->store('team_leader_banners', 'public');
+
+        \App\Models\TeamLeaderBanner::create([
+            'title'       => $request->title,
+            'image_path'  => $imagePath,
+            'description' => $request->description ?? '',
+            'landing_url' => $request->landing_url ?? '',
+            'target_region' => $request->target_region ?? '',
+            'status'      => 'approved',
+            'uploaded_by' => 'admin',
+        ]);
+
+        return redirect()->route('admin.leader-banners')->with('message', 'Banner uploaded and approved successfully!');
+    }
+
+    public function leaderBannerApprove($id)
+    {
+        \App\Models\TeamLeaderBanner::where('id', $id)->update(['status' => 'approved']);
+        return redirect()->back()->with('message', 'Banner approved.');
+    }
+
+    public function leaderBannerReject(Request $request, $id)
+    {
+        \App\Models\TeamLeaderBanner::where('id', $id)->update([
+            'status' => 'rejected',
+            'rejected_reason' => $request->reason ?? '',
+        ]);
+        return redirect()->back()->with('message', 'Banner rejected.');
+    }
+
+    public function leaderBannerDelete($id)
+    {
+        \App\Models\TeamLeaderBanner::where('id', $id)->delete();
+        return redirect()->back()->with('message', 'Banner deleted.');
     }
 
     public function rejectTeamLeader($id)

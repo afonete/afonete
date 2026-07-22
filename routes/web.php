@@ -384,8 +384,27 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     
     // ── TEAM LEADERS MANAGEMENT (admin) ──
     Route::get('admin/team-leaders', [AdminController::class, 'teamLeadersList'])->name('admin.team-leaders.index');
+    Route::get('admin/team-leaders/{id}', [AdminController::class, 'showTeamLeader'])->name('admin.team-leaders.show');
     Route::post('admin/team-leaders/{id}/approve', [AdminController::class, 'approveTeamLeader'])->name('admin.team-leaders.approve');
+    Route::post('admin/team-leaders/credit/{creditId}/update', [AdminController::class, 'updateCredit'])->name('admin.team-leaders.credit.update');
+    Route::post('admin/team-leaders/{leaderId}/credit/create', [AdminController::class, 'createCredit'])->name('admin.team-leaders.credit.create');
     Route::post('admin/team-leaders/{id}/reject', [AdminController::class, 'rejectTeamLeader'])->name('admin.team-leaders.reject');
+
+    // Official Video Promotions & Tutorials
+    Route::get('admin/leader-videos', [AdminController::class, 'leaderVideos'])->name('admin.leader-videos');
+    Route::get('admin/leader-videos/upload', [AdminController::class, 'leaderVideoUpload'])->name('admin.leader-videos.upload');
+    Route::post('admin/leader-videos/store', [AdminController::class, 'leaderVideoStore'])->name('admin.leader-videos.store');
+    Route::get('admin/leader-videos/{id}/approve', [AdminController::class, 'leaderVideoApprove'])->name('admin.leader-videos.approve');
+    Route::post('admin/leader-videos/{id}/reject', [AdminController::class, 'leaderVideoReject'])->name('admin.leader-videos.reject');
+    Route::get('admin/leader-videos/{id}/delete', [AdminController::class, 'leaderVideoDelete'])->name('admin.leader-videos.delete');
+
+    // Marketing Banners & Creatives
+    Route::get('admin/leader-banners', [AdminController::class, 'leaderBanners'])->name('admin.leader-banners');
+    Route::get('admin/leader-banners/upload', [AdminController::class, 'leaderBannerUpload'])->name('admin.leader-banners.upload');
+    Route::post('admin/leader-banners/store', [AdminController::class, 'leaderBannerStore'])->name('admin.leader-banners.store');
+    Route::get('admin/leader-banners/{id}/approve', [AdminController::class, 'leaderBannerApprove'])->name('admin.leader-banners.approve');
+    Route::post('admin/leader-banners/{id}/reject', [AdminController::class, 'leaderBannerReject'])->name('admin.leader-banners.reject');
+    Route::get('admin/leader-banners/{id}/delete', [AdminController::class, 'leaderBannerDelete'])->name('admin.leader-banners.delete');
     Route::post('admin/team-leaders/{id}/suspend', [AdminController::class, 'suspendTeamLeader'])->name('admin.team-leaders.suspend');
     Route::post('admin/team-leaders/{id}/reactivate', [AdminController::class, 'reactivateTeamLeader'])->name('admin.team-leaders.reactivate');
     
@@ -537,6 +556,7 @@ Route::get('deactivate', [News::class, 'deactivate']);
 
 Route::get('project', [HomeController::class, 'project'])->name('project');
 Route::get('team-leader', [TeamLeaderController::class, 'index'])->name('team.leader');
+Route::get('api/countries', [TeamLeaderController::class, 'countries'])->name('api.countries');
 Route::get('team-leader/login', [TeamLeaderController::class, 'showLoginForm'])->name('team-leader.login');
 Route::post('team-leader/login', [TeamLeaderController::class, 'loginLeader'])->name('team-leader.login.post');
 Route::post('team-leader/logout', [TeamLeaderController::class, 'logoutLeader'])->name('team-leader.logout');
@@ -557,6 +577,8 @@ Route::middleware('team-leader')->group(function () {
 
     // confirmed approval
     Route::get('team-leader/dashboard', [TeamLeaderController::class, 'dashboard'])->name('team-leader.dashboard');
+    Route::get('team-leader/all', [TeamLeaderController::class, 'allFeatures'])->name('team-leader.all');
+    Route::post('team-leader/event-report', [TeamLeaderController::class, 'storeEventReport'])->name('team-leader.event-report');
     Route::post('team-leader/events', [TeamLeaderController::class, 'storeEvent'])->name('team-leader.events.store');
     Route::post('team-leader/events/{id}/proof', [TeamLeaderController::class, 'submitEventProof'])->name('team-leader.events.proof');
     Route::post('team-leader/socials', [TeamLeaderController::class, 'storeSocial'])->name('team-leader.socials.store');

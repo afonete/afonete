@@ -24,10 +24,20 @@ class TeamLeaderEvent extends Model
         'proof_files',
         'proof_notes',
         'proof_status',
+        'event_image_1',
+        'event_image_2',
+        'event_done_on',
+        'hotel_location',
+        'country',
+        'place',
+        'event_date',
+        'event_type',
     ];
 
     protected $casts = [
         'event_time'      => 'datetime',
+        'event_done_on'   => 'date',
+        'event_date'      => 'date',
         'proof_submitted' => 'boolean',
     ];
 

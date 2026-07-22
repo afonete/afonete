@@ -35,28 +35,28 @@ s0.parentNode.insertBefore(s1,s0);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-    <title>{{ strtoupper(env('APP_NAME')) }} Affiliate</title>
+    <title><?php echo e(strtoupper(env('APP_NAME'))); ?> Affiliate</title>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
 <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="{{asset('assets/a/dist/js/adminlte.min.js')}}"></script>
+    <script src="<?php echo e(asset('assets/a/dist/js/adminlte.min.js')); ?>"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-     <link rel="icon" href="{{asset('assets/a/img/big-logo.png')}}">
+     <link rel="icon" href="<?php echo e(asset('assets/a/img/big-logo.png')); ?>">
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="{{asset('assets/a/plugins/fontawesome-free/css/all.min.css')}}">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/plugins/fontawesome-free/css/all.min.css')); ?>">
     <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
     <!-- Theme style -->
-    <link rel="stylesheet" href="{{asset('assets/a/dist/css/bootstrap.min.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/a/dist/css/tree_style.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/a/plugins/fontawesome-free/css/all.min.css')}}">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/dist/css/bootstrap.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/dist/css/tree_style.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/plugins/fontawesome-free/css/all.min.css')); ?>">
     <link rel="stylesheet"
-        href="{{asset('assets/a/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/a/dist/css/adminlte.min.css')}}">
+        href="<?php echo e(asset('assets/a/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/dist/css/adminlte.min.css')); ?>">
 
-    <link rel="stylesheet" href="{{asset('assets/a/plugins/overlayScrollbars/css/OverlayScrollbars.min.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/a/dist/css/proje.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/a/css/style.css')}}">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/plugins/overlayScrollbars/css/OverlayScrollbars.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/dist/css/proje.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/a/css/style.css')); ?>">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- sdsssd -->
 
@@ -96,7 +96,7 @@ s0.parentNode.insertBefore(s1,s0);
   animation: fadeIn 9s;
 }
 
-@keyframes fadeIn {
+@keyframes  fadeIn {
   from {
     opacity: 12;
   }
@@ -257,31 +257,7 @@ if (showAlertBtn) {
 
 
         <!-- Navbar -->
-        {{-- <nav class="main-header navbar navbar-expand navbar-white navbar-light d-flex justify-content-between">
-            <!-- Left navbar links -->
-            <ul class="navbar-nav bg-danger">
-                <li class="nav-item">
-                    <a class="nav-link" data-widget="pushmenu" href="#" role="button" ><i class="fas fa-bars"></i></a>
-                </li>
-            </ul>
-
-
-            <div class="flex-1 d-flex bg-success" >
-
-                     <div class="user-panel d-flex justify-content-end" id="drop-btn" role="button">
-                        <div class="info">
-                            <a href="#" class="d-block">{{$name}}</a>
-                        </div>
-                        <div class="user-img">
-                           <img src="{{asset('assets/a/img/user.png')}}" class="" alt="User Image">
-                        </div>
-                    </div>
-
-
-                </div>
-
-
-        </nav> --}}
+        
 
             <nav class="main-header navbar navbar-expand-lg navbar-white ">
 
@@ -321,10 +297,10 @@ if (showAlertBtn) {
 
                     <div class="user-panel d-flex justify-content-end" id="drop-btn" role="button">
                        <div class="info">
-                           <a href="#" class="d-block">{{$name}}</a>
+                           <a href="#" class="d-block"><?php echo e($name); ?></a>
                        </div>
                        <div class="user-img">
-                          <img src="{{asset('assets/a/img/user.png')}}" class="" alt="User Image">
+                          <img src="<?php echo e(asset('assets/a/img/user.png')); ?>" class="" alt="User Image">
                        </div>
                    </div>
 
@@ -346,10 +322,10 @@ if (showAlertBtn) {
     <aside class="main-sidebar sidebar-dark-info elevation-4 custom-user-sidebar">
 
         <!-- Brand Logo -->
-        <a href="{{route('user.dashboard')}}" class="brand-link">
-            <img src="{{asset('assets/a/img/big-logo.png')}}" class="brand-image img-circle elevation-3"
+        <a href="<?php echo e(route('user.dashboard')); ?>" class="brand-link">
+            <img src="<?php echo e(asset('assets/a/img/big-logo.png')); ?>" class="brand-image img-circle elevation-3"
                 style="opacity: .8">
-            <span class="brand-text font-weight-light">{{ strtoupper(env('APP_NAME')) }}</span>
+            <span class="brand-text font-weight-light"><?php echo e(strtoupper(env('APP_NAME'))); ?></span>
         </a>
 
         <!-- Sidebar -->
@@ -366,8 +342,8 @@ if (showAlertBtn) {
                           <div class="d-flex flex-column align-items-center text-center">
                             <div class="sidebar-user-profile d-flex flex-column align-items-center text-center pb-3">
                                 <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="User Avatar" class="rounded-circle bg-white sidebar-user-avatar">
-                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="{{ $user->activation }}">{{ $user->activation }}</h5>
-                                <small class="sidebar-user-username text-muted" title="{{ $user->user }}">{{ $user->user }}</small>
+                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="<?php echo e($user->activation); ?>"><?php echo e($user->activation); ?></h5>
+                                <small class="sidebar-user-username text-muted" title="<?php echo e($user->user); ?>"><?php echo e($user->user); ?></small>
                             </div>
 
                             <div class="d-flex flex-column align-items-center">
@@ -391,225 +367,222 @@ if (showAlertBtn) {
                     </div>
 
                  </li>
-                    {{-- Restructured user sidebar menu --}}
+                    
                     <li class="nav-item">
-                        <a href="{{ route('user.dashboard') }}" class="nav-link {{ request()->routeIs('user.dashboard') ? 'active' : '' }}">
+                        <a href="<?php echo e(route('user.dashboard')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
 
-                    {{-- Packages --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages <?php echo e(request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-box-open"></i>
                             <p>Packages <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('user.buypackage') }}" class="nav-link {{ request()->routeIs('user.buypackage') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.buypackage')); ?>" class="nav-link <?php echo e(request()->routeIs('user.buypackage') ? 'active' : ''); ?>">
                                     <i class="fas fa-shopping-cart nav-icon"></i><p>Buy UVP AI License</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
-                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
+                                    <a href="<?php echo e(route('user.dashboard.freeaccount-restricted')); ?>" class="nav-link">
                                         <i class="fas fa-chart-line nav-icon"></i><p>Investment Package</p>
                                     </a>
-                                @else
-                                    <a href="{{ route('investment-package') }}" class="nav-link {{ request()->routeIs('investment-package') ? 'active' : '' }}">
+                                <?php else: ?>
+                                    <a href="<?php echo e(route('investment-package')); ?>" class="nav-link <?php echo e(request()->routeIs('investment-package') ? 'active' : ''); ?>">
                                         <i class="far fa-circle nav-icon"></i><p>Investment Package</p>
                                     </a>
-                                @endif
+                                <?php endif; ?>
                             </li>
                             <li class="nav-item">
-                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
-                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
+                                    <a href="<?php echo e(route('user.dashboard.freeaccount-restricted')); ?>" class="nav-link">
                                         <i class="fas fa-layer-group nav-icon"></i><p>Staker Package</p>
                                     </a>
-                                @else
-                                    <a href="{{ route('staker-package') }}" class="nav-link {{ request()->routeIs('staker-package') ? 'active' : '' }}">
+                                <?php else: ?>
+                                    <a href="<?php echo e(route('staker-package')); ?>" class="nav-link <?php echo e(request()->routeIs('staker-package') ? 'active' : ''); ?>">
                                         <i class="far fa-circle nav-icon"></i><p>Staker Package</p>
                                     </a>
-                                @endif
+                                <?php endif; ?>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.investments') }}" class="nav-link {{ request()->routeIs('user.investments*') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.investments')); ?>" class="nav-link <?php echo e(request()->routeIs('user.investments*') ? 'active' : ''); ?>">
                                     <i class="fas fa-briefcase nav-icon"></i><p>My Investments</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('packageRenew') }}" class="nav-link {{ request()->routeIs('packageRenew') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('packageRenew')); ?>" class="nav-link <?php echo e(request()->routeIs('packageRenew') ? 'active' : ''); ?>">
                                     <i class="fas fa-redo-alt nav-icon"></i><p>Package Renewal</p>
                                 </a>
                             </li>
                         </ul>
                     </li>
 
-                    {{-- Wallets --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets <?php echo e(request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-wallet"></i>
                             <p>Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.balance') }}" class="nav-link {{ request()->routeIs('user.dashboard.balance') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.dashboard.balance')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.balance') ? 'active' : ''); ?>">
                                     <i class="fas fa-scale-balanced nav-icon"></i><p>Balance</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.deposit') }}" class="nav-link {{ request()->routeIs('user.dashboard.deposit') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.dashboard.deposit')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.deposit') ? 'active' : ''); ?>">
                                     <i class="fas fa-arrow-down nav-icon"></i><p>Deposit</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.userwithdraw') }}" class="nav-link {{ request()->routeIs('user.dashboard.userwithdraw') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.userwithdraw') ? 'active' : ''); ?>">
                                     <i class="fas fa-arrow-up nav-icon"></i><p>Withdraw</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.withdrawal-history') }}" class="nav-link {{ request()->routeIs('user.withdrawal-history') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.withdrawal-history')); ?>" class="nav-link <?php echo e(request()->routeIs('user.withdrawal-history') ? 'active' : ''); ?>">
                                     <i class="fas fa-history nav-icon"></i><p>Withdrawal History</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.payments') }}" class="nav-link {{ request()->routeIs('user.dashboard.payments') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.dashboard.payments')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.payments') ? 'active' : ''); ?>">
                                     <i class="fas fa-exchange-alt nav-icon"></i><p>Internal Exchange</p>
                                 </a>
                             </li>
                         </ul>
                     </li>
 
-                    {{-- Token Wallets --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.token.*') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tokens {{ request()->routeIs('user.token.*') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.token.*') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tokens <?php echo e(request()->routeIs('user.token.*') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-coins"></i>
                             <p>Token Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item"><a href="{{ route('user.token.locked') }}" class="nav-link {{ request()->routeIs('user.token.locked') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Locked Token</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.token.available') }}" class="nav-link {{ request()->routeIs('user.token.available') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Available Token</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.token.transfer') }}" class="nav-link {{ request()->routeIs('user.token.transfer') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Transfer Token</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.token.swap') }}" class="nav-link {{ request()->routeIs('user.token.swap') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Swap Token</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.token.withdraw') }}" class="nav-link {{ request()->routeIs('user.token.withdraw') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Withdraw Token</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.token.locked')); ?>" class="nav-link <?php echo e(request()->routeIs('user.token.locked') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Locked Token</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.token.available')); ?>" class="nav-link <?php echo e(request()->routeIs('user.token.available') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Available Token</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.token.transfer')); ?>" class="nav-link <?php echo e(request()->routeIs('user.token.transfer') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Transfer Token</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.token.swap')); ?>" class="nav-link <?php echo e(request()->routeIs('user.token.swap') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Swap Token</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.token.withdraw')); ?>" class="nav-link <?php echo e(request()->routeIs('user.token.withdraw') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Withdraw Token</p></a></li>
                         </ul>
                     </li>
 
-                    {{-- Team & Referrals --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-team {{ request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-team <?php echo e(request()->routeIs('teambuilding','user.referral.show','user.referral.*','downline') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Team &amp; Referrals <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item"><a href="{{ route('teambuilding') }}" class="nav-link {{ request()->routeIs('teambuilding') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Team Building</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.referral.show') }}" class="nav-link {{ request()->routeIs('user.referral.show') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>My Links</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.referral.bonus') }}" class="nav-link {{ request()->routeIs('user.referral.bonus') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Referral Bonus</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.referral.downline') }}" class="nav-link {{ request()->routeIs('user.referral.downline') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Downline</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.referral.rank') }}" class="nav-link {{ request()->routeIs('user.referral.rank') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Ranks &amp; Rewards</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('teambuilding')); ?>" class="nav-link <?php echo e(request()->routeIs('teambuilding') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Team Building</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.referral.show')); ?>" class="nav-link <?php echo e(request()->routeIs('user.referral.show') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>My Links</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.referral.bonus')); ?>" class="nav-link <?php echo e(request()->routeIs('user.referral.bonus') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Referral Bonus</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.referral.downline')); ?>" class="nav-link <?php echo e(request()->routeIs('user.referral.downline') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Downline</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.referral.rank')); ?>" class="nav-link <?php echo e(request()->routeIs('user.referral.rank') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Ranks &amp; Rewards</p></a></li>
                         </ul>
                     </li>
 
-                    {{-- FOMO / Tasks --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tasks {{ request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-tasks <?php echo e(request()->routeIs('user.dashboard.payclick','user.dashboard.project','user.dashboard.payvideo') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-tasks"></i>
                             <p>FOMO / Tasks <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item"><a href="{{ route('user.dashboard.payclick') }}" class="nav-link {{ request()->routeIs('user.dashboard.payclick') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>FOMO</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.dashboard.project') }}" class="nav-link {{ request()->routeIs('user.dashboard.project') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Upload Project</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.dashboard.payvideo') }}" class="nav-link {{ request()->routeIs('user.dashboard.payvideo') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Paid Ads / Videos</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.dashboard.payclick')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.payclick') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>FOMO</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.dashboard.project')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.project') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Upload Project</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.dashboard.payvideo')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.payvideo') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Paid Ads / Videos</p></a></li>
                         </ul>
                     </li>
 
-                    {{-- My Contract --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.contracts.*') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('user.contracts.*') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.contracts.*') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other <?php echo e(request()->routeIs('user.contracts.*') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-file-signature"></i>
                             <p>My contract <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('user.contracts.bifonex') }}" class="nav-link {{ request()->routeIs('user.contracts.bifonex') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('user.contracts.bifonex')); ?>" class="nav-link <?php echo e(request()->routeIs('user.contracts.bifonex') ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Bifonex Contract</p>
                                 </a>
                             </li>
                         </ul>
                     </li>
 
-                    {{-- ═══════════════════════════════════════════════════
-                         TEAM LEADER / SUPER LEADER MENU
-                         Shows below "My Contract" for activated leaders
-                         ═══════════════════════════════════════════════════ --}}
-                    @php
+                    
+                    <?php
                         $isTeamLeader = in_array($user->has_paid_package ?? '', ['TEAM_LEADER', 'SUPER_LEADER']);
                         $leaderLabel  = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'Super Leader' : 'Team Leader';
                         $leaderIcon   = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'fa-crown' : 'fa-users-cog';
                         $leaderColor  = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'group-tokens' : 'group-team';
-                    @endphp
-                    @if($isTeamLeader)
-                    <li class="nav-item has-treeview {{ request()->is('team-leader/dashboard*') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle {{ $leaderColor }} {{ request()->is('team-leader/dashboard*') ? 'active' : '' }}">
-                            <i class="nav-icon fas {{ $leaderIcon }}"></i>
-                            <p>{{ $leaderLabel }} <i class="fas fa-angle-left right"></i></p>
+                    ?>
+                    <?php if($isTeamLeader): ?>
+                    <li class="nav-item has-treeview <?php echo e(request()->is('team-leader/dashboard*') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle <?php echo e($leaderColor); ?> <?php echo e(request()->is('team-leader/dashboard*') ? 'active' : ''); ?>">
+                            <i class="nav-icon fas <?php echo e($leaderIcon); ?>"></i>
+                            <p><?php echo e($leaderLabel); ?> <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.all') }}" class="nav-link {{ request()->routeIs('team-leader.all') ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.all')); ?>" class="nav-link <?php echo e(request()->routeIs('team-leader.all') ? 'active' : ''); ?>">
                                     <i class="fas fa-th-large nav-icon" style="color:#fbbf24"></i><p style="font-weight:700">ALL</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.dashboard') }}?tab=planning" class="nav-link {{ request()->is('team-leader/dashboard*') && (request('tab') === 'planning' || !request('tab')) ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=planning" class="nav-link <?php echo e(request()->is('team-leader/dashboard*') && (request('tab') === 'planning' || !request('tab')) ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Events Planning</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.dashboard') }}?tab=proof" class="nav-link {{ request('tab') === 'proof' ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=proof" class="nav-link <?php echo e(request('tab') === 'proof' ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Event Proofs</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.dashboard') }}?tab=ambassador" class="nav-link {{ request('tab') === 'ambassador' ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=ambassador" class="nav-link <?php echo e(request('tab') === 'ambassador' ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Social Ambassador</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.dashboard') }}?tab=videos" class="nav-link {{ request('tab') === 'videos' ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=videos" class="nav-link <?php echo e(request('tab') === 'videos' ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Official Videos</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('team-leader.dashboard') }}?tab=banners" class="nav-link {{ request('tab') === 'banners' ? 'active' : '' }}">
+                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=banners" class="nav-link <?php echo e(request('tab') === 'banners' ? 'active' : ''); ?>">
                                     <i class="far fa-circle nav-icon"></i><p>Ad Banners</p>
                                 </a>
                             </li>
                         </ul>
                     </li>
-                    @endif
+                    <?php endif; ?>
 
-                    {{-- Other --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('profile.edit','password.show') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('profile.edit','password.show') ? 'active' : '' }}">
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('profile.edit','password.show') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other <?php echo e(request()->routeIs('profile.edit','password.show') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-ellipsis-h"></i>
                             <p>Other <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
-                            @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
-                                <li class="nav-item"><a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Education</p></a></li>
-                            @else
+                            <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
+                                <li class="nav-item"><a href="<?php echo e(route('user.dashboard.freeaccount-restricted')); ?>" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Education</p></a></li>
+                            <?php else: ?>
                                 <li class="nav-item"><a href="/user/education" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Education</p></a></li>
-                            @endif
+                            <?php endif; ?>
                             <li class="nav-item"><a href="/user/rewards" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Reward Center <span class="right badge badge-success">New</span></p></a></li>
                             <li class="nav-item"><a href="/user/faq" class="nav-link"><i class="far fa-circle nav-icon"></i><p>FAQ</p></a></li>
-                            <li class="nav-item"><a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.edit') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Profile</p></a></li>
-                            <li class="nav-item"><a href="{{ route('password.show') }}" class="nav-link {{ request()->routeIs('password.show') ? 'active' : '' }}"><i class="far fa-circle nav-icon"></i><p>Password</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('profile.edit')); ?>" class="nav-link <?php echo e(request()->routeIs('profile.edit') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Profile</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('password.show')); ?>" class="nav-link <?php echo e(request()->routeIs('password.show') ? 'active' : ''); ?>"><i class="far fa-circle nav-icon"></i><p>Password</p></a></li>
                         </ul>
                     </li>
 
-                    {{-- Label: NOT IN USE NOW --}}
+                    
                     <li class="nav-header text-uppercase text-muted">Not in use now</li>
                     <li class="nav-item has-treeview">
                         <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-legacy">
@@ -617,12 +590,12 @@ if (showAlertBtn) {
                             <p>Legacy / Coming Soon <i class="fas fa-angle-left right"></i></p>
                         </a>
                         <ul class="nav nav-treeview">
-                            <li class="nav-item"><a href="{{ route('overview') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Finance &amp; Wallet</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('overview')); ?>" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Finance &amp; Wallet</p></a></li>
                             <li class="nav-item"><a href="/user/deposit" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Deposit Old Route</p></a></li>
                             <li class="nav-item"><a href="/user/dashboard/withdraw/user" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Withdraw Old Route</p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Featured <span class="right badge badge-danger">soon</span></p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Upgrade Package</p></a></li>
-                            <li class="nav-item"><a href="{{ route('user.dashboard.create') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Club Building</p></a></li>
+                            <li class="nav-item"><a href="<?php echo e(route('user.dashboard.create')); ?>" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Club Building</p></a></li>
                             <li class="nav-item"><a href="https://exchange.focoin.eu/" target="_blank" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Exchange</p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Products</p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Eshop</p></a></li>
@@ -644,7 +617,7 @@ if (showAlertBtn) {
                         <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
                             <i class="nav-icon las la-sign-out-alt text-danger"></i><p>Logout</p>
                         </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST"> @csrf </form>
+                        <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST"> <?php echo csrf_field(); ?> </form>
                     </li>
 
                 </ul>
@@ -679,20 +652,21 @@ if (showAlertBtn) {
                        <?php //check if user have been applied
                        $applied=Position::where('user',$name)->first();
                          ?>
-                        <form  method="POST" action="{{route('user.position.apply')}}">
-                            @csrf
-                             @if($applied)
+                        <form  method="POST" action="<?php echo e(route('user.position.apply')); ?>">
+                            <?php echo csrf_field(); ?>
+                             <?php if($applied): ?>
                          <div class="text-dark">
                             <div class="p-1 text-dark text-center" style="border-bottom: 1px solid black;">
-                                <span> {{$applied->position}}
+                                <span> <?php echo e($applied->position); ?>
+
                             </div>
                             <div class="d-flex justify-content-around">
-                                <div class="text-dark p-1"> reward: <span class="font-weight-bold">{{$applied->award}}$ </span> </div>
-                                <div class="text-dark p-1"> Status: <span class="font-weight-bold"> {{$applied->status}} </span></div>
+                                <div class="text-dark p-1"> reward: <span class="font-weight-bold"><?php echo e($applied->award); ?>$ </span> </div>
+                                <div class="text-dark p-1"> Status: <span class="font-weight-bold"> <?php echo e($applied->status); ?> </span></div>
                             </div>
 
                          </div>
-                    @else
+                    <?php else: ?>
                             <select class="custom-select" id="position-select" required name="position">
                                 <option selected="true" disabled="disabled">Apply position</option>
 
@@ -751,11 +725,11 @@ if (showAlertBtn) {
 
                                 </div>
                         </select>
-                        @endif</form>
+                        <?php endif; ?></form>
 
                     </div>
                 </div>
-                <p><i class="las la-id-card mr-2"></i><a href="{{route('profile.edit')}}">Profile</a></p>
+                <p><i class="las la-id-card mr-2"></i><a href="<?php echo e(route('profile.edit')); ?>">Profile</a></p>
                 <p> <i class="fas fa-cog mr-2"></i> <a href="#" onclick="soon()">Settings</a></p>
                 <hr id="hrs">
 
@@ -764,7 +738,7 @@ if (showAlertBtn) {
                     <i class="las la-sign-out-alt text-danger"></i>
                     <a class="text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
                         Logout</a></p>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST"> @csrf
+                <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST"> <?php echo csrf_field(); ?>
                 </form>
             </div>
     </aside>
@@ -1388,3 +1362,4 @@ if (showAlertBtn) {
     </style>
 
 </html>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/user-dashboard-base.blade.php ENDPATH**/ ?>

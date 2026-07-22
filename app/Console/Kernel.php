@@ -25,6 +25,9 @@ class Kernel extends ConsoleKernel
         // Auto-detect users who meet rank criteria → create pending applications for admin
         $schedule->command('ranks:check')->dailyAt('00:10');
 
+        // SUPER LEADER credit processing: turnover milestones, cashout releases, auto-withdrawals
+        $schedule->command('credits:process-super-leaders')->everyFiveMinutes();
+
         // Weekly Monday referral bonus window:
         //   - Promote all pending bonus rows whose week_start has arrived → withdrawable
         //   - Compute and credit Associate Manager weekly 20% bonus

@@ -134,30 +134,71 @@
                     </div>
                 @endif
 
+                {{-- ══ SUPER LEADER CREDIT CARD ══ --}}
+                @if($credit && $credit->credit_amount > 0)
+                <div class="leader-header mb-4" style="border-color: #f59e0b; background: linear-gradient(135deg, #1c1d20 0%, #2d2006 100%);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="background: rgba(245,158,11,0.15); padding: 12px; border-radius: 8px;">
+                                <i class="fas fa-credit-card text-warning" style="font-size: 1.4rem;"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 font-weight-bold text-warning">SUPER LEADER Credit Wallet</h5>
+                                <p class="text-slate-400 text-xs mb-0">Your allocated credit from the administration.</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <h3 class="mb-0 font-weight-extrabold" style="color: #fbbf24;">${{ number_format($credit->credit_amount, 2) }}</h3>
+                            @if($credit->status === 'active')
+                                <span class="badge bg-success px-3 py-1" style="border-radius: 20px; font-size: 0.7rem;">Active</span>
+                            @else
+                                <span class="badge bg-warning text-dark px-3 py-1" style="border-radius: 20px; font-size: 0.7rem;">Pending</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="row mt-3 pt-3" style="border-top: 1px solid #2e2f34;">
+                        <div class="col-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">Remaining</p>
+                            <p class="font-weight-bold text-success mb-0">${{ number_format($credit->remaining_credit, 2) }}</p>
+                        </div>
+                        <div class="col-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">Cashout</p>
+                            <p class="font-weight-bold text-info mb-0">${{ number_format($credit->cashout_amount, 2) }}</p>
+                        </div>
+                        <div class="col-4 text-center">
+                            <p class="text-slate-500 text-xs mb-1">Turnover Target</p>
+                            <p class="font-weight-bold text-white mb-0">${{ number_format($credit->sales_turnover_target, 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                @php $activeTab = request('tab', 'planning'); @endphp
+
                 {{-- Nav Tabs (5 Pages of the Team Leader Dashboard) --}}
                 <ul class="nav nav-pills mb-4 leader-tabs-nav" id="leaderTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="tab-planning-link" data-toggle="pill" href="#tab-planning" role="tab">
+                        <a class="nav-link {{ $activeTab === 'planning' ? 'active' : '' }}" id="tab-planning-link" data-toggle="pill" href="#tab-planning" role="tab">
                             <i class="fas fa-calendar-plus mr-1.5"></i>Page 1: Events Planning &amp; Zoom
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-proof-link" data-toggle="pill" href="#tab-proof" role="tab">
+                        <a class="nav-link {{ $activeTab === 'proof' ? 'active' : '' }}" id="tab-proof-link" data-toggle="pill" href="#tab-proof" role="tab">
                             <i class="fas fa-camera-retro mr-1.5"></i>Page 2: Event Proof Upload
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-ambassador-link" data-toggle="pill" href="#tab-ambassador" role="tab">
+                        <a class="nav-link {{ $activeTab === 'ambassador' ? 'active' : '' }}" id="tab-ambassador-link" data-toggle="pill" href="#tab-ambassador" role="tab">
                             <i class="fas fa-bullhorn mr-1.5"></i>Page 3: Social Ambassador Link
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-videos-link" data-toggle="pill" href="#tab-videos" role="tab">
+                        <a class="nav-link {{ $activeTab === 'videos' ? 'active' : '' }}" id="tab-videos-link" data-toggle="pill" href="#tab-videos" role="tab">
                             <i class="fas fa-video mr-1.5"></i>Page 4: Official Videos
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="tab-banners-link" data-toggle="pill" href="#tab-banners" role="tab">
+                        <a class="nav-link {{ $activeTab === 'banners' ? 'active' : '' }}" id="tab-banners-link" data-toggle="pill" href="#tab-banners" role="tab">
                             <i class="fas fa-images mr-1.5"></i>Page 5: Ad Banners
                         </a>
                     </li>
@@ -168,7 +209,7 @@
                     {{-- ───────────────────────────────────────────────────────────
                          PAGE 1: EVENTS PLANNING & ZOOM MEETINGS
                          ─────────────────────────────────────────────────────────── --}}
-                    <div class="tab-pane fade show active" id="tab-planning" role="tabpanel">
+                    <div class="tab-pane fade {{ $activeTab === 'planning' ? 'show active' : '' }}" id="tab-planning" role="tabpanel">
                         <div class="row">
                             {{-- Form --}}
                             <div class="col-lg-5 mb-4">
@@ -269,7 +310,7 @@
                     {{-- ───────────────────────────────────────────────────────────
                          PAGE 2: EVENT PROOFS
                          ─────────────────────────────────────────────────────────── --}}
-                    <div class="tab-pane fade" id="tab-proof" role="tabpanel">
+                    <div class="tab-pane fade {{ $activeTab === 'proof' ? 'show active' : '' }}" id="tab-proof" role="tabpanel">
                         <div class="row justify-content-center">
                             <div class="col-lg-8">
                                 <div class="leader-card">
@@ -371,7 +412,7 @@
                     {{-- ───────────────────────────────────────────────────────────
                          PAGE 3: SOCIAL MEDIA AMBASSADOR
                          ─────────────────────────────────────────────────────────── --}}
-                    <div class="tab-pane fade" id="tab-ambassador" role="tabpanel">
+                    <div class="tab-pane fade {{ $activeTab === 'ambassador' ? 'show active' : '' }}" id="tab-ambassador" role="tabpanel">
                         <div class="row">
                             {{-- Form --}}
                             <div class="col-lg-5 mb-4">
@@ -465,7 +506,7 @@
                     {{-- ───────────────────────────────────────────────────────────
                          PAGE 4: OFFICIAL VIDEOS
                          ─────────────────────────────────────────────────────────── --}}
-                    <div class="tab-pane fade" id="tab-videos" role="tabpanel">
+                    <div class="tab-pane fade {{ $activeTab === 'videos' ? 'show active' : '' }}" id="tab-videos" role="tabpanel">
                         <div class="leader-card">
                             <h5 class="font-weight-bold mb-3 text-info"><i class="fas fa-video mr-2"></i>Official Video Promotions &amp; Tutorials</h5>
                             <p class="text-muted text-sm mb-4">View official video campaigns designed by the admin. Learn about system features, new promotions, and guidelines.</p>
@@ -480,11 +521,10 @@
                                         <div class="col-md-6 col-lg-4 mb-4">
                                             <div class="card bg-dark border border-secondary shadow-sm h-100" style="border-radius: 12px; overflow: hidden;">
                                                 {{-- Embedded YouTube Player or Standard HTML5 Player --}}
-                                                @if(str_contains($video->video, 'youtube.com') || str_contains($video->video, 'youtu.be'))
+                                                @if($video->video_type === 'youtube')
                                                     @php
                                                         // extract YouTube code
-                                                        preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|[^/]+[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $video->video, $match);
-                                                        $ytId = $match[1] ?? '';
+                                                        $ytId = $video->youtubeId();
                                                     @endphp
                                                     @if($ytId)
                                                         <iframe class="w-100" style="height: 180px;" src="https://www.youtube.com/embed/{{ $ytId }}" frameborder="0" allowfullscreen></iframe>
@@ -495,14 +535,14 @@
                                                     @endif
                                                 @else
                                                     <video class="w-100" style="height: 180px; background:#000;" controls>
-                                                        <source src="{{ asset('storage/' . $video->video) }}" type="video/mp4">
+                                                        <source src="{{ asset('storage/' . $video->video_url) }}" type="video/mp4">
                                                     </video>
                                                 @endif
                                                 <div class="card-body p-3 flex-column justify-content-between">
-                                                    <h6 class="font-weight-bold text-light mb-1.5 leading-snug">{{ $video->tittle }}</h6>
+                                                    <h6 class="font-weight-bold text-light mb-1.5 leading-snug">{{ $video->title }}</h6>
                                                     <div class="d-flex justify-content-between align-items-center text-xs mt-3 pt-2 border-top border-secondary">
-                                                        <span class="text-slate-400 font-mono"><i class="fas fa-play-circle mr-1"></i> {{ number_format($video->reached_views) }} reached</span>
-                                                        <span class="text-indigo-400 font-bold"><i class="fas fa-clock mr-1"></i> {{ $video->time }} sec</span>
+                                                        <span class="text-slate-400 font-mono"><i class="fas fa-play-circle mr-1"></i> {{ number_format($video->views_count) }} reached</span>
+                                                        <span class="text-indigo-400 font-bold"><i class="fas fa-clock mr-1"></i> {{ $video->duration_seconds }} sec</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -516,7 +556,7 @@
                     {{-- ───────────────────────────────────────────────────────────
                          PAGE 5: AD BANNERS
                          ─────────────────────────────────────────────────────────── --}}
-                    <div class="tab-pane fade" id="tab-banners" role="tabpanel">
+                    <div class="tab-pane fade {{ $activeTab === 'banners' ? 'show active' : '' }}" id="tab-banners" role="tabpanel">
                         <div class="leader-card">
                             <h5 class="font-weight-bold mb-3 text-info"><i class="fas fa-images mr-2"></i>Marketing Banners &amp; Creatives</h5>
                             <p class="text-muted text-sm mb-4">Official designs and picture banners prepared by our designers. Download them and post on your social profiles to attract recruits.</p>
@@ -531,13 +571,13 @@
                                         <div class="col-md-6 col-lg-4 mb-4">
                                             <div class="card bg-dark border border-secondary shadow-sm h-100" style="border-radius: 12px; overflow: hidden;">
                                                 <div class="p-1 bg-slate-900 d-flex align-items-center justify-content-center" style="height: 200px; overflow: hidden;">
-                                                    <img src="{{ asset('storage/' . $banner->banner) }}" class="img-fluid rounded max-h-[190px]" alt="{{ $banner->tittle }}" onerror="this.src='https://placehold.co/400x250?text=Marketing+Creative';">
+                                                    <img src="{{ asset('storage/' . $banner->image_path) }}" class="img-fluid rounded max-h-[190px]" alt="{{ $banner->title }}" onerror="this.src='https://placehold.co/400x250?text=Marketing+Creative';">
                                                 </div>
                                                 <div class="card-body p-3">
-                                                    <h6 class="font-weight-bold text-light mb-1 leading-snug">{{ $banner->tittle }}</h6>
+                                                    <h6 class="font-weight-bold text-light mb-1 leading-snug">{{ $banner->title }}</h6>
                                                     <p class="text-xs text-muted leading-relaxed mt-2" style="font-family: inherit;">{{ Str::limit($banner->description, 75) }}</p>
                                                     <div class="d-flex justify-content-between align-items-center text-xs mt-3 pt-2 border-top border-secondary">
-                                                        <a href="{{ asset('storage/' . $banner->banner) }}" target="_blank" download class="btn btn-xs btn-outline-info font-weight-bold w-100 text-center" style="border-radius: 6px;">
+                                                        <a href="{{ asset('storage/' . $banner->image_path) }}" target="_blank" download class="btn btn-xs btn-outline-info font-weight-bold w-100 text-center" style="border-radius: 6px;">
                                                             <i class="fas fa-download mr-1"></i> Download Banner Asset
                                                         </a>
                                                     </div>

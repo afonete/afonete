@@ -502,51 +502,89 @@ All Team Leaders are expected to act in line with the values, policies, and stan
     <!-- sweatalert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        fetch("https://restcountries.com/v3.1/all?fields=name,idd")
-            .then(response => response.json())
-            .then(data => {
-                const countrySelect = document.getElementById("countrySelect");
-                const phoneInput = document.getElementById("phone");
-                
-                // Exclude Chile and Israel
-                const excludedCountries = ['Chile', 'Israel'];
-                const filteredData = data.filter(country => !excludedCountries.includes(country.name.common));
-                
-                filteredData.sort((a, b) => a.name.common.localeCompare(b.name.common));
-                
-                filteredData.forEach(country => {
-                    const option = document.createElement("option");
-                    option.value = country.name.common;
-                    option.textContent = country.name.common;
-                    countrySelect.appendChild(option);
-                });
+        /* ================================================================
+       COUNTRY DROPDOWN  +  PHONE DIAL-CODE  —  STATIC EMBEDDED DATA
+       ================================================================
+       • 246 countries pre-sorted A-Z, Chile & Israel excluded
+       • Dial codes embedded — ZERO network calls, ZERO CORS issues
+       • ONE change listener on <select>
+       • ONE isolated input listener on phone <input>
+       ================================================================ */
+    (function () {
+        'use strict';
 
-                let activeCountryCode = "";
+        var COUNTRIES = [{"n":"Afghanistan","d":"+93"},{"n":"Albania","d":"+355"},{"n":"Algeria","d":"+213"},{"n":"American Samoa","d":"+1684"},{"n":"Andorra","d":"+376"},{"n":"Angola","d":"+244"},{"n":"Anguilla","d":"+1264"},{"n":"Antigua and Barbuda","d":"+1268"},{"n":"Argentina","d":"+54"},{"n":"Armenia","d":"+374"},{"n":"Aruba","d":"+297"},{"n":"Australia","d":"+61"},{"n":"Austria","d":"+43"},{"n":"Azerbaijan","d":"+994"},{"n":"Bahamas","d":"+1242"},{"n":"Bahrain","d":"+973"},{"n":"Bangladesh","d":"+880"},{"n":"Barbados","d":"+1246"},{"n":"Belarus","d":"+375"},{"n":"Belgium","d":"+32"},{"n":"Belize","d":"+501"},{"n":"Benin","d":"+229"},{"n":"Bermuda","d":"+1441"},{"n":"Bhutan","d":"+975"},{"n":"Bolivia","d":"+591"},{"n":"Bosnia and Herzegovina","d":"+387"},{"n":"Botswana","d":"+267"},{"n":"Bouvet Island","d":"+47"},{"n":"Brazil","d":"+55"},{"n":"British Indian Ocean Territory","d":"+246"},{"n":"British Virgin Islands","d":"+1284"},{"n":"Brunei","d":"+673"},{"n":"Bulgaria","d":"+359"},{"n":"Burkina Faso","d":"+226"},{"n":"Burundi","d":"+257"},{"n":"Cambodia","d":"+855"},{"n":"Cameroon","d":"+237"},{"n":"Canada","d":"+1"},{"n":"Cape Verde","d":"+238"},{"n":"Caribbean Netherlands","d":"+599"},{"n":"Cayman Islands","d":"+1345"},{"n":"Central African Republic","d":"+236"},{"n":"Chad","d":"+235"},{"n":"China","d":"+86"},{"n":"Christmas Island","d":"+61"},{"n":"Cocos (Keeling) Islands","d":"+61"},{"n":"Colombia","d":"+57"},{"n":"Comoros","d":"+269"},{"n":"Congo","d":"+242"},{"n":"Cook Islands","d":"+682"},{"n":"Costa Rica","d":"+506"},{"n":"Croatia","d":"+385"},{"n":"Cuba","d":"+53"},{"n":"Curaçao","d":"+599"},{"n":"Cyprus","d":"+357"},{"n":"Czechia","d":"+420"},{"n":"Denmark","d":"+45"},{"n":"Djibouti","d":"+253"},{"n":"Dominica","d":"+1767"},{"n":"Dominican Republic","d":"+1809"},{"n":"DR Congo","d":"+243"},{"n":"Ecuador","d":"+593"},{"n":"Egypt","d":"+20"},{"n":"El Salvador","d":"+503"},{"n":"Equatorial Guinea","d":"+240"},{"n":"Eritrea","d":"+291"},{"n":"Estonia","d":"+372"},{"n":"Eswatini","d":"+268"},{"n":"Ethiopia","d":"+251"},{"n":"Falkland Islands","d":"+500"},{"n":"Faroe Islands","d":"+298"},{"n":"Fiji","d":"+679"},{"n":"Finland","d":"+358"},{"n":"France","d":"+33"},{"n":"French Guiana","d":"+594"},{"n":"French Polynesia","d":"+689"},{"n":"French Southern and Antarctic Lands","d":"+262"},{"n":"Gabon","d":"+241"},{"n":"Gambia","d":"+220"},{"n":"Georgia","d":"+995"},{"n":"Germany","d":"+49"},{"n":"Ghana","d":"+233"},{"n":"Gibraltar","d":"+350"},{"n":"Greece","d":"+30"},{"n":"Greenland","d":"+299"},{"n":"Grenada","d":"+1473"},{"n":"Guadeloupe","d":"+590"},{"n":"Guam","d":"+1671"},{"n":"Guatemala","d":"+502"},{"n":"Guernsey","d":"+44"},{"n":"Guinea","d":"+224"},{"n":"Guinea-Bissau","d":"+245"},{"n":"Guyana","d":"+592"},{"n":"Haiti","d":"+509"},{"n":"Honduras","d":"+504"},{"n":"Hong Kong","d":"+852"},{"n":"Hungary","d":"+36"},{"n":"Iceland","d":"+354"},{"n":"India","d":"+91"},{"n":"Indonesia","d":"+62"},{"n":"Iran","d":"+98"},{"n":"Iraq","d":"+964"},{"n":"Ireland","d":"+353"},{"n":"Isle of Man","d":"+44"},{"n":"Italy","d":"+39"},{"n":"Ivory Coast","d":"+225"},{"n":"Jamaica","d":"+1876"},{"n":"Japan","d":"+81"},{"n":"Jersey","d":"+44"},{"n":"Jordan","d":"+962"},{"n":"Kazakhstan","d":"+7"},{"n":"Kenya","d":"+254"},{"n":"Kiribati","d":"+686"},{"n":"Kosovo","d":"+383"},{"n":"Kuwait","d":"+965"},{"n":"Kyrgyzstan","d":"+996"},{"n":"Laos","d":"+856"},{"n":"Latvia","d":"+371"},{"n":"Lebanon","d":"+961"},{"n":"Lesotho","d":"+266"},{"n":"Liberia","d":"+231"},{"n":"Libya","d":"+218"},{"n":"Liechtenstein","d":"+423"},{"n":"Lithuania","d":"+370"},{"n":"Luxembourg","d":"+352"},{"n":"Macau","d":"+853"},{"n":"Madagascar","d":"+261"},{"n":"Malawi","d":"+265"},{"n":"Malaysia","d":"+60"},{"n":"Maldives","d":"+960"},{"n":"Mali","d":"+223"},{"n":"Malta","d":"+356"},{"n":"Marshall Islands","d":"+692"},{"n":"Martinique","d":"+596"},{"n":"Mauritania","d":"+222"},{"n":"Mauritius","d":"+230"},{"n":"Mayotte","d":"+262"},{"n":"Mexico","d":"+52"},{"n":"Micronesia","d":"+691"},{"n":"Moldova","d":"+373"},{"n":"Monaco","d":"+377"},{"n":"Mongolia","d":"+976"},{"n":"Montenegro","d":"+382"},{"n":"Montserrat","d":"+1664"},{"n":"Morocco","d":"+212"},{"n":"Mozambique","d":"+258"},{"n":"Myanmar","d":"+95"},{"n":"Namibia","d":"+264"},{"n":"Nauru","d":"+674"},{"n":"Nepal","d":"+977"},{"n":"Netherlands","d":"+31"},{"n":"New Caledonia","d":"+687"},{"n":"New Zealand","d":"+64"},{"n":"Nicaragua","d":"+505"},{"n":"Niger","d":"+227"},{"n":"Nigeria","d":"+234"},{"n":"Niue","d":"+683"},{"n":"Norfolk Island","d":"+672"},{"n":"North Korea","d":"+850"},{"n":"North Macedonia","d":"+389"},{"n":"Northern Mariana Islands","d":"+1670"},{"n":"Norway","d":"+47"},{"n":"Oman","d":"+968"},{"n":"Pakistan","d":"+92"},{"n":"Palau","d":"+680"},{"n":"Palestine","d":"+970"},{"n":"Panama","d":"+507"},{"n":"Papua New Guinea","d":"+675"},{"n":"Paraguay","d":"+595"},{"n":"Peru","d":"+51"},{"n":"Philippines","d":"+63"},{"n":"Pitcairn Islands","d":"+64"},{"n":"Poland","d":"+48"},{"n":"Portugal","d":"+351"},{"n":"Puerto Rico","d":"+1787"},{"n":"Qatar","d":"+974"},{"n":"Romania","d":"+40"},{"n":"Russia","d":"+7"},{"n":"Rwanda","d":"+250"},{"n":"Réunion","d":"+262"},{"n":"Saint Barthélemy","d":"+590"},{"n":"Saint Helena, Ascension and Tristan da Cunha","d":"+290"},{"n":"Saint Kitts and Nevis","d":"+1869"},{"n":"Saint Lucia","d":"+1758"},{"n":"Saint Martin","d":"+590"},{"n":"Saint Pierre and Miquelon","d":"+508"},{"n":"Saint Vincent and the Grenadines","d":"+1784"},{"n":"Samoa","d":"+685"},{"n":"San Marino","d":"+378"},{"n":"Saudi Arabia","d":"+966"},{"n":"Senegal","d":"+221"},{"n":"Serbia","d":"+381"},{"n":"Seychelles","d":"+248"},{"n":"Sierra Leone","d":"+232"},{"n":"Singapore","d":"+65"},{"n":"Sint Maarten","d":"+1721"},{"n":"Slovakia","d":"+421"},{"n":"Slovenia","d":"+386"},{"n":"Solomon Islands","d":"+677"},{"n":"Somalia","d":"+252"},{"n":"South Africa","d":"+27"},{"n":"South Georgia","d":"+500"},{"n":"South Korea","d":"+82"},{"n":"South Sudan","d":"+211"},{"n":"Spain","d":"+34"},{"n":"Sri Lanka","d":"+94"},{"n":"Sudan","d":"+249"},{"n":"Suriname","d":"+597"},{"n":"Svalbard and Jan Mayen","d":"+47"},{"n":"Sweden","d":"+46"},{"n":"Switzerland","d":"+41"},{"n":"Syria","d":"+963"},{"n":"São Tomé and Príncipe","d":"+239"},{"n":"Taiwan","d":"+886"},{"n":"Tajikistan","d":"+992"},{"n":"Tanzania","d":"+255"},{"n":"Thailand","d":"+66"},{"n":"Timor-Leste","d":"+670"},{"n":"Togo","d":"+228"},{"n":"Tokelau","d":"+690"},{"n":"Tonga","d":"+676"},{"n":"Trinidad and Tobago","d":"+1868"},{"n":"Tunisia","d":"+216"},{"n":"Turkmenistan","d":"+993"},{"n":"Turks and Caicos Islands","d":"+1649"},{"n":"Tuvalu","d":"+688"},{"n":"Türkiye","d":"+90"},{"n":"Uganda","d":"+256"},{"n":"Ukraine","d":"+380"},{"n":"United Arab Emirates","d":"+971"},{"n":"United Kingdom","d":"+44"},{"n":"United States","d":"+1"},{"n":"United States Minor Outlying Islands","d":"+1"},{"n":"United States Virgin Islands","d":"+1340"},{"n":"Uruguay","d":"+598"},{"n":"Uzbekistan","d":"+998"},{"n":"Vanuatu","d":"+678"},{"n":"Vatican City","d":"+39"},{"n":"Venezuela","d":"+58"},{"n":"Vietnam","d":"+84"},{"n":"Wallis and Futuna","d":"+681"},{"n":"Western Sahara","d":"+212"},{"n":"Yemen","d":"+967"},{"n":"Zambia","d":"+260"},{"n":"Zimbabwe","d":"+263"},{"n":"Åland Islands","d":"+358"}];
 
-                countrySelect.addEventListener('change', function() {
-                    const selectedCountry = filteredData.find(country => country.name.common === this.value);
-                    activeCountryCode = selectedCountry?.idd?.root + (selectedCountry?.idd?.suffixes?.[0] || '');
-                    phoneInput.value = activeCountryCode;
-                });
+        var countrySel = document.getElementById('countrySelect');
+        var phoneIn    = document.getElementById('phone');
+        var dialCode   = '';
 
-                phoneInput.addEventListener('input', function(e) {
-                    if (!activeCountryCode) return;
-                    let cursorPosition = this.selectionStart;
-                    let inputValue = this.value;
-                    
-                    if (inputValue.length < activeCountryCode.length) {
-                        this.value = activeCountryCode;
-                        cursorPosition = activeCountryCode.length;
-                    } else {
-                        let numbers = inputValue.slice(activeCountryCode.length).replace(/\D/g, '');
-                        this.value = activeCountryCode + numbers;
-                        cursorPosition = Math.min(cursorPosition, this.value.length);
-                    }
-                    
-                    this.setSelectionRange(cursorPosition, cursorPosition);
-                });
-            })
-            .catch(error => console.error("Error fetching countries:", error));
+        /* ── 1. Populate dropdown from embedded data (instant) ─────── */
+        countrySel.innerHTML =
+            '<option value="" disabled selected>Select your country</option>';
+
+        COUNTRIES.forEach(function (c) {
+            var opt  = document.createElement('option');
+            opt.value       = c.n;
+            opt.textContent = c.n;
+            opt.setAttribute('data-dial', c.d || '');
+            countrySel.appendChild(opt);
+        });
+
+        /* ── 2. Country change  →  bind dial code to phone field ─── */
+        countrySel.addEventListener('change', function () {
+            var opt = this.options[this.selectedIndex];
+            dialCode = (opt && opt.getAttribute('data-dial')) || '';
+
+            if (dialCode) {
+                phoneIn.value = dialCode + ' ';
+                phoneIn.focus();
+            } else {
+                phoneIn.value = '';
+            }
+        });
+
+        /* ── 3. SINGLE isolated input listener — phone formatting ── */
+        phoneIn.addEventListener('input', function () {
+            var raw    = this.value;
+            var cursor = this.selectionStart;
+
+            if (!dialCode) {
+                // No country chosen yet — allow only digits
+                var d = raw.replace(/\D/g, '');
+                if (d !== raw) {
+                    this.value = d;
+                    this.setSelectionRange(d.length, d.length);
+                }
+                return;
+            }
+
+            // Guard: user tried to delete the dial-code prefix
+            if (raw.indexOf(dialCode) !== 0) {
+                this.value = dialCode + ' ';
+                this.setSelectionRange(this.value.length, this.value.length);
+                return;
+            }
+
+            // Extract user-typed digits (everything after dial code + space)
+            var after   = raw.slice(dialCode.length).replace(/\D/g, '');
+            var grouped = '';
+            for (var i = 0; i < after.length; i++) {
+                if (i > 0 && i % 3 === 0) grouped += ' ';
+                grouped += after[i];
+            }
+
+            var formatted = dialCode + ' ' + grouped;
+            var oldLen    = raw.length;
+            this.value    = formatted;
+
+            var shift = formatted.length - oldLen;
+            var newCur = Math.max(dialCode.length + 1, cursor + shift);
+            this.setSelectionRange(newCur, newCur);
+        });
+
+    })();
+
 
 
     //    subbmit application

@@ -614,7 +614,7 @@ img{ max-width:100%;}
 <div class="dashboard-grid-container">
 
     {{-- Package Expired Banner --}}
-    @if ($user->has_free_package == 'no' && $package_expired)
+    @if ($user->has_free_package == 'no' && $package_expired && !in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']))
     <div class="alert alert-danger mb-4 text-center p-3" role="alert" style="border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
         <i class="fas fa-times-circle mr-2" style="font-size: 1.2rem;"></i>
         <strong>Your package has expired!</strong> Daily ROI income has stopped. Purchase a new package to resume earnings.
@@ -656,7 +656,7 @@ img{ max-width:100%;}
                         @if(isset($mypackage) && $mypackage)
                             Portfolio: ${{ number_format($package_paid ?? 0,2) }}
                             <span class="badge badge-light text-dark ml-2" style="font-size:10px;">
-                                {{ $package_expired ? 'EXPIRED' : 'ACTIVE' }}
+                                {{ (in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) || !$package_expired) ? 'ACTIVE' : 'EXPIRED' }}
                             </span>
                             @if(isset($daysgone))
                                 <br><small style="opacity:.85;">Day {{ $daysgone }} / {{ $pkg_duration ?? 100 }}</small>

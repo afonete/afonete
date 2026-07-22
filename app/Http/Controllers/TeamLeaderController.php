@@ -8,6 +8,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use App\Models\TeamLeader;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
@@ -16,6 +18,58 @@ class TeamLeaderController extends Controller
     public function index()
     {
         return view('home.team-leader');
+    }
+
+    /**
+     * Proxy the REST Countries API server-side to avoid browser CORS
+     * issues caused by the API's 301 redirect to a CDN that lacks
+     * Access-Control-Allow-Origin headers.
+     *
+     * Results are cached for 24 hours — country data rarely changes.
+     */
+    public function countries()
+    {
+        $countries = Cache::remember('rest_countries_list', 86400, function () {
+            try {
+                $response = Http::timeout(15)
+                    ->get('https://restcountries.com/v3.1/all', [
+                        'fields' => 'name,idd',
+                    ]);
+
+                if (!$response->successful()) {
+                    return [];
+                }
+
+                $data = $response->json();
+
+                // Exclude Chile & Israel, then sort A-Z
+                $excluded = ['Chile', 'Israel'];
+
+                $filtered = array_values(array_filter($data, function ($c) use ($excluded) {
+                    return !in_array($c['name']['common'] ?? '', $excluded);
+                }));
+
+                usort($filtered, function ($a, $b) {
+                    return strcasecmp(
+                        $a['name']['common'] ?? '',
+                        $b['name']['common'] ?? ''
+                    );
+                });
+
+                // Slim down to only what the frontend needs
+                return array_map(function ($c) {
+                    return [
+                        'name' => $c['name']['common'] ?? '',
+                        'dial' => $c['idd']['root'] ?? '',
+                    ];
+                }, $filtered);
+            } catch (\Exception $e) {
+                \Log::error('REST Countries proxy failed: ' . $e->getMessage());
+                return [];
+            }
+        });
+
+        return response()->json($countries);
     }
 
     public function apply(Request $request)
@@ -96,15 +150,17 @@ class TeamLeaderController extends Controller
     public function completeApplication(Request $request)
     {
         $request->validate([
-            'username'  => 'required|string',
-            'whatsapp'  => 'required|string|max:255',
-            'instagram' => 'required|string|max:255',
+            'username'          => 'required|string',
+            'whatsapp'          => 'required|string|max:255',
+            'instagram'         => 'required|string|max:255',
+            'leadership_level'  => 'required|string|in:TEAM_LEADER,SUPER_LEADER',
         ]);
 
         $leader = TeamLeader::where('User_name', $request->username)->firstOrFail();
         $leader->update([
-            'whatsapp'  => $request->whatsapp,
-            'instagram' => $request->instagram,
+            'whatsapp'          => $request->whatsapp,
+            'instagram'         => $request->instagram,
+            'leadership_level'  => $request->leadership_level,
         ]);
 
         return redirect()->back()->with('success', 'Application details updated successfully! The administration will check them shortly.');
@@ -117,13 +173,110 @@ class TeamLeaderController extends Controller
         $events = \App\Models\TeamLeaderEvent::where('user_id', $user->id)->latest()->get();
         $socials = \App\Models\TeamLeaderSocial::where('user_id', $user->id)->latest()->get();
         
-        // Page 4: Admin Video Content
-        $adminVideos = \App\Models\video::where('status', 'approved')->orWhere('status', 'active')->latest()->take(10)->get();
+        // Page 4: Official Videos (from dedicated team_leader_videos table)
+        $adminVideos = \App\Models\TeamLeaderVideo::whereIn('status', ['approved', 'active'])
+            ->orderBy('sort_order')->latest()->get();
         
-        // Page 5: Admin Advertisement Banners
-        $adminBanners = \App\Models\ads::where('status', 'approved')->orWhere('status', 'active')->latest()->take(10)->get();
+        // Page 5: Marketing Banners (from dedicated team_leader_banners table)
+        $adminBanners = \App\Models\TeamLeaderBanner::whereIn('status', ['approved', 'active'])
+            ->orderBy('sort_order')->latest()->get();
 
-        return view('team-leader.dashboard', compact('events', 'socials', 'adminVideos', 'adminBanners'));
+        // SUPER LEADER credit info
+        $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)->first();
+        $credit = null;
+        if ($teamLeader) {
+            $credit = $teamLeader->superLeaderCredit;
+        }
+
+        return view('team-leader.dashboard', compact('events', 'socials', 'adminVideos', 'adminBanners', 'credit', 'teamLeader'));
+    }
+
+    /**
+     * ALL-IN-ONE page — combines every team leader feature on a single page.
+     */
+    public function allFeatures()
+    {
+        $user = Auth::user();
+        $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)->first();
+
+        // Activation / duration
+        $activation = \App\Models\Activations::where('email', $user->email)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])->first();
+
+        $durationDays   = $activation ? (int)($activation->period ?? 60) : 60;
+        $activationDate = $activation ? \Carbon\Carbon::parse($activation->updated_at) : null;
+        $expiryDate     = $activationDate ? $activationDate->copy()->addDays($durationDays) : null;
+        $tasks          = $activation ? $activation->task : '';
+
+        // Credit (SUPER LEADER only)
+        $credit = $teamLeader ? $teamLeader->superLeaderCredit : null;
+
+        // Events (split by type)
+        $allEvents   = \App\Models\TeamLeaderEvent::where('user_id', $user->id)->latest()->get();
+        $planEvents  = $allEvents->where('event_type', 'plan');
+        $zoomEvents  = $allEvents->where('event_type', 'zoom');
+
+        // Event images for carousel
+        $eventImages = $allEvents->pluck('event_image_1')->filter()->merge(
+            $allEvents->pluck('event_image_2')->filter()
+        )->values();
+
+        // Socials
+        $socials = \App\Models\TeamLeaderSocial::where('user_id', $user->id)->latest()->get();
+
+        // Videos & Banners
+        $adminVideos  = \App\Models\TeamLeaderVideo::whereIn('status', ['approved', 'active'])->orderBy('sort_order')->latest()->get();
+        $adminBanners = \App\Models\TeamLeaderBanner::whereIn('status', ['approved', 'active'])->orderBy('sort_order')->latest()->take(6)->get();
+
+        // Referral stats for charts
+        $directReferrals  = $user->referrals()->count();
+        $activeReferrals  = $user->referrals()->where('has_paid_package', '!=', 'no')->where('has_paid_package', '!=', '')->count();
+
+        return view('team-leader.all', compact(
+            'teamLeader', 'activation', 'durationDays', 'activationDate', 'expiryDate',
+            'tasks', 'credit', 'allEvents', 'planEvents', 'zoomEvents', 'eventImages',
+            'socials', 'adminVideos', 'adminBanners', 'directReferrals', 'activeReferrals'
+        ));
+    }
+
+    /**
+     * Store event plan or zoom report from the ALL page.
+     */
+    public function storeEventReport(Request $request)
+    {
+        $request->validate([
+            'event_type' => 'required|in:plan,zoom',
+        ]);
+
+        $data = [
+            'user_id'    => Auth::id(),
+            'title'      => $request->event_type === 'plan' ? 'Event Plan Report' : 'Zoom Session Report',
+            'type'       => $request->event_type === 'zoom' ? 'zoom' : 'physical',
+            'event_type' => $request->event_type,
+            'status'     => 'pending',
+        ];
+
+        if ($request->event_type === 'plan') {
+            if ($request->hasFile('event_image_1')) {
+                $data['event_image_1'] = $request->file('event_image_1')->store('event_images', 'public');
+            }
+            if ($request->hasFile('event_image_2')) {
+                $data['event_image_2'] = $request->file('event_image_2')->store('event_images', 'public');
+            }
+            $data['proof_notes']    = $request->description ?? '';
+            $data['event_done_on']  = $request->event_done_on ?? null;
+            $data['hotel_location'] = $request->hotel_location ?? '';
+        } else {
+            $data['zoom_link'] = $request->zoom_link ?? '';
+            $data['country']   = $request->country ?? '';
+            $data['place']     = $request->place ?? '';
+            $data['location']  = $request->location ?? '';
+            $data['event_date']= $request->event_date ?? null;
+        }
+
+        \App\Models\TeamLeaderEvent::create($data);
+
+        return redirect()->back()->with('success', ucfirst($request->event_type) . ' report submitted successfully!');
     }
 
     public function storeEvent(Request $request)
@@ -235,9 +388,34 @@ class TeamLeaderController extends Controller
                 session(['team_leader_Usen_Name' => $user->user]);
 
                 if ($teamLeader->status === 'confirmed') {
-                    if ($user->has_paid_package === 'TEAM_LEADER') {
-                        return redirect()->route('team-leader.dashboard');
+                    // Check if activated (has_paid_package set to TEAM_LEADER or SUPER_LEADER)
+                    $activated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
+
+                    // Self-repair: if the package was overwritten by the free-access
+                    // middleware, restore it from the activations table.
+                    if (!$activated) {
+                        $usedActivation = \App\Models\Activations::where('email', $user->email)
+                            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                            ->where('stutus', 'used')
+                            ->first();
+
+                        if ($usedActivation) {
+                            $user->has_paid_package = $usedActivation->package;
+                            $user->has_free_package = 'no';
+                            $user->save();
+                            $activated = true;
+                        }
                     }
+
+                    if ($activated) {
+                        // Already activated → go to user dashboard.
+                        // The 'contract' middleware will intercept and force
+                        // contract signing before granting dashboard access.
+                        return redirect()->route('user.dashboard');
+                    }
+
+                    // Confirmed but NOT activated → send to pending-approval
+                    // where they'll see their activation code + "Activate Now"
                     return redirect()->to(url('/team-leader/pending-approval?username='.$user->user));
                 }
 

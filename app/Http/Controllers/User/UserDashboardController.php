@@ -181,6 +181,46 @@ class UserDashboardController extends Controller{
                     }
                 }
                 break;
+            case 'TEAM_LEADER':
+            case 'SUPER_LEADER':
+                // ── Team Leader / Super Leader dashboard metrics ──
+                $activation = $user->have_activation_code ?? null;
+                if ($activation) {
+                    $portfolio = (float) ($activation->price ?? 0);
+                }
+
+                // Credit wallet (SUPER_LEADER only — legacy + new table)
+                if ($user->has_paid_package === 'SUPER_LEADER' && $activation) {
+                    // Try legacy credits table first (synced by admin)
+                    if (isset($activation->myCredit)) {
+                        $credit = (float) ($activation->myCredit->amount ?? 0);
+                        $credit_status = $activation->myCredit->status ?? '';
+                    }
+                    // Also check super_leader_credits for display
+                    $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)->first();
+                    if ($teamLeader) {
+                        $slCredit = $teamLeader->superLeaderCredit;
+                        if ($slCredit) {
+                            $credit = (float) $slCredit->credit_amount;
+                            $credit_status = $slCredit->status;
+                            // NOTE: Do NOT add cashout_amount here — the command
+                            // already deposited it into ChartAccount CASHOUT,
+                            // which is read by $cashout above. Adding it again
+                            // would double-count.
+                        }
+                    }
+                }
+
+                // Locked Token — from activation token or balance reserved_token
+                if ($activation && (float)($activation->token ?? 0) > 0) {
+                    $lockedToken = (float) $activation->token;
+                } else {
+                    $bal = \App\Models\balance::where('user', $user->id)->first();
+                    if ($bal) {
+                        $lockedToken = (float) ($bal->reserved_token ?? 0);
+                    }
+                }
+                break;
             default:
                 $portfolio = $package ? (float)$package->paid : 0;
         }
@@ -201,7 +241,11 @@ class UserDashboardController extends Controller{
         $earnings = (float) $user->earnings->sum("amount");
 
         $ChartAccount = $user->ChartAccount()->where("acc_type","TRADING")->first();
-        $lockedToken    = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        // Only read LOCKED_TOKEN from ChartAccount if not already set
+        // by the TEAM_LEADER / SUPER_LEADER switch case above.
+        if (!isset($lockedToken)) {
+            $lockedToken = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        }
         $freeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
         $availableToken = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
         // GAS_FEE is admin-only — not read here
@@ -244,10 +288,13 @@ class UserDashboardController extends Controller{
         }
 
         // ── Package expiry state ──
-        $packageExpired = !$package || ($package->is_expired ?? true);
+        // Team leaders don't expire — their access is tied to activation, not a timed package.
+        $isLeaderPackage = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
+        $packageExpired = $isLeaderPackage ? false : (!$package || ($package->is_expired ?? true));
 
         // If the package just expired, make sure has_paid_package is reset
-        if ($packageExpired && $user->has_paid_package !== 'no') {
+        // (but NEVER reset TEAM_LEADER / SUPER_LEADER packages)
+        if ($packageExpired && $user->has_paid_package !== 'no' && !$isLeaderPackage) {
             $user->has_paid_package = 'no';
             $user->save();
         }
@@ -346,7 +393,9 @@ class UserDashboardController extends Controller{
             "renewal_due"            => $renewalDue,
             "renewal_number"         => $renewalNumber,
             // Extra helpers for blade
-            "package_name"           => $adventureRow ? $adventureRow->name : ($package ? 'VENTURE' : 'FREE'),
+            "package_name"           => in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER'])
+                                        ? $user->has_paid_package
+                                        : ($adventureRow ? $adventureRow->name : ($package ? 'VENTURE' : 'FREE')),
             "package_paid"           => $package ? (float)$package->paid : 0,
             "package_currency"       => $adventureRow->currency ?? 'USD',
         ]);
