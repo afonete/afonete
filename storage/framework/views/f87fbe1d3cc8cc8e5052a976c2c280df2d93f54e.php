@@ -6,19 +6,47 @@
 
     <!-- AGGRESSIVE FIX FOR SIDEBAR OVERLAP -->
     <style>
-        /* Force the content to the right of the sidebar */
-        body .content-wrapper,
-        body .wrapper > .content-wrapper {
-            margin-left: 260px !important;
-            padding-top: 70px !important;
-            min-height: 100vh;
-            padding-right: 20px;
+        /* Force the content to the right of the sidebar only when NOT collapsed on desktop */
+        @media (min-width: 992px) {
+            body:not(.sidebar-collapse) .content-wrapper,
+            body:not(.sidebar-collapse) .wrapper > .content-wrapper {
+                margin-left: 260px !important;
+                padding-top: 70px !important;
+                min-height: 100vh;
+                padding-right: 20px;
+                transition: margin-left .3s ease-in-out;
+            }
+            
+            /* Fit screen smoothly when sidebar is collapsed */
+            body.sidebar-collapse .content-wrapper,
+            body.sidebar-collapse .wrapper > .content-wrapper {
+                margin-left: 4.6rem !important; /* matches standard AdminLTE collapsed sidebar-mini width */
+                padding-top: 70px !important;
+                min-height: 100vh;
+                padding-right: 20px;
+                transition: margin-left .3s ease-in-out;
+            }
         }
         
         /* Mobile fix */
         @media (max-width: 991.98px) {
-            body .content-wrapper {
+            body .content-wrapper,
+            body.sidebar-collapse .content-wrapper,
+            body:not(.sidebar-collapse) .content-wrapper {
                 margin-left: 0 !important;
+                padding-top: 70px !important;
+                padding-right: 0 !important;
+                padding-left: 0 !important;
+            }
+            .tl-dashboard {
+                padding: 10px 0 !important; /* Removes side padding on mobile */
+            }
+            .tl-grid {
+                padding: 0 !important; /* Full bleed on mobile */
+                gap: 15px !important;
+            }
+            .events-grid {
+                grid-template-columns: 1fr !important; /* Stacks history below form */
             }
         }
         
@@ -26,15 +54,68 @@
             padding: 20px;
         }
         
-        /* Make sure sidebar doesn't bleed */
-        .main-sidebar {
-            z-index: 1030 !important;
-        }
-        
         /* Extra safety for this specific page */
         .tl-dashboard {
             position: relative;
             z-index: 1;
+        }
+
+        /* Responsive main layout grid - increases banner size on desktop to 280px */
+        .tl-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 280px; /* Increased from 180px to 280px */
+            gap: 24px;
+        }
+
+        /* Responsive rows that stack neatly on smaller devices */
+        .tl-row-top {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .tl-row-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 991.98px) {
+            .tl-row-top,
+            .tl-row-bottom {
+                grid-template-columns: 1fr !important; /* Stacks all segments vertically on mobile/tablet */
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .tl-grid {
+                grid-template-columns: 1fr 240px;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .tl-grid {
+                grid-template-columns: 1fr; /* Stacks vertically on mobile/tablet */
+                gap: 20px;
+            }
+        }
+
+        .ad-banner-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-2);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .ad-banner-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-3);
         }
     </style>
 
@@ -148,7 +229,7 @@
             gap: 10px;
             cursor: pointer;
             font-weight: 700;
-            border: 2px solid #f87171;
+            border: 1px solid #f87171;
         }
 
         .rules-box {
@@ -236,7 +317,7 @@
             overflow: hidden;
             flex-shrink: 0;
             cursor: pointer;
-            border: 2px solid transparent;
+            border: 1px solid transparent;
         }
 
         .v-thumb.active {
@@ -289,22 +370,28 @@
     </style>
 
     <!-- PROPER ADMINLTE WRAPPER -->
-    <div class="content-wrapper" style="margin-left: 260px !important; padding-top: 70px !important;">
+    <div class="content-wrapper" style="padding-top: 70px !important;">
         <section class="content">
             
             <div class="tl-dashboard">
+                <?php
+                    $userLevel = $activation->package ?? ($teamLeader->leadership_level ?? 'TEAM_LEADER');
+                    $isSuperLeader = strtoupper($userLevel) === 'SUPER_LEADER';
+                    $dashboardTitle = $isSuperLeader ? 'Super Leader Dashboard' : 'Team Leader Dashboard';
+                ?>
+
                 <!-- HEADER -->
                 <div class="tl-header">
-                    <h1>Team apply dashboard</h1>
+                    <h1><?php echo e($dashboardTitle); ?></h1>
                 </div>
 
-                <div style="max-width: 1400px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 180px; gap: 20px;">
+                <div class="tl-grid">
 
             <!-- MAIN CONTENT -->
             <div>
 
             <!-- TOP ROW: COUNTDOWN + RULES -->
-            <div style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; margin-bottom: 24px;">
+            <div class="tl-row-top">
                 
                 <!-- Countdown + Badges -->
                 <div class="card">
@@ -318,11 +405,6 @@
                         </div>
 
                         <div class="badges">
-                            <?php
-                                $userLevel = $activation->package ?? ($teamLeader->leadership_level ?? 'TEAM_LEADER');
-                                $isSuperLeader = strtoupper($userLevel) === 'SUPER_LEADER';
-                            ?>
-
                             <?php if($isSuperLeader): ?>
                                 <span class="badge badge-tm">TM SUPER LEADER</span>
                             <?php else: ?>
@@ -446,14 +528,17 @@
                                         <label>Image 1 <span style="color:#f87171;">required</span></label>
                                         <input type="file" name="event_image_1" accept="image/*" required>
 
-                                        <label>Image 2 <span style="color:#64748b;">optional</span></label>
-                                        <input type="file" name="event_image_2" accept="image/*">
+                                        <label>Image 2 (Multiple) <span style="color:#64748b;">optional</span></label>
+                                        <input type="file" name="event_image_2[]" accept="image/*" multiple>
 
                                         <label>Description <span style="color:#f87171;">required</span></label>
                                         <textarea name="description" required rows="2"></textarea>
 
                                         <label>Event done on <span style="color:#f87171;">required</span></label>
                                         <input type="date" name="event_done_on" required>
+
+                                        <label>Event Time <span style="color:#f87171;">required</span></label>
+                                        <input type="time" name="event_time" required>
 
                                         <label>Hotel/Location <span style="color:#64748b;">optional</span></label>
                                         <input type="text" name="hotel_location">
@@ -471,6 +556,9 @@
 
                                         <label>Date <span style="color:#f87171;">required</span></label>
                                         <input type="date" name="event_date">
+
+                                        <label>Event Time <span style="color:#f87171;">required</span></label>
+                                        <input type="time" name="event_time">
                                     </div>
 
                                     <button type="submit" style="width:100%;margin-top:12px;background:#3b82f6;color:white;padding:10px;border:none;border-radius:8px;font-weight:700;">
@@ -485,7 +573,7 @@
                     <div style="margin-top:16px;">
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <?php $__currentLoopData = $eventImages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $img): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <img src="<?php echo e(asset('storage/'.$img)); ?>" style="width:90px;height:70px;object-fit:cover;border-radius:6px;border:2px solid #e2e8f0;">
+                                <img src="<?php echo e(asset('storage/'.$img)); ?>" style="width:90px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             <?php if($eventImages->isEmpty()): ?>
                                 <span style="color:#94a3b8;font-size:0.8rem;">No event photos yet.</span>
@@ -502,7 +590,7 @@
             </div>
 
             <!-- AMBASSADOR + VIDEOS ROW -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <div class="tl-row-bottom">
                 
                 <!-- Ambassador Program -->
                 <div class="card">
@@ -559,15 +647,15 @@
             </div> <!-- END MAIN CONTENT -->
 
             <!-- RIGHT SIDEBAR: AD BANNERS -->
-            <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;flex-direction:column;gap:16px;">
                 <?php $__empty_1 = true; $__currentLoopData = $adminBanners; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $banner): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow-2);overflow:hidden;">
+                    <div class="ad-banner-card">
                         <?php if($banner->image_path): ?>
                             <img src="<?php echo e(asset('storage/'.$banner->image_path)); ?>" 
                                  alt="<?php echo e($banner->title ?? 'Ad Banner'); ?>"
                                  style="width:100%;height:auto;display:block;object-fit:cover;">
                         <?php else: ?>
-                            <div style="padding:40px 20px;text-align:center;background:#f1e7ff;color:#581c87;">
+                            <div style="padding:50px 20px;text-align:center;background:#f1e7ff;color:#581c87;">
                                 <i class="fas fa-image fa-2x mb-2"></i>
                                 <div style="font-weight:600;"><?php echo e($banner->title ?? 'Ad Banner'); ?></div>
                             </div>
@@ -575,17 +663,17 @@
                     </div>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <!-- Default placeholder banners -->
-                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
-                        <i class="fas fa-ad fa-2x mb-2"></i>
-                        <div style="font-size:0.85rem;">Ad Space</div>
+                    <div class="ad-banner-card" style="padding:60px 20px;text-align:center;color:#64748b;background:#f8fafc;">
+                        <i class="fas fa-ad fa-3x mb-3" style="color:#a855f7;"></i>
+                        <div style="font-size:0.95rem;font-weight:700;margin-top:4px;">Ad Space</div>
                     </div>
-                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
-                        <i class="fas fa-ad fa-2x mb-2"></i>
-                        <div style="font-size:0.85rem;">Ad Space</div>
+                    <div class="ad-banner-card" style="padding:60px 20px;text-align:center;color:#64748b;background:#f8fafc;">
+                        <i class="fas fa-ad fa-3x mb-3" style="color:#a855f7;"></i>
+                        <div style="font-size:0.95rem;font-weight:700;margin-top:4px;">Ad Space</div>
                     </div>
-                    <div style="background:#f8fafc;border-radius:12px;box-shadow:var(--shadow-2);padding:40px 20px;text-align:center;color:#64748b;">
-                        <i class="fas fa-ad fa-2x mb-2"></i>
-                        <div style="font-size:0.85rem;">Ad Space</div>
+                    <div class="ad-banner-card" style="padding:60px 20px;text-align:center;color:#64748b;background:#f8fafc;">
+                        <i class="fas fa-ad fa-3x mb-3" style="color:#a855f7;"></i>
+                        <div style="font-size:0.95rem;font-weight:700;margin-top:4px;">Ad Space</div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -661,6 +749,28 @@
             
             document.getElementById('tb-plan').classList.toggle('active', type === 'plan');
             document.getElementById('tb-zoom').classList.toggle('active', type === 'zoom');
+
+            // Dynamically manage required attributes
+            const fpInputs = document.querySelectorAll('#fp input, #fp textarea');
+            const fzInputs = document.querySelectorAll('#fz input');
+
+            fpInputs.forEach(input => {
+                if (type === 'plan') {
+                    if (input.name !== 'event_image_2[]' && input.name !== 'hotel_location') {
+                        input.setAttribute('required', 'required');
+                    }
+                } else {
+                    input.removeAttribute('required');
+                }
+            });
+
+            fzInputs.forEach(input => {
+                if (type === 'zoom') {
+                    input.setAttribute('required', 'required');
+                } else {
+                    input.removeAttribute('required');
+                }
+            });
         }
 
         // Ambassador Modal

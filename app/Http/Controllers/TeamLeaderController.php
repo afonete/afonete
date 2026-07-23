@@ -217,9 +217,23 @@ class TeamLeaderController extends Controller
         $zoomEvents  = $allEvents->where('event_type', 'zoom');
 
         // Event images for carousel
-        $eventImages = $allEvents->pluck('event_image_1')->filter()->merge(
-            $allEvents->pluck('event_image_2')->filter()
-        )->values();
+        $eventImages = $allEvents->pluck('event_image_1')->filter();
+        foreach ($allEvents as $e) {
+            if ($e->event_image_2) {
+                $imgs = explode(',', $e->event_image_2);
+                foreach ($imgs as $img) {
+                    if (trim($img)) {
+                        $eventImages->push(trim($img));
+                    }
+                }
+            }
+        }
+        $eventImages = $eventImages->values();
+
+        $announcements = \App\Models\TeamLeaderAnnouncement::where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest()
+            ->get();
 
         // Socials
         $socials = \App\Models\TeamLeaderSocial::where('user_id', $user->id)->latest()->get();
@@ -235,7 +249,8 @@ class TeamLeaderController extends Controller
         return view('team-leader.all', compact(
             'teamLeader', 'activation', 'durationDays', 'activationDate', 'expiryDate',
             'tasks', 'credit', 'allEvents', 'planEvents', 'zoomEvents', 'eventImages',
-            'socials', 'adminVideos', 'adminBanners', 'directReferrals', 'activeReferrals'
+            'socials', 'adminVideos', 'adminBanners', 'directReferrals', 'activeReferrals',
+            'announcements'
         ));
     }
 
@@ -261,17 +276,32 @@ class TeamLeaderController extends Controller
                 $data['event_image_1'] = $request->file('event_image_1')->store('event_images', 'public');
             }
             if ($request->hasFile('event_image_2')) {
-                $data['event_image_2'] = $request->file('event_image_2')->store('event_images', 'public');
+                $files = $request->file('event_image_2');
+                if (is_array($files)) {
+                    $paths = [];
+                    foreach ($files as $file) {
+                        $paths[] = $file->store('event_images', 'public');
+                    }
+                    $data['event_image_2'] = implode(',', $paths);
+                } else {
+                    $data['event_image_2'] = $files->store('event_images', 'public');
+                }
             }
             $data['proof_notes']    = $request->description ?? '';
             $data['event_done_on']  = $request->event_done_on ?? null;
             $data['hotel_location'] = $request->hotel_location ?? '';
+
+            $time = $request->event_time ?? now()->format('H:i');
+            $data['event_time'] = $request->event_done_on . ' ' . $time . ':00';
         } else {
             $data['zoom_link'] = $request->zoom_link ?? '';
             $data['country']   = $request->country ?? '';
             $data['place']     = $request->place ?? '';
             $data['location']  = $request->location ?? '';
             $data['event_date']= $request->event_date ?? null;
+
+            $time = $request->event_time ?? now()->format('H:i');
+            $data['event_time'] = $request->event_date . ' ' . $time . ':00';
         }
 
         \App\Models\TeamLeaderEvent::create($data);

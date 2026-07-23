@@ -1608,6 +1608,52 @@ public function check(Request $request) {
         return redirect()->back()->with('message', 'Banner deleted.');
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  TEAM LEADERS ANNOUNCEMENTS
+    // ═══════════════════════════════════════════════════════════
+    public function announcementsList()
+    {
+        $announcements = \App\Models\TeamLeaderAnnouncement::orderBy('sort_order')->latest()->get();
+        return view('admin.announcements.index', compact('announcements'));
+    }
+
+    public function announcementCreate()
+    {
+        return view('admin.announcements.create');
+    }
+
+    public function announcementStore(Request $request)
+    {
+        $request->validate([
+            'title'   => 'required|string|max:255',
+            'content' => 'required|string',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        \App\Models\TeamLeaderAnnouncement::create([
+            'title'     => $request->title,
+            'content'   => $request->content,
+            'sort_order'=> $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.announcements.index')->with('message', 'Announcement created successfully!');
+    }
+
+    public function announcementToggle($id)
+    {
+        $ann = \App\Models\TeamLeaderAnnouncement::findOrFail($id);
+        $ann->update(['is_active' => !$ann->is_active]);
+        return redirect()->back()->with('message', 'Announcement status updated!');
+    }
+
+    public function announcementDelete($id)
+    {
+        $ann = \App\Models\TeamLeaderAnnouncement::findOrFail($id);
+        $ann->delete();
+        return redirect()->back()->with('message', 'Announcement deleted!');
+    }
+
     public function rejectTeamLeader($id)
     {
         $leader = \App\Models\TeamLeader::findOrFail($id);

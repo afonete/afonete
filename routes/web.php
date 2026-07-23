@@ -405,6 +405,13 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/leader-banners/{id}/approve', [AdminController::class, 'leaderBannerApprove'])->name('admin.leader-banners.approve');
     Route::post('admin/leader-banners/{id}/reject', [AdminController::class, 'leaderBannerReject'])->name('admin.leader-banners.reject');
     Route::get('admin/leader-banners/{id}/delete', [AdminController::class, 'leaderBannerDelete'])->name('admin.leader-banners.delete');
+
+    // Team Leaders Announcements
+    Route::get('admin/announcements', [AdminController::class, 'announcementsList'])->name('admin.announcements.index');
+    Route::get('admin/announcements/create', [AdminController::class, 'announcementCreate'])->name('admin.announcements.create');
+    Route::post('admin/announcements', [AdminController::class, 'announcementStore'])->name('admin.announcements.store');
+    Route::get('admin/announcements/{id}/toggle', [AdminController::class, 'announcementToggle'])->name('admin.announcements.toggle');
+    Route::get('admin/announcements/{id}/delete', [AdminController::class, 'announcementDelete'])->name('admin.announcements.delete');
     Route::post('admin/team-leaders/{id}/suspend', [AdminController::class, 'suspendTeamLeader'])->name('admin.team-leaders.suspend');
     Route::post('admin/team-leaders/{id}/reactivate', [AdminController::class, 'reactivateTeamLeader'])->name('admin.team-leaders.reactivate');
     
