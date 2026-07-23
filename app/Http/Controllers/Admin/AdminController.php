@@ -1194,8 +1194,9 @@ public function check(Request $request) {
         $pendingEvents = \App\Models\TeamLeaderEvent::where('status', 'pending')->latest()->get();
         $pendingProofs = \App\Models\TeamLeaderEvent::where('proof_submitted', true)->where('proof_status', 'pending')->latest()->get();
         $pendingSocials = \App\Models\TeamLeaderSocial::where('status', 'pending')->latest()->get();
+        $approvedSocials = \App\Models\TeamLeaderSocial::where('status', 'approved')->latest()->get();
 
-        return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials'));
+        return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials', 'approvedSocials'));
     }
 
     /**
@@ -1228,6 +1229,11 @@ public function check(Request $request) {
             'total_active_referrals'    => 0,
             'referral_bonuses'  => 0,
             'tasks'             => $activation ? $activation->task : '',
+            // Structured tasks with persisted tick state for Performance Monitoring.
+            'task_items'        => \App\Models\TeamLeaderTaskCompletion::buildTaskList(
+                                        $user->id ?? 0,
+                                        $activation ? $activation->task : ''
+                                   ),
             'price'             => $activation ? (float)($activation->price ?? 0) : 0,
             'tokens'            => $activation ? (float)($activation->token ?? 0) : 0,
         ];

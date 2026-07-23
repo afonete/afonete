@@ -188,7 +188,8 @@ class TeamLeaderController extends Controller
             $credit = $teamLeader->superLeaderCredit;
         }
 
-        return view('team-leader.dashboard', compact('events', 'socials', 'adminVideos', 'adminBanners', 'credit', 'teamLeader'));
+        // The all-in-one page (/team-leader/all) is now the single team-leader page.
+        return redirect()->route('team-leader.all');
     }
 
     /**
@@ -207,6 +208,12 @@ class TeamLeaderController extends Controller
         $activationDate = $activation ? \Carbon\Carbon::parse($activation->updated_at) : null;
         $expiryDate     = $activationDate ? $activationDate->copy()->addDays($durationDays) : null;
         $tasks          = $activation ? $activation->task : '';
+
+        // Build structured task list merged with persisted tick state.
+        $taskItems = \App\Models\TeamLeaderTaskCompletion::buildTaskList(
+            $user->id,
+            $tasks
+        );
 
         // Credit (SUPER LEADER only)
         $credit = $teamLeader ? $teamLeader->superLeaderCredit : null;
@@ -250,7 +257,7 @@ class TeamLeaderController extends Controller
             'teamLeader', 'activation', 'durationDays', 'activationDate', 'expiryDate',
             'tasks', 'credit', 'allEvents', 'planEvents', 'zoomEvents', 'eventImages',
             'socials', 'adminVideos', 'adminBanners', 'directReferrals', 'activeReferrals',
-            'announcements'
+            'announcements', 'taskItems'
         ));
     }
 
@@ -347,25 +354,42 @@ class TeamLeaderController extends Controller
     public function submitEventProof(Request $request, $id)
     {
         $request->validate([
-            'proof_notes' => 'required|string|max:1000',
-            'proof_file'  => 'nullable|file|mimes:jpg,jpeg,png,pdf,mp4|max:51200', // max 50MB
+            'proof_notes'   => 'required|string|max:1000',
+            'proof_file'    => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,mp4,mov,avi|max:51200', // legacy single-file input
+            'proof_files'   => 'nullable|array',
+            'proof_files.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,mp4,mov,avi|max:51200',
         ]);
 
         $event = \App\Models\TeamLeaderEvent::where('user_id', Auth::id())->where('id', $id)->firstOrFail();
 
-        $path = null;
-        if ($request->hasFile('proof_file')) {
-            $path = $request->file('proof_file')->store('proof_of_payment', 'public');
+        // Gather every uploaded file — supports multiple pictures/files at once
+        // (proof_files[]) plus the legacy single-file input (proof_file).
+        $newPaths = [];
+        if ($request->hasFile('proof_files')) {
+            foreach ($request->file('proof_files') as $file) {
+                if ($file && $file->isValid()) {
+                    $newPaths[] = $file->store('proof_of_payment', 'public');
+                }
+            }
         }
+        if ($request->hasFile('proof_file') && $request->file('proof_file')->isValid()) {
+            $newPaths[] = $request->file('proof_file')->store('proof_of_payment', 'public');
+        }
+
+        // Append to any proofs already uploaded for this event (additive).
+        $existing = !empty($event->proof_files)
+            ? array_filter(array_map('trim', explode(',', $event->proof_files)))
+            : [];
+        $allPaths = array_values(array_unique(array_merge($existing, $newPaths)));
 
         $event->update([
             'proof_submitted' => true,
-            'proof_files'     => $path,
+            'proof_files'     => implode(',', $allPaths),
             'proof_notes'     => $request->proof_notes,
             'proof_status'    => 'pending',
         ]);
 
-        return redirect()->back()->with('success', 'Meeting proof uploaded successfully! The administration will audit and review your proof.');
+        return redirect()->back()->with('success', 'Meeting proof uploaded successfully! ' . count($newPaths) . ' file(s) saved. The administration will audit and review your proof.');
     }
 
     public function storeSocial(Request $request)
@@ -385,6 +409,68 @@ class TeamLeaderController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Social media ambassador link submitted successfully for review!');
+    }
+
+    /**
+     * Persist a task tick from the /team-leader/all page.
+     *
+     * The tick is saved server-side so it survives logouts / device changes
+     * and feeds the admin Performance Monitoring view. Only tasks that are
+     * actually part of the leader's activation may be toggled.
+     */
+    public function toggleTask(Request $request)
+    {
+        $request->validate([
+            'task_hash' => 'required|string|size:40',
+            'completed' => 'required|boolean',
+        ]);
+
+        $user = Auth::user();
+
+        $activation = \App\Models\Activations::where('email', $user->email)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->first();
+
+        $rawTasks = $activation ? $activation->task : '';
+
+        $list = \App\Models\TeamLeaderTaskCompletion::buildTaskList($user->id, $rawTasks);
+
+        // Authorize: the hash must belong to one of this user's assigned tasks.
+        $match = null;
+        foreach ($list['items'] as $item) {
+            if (hash_equals($item['hash'], (string) $request->task_hash)) {
+                $match = $item;
+                break;
+            }
+        }
+
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This task is not assigned to you.',
+            ], 422);
+        }
+
+        $completed = filter_var($request->completed, FILTER_VALIDATE_BOOLEAN);
+
+        \App\Models\TeamLeaderTaskCompletion::updateOrCreate(
+            ['user_id' => $user->id, 'task_hash' => $match['hash']],
+            [
+                'task_text'    => $match['text'],
+                'is_completed' => $completed,
+                'completed_at' => $completed ? now() : null,
+            ]
+        );
+
+        // Recompute totals after the change.
+        $stats = \App\Models\TeamLeaderTaskCompletion::buildTaskList($user->id, $rawTasks);
+
+        return response()->json([
+            'success'         => true,
+            'completed'       => $completed,
+            'completed_count' => $stats['completed'],
+            'total_count'     => $stats['total'],
+        ]);
     }
 
     public function showLoginForm()

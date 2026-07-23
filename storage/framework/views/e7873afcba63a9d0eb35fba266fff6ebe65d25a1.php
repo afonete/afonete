@@ -335,11 +335,53 @@
 
                     
                     <?php if($performance['tasks']): ?>
+                    <?php
+                        $taskItems = $performance['task_items'] ?? ['items'=>[], 'total'=>0, 'completed'=>0];
+                        $taskPct = $taskItems['total'] > 0 ? round(($taskItems['completed'] / $taskItems['total']) * 100) : 0;
+                    ?>
                     <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                            <i class="fas fa-list-check text-slate-500 mr-1"></i> Assigned Tasks
-                        </h4>
-                        <div class="bg-gray-50 rounded-xl p-3 border text-sm text-slate-700" style="white-space: pre-line;"><?php echo e($performance['tasks']); ?></div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center">
+                                <i class="fas fa-list-check text-slate-500 mr-1"></i> Assigned Tasks
+                            </h4>
+                            <span class="text-xs font-bold <?php echo e($taskPct >= 100 ? 'text-green-600' : 'text-indigo-600'); ?>">
+                                <?php echo e($taskItems['completed']); ?> / <?php echo e($taskItems['total']); ?> done
+                            </span>
+                        </div>
+
+                        
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="h-2 rounded-full transition-all duration-300 <?php echo e($taskPct >= 100 ? 'bg-green-500' : 'bg-indigo-500'); ?>" style="width: <?php echo e($taskPct); ?>%"></div>
+                        </div>
+
+                        <ul class="space-y-2">
+                            <?php $__currentLoopData = $taskItems['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <li class="flex items-start gap-3 bg-gray-50 rounded-xl px-3 py-2 border">
+                                    <?php if($t['completed']): ?>
+                                        <i class="fas fa-check-circle text-green-600 mt-0.5"></i>
+                                    <?php else: ?>
+                                        <i class="far fa-circle text-gray-300 mt-0.5"></i>
+                                    <?php endif; ?>
+                                    <span class="flex-1 text-sm <?php echo e($t['completed'] ? 'line-through text-gray-400' : 'text-slate-700 font-medium'); ?>">
+                                        <?php echo e($idx + 1); ?>. <?php echo e($t['text']); ?>
+
+                                    </span>
+                                    <?php if($t['completed'] && $t['completed_at']): ?>
+                                        <span class="text-[10px] text-gray-400 whitespace-nowrap" title="Completed">
+                                            <i class="fas fa-clock"></i> <?php echo e(\Carbon\Carbon::parse($t['completed_at'])->format('d M Y')); ?>
+
+                                        </span>
+                                    <?php endif; ?>
+                                </li>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </ul>
+
+                        <?php if($taskItems['total'] > 0): ?>
+                            <p class="text-[11px] text-gray-400 mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                Ticks are recorded by the leader on their dashboard and shown here in real time.
+                            </p>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
 

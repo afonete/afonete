@@ -1,6 +1,8 @@
 <div class="wrapper">
     @include('user.user-dashboard-base')
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -261,10 +263,39 @@
         }
 
         .report-form label {
-            font-size: 0.75rem;
-            display: block;
-            margin-bottom: 4px;
-            color: #94a3b8;
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+            color: #f1f5f9;
+        }
+
+        /* Small "required" / "optional" markers — sized down vs the label.
+           Works the same for both the Plan and Zoom (switchable) forms. */
+        .report-form label span {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            line-height: 1.5;
+            background: rgba(148, 163, 184, 0.16);
+        }
+
+        /* Make the native calendar/clock picker icons clearly visible on the dark background. */
+        .report-form input[type="date"],
+        .report-form input[type="time"] {
+            color-scheme: dark;
+        }
+        .report-form input[type="date"]::-webkit-calendar-picker-indicator,
+        .report-form input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.9;
+            cursor: pointer;
         }
 
         .report-form input, .report-form textarea, .report-form select {
@@ -428,74 +459,70 @@
                             </div>
                         </div>
 
-                        <!-- SYSTEM ANNOUNCEMENT -->
-                        <div style="margin-top:16px;border:1px solid #93c5fd;border-radius:8px;background:#eff6ff;padding:14px;">
-                            <div style="font-weight:700;color:#1d4ed8;font-size:0.85rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
-                                <i class="fas fa-bullhorn"></i> SYSTEM ANNOUNCEMENT
+                        <!-- ASSIGNED TASKS (moved here — swapped with System Announcement) -->
+                        <div style="margin-top:16px;border:1px solid #c7d2fe;border-radius:8px;background:#eef2ff;padding:14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <span style="font-weight:700;color:#1e40af;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;"><i class="fas fa-tasks"></i> ASSIGNED TASKS</span>
+                                <span id="task-count-badge" style="font-size:0.65rem;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:999px;">{{ $taskItems['completed'] }}/{{ $taskItems['total'] }} done</span>
                             </div>
-                            <div style="font-size:0.78rem;color:#1e3a8a;line-height:1.5;max-height:250px;overflow-y:auto;padding-right:4px;">
-                                @forelse($announcements as $index => $ann)
-                                    <div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #dbeafe;">
-                                        <strong>{{ $index + 1 }}. {{ $ann->title }}</strong>
-                                        <div style="margin-top:4px;color:#1e40af;">{{ $ann->content }}</div>
+
+                            @if($taskItems['total'] > 0)
+                                <div id="task-list" style="display:flex;flex-direction:column;gap:8px;">
+                                    @foreach($taskItems['items'] as $index => $t)
+                                        <div class="task-item" style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:white;border:1px solid #e0e7ff;border-radius:8px;">
+                                            <input type="checkbox" id="task-{{ $index }}"
+                                                   data-hash="{{ $t['hash'] }}"
+                                                   {{ $t['completed'] ? 'checked' : '' }}
+                                                   onchange="toggleTask(this)"
+                                                   style="width:18px;height:18px;accent-color:#1e40af;cursor:pointer;margin-top:2px;">
+                                            <label for="task-{{ $index }}" style="flex:1;cursor:pointer;font-size:0.8rem;line-height:1.4;">
+                                                {{ $index + 1 }}. {{ $t['text'] }}
+                                            </label>
+                                            <span class="task-status" style="font-size:0.65rem;color:#64748b;white-space:nowrap;">{{ $t['completed'] ? '✓ Done' : 'Pending' }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div style="margin-top:12px;">
+                                    <div style="display:flex;justify-content:space-between;font-size:0.7rem;margin-bottom:4px;">
+                                        <span style="color:#64748b;">Progress</span>
+                                        <span id="task-progress-text">{{ $taskItems['completed'] }}/{{ $taskItems['total'] }}</span>
                                     </div>
-                                @empty
-                                    <div style="color:#64748b;font-style:italic;">No announcements active at this time.</div>
-                                @endforelse
-                            </div>
+                                    <div style="background:#e0e7ff;height:7px;border-radius:999px;overflow:hidden;">
+                                        <div id="task-progress-bar"
+                                             style="height:100%;width:{{ $taskItems['total'] > 0 ? round($taskItems['completed']/$taskItems['total']*100) : 0 }}%;background:linear-gradient(to right,#1e40af,#3b82f6);transition:width 0.3s;"></div>
+                                    </div>
+                                </div>
+                                <p style="font-size:0.62rem;color:#94a3b8;margin-top:6px;">
+                                    <i class="fas fa-shield-alt"></i> Your progress is saved automatically and stays ticked until you untick it.
+                                </p>
+                            @else
+                                <div style="padding:14px;text-align:center;color:#64748b;">
+                                    <i class="fas fa-clipboard-list fa-2x mb-2" style="opacity:0.4;"></i><br>
+                                    <strong>No tasks assigned yet.</strong><br>
+                                    <small>Admin will assign tasks soon.</small>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                <!-- ASSIGNED TASKS (from Admin) -->
+                <!-- SYSTEM ANNOUNCEMENT (moved here — swapped with Assigned Tasks) -->
                 <div class="card">
-                    <div class="card-header" style="background:#1e40af;color:white;">
-                        <i class="fas fa-tasks mr-2"></i> ASSIGNED TASKS
+                    <div class="card-header" style="background:#1d4ed8;color:white;">
+                        <i class="fas fa-bullhorn mr-2"></i> SYSTEM ANNOUNCEMENT
                     </div>
-                    <div style="padding: 20px;">
-                        @if($tasks)
-                            <div style="margin-bottom: 12px;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                    <span style="font-weight:700;color:#1e40af;">Your Tasks</span>
-                                    <span style="font-size:0.75rem;background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:999px;">{{ count(explode("\n", $tasks)) }} tasks</span>
+                    <div style="padding:18px;">
+                        <div style="font-size:0.88rem;color:#1e3a8a;line-height:1.6;max-height:420px;overflow-y:auto;padding-right:4px;">
+                            @forelse($announcements as $index => $ann)
+                                <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #dbeafe;">
+                                    <strong style="color:#1e40af;">{{ $index + 1 }}. {{ $ann->title }}</strong>
+                                    <div style="margin-top:5px;color:#1e3a8a;">{{ $ann->content }}</div>
                                 </div>
-
-                                <!-- Interactive Task List -->
-                                <div id="task-list" style="display:flex;flex-direction:column;gap:10px;">
-                                    @foreach(explode("\n", trim($tasks)) as $index => $task)
-                                        @if(trim($task))
-                                        <div class="task-item" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border:1px solid #e0e7ff;border-radius:10px;">
-                                            <input type="checkbox" id="task-{{ $index }}" 
-                                                   onchange="markTaskComplete(this, {{ $index }})"
-                                                   style="width:20px;height:20px;accent-color:#1e40af;cursor:pointer;">
-                                            <label for="task-{{ $index }}" style="flex:1;cursor:pointer;font-size:0.92rem;line-height:1.4;">
-                                                {{ trim($task) }}
-                                            </label>
-                                            <span class="task-status" style="font-size:0.7rem;color:#64748b;white-space:nowrap;">Pending</span>
-                                        </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-
-                                <!-- Progress Bar -->
-                                <div style="margin-top:16px;">
-                                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:4px;">
-                                        <span style="color:#64748b;">Progress</span>
-                                        <span id="task-progress-text">0/{{ count(explode("\n", trim($tasks))) }}</span>
-                                    </div>
-                                    <div style="background:#e0e7ff;height:8px;border-radius:999px;overflow:hidden;">
-                                        <div id="task-progress-bar" 
-                                             style="height:100%;width:0%;background:linear-gradient(to right,#1e40af,#3b82f6);transition:width 0.3s;"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        @else
-                            <div style="padding:20px;text-align:center;color:#64748b;">
-                                <i class="fas fa-clipboard-list fa-2x mb-2" style="opacity:0.4;"></i><br>
-                                <strong>No tasks assigned yet.</strong><br>
-                                <small>Admin will assign tasks soon.</small>
-                            </div>
-                        @endif
+                            @empty
+                                <div style="color:#64748b;font-style:italic;text-align:center;padding:30px 0;">No announcements active at this time.</div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
@@ -510,14 +537,107 @@
                         <div>
                             <div class="section-title">My Event History</div>
                             <div class="event-history" style="min-height: 180px;">
-                                @forelse($planEvents as $e)
-                                    <div style="padding:6px 0;border-bottom:1px solid #e2e8f0;font-size:0.85rem;">
-                                        <strong>{{ $e->title }}</strong> 
-                                        <span style="font-size:0.7rem;padding:1px 8px;border-radius:999px;background:#fef3c7;color:#854d0e;">{{ $e->status }}</span>
+                                @forelse($allEvents as $e)
+                                    @php
+                                        $evIsZoom = ($e->event_type === 'zoom' || $e->type === 'zoom');
+                                        $statusColors = [
+                                            'approved' => 'background:#dcfce7;color:#166534;',
+                                            'pending'  => 'background:#fef3c7;color:#854d0e;',
+                                            'rejected' => 'background:#fee2e2;color:#b91c1c;',
+                                        ];
+                                        $proofColors = [
+                                            'approved' => 'background:#dcfce7;color:#166534;',
+                                            'pending'  => 'background:#fef3c7;color:#854d0e;',
+                                            'rejected' => 'background:#fee2e2;color:#b91c1c;',
+                                            'none'     => 'background:#f1f5f9;color:#64748b;',
+                                        ];
+                                        $proofFiles = !empty($e->proof_files) ? array_filter(array_map('trim', explode(',', $e->proof_files))) : [];
+                                        $evPhotos = [];
+                                        if (!empty($e->event_image_1)) { $evPhotos[] = $e->event_image_1; }
+                                        if (!empty($e->event_image_2)) {
+                                            foreach (explode(',', $e->event_image_2) as $_p) {
+                                                $_p = trim($_p);
+                                                if ($_p !== '') { $evPhotos[] = $_p; }
+                                            }
+                                        }
+                                    @endphp
+                                    <div class="event-row" style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:0.85rem;">
+                                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:0;">
+                                                <strong>{{ $e->title }}</strong>
+                                                @if($evIsZoom)
+                                                    <span style="font-size:0.6rem;padding:1px 6px;border-radius:999px;background:#dbeafe;color:#1e40af;margin-left:4px;vertical-align:middle;"><i class="fas fa-video"></i> Zoom</span>
+                                                @else
+                                                    <span style="font-size:0.6rem;padding:1px 6px;border-radius:999px;background:#e0e7ff;color:#3730a3;margin-left:4px;vertical-align:middle;"><i class="fas fa-map-marker-alt"></i> Plan</span>
+                                                @endif
+                                                @if($e->event_time)
+                                                    <div style="font-size:0.7rem;color:#64748b;margin-top:2px;"><i class="fas fa-clock"></i> {{ $e->event_time->format('d M Y, h:i A') }}</div>
+                                                @endif
+                                            </div>
+                                            <span style="font-size:0.7rem;padding:1px 8px;border-radius:999px;{{ $statusColors[$e->status] ?? $statusColors['pending'] }}">{{ ucfirst($e->status) }}</span>
+                                        </div>
+
+                                        {{-- Proof of event: status badge + uploaded previews --}}
+                                        @if($e->proof_submitted || !empty($proofFiles))
+                                            <div style="margin-top:4px;font-size:0.7rem;color:#64748b;">
+                                                Proof:
+                                                <span style="padding:1px 8px;border-radius:999px;{{ $proofColors[$e->proof_status] ?? $proofColors['none'] }}">{{ ucfirst($e->proof_status ?: 'none') }}</span>
+                                                @if(!empty($proofFiles)) &middot; {{ count($proofFiles) }} file(s) @endif
+                                            </div>
+                                            @if(!empty($proofFiles))
+                                                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+                                                    @foreach($proofFiles as $pf)
+                                                        @php
+                                                            $pfUrl = asset('storage/'.$pf);
+                                                            $pfExt = strtolower(pathinfo($pf, PATHINFO_EXTENSION));
+                                                            $pfIsImg = in_array($pfExt, ['jpg','jpeg','png','gif','webp','bmp']);
+                                                        @endphp
+                                                        @if($pfIsImg)
+                                                            <img src="{{ $pfUrl }}" onclick="openLightbox('{{ $pfUrl }}')" title="Click to view proof" style="width:46px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer;">
+                                                        @else
+                                                            <a href="{{ $pfUrl }}" target="_blank" style="display:inline-flex;align-items:center;gap:3px;font-size:0.62rem;padding:3px 6px;background:#f1f5f9;color:#475569;border-radius:6px;border:1px solid #e2e8f0;">
+                                                                <i class="fas fa-file-download"></i> {{ strtoupper($pfExt) }}
+                                                            </a>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        @endif
+
+                                        {{-- Event report photos — this event's own images (filtered per event) --}}
+                                        @if(!empty($evPhotos))
+                                            <div style="margin-top:6px;">
+                                                <div style="font-size:0.65rem;color:#64748b;margin-bottom:3px;"><i class="fas fa-images"></i> Event Photos</div>
+                                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                                    @foreach($evPhotos as $ep)
+                                                        @php $epUrl = asset('storage/'.$ep); @endphp
+                                                        <img src="{{ $epUrl }}" onclick="openLightbox('{{ $epUrl }}')" title="Click to view" style="width:50px;height:42px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer;">
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        {{-- Upload proof button: only when the event is approved AND proof not yet approved --}}
+                                        @if($e->status === 'approved' && $e->proof_status !== 'approved')
+                                            <button type="button" onclick="openProofModal({{ $e->id }})" style="margin-top:8px;background:#0f766e;color:white;border:none;padding:6px 12px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;">
+                                                <i class="fas fa-cloud-upload-alt"></i> Upload Proof of Event
+                                            </button>
+                                        @elseif($e->status === 'approved' && $e->proof_status === 'approved')
+                                            <span style="display:inline-block;margin-top:8px;background:#065f46;color:#a7f3d0;padding:6px 12px;border-radius:8px;font-size:0.72rem;font-weight:700;">
+                                                <i class="fas fa-check-circle"></i> Proof Approved
+                                            </span>
+                                        @endif
                                     </div>
                                 @empty
-                                    <div style="color:#64748b;text-align:center;padding:40px 0;">No event plan history.</div>
+                                    <div style="color:#64748b;text-align:center;padding:40px 0;">No event history yet.</div>
                                 @endforelse
+
+                                {{-- Event history pagination (3 events per page) --}}
+                                <div id="eventPager" style="display:none;justify-content:space-between;align-items:center;margin-top:12px;font-size:0.75rem;">
+                                    <button id="eventPrev" type="button" onclick="eventPrevPage()" style="background:#1e2937;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.72rem;"><i class="fas fa-chevron-left"></i> Prev</button>
+                                    <span id="eventPageInfo" style="color:#64748b;"></span>
+                                    <button id="eventNext" type="button" onclick="eventNextPage()" style="background:#1e2937;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.72rem;">Next <i class="fas fa-chevron-right"></i></button>
+                                </div>
                             </div>
                         </div>
 
@@ -574,17 +694,7 @@
                         </div>
                     </div>
 
-                    <!-- Event Images Carousel -->
-                    <div style="margin-top:16px;">
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                            @foreach($eventImages as $img)
-                                <img src="{{ asset('storage/'.$img) }}" style="width:90px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
-                            @endforeach
-                            @if($eventImages->isEmpty())
-                                <span style="color:#94a3b8;font-size:0.8rem;">No event photos yet.</span>
-                            @endif
-                        </div>
-                    </div>
+                    {{-- Event photos now appear per-event inside "My Event History" (clickable) --}}
 
                     <!-- Toggle Buttons -->
                     <div class="toggle-buttons">
@@ -605,12 +715,47 @@
                             BECOME A BIFONEX AMBASSADOR
                         </div>
 
+                        @php
+                            // Map each platform to the user's latest ambassador application.
+                            // $socials is already ordered latest-first.
+                            $platformStatuses = [];
+                            foreach ($socials as $s) {
+                                if (!isset($platformStatuses[$s->platform])) {
+                                    $platformStatuses[$s->platform] = $s;
+                                }
+                            }
+                        @endphp
+
                         <div class="amb-grid">
                             @foreach(['Instagram','Twitter','TikTok','YouTube','Support','Creator'] as $platform)
-                                <div class="amb-card">
+                                @php
+                                    $mySocial = $platformStatuses[$platform] ?? null;
+                                    $ambStatus = $mySocial ? $mySocial->status : null;
+                                @endphp
+                                <div class="amb-card" style="@if($ambStatus==='approved')background:#065f46;@elseif($ambStatus==='pending')background:#92400e;@elseif($ambStatus==='rejected')background:#991b1b;@endif">
                                     <div style="font-weight:700;margin-bottom:4px;">{{ $platform }}</div>
                                     <div style="font-size:0.7rem;opacity:0.85;">Promote Bifonex</div>
-                                    <button onclick="openModal('{{ $platform }}')">Apply now</button>
+
+                                    @if($ambStatus === 'approved')
+                                        {{-- APPROVED — locked, cannot re-apply --}}
+                                        <div style="margin-top:6px;font-size:0.6rem;font-weight:700;background:#a7f3d0;color:#065f46;padding:2px 8px;border-radius:999px;display:inline-block;">✓ APPROVED</div>
+                                        @if($mySocial->profile_link)
+                                            <a href="{{ $mySocial->profile_link }}" target="_blank" rel="noopener" style="margin-top:8px;display:block;background:#064e3b;color:#d1fae5;padding:6px 8px;border-radius:6px;font-size:0.66rem;font-weight:700;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                                <i class="fas fa-external-link-alt"></i> View Profile
+                                            </a>
+                                        @endif
+                                        <button disabled style="margin-top:8px;background:#064e3b;color:#a7f3d0;border:none;padding:6px 14px;border-radius:6px;font-size:0.7rem;cursor:not-allowed;opacity:0.9;">Approved ✓</button>
+                                    @elseif($ambStatus === 'pending')
+                                        {{-- PENDING — already submitted, locked while under review --}}
+                                        <div style="margin-top:6px;font-size:0.6rem;font-weight:700;background:#fde68a;color:#92400e;padding:2px 8px;border-radius:999px;display:inline-block;">⏳ PENDING</div>
+                                        <button disabled style="margin-top:8px;background:#78350f;color:#fde68a;border:none;padding:6px 14px;border-radius:6px;font-size:0.7rem;cursor:not-allowed;">Pending Review</button>
+                                    @elseif($ambStatus === 'rejected')
+                                        {{-- REJECTED — can re-apply --}}
+                                        <div style="margin-top:6px;font-size:0.6rem;font-weight:700;background:#fecaca;color:#991b1b;padding:2px 8px;border-radius:999px;display:inline-block;">✕ REJECTED</div>
+                                        <button onclick="openModal('{{ $platform }}')" style="margin-top:8px;background:#1e3a8a;color:white;border:none;padding:6px 14px;border-radius:6px;font-size:0.7rem;cursor:pointer;">Re-apply</button>
+                                    @else
+                                        <button onclick="openModal('{{ $platform }}')">Apply now</button>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -722,6 +867,41 @@
         </div>
     </div>
 
+    <!-- Proof of Event Upload Modal -->
+    <div id="proofModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:99999;">
+        <div style="background:white;border-radius:12px;width:460px;max-width:92vw;max-height:90vh;overflow-y:auto;padding:24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <h4 style="margin:0;font-size:1rem;">Upload Proof of Event</h4>
+                <button type="button" onclick="closeProofModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;line-height:1;">&times;</button>
+            </div>
+            <p style="font-size:0.75rem;color:#64748b;margin:0 0 14px;">Add photos, documents or videos. You can select multiple files at once.</p>
+            <form id="proofForm" action="" method="POST" enctype="multipart/form-data">
+                @csrf
+                <label style="font-size:0.8rem;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Pictures &amp; Files <span style="color:#ef4444;">*</span></label>
+                <input type="file" name="proof_files[]" multiple accept="image/*,application/pdf,video/*" required
+                       style="width:100%;font-size:0.8rem;padding:8px;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:4px;box-sizing:border-box;">
+                <small style="font-size:0.68rem;color:#94a3b8;display:block;margin-bottom:12px;">Hold Ctrl / Cmd to pick several. Images, PDFs &amp; videos are all allowed together.</small>
+
+                <label style="font-size:0.8rem;font-weight:600;color:#334155;display:block;margin-bottom:4px;">Notes <span style="color:#ef4444;">*</span></label>
+                <textarea name="proof_notes" required rows="3" placeholder="Describe what this proof shows..."
+                          style="width:100%;font-size:0.8rem;padding:8px;border:1px solid #cbd5e1;border-radius:8px;margin-bottom:14px;box-sizing:border-box;"></textarea>
+
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" onclick="closeProofModal()" style="padding:8px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>
+                    <button type="submit" style="padding:8px 16px;background:#0f766e;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Proof
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Lightbox -->
+    <div id="imgLightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:999999;align-items:center;justify-content:center;padding:20px;">
+        <button onclick="event.stopPropagation(); closeLightbox()" style="position:fixed;top:14px;right:24px;color:#fff;font-size:2.2rem;line-height:1;background:none;border:none;cursor:pointer;z-index:1000000;">&times;</button>
+        <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()" style="max-width:92%;max-height:90%;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.6);object-fit:contain;">
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Countdown Timer
@@ -788,6 +968,70 @@
             document.getElementById('ambModal').style.display = 'none';
         }
 
+        // ===== Proof of Event Upload Modal =====
+        var proofBaseUrl = "{{ route('team-leader.events.proof', ['id' => '__PROOFID__']) }}";
+        function openProofModal(eventId) {
+            var form = document.getElementById('proofForm');
+            form.action = proofBaseUrl.replace('__PROOFID__', eventId);
+            form.reset();
+            document.getElementById('proofModal').style.display = 'flex';
+        }
+        function closeProofModal() {
+            document.getElementById('proofModal').style.display = 'none';
+        }
+
+        // ===== Image Lightbox =====
+        function openLightbox(src) {
+            var lb = document.getElementById('imgLightbox');
+            document.getElementById('lightboxImg').src = src;
+            lb.style.display = 'flex';
+        }
+        function closeLightbox() {
+            document.getElementById('imgLightbox').style.display = 'none';
+            document.getElementById('lightboxImg').src = '';
+        }
+        // Close lightbox on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { closeLightbox(); }
+        });
+
+        // ===== Event History pagination (3 per page) =====
+        var eventPageSize = 4;
+        var eventCurrentPage = 1;
+
+        function renderEventPage() {
+            var rows = document.querySelectorAll('.event-row');
+            var total = rows.length;
+            var totalPages = Math.max(1, Math.ceil(total / eventPageSize));
+
+            if (eventCurrentPage > totalPages) { eventCurrentPage = totalPages; }
+
+            var start = (eventCurrentPage - 1) * eventPageSize;
+            rows.forEach(function(row, i) {
+                row.style.display = (i >= start && i < start + eventPageSize) ? '' : 'none';
+            });
+
+            var info = document.getElementById('eventPageInfo');
+            var prev = document.getElementById('eventPrev');
+            var next = document.getElementById('eventNext');
+            var pager = document.getElementById('eventPager');
+
+            if (info) { info.textContent = total > 0 ? ('Page ' + eventCurrentPage + ' of ' + totalPages) : ''; }
+            if (prev) { prev.style.visibility = (eventCurrentPage <= 1) ? 'hidden' : 'visible'; }
+            if (next) { next.style.visibility = (eventCurrentPage >= totalPages) ? 'hidden' : 'visible'; }
+            if (pager) { pager.style.display = (total <= eventPageSize) ? 'none' : 'flex'; }
+        }
+
+        function eventPrevPage() {
+            if (eventCurrentPage > 1) { eventCurrentPage--; renderEventPage(); }
+        }
+
+        function eventNextPage() {
+            var rows = document.querySelectorAll('.event-row');
+            var totalPages = Math.max(1, Math.ceil(rows.length / eventPageSize));
+            if (eventCurrentPage < totalPages) { eventCurrentPage++; renderEventPage(); }
+        }
+
         // Video player
         function playV(el, type, src) {
             document.querySelectorAll('.v-thumb').forEach(x => x.classList.remove('active'));
@@ -811,89 +1055,114 @@
             }
 
             // Initialize Task Progress
-            initTaskProgress();
+            initTaskUI();
+
+            // Initialize Event History pagination
+            renderEventPage();
         });
 
-        // ===== INTERACTIVE TASK SYSTEM =====
-        function initTaskProgress() {
-            const taskItems = document.querySelectorAll('#task-list .task-item');
-            if (!taskItems.length) return;
-
-            // Load saved state from localStorage
-            const savedState = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
-
-            let completed = 0;
-            const total = taskItems.length;
-
-            taskItems.forEach((item, index) => {
-                const checkbox = item.querySelector('input[type="checkbox"]');
-                const statusEl = item.querySelector('.task-status');
-
-                if (savedState[index]) {
-                    checkbox.checked = true;
-                    item.style.opacity = '0.75';
-                    statusEl.innerHTML = `<span style="color:#16a34a;font-weight:600;">✓ Done</span>`;
-                    completed++;
-                }
-
-                // Click anywhere on the task row to toggle
-                item.addEventListener('click', function(e) {
-                    if (e.target.tagName === 'INPUT') return;
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change'));
-                });
-            });
-
-            updateProgressBar(completed, total);
+        // ===== PERSISTENT TASK SYSTEM (server-backed) =====
+        // Ticks are saved to the server so they survive logout / device changes
+        // and feed the admin Performance Monitoring view.
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
         }
 
-        function markTaskComplete(checkbox, index) {
-            const item = checkbox.closest('.task-item');
+        function applyTaskState(item, checked) {
             const statusEl = item.querySelector('.task-status');
-
-            if (checkbox.checked) {
-                item.style.transition = 'all 0.3s';
+            if (checked) {
                 item.style.opacity = '0.75';
-                statusEl.innerHTML = `<span style="color:#16a34a;font-weight:600;">✓ Done</span>`;
-
-                // Save to localStorage
-                const saved = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
-                saved[index] = true;
-                localStorage.setItem('teamLeaderTasks', JSON.stringify(saved));
+                statusEl.innerHTML = '<span style="color:#16a34a;font-weight:600;">✓ Done</span>';
             } else {
                 item.style.opacity = '1';
-                statusEl.innerHTML = `Pending`;
-
-                const saved = JSON.parse(localStorage.getItem('teamLeaderTasks') || '{}');
-                delete saved[index];
-                localStorage.setItem('teamLeaderTasks', JSON.stringify(saved));
+                statusEl.innerHTML = 'Pending';
             }
-
-            // Update progress
-            const allCheckboxes = document.querySelectorAll('#task-list input[type="checkbox"]');
-            let done = 0;
-            allCheckboxes.forEach(cb => { if (cb.checked) done++; });
-
-            updateProgressBar(done, allCheckboxes.length);
         }
 
-        function updateProgressBar(completed, total) {
+        function updateTaskProgress(completed, total) {
             const progressBar = document.getElementById('task-progress-bar');
             const progressText = document.getElementById('task-progress-text');
+            const countBadge = document.getElementById('task-count-badge');
+            if (!progressBar) return;
 
-            if (!progressBar || !progressText) return;
+            const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+            progressBar.style.width = pct + '%';
+            progressBar.style.background = (completed === total && total > 0)
+                ? 'linear-gradient(to right, #16a34a, #4ade80)'
+                : 'linear-gradient(to right, #1e40af, #3b82f6)';
 
-            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            if (progressText) progressText.innerHTML = completed + '/' + total;
+            if (countBadge)   countBadge.innerHTML   = completed + '/' + total + ' done';
+        }
 
-            progressBar.style.width = percentage + '%';
-            progressText.innerHTML = `${completed}/${total}`;
+        function setAllTasksState() {
+            const cbs = document.querySelectorAll('#task-list input[type="checkbox"]');
+            let done = 0;
+            cbs.forEach(cb => {
+                applyTaskState(cb.closest('.task-item'), cb.checked);
+                if (cb.checked) done++;
+            });
+            updateTaskProgress(done, cbs.length);
+        }
 
-            // Color change when all complete
-            if (completed === total && total > 0) {
-                progressBar.style.background = 'linear-gradient(to right, #16a34a, #4ade80)';
-                progressText.style.color = '#16a34a';
-                progressText.style.fontWeight = '700';
-            }
+        function toggleTask(checkbox) {
+            const item = checkbox.closest('.task-item');
+            const hash = checkbox.getAttribute('data-hash');
+            const isNowChecked = checkbox.checked;
+
+            // Optimistic UI update
+            applyTaskState(item, isNowChecked);
+            const cbs = document.querySelectorAll('#task-list input[type="checkbox"]');
+            let done = 0;
+            cbs.forEach(cb => { if (cb.checked) done++; });
+            updateTaskProgress(done, cbs.length);
+
+            fetch('{{ route("team-leader.task-toggle") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ task_hash: hash, completed: isNowChecked }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Use authoritative counts returned by the server.
+                    updateTaskProgress(data.completed_count, data.total_count);
+                } else {
+                    // Revert on failure.
+                    checkbox.checked = !isNowChecked;
+                    setAllTasksState();
+                    alert(data.message || 'Could not save this task. Please try again.');
+                }
+            })
+            .catch(() => {
+                checkbox.checked = !isNowChecked;
+                setAllTasksState();
+                alert('Network error — your task was not saved. Please try again.');
+            });
+        }
+
+        function initTaskUI() {
+            const cbs = document.querySelectorAll('#task-list input[type="checkbox"]');
+            if (!cbs.length) return;
+
+            // Paint initial state from the server-rendered checkboxes.
+            setAllTasksState();
+
+            // Click anywhere on the task row to toggle (not on the checkbox/label itself).
+            cbs.forEach(cb => {
+                const item = cb.closest('.task-item');
+                item.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'LABEL') return;
+                    cb.checked = !cb.checked;
+                    toggleTask(cb);
+                });
+            });
         }
     </script>
 </div>

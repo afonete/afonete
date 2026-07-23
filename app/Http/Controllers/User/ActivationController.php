@@ -34,7 +34,7 @@ public function index(){
         $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
 
         if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
-            return redirect()->route('team-leader.dashboard');
+            return redirect()->route('team-leader.all');
         }
         if ($teamLeader->status === 'pending') {
             return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
@@ -198,7 +198,7 @@ public function g_upgrade(Request $request){
         $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
 
         if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
-            return redirect()->route('team-leader.dashboard');
+            return redirect()->route('team-leader.all');
         }
 
         if ($teamLeader->status === 'pending') {

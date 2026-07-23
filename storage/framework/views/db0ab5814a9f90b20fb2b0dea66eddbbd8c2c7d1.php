@@ -1,6 +1,6 @@
 
 <?php $__env->startSection('contents'); ?>
-<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl" x-data="{ tab: 'pending', openModal: null }">
+<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl" x-data="{ tab: 'pending', openModal: null, openEvent: null, openProof: null }">
 
     
     <?php if(session('message')): ?>
@@ -56,6 +56,10 @@
                 <button @click="tab = 'socials'" :class="tab === 'socials' ? 'border-blue-500 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center gap-2 transition duration-150">
                     <i class="fas fa-bullhorn"></i> Ambassadors Audit
                     <span class="bg-pink-100 text-pink-800 text-xs font-bold px-2 py-0.5 rounded-full"><?php echo e(count($pendingSocials)); ?></span>
+                </button>
+                <button @click="tab = 'approvedAmb'" :class="tab === 'approvedAmb' ? 'border-blue-500 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center gap-2 transition duration-150">
+                    <i class="fas fa-badge-check"></i> Confirmed Ambassadors
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full"><?php echo e(count($approvedSocials)); ?></span>
                 </button>
 
                 
@@ -352,6 +356,9 @@
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-600 text-xs"><?php echo e($event->event_time->format('d M Y, h:i A')); ?></td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        <button type="button" @click="openEvent = '<?php echo e($event->id); ?>'" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                            <i class="fas fa-info-circle mr-1"></i> Details
+                                        </button>
                                         <form action="<?php echo e(route('admin.team-leaders.events.approve', $event->id)); ?>" method="POST" class="inline">
                                             <?php echo csrf_field(); ?>
                                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
@@ -366,6 +373,143 @@
                                         </form>
                                     </td>
                                 </tr>
+
+                                
+                                <div x-cloak x-show="openEvent === '<?php echo e($event->id); ?>'" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display:none;">
+                                    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto" @click.away="openEvent = null">
+                                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
+                                            <h4 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                                <i class="fas fa-calendar-check text-indigo-600"></i> Event Full Details
+                                            </h4>
+                                            <button type="button" @click="openEvent = null" class="text-gray-400 hover:text-gray-700">
+                                                <i class="fas fa-times text-xl"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="p-6 space-y-5">
+                                            <?php
+                                                $evLeader = $event->user ? \App\Models\TeamLeader::where('User_name', $event->user->user)->first() : null;
+                                                $evImgs = [];
+                                                if (!empty($event->event_image_1)) { $evImgs[] = $event->event_image_1; }
+                                                if (!empty($event->event_image_2)) {
+                                                    foreach (explode(',', $event->event_image_2) as $im) {
+                                                        $im = trim($im);
+                                                        if ($im !== '') { $evImgs[] = $im; }
+                                                    }
+                                                }
+                                            ?>
+
+                                            
+                                            <div class="flex items-center gap-3 bg-indigo-50 rounded-xl p-3 border border-indigo-100">
+                                                <div class="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <?php if($evLeader): ?>
+                                                        <a href="<?php echo e(route('admin.team-leaders.show', $evLeader->id)); ?>" class="font-bold text-gray-900 hover:text-indigo-600"><?php echo e($event->user->name ?? 'Unknown Leader'); ?></a>
+                                                    <?php else: ?>
+                                                        <span class="font-bold text-gray-900"><?php echo e($event->user->name ?? 'Unknown Leader'); ?></span>
+                                                    <?php endif; ?>
+                                                    <div class="text-xs text-gray-500 font-mono">&#64;<?php echo e($event->user->user ?? '—'); ?></div>
+                                                </div>
+                                            </div>
+
+                                            
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Event Title</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->title ?? '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Category</p>
+                                                    <p class="font-bold text-slate-800 uppercase"><?php echo e($event->event_type ?? $event->type ?? '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Meeting Type</p>
+                                                    <p class="font-bold <?php echo e($event->type === 'zoom' ? 'text-blue-700' : 'text-indigo-700'); ?>"><?php echo e(ucfirst($event->type ?? '—')); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Approval Status</p>
+                                                    <p class="font-bold"><?php echo e(ucfirst($event->status ?? '—')); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Scheduled Time</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->event_time ? $event->event_time->format('d M Y, h:i A') : '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Event Done On</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->event_done_on ? $event->event_done_on->format('d M Y') : '—'); ?></p>
+                                                </div>
+                                            </div>
+
+                                            
+                                            <?php if($event->type === 'zoom'): ?>
+                                                <div class="bg-blue-50 rounded-xl p-3 border border-blue-100 space-y-1 text-sm">
+                                                    <p class="text-[10px] text-blue-400 font-bold uppercase mb-1"><i class="fas fa-video mr-1"></i> Zoom Details</p>
+                                                    <?php if($event->zoom_link): ?>
+                                                        <p><span class="text-gray-500">Link:</span> <a href="<?php echo e($event->zoom_link); ?>" target="_blank" rel="noopener" class="text-blue-700 font-bold break-all"><?php echo e($event->zoom_link); ?></a></p>
+                                                    <?php endif; ?>
+                                                    <p><span class="text-gray-500">Country:</span> <span class="font-semibold text-slate-700"><?php echo e($event->country ?? '—'); ?></span></p>
+                                                    <p><span class="text-gray-500">Place:</span> <span class="font-semibold text-slate-700"><?php echo e($event->place ?? '—'); ?></span></p>
+                                                    <?php if($event->event_date): ?><p><span class="text-gray-500">Date:</span> <span class="font-semibold text-slate-700"><?php echo e($event->event_date->format('d M Y')); ?></span></p><?php endif; ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="bg-indigo-50 rounded-xl p-3 border border-indigo-100 space-y-1 text-sm">
+                                                    <p class="text-[10px] text-indigo-400 font-bold uppercase mb-1"><i class="fas fa-map-marker-alt mr-1"></i> Venue Details</p>
+                                                    <p><span class="text-gray-500">Location:</span> <span class="font-semibold text-slate-700"><?php echo e($event->location ?? '—'); ?></span></p>
+                                                    <p><span class="text-gray-500">Hotel / Venue:</span> <span class="font-semibold text-slate-700"><?php echo e($event->hotel_location ?? '—'); ?></span></p>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            
+                                            <?php if(!empty($evImgs)): ?>
+                                                <div>
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2"><i class="fas fa-images mr-1"></i> Uploaded Photos</p>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <?php $__currentLoopData = $evImgs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $im): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                            <a href="<?php echo e(asset('storage/' . $im)); ?>" target="_blank" rel="noopener">
+                                                                <img src="<?php echo e(asset('storage/' . $im)); ?>" class="w-24 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition">
+                                                            </a>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            
+                                            <div class="bg-gray-50 rounded-xl p-3 border text-sm">
+                                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Proof Status</p>
+                                                <p>
+                                                    Submitted:
+                                                    <?php if($event->proof_submitted): ?>
+                                                        <span class="text-green-700 font-bold">Yes</span>
+                                                    <?php else: ?>
+                                                        <span class="text-gray-500 font-bold">No</span>
+                                                    <?php endif; ?>
+                                                    &middot; Status: <span class="font-bold"><?php echo e(ucfirst($event->proof_status ?? '—')); ?></span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        
+                                        <div class="px-6 py-4 border-t flex flex-wrap justify-end items-center gap-2 bg-gray-50 sticky bottom-0">
+                                            <button type="button" @click="openEvent = null" class="bg-gray-200 hover:bg-gray-300 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
+                                                Close
+                                            </button>
+                                            <form action="<?php echo e(route('admin.team-leaders.events.reject', $event->id)); ?>" method="POST">
+                                                <?php echo csrf_field(); ?>
+                                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150" onclick="return confirm('Reject this event?')">
+                                                    <i class="fas fa-times mr-1"></i> Reject
+                                                </button>
+                                            </form>
+                                            <form action="<?php echo e(route('admin.team-leaders.events.approve', $event->id)); ?>" method="POST">
+                                                <?php echo csrf_field(); ?>
+                                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
+                                                    <i class="fas fa-check mr-1"></i> Approve
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
@@ -408,6 +552,9 @@
                                     </td>
                                     <td class="px-6 py-4 font-medium text-gray-600 text-xs max-w-[200px] truncate" title="<?php echo e($event->proof_notes); ?>"><?php echo e($event->proof_notes); ?></td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        <button type="button" @click="openProof = '<?php echo e($event->id); ?>'" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                            <i class="fas fa-info-circle mr-1"></i> Details
+                                        </button>
                                         <form action="<?php echo e(route('admin.team-leaders.proofs.approve', $event->id)); ?>" method="POST" class="inline">
                                             <?php echo csrf_field(); ?>
                                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
@@ -422,6 +569,155 @@
                                         </form>
                                     </td>
                                 </tr>
+
+                                
+                                <div x-cloak x-show="openProof === '<?php echo e($event->id); ?>'" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display:none;">
+                                    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto" @click.away="openProof = null">
+                                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
+                                            <h4 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                                                <i class="fas fa-camera-retro text-teal-600"></i> Proof Full Details
+                                            </h4>
+                                            <button type="button" @click="openProof = null" class="text-gray-400 hover:text-gray-700">
+                                                <i class="fas fa-times text-xl"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="p-6 space-y-5">
+                                            <?php
+                                                $prLeader = $event->user ? \App\Models\TeamLeader::where('User_name', $event->user->user)->first() : null;
+                                                $prImgs = [];
+                                                if (!empty($event->event_image_1)) { $prImgs[] = $event->event_image_1; }
+                                                if (!empty($event->event_image_2)) {
+                                                    foreach (explode(',', $event->event_image_2) as $im) {
+                                                        $im = trim($im);
+                                                        if ($im !== '') { $prImgs[] = $im; }
+                                                    }
+                                                }
+                                            ?>
+
+                                            
+                                            <div class="flex items-center gap-3 bg-teal-50 rounded-xl p-3 border border-teal-100">
+                                                <div class="w-10 h-10 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <?php if($prLeader): ?>
+                                                        <a href="<?php echo e(route('admin.team-leaders.show', $prLeader->id)); ?>" class="font-bold text-gray-900 hover:text-teal-600"><?php echo e($event->user->name ?? 'Unknown Leader'); ?></a>
+                                                    <?php else: ?>
+                                                        <span class="font-bold text-gray-900"><?php echo e($event->user->name ?? 'Unknown Leader'); ?></span>
+                                                    <?php endif; ?>
+                                                    <div class="text-xs text-gray-500 font-mono">&#64;<?php echo e($event->user->user ?? '—'); ?></div>
+                                                </div>
+                                            </div>
+
+                                            
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Meeting / Event Title</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->title ?? '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Category</p>
+                                                    <p class="font-bold text-slate-800 uppercase"><?php echo e($event->event_type ?? $event->type ?? '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Proof Submitted</p>
+                                                    <p class="font-bold <?php echo e($event->proof_submitted ? 'text-green-700' : 'text-gray-500'); ?>"><?php echo e($event->proof_submitted ? 'Yes' : 'No'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Audit Status</p>
+                                                    <p class="font-bold"><?php echo e(ucfirst($event->proof_status ?? '—')); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Event Done On</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->event_done_on ? $event->event_done_on->format('d M Y') : '—'); ?></p>
+                                                </div>
+                                                <div class="bg-gray-50 rounded-xl p-3 border">
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase">Scheduled Time</p>
+                                                    <p class="font-bold text-slate-800"><?php echo e($event->event_time ? $event->event_time->format('d M Y, h:i A') : '—'); ?></p>
+                                                </div>
+                                            </div>
+
+                                            
+                                            <?php if($event->hotel_location): ?>
+                                                <div class="bg-indigo-50 rounded-xl p-3 border border-indigo-100 text-sm">
+                                                    <p class="text-[10px] text-indigo-400 font-bold uppercase mb-1"><i class="fas fa-map-marker-alt mr-1"></i> Hotel / Venue</p>
+                                                    <p class="font-semibold text-slate-700"><?php echo e($event->hotel_location); ?></p>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            
+                                            <div class="bg-gray-50 rounded-xl p-3 border text-sm">
+                                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1"><i class="fas fa-align-left mr-1"></i> Performance Notes</p>
+                                                <p class="text-slate-700 whitespace-pre-wrap"><?php echo e($event->proof_notes ?: 'No notes provided.'); ?></p>
+                                            </div>
+
+                                            
+                                            <?php
+                                                $proofAttach = !empty($event->proof_files) ? array_filter(array_map('trim', explode(',', $event->proof_files))) : [];
+                                            ?>
+                                            <div class="bg-blue-50 rounded-xl p-3 border border-blue-100 text-sm">
+                                                <p class="text-[10px] text-blue-400 font-bold uppercase mb-2"><i class="fas fa-paperclip mr-1"></i> Proof Attachment(s) — <?php echo e(count($proofAttach)); ?> file(s)</p>
+                                                <?php if(!empty($proofAttach)): ?>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <?php $__currentLoopData = $proofAttach; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                            <?php
+                                                                $paUrl = asset('storage/'.$pa);
+                                                                $paExt = strtolower(pathinfo($pa, PATHINFO_EXTENSION));
+                                                                $paIsImg = in_array($paExt, ['jpg','jpeg','png','gif','webp','bmp']);
+                                                            ?>
+                                                            <?php if($paIsImg): ?>
+                                                                <a href="<?php echo e($paUrl); ?>" target="_blank" rel="noopener">
+                                                                    <img src="<?php echo e($paUrl); ?>" class="w-20 h-16 object-cover rounded-lg border border-blue-200 hover:opacity-80 transition">
+                                                                </a>
+                                                            <?php else: ?>
+                                                                <a href="<?php echo e($paUrl); ?>" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs bg-white text-blue-700 font-bold px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-100 transition duration-150">
+                                                                    <i class="fas fa-file-download"></i> <?php echo e(strtoupper($paExt)); ?>
+
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-xs text-gray-400 italic">No attachment file uploaded.</span>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            
+                                            <?php if(!empty($prImgs)): ?>
+                                                <div>
+                                                    <p class="text-[10px] text-gray-400 font-bold uppercase mb-2"><i class="fas fa-images mr-1"></i> Uploaded Photos</p>
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <?php $__currentLoopData = $prImgs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $im): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                            <a href="<?php echo e(asset('storage/' . $im)); ?>" target="_blank" rel="noopener">
+                                                                <img src="<?php echo e(asset('storage/' . $im)); ?>" class="w-24 h-20 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition">
+                                                            </a>
+                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        
+                                        <div class="px-6 py-4 border-t flex flex-wrap justify-end items-center gap-2 bg-gray-50 sticky bottom-0">
+                                            <button type="button" @click="openProof = null" class="bg-gray-200 hover:bg-gray-300 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
+                                                Close
+                                            </button>
+                                            <form action="<?php echo e(route('admin.team-leaders.proofs.reject', $event->id)); ?>" method="POST">
+                                                <?php echo csrf_field(); ?>
+                                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150" onclick="return confirm('Reject this proof?')">
+                                                    <i class="fas fa-times mr-1"></i> Reject
+                                                </button>
+                                            </form>
+                                            <form action="<?php echo e(route('admin.team-leaders.proofs.approve', $event->id)); ?>" method="POST">
+                                                <?php echo csrf_field(); ?>
+                                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
+                                                    <i class="fas fa-check mr-1"></i> Approve
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
                     </table>
@@ -473,6 +769,63 @@
                                                 <i class="fas fa-times mr-1"></i> Reject
                                             </button>
                                         </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        
+        <div x-show="tab === 'approvedAmb'" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">
+            <?php if($approvedSocials->isEmpty()): ?>
+                <p class="text-gray-500 text-sm py-8 text-center">No confirmed ambassadors yet. Approved applications will appear here.</p>
+            <?php else: ?>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[11px] tracking-wider">
+                            <tr>
+                                <th class="px-6 py-3 text-left">Team Leader</th>
+                                <th class="px-6 py-3 text-left">Platform</th>
+                                <th class="px-6 py-3 text-left">Ambassador Profile Link</th>
+                                <th class="px-6 py-3 text-right">Avg Impressions</th>
+                                <th class="px-6 py-3 text-left">Confirmed On</th>
+                                <th class="px-6 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            <?php $__currentLoopData = $approvedSocials; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $social): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
+                                    $ambLeader = $social->user ? \App\Models\TeamLeader::where('User_name', $social->user->user)->first() : null;
+                                ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4">
+                                        <?php if($ambLeader): ?>
+                                            <a href="<?php echo e(route('admin.team-leaders.show', $ambLeader->id)); ?>" class="font-bold text-gray-900 hover:text-blue-600 transition duration-150">
+                                                <?php echo e($social->user->name ?? 'Unknown'); ?> <i class="fas fa-external-link-alt text-[10px] text-gray-400 ml-1"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <div class="font-bold text-gray-900"><?php echo e($social->user->name ?? 'Unknown'); ?></div>
+                                        <?php endif; ?>
+                                        <div class="text-xs text-gray-500 font-mono">&#64;<?php echo e($social->user->user ?? ''); ?></div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="badge bg-green-100 text-green-800 font-bold px-2.5 py-1 text-xs uppercase border border-green-200">
+                                            <?php echo e($social->platform); ?>
+
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-mono"><a href="<?php echo e($social->profile_link); ?>" target="_blank" rel="noopener" class="text-blue-700 font-bold hover:underline break-all"><?php echo e($social->profile_link); ?></a></td>
+                                    <td class="px-6 py-4 text-right font-extrabold text-slate-700"><?php echo e(number_format($social->views_count, 0)); ?></td>
+                                    <td class="px-6 py-4 text-gray-500 text-xs font-medium"><?php echo e($social->updated_at->format('d M Y')); ?></td>
+                                    <td class="px-6 py-4 text-right space-x-2">
+                                        <?php if($ambLeader): ?>
+                                            <a href="<?php echo e(route('admin.team-leaders.show', $ambLeader->id)); ?>" class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                                <i class="fas fa-eye mr-1"></i> View Leader
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>

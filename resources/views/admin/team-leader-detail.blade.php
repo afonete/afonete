@@ -336,11 +336,51 @@
 
                     {{-- Assigned Tasks --}}
                     @if($performance['tasks'])
+                    @php
+                        $taskItems = $performance['task_items'] ?? ['items'=>[], 'total'=>0, 'completed'=>0];
+                        $taskPct = $taskItems['total'] > 0 ? round(($taskItems['completed'] / $taskItems['total']) * 100) : 0;
+                    @endphp
                     <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                            <i class="fas fa-list-check text-slate-500 mr-1"></i> Assigned Tasks
-                        </h4>
-                        <div class="bg-gray-50 rounded-xl p-3 border text-sm text-slate-700" style="white-space: pre-line;">{{ $performance['tasks'] }}</div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center">
+                                <i class="fas fa-list-check text-slate-500 mr-1"></i> Assigned Tasks
+                            </h4>
+                            <span class="text-xs font-bold {{ $taskPct >= 100 ? 'text-green-600' : 'text-indigo-600' }}">
+                                {{ $taskItems['completed'] }} / {{ $taskItems['total'] }} done
+                            </span>
+                        </div>
+
+                        {{-- Completion progress bar --}}
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+                            <div class="h-2 rounded-full transition-all duration-300 {{ $taskPct >= 100 ? 'bg-green-500' : 'bg-indigo-500' }}" style="width: {{ $taskPct }}%"></div>
+                        </div>
+
+                        <ul class="space-y-2">
+                            @foreach($taskItems['items'] as $idx => $t)
+                                <li class="flex items-start gap-3 bg-gray-50 rounded-xl px-3 py-2 border">
+                                    @if($t['completed'])
+                                        <i class="fas fa-check-circle text-green-600 mt-0.5"></i>
+                                    @else
+                                        <i class="far fa-circle text-gray-300 mt-0.5"></i>
+                                    @endif
+                                    <span class="flex-1 text-sm {{ $t['completed'] ? 'line-through text-gray-400' : 'text-slate-700 font-medium' }}">
+                                        {{ $idx + 1 }}. {{ $t['text'] }}
+                                    </span>
+                                    @if($t['completed'] && $t['completed_at'])
+                                        <span class="text-[10px] text-gray-400 whitespace-nowrap" title="Completed">
+                                            <i class="fas fa-clock"></i> {{ \Carbon\Carbon::parse($t['completed_at'])->format('d M Y') }}
+                                        </span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        @if($taskItems['total'] > 0)
+                            <p class="text-[11px] text-gray-400 mt-2">
+                                <i class="fas fa-info-circle"></i>
+                                Ticks are recorded by the leader on their dashboard and shown here in real time.
+                            </p>
+                        @endif
                     </div>
                     @endif
 

@@ -589,7 +589,8 @@ Route::middleware('team-leader')->group(function () {
     Route::post('team-leader/events', [TeamLeaderController::class, 'storeEvent'])->name('team-leader.events.store');
     Route::post('team-leader/events/{id}/proof', [TeamLeaderController::class, 'submitEventProof'])->name('team-leader.events.proof');
     Route::post('team-leader/socials', [TeamLeaderController::class, 'storeSocial'])->name('team-leader.socials.store');
-          
+    Route::post('team-leader/task-toggle', [TeamLeaderController::class, 'toggleTask'])->name('team-leader.task-toggle');
+
 });
 
 

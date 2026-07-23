@@ -566,15 +566,6 @@ ul li a{
          </li>
 
          <li>
-            <a href="{{ route('admin.team-leaders.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800  dark:text-gray-300">
-                  <i class="fa-solid fa-users-cog"></i>
-                </span>
-                <span class="flex-1 ms-3 whitespace-nowrap text-sm">Team Leaders</span>
-            </a>
-         </li>
-
-         <li>
           <a href="#" class="flex items-center p-2 text-gray-800 dark:text-white
           hover:bg-gray-100 dark:hover:bg-gray-700 group">
 
@@ -760,6 +751,14 @@ ul li a{
         </ul>
     </li>
 
+    {{-- ═══ Team Leaders ═══ --}}
+    <li>
+        <a href="{{ route('admin.team-leaders.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+          <i class="fa-solid fa-users-cog"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">Team Leaders</span>
+        </a>
+    </li>
+
     {{-- ═══ Official Video Promotions & Tutorials ═══ --}}
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
@@ -805,6 +804,31 @@ ul li a{
                 <a href="{{ route('admin.leader-banners.upload') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-cloud-upload-alt"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Upload Banner</span>
+                </a>
+            </li>
+        </ul>
+    </li>
+
+    {{-- ═══ Team Leaders Announcement ═══ --}}
+    <li>
+        <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+          <i class="fa-solid fa-bullhorn"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">Team Leaders Announcement</span>
+           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+            <i class="fa-solid fa-angle-right"></i>
+         </span>
+        </a>
+        <ul class="submenu ml-2 py-2">
+            <li>
+                <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-list"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">All Announcements</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.announcements.create') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                  <i class="fa-solid fa-cloud-upload-alt"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Create Announcement</span>
                 </a>
             </li>
         </ul>

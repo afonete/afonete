@@ -523,43 +523,11 @@ if (showAlertBtn) {
                         $leaderColor  = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'group-tokens' : 'group-team';
                     ?>
                     <?php if($isTeamLeader): ?>
-                    <li class="nav-item has-treeview <?php echo e(request()->is('team-leader/dashboard*') ? 'menu-open' : ''); ?>">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle <?php echo e($leaderColor); ?> <?php echo e(request()->is('team-leader/dashboard*') ? 'active' : ''); ?>">
+                    <li class="nav-item">
+                        <a href="<?php echo e(route('team-leader.all')); ?>" class="nav-link <?php echo e(request()->routeIs('team-leader.all') ? 'active' : ''); ?>">
                             <i class="nav-icon fas <?php echo e($leaderIcon); ?>"></i>
-                            <p><?php echo e($leaderLabel); ?> <i class="fas fa-angle-left right"></i></p>
+                            <p><?php echo e($leaderLabel); ?></p>
                         </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.all')); ?>" class="nav-link <?php echo e(request()->routeIs('team-leader.all') ? 'active' : ''); ?>">
-                                    <i class="fas fa-th-large nav-icon" style="color:#fbbf24"></i><p style="font-weight:700">ALL</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=planning" class="nav-link <?php echo e(request()->is('team-leader/dashboard*') && (request('tab') === 'planning' || !request('tab')) ? 'active' : ''); ?>">
-                                    <i class="far fa-circle nav-icon"></i><p>Events Planning</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=proof" class="nav-link <?php echo e(request('tab') === 'proof' ? 'active' : ''); ?>">
-                                    <i class="far fa-circle nav-icon"></i><p>Event Proofs</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=ambassador" class="nav-link <?php echo e(request('tab') === 'ambassador' ? 'active' : ''); ?>">
-                                    <i class="far fa-circle nav-icon"></i><p>Social Ambassador</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=videos" class="nav-link <?php echo e(request('tab') === 'videos' ? 'active' : ''); ?>">
-                                    <i class="far fa-circle nav-icon"></i><p>Official Videos</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="<?php echo e(route('team-leader.dashboard')); ?>?tab=banners" class="nav-link <?php echo e(request('tab') === 'banners' ? 'active' : ''); ?>">
-                                    <i class="far fa-circle nav-icon"></i><p>Ad Banners</p>
-                                </a>
-                            </li>
-                        </ul>
                     </li>
                     <?php endif; ?>
 

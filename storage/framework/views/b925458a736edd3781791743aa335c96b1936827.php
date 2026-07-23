@@ -12,11 +12,11 @@
 
 <script>
 
-// var userType="{{$user->utype}}";
+// var userType="<?php echo e($user->utype); ?>";
 //     // Check if the user's 'utype' is 'ADM'.
 //     if (userType === 'ADM') {
 //         // Redirect the user to the admin.dashboard route.
-//         window.location.href = '{{ route("admin.dashboard") }}';
+//         window.location.href = '<?php echo e(route("admin.dashboard")); ?>';
 //     }
     </script>
 <!DOCTYPE html>
@@ -28,17 +28,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Bifonex Affiliate || Earn money infinetely</title>
-    <link rel="icon" href="{{asset('assets/front/img/big-logo.png')}}">
+    <link rel="icon" href="<?php echo e(asset('assets/front/img/big-logo.png')); ?>">
     <!-- Css Styles -->
-    <link rel="stylesheet" href="{{asset('assets/front/css/jquery-ui.min.css')}}" type="text/css">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/jquery-ui.min.css')); ?>" type="text/css">
 
-        <link rel="stylesheet" href="{{asset('assets/front/css/includes.css')}}">
-        <link rel="stylesheet" href="{{asset('assets/front/css/booststrap_changed.min.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/front/css/font-awesome.min.css')}}">
-    <link rel="stylesheet" href="{{asset('assets/front/css/homePage.css')}}">
-     <link rel="stylesheet" href="{{asset('assets/front/css/booststrap_changed.min.css')}}">
+        <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/includes.css')); ?>">
+        <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/booststrap_changed.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/font-awesome.min.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/homePage.css')); ?>">
+     <link rel="stylesheet" href="<?php echo e(asset('assets/front/css/booststrap_changed.min.css')); ?>">
 
-  <script src="{{asset('assets/a/dist/js/signature.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/signature.js')); ?>"></script>
 </head>
 <style type="text/css">
 
@@ -88,12 +88,12 @@ of the First Party
                                         <div class="user-info">
                                                 <div>
                                                         <span>Mr./ Mrs. / Ms.</span>
-                                                        <span class="font-weight-bold">{{$name}} </span>
+                                                        <span class="font-weight-bold"><?php echo e($name); ?> </span>
                                                 </div>
 
                                                 <div>
                                                         <span> Nationality,</span>
-                                                        <span class="font-weight-bold">{{$country}}</span>
+                                                        <span class="font-weight-bold"><?php echo e($country); ?></span>
                                                 </div>
 
                                                 <div>
@@ -1575,11 +1575,11 @@ authorized representative as of the date first set forth above.
 <body>
 	<center>
 <h2>Sign contract</h2><br>
-@if($message)
-<span class="alert alert-danger"> {{$message??''}}</span><br><br>@endif
+<?php if($message): ?>
+<span class="alert alert-danger"> <?php echo e($message??''); ?></span><br><br><?php endif; ?>
 
-   <form method="post" action="{{route('user.contract.save')}}" enctype="multipart/form-data">
-    @csrf
+   <form method="post" action="<?php echo e(route('user.contract.save')); ?>" enctype="multipart/form-data">
+    <?php echo csrf_field(); ?>
     <div id="signature-pad">
         <div style="border:solid 1px teal; width:360px;height:110px;padding:3px;position:relative;">
             <div id="note" onmouseover="my_function();">The signature should be inside box</div>
@@ -1620,24 +1620,25 @@ function my_function(){
 }
 </script>
 
-<script src="{{asset('assets/front/js/jquery-3.3.1.min.js')}}"></script>
-<script src="{{asset('assets/front/js/bootstrap.min.js')}}"></script>
-<script src="{{asset('assets/front/js/owl.carousel.min.js')}}"></script>
-<script src="{{asset('assets/front/js/main.js')}}"></script>
-<script src="{{asset('assets/front/js/jquery-3.3.1.min.js')}}"></script>
-<script src="{{asset('assets/front/js/jquery-migrate-3.0.1.min.js')}}"></script>
-<script src="{{asset('assets/front/js/booststrap.min.js')}}"></script>
-<script src="{{asset('assets/front/js/jquery.stellar.min.js')}}"></script>
-<script src="{{asset('assets/front/js/jquery.waypoints.min.js')}}"></script>
-<script src="{{asset('assets/front/js/jquery.animateNumber.min.js')}}"></script>
-<script src="{{asset('assets/front/js/aos.js')}}"></script>
-<script src="{{asset('assets/front/js/mainj.js')}}"></script>
-<script src="{{asset('assets/front/js/jquerry.min.js')}}"></script>
-<script src="{{asset('assets/front/js/slick.min.js')}}"></script>
-<script src="{{asset('assets/front/js/mainn.js')}}"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery-3.3.1.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/bootstrap.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/owl.carousel.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/main.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery-3.3.1.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery-migrate-3.0.1.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/booststrap.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery.stellar.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery.waypoints.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquery.animateNumber.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/aos.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/mainj.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/jquerry.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/slick.min.js')); ?>"></script>
+<script src="<?php echo e(asset('assets/front/js/mainn.js')); ?>"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous">
 </script>
 
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/contract.blade.php ENDPATH**/ ?>

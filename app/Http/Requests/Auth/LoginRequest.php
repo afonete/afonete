@@ -93,7 +93,7 @@ class LoginRequest extends FormRequest
                 return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
 
             }
-            return redirect()->to(url('team-leader/dashboard'));
+            return redirect()->to(url('team-leader/all'));
         }
 
 
