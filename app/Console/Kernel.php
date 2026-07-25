@@ -86,5 +86,6 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\ProcessReferralWeekly::class,
         \App\Console\Commands\CheckRankEligibility::class,
         \App\Console\Commands\FixPaymentExpirationDates::class,
+        \App\Console\Commands\AuditTeamLeaderCorrelation::class,
     ];
 }

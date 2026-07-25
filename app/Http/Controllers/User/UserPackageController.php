@@ -167,7 +167,7 @@ public function Savecontract(Request $request)
 
 
                     if ($user->save() && $contract->save()) {
-                     return Redirect::route('user.dashboard')->with('message','You have been  activated Bifonex account , Enjoy unlimited earning on Bifonex');
+                     return Redirect::route('user.dashboard')->with('message','Activation successful! Your Bifonex account is ready. Enjoy unlimited earning opportunities.');
                     }
 
 
@@ -193,7 +193,7 @@ public function Savecontract(Request $request)
                     $pack=$user->has_paid_package;
                     // return ($user);
 if ($user->save()) {
-  return Redirect::route('user.dashboard')->with('message','You have been  activated '.$pack.' account , Enjoy unlimited earning on Bifonex');
+  return Redirect::route('user.dashboard')->with('message','Activation successful! Your '.$pack.' account is ready. Enjoy unlimited earning opportunities.');
 }
 return view('user.previeu');
 

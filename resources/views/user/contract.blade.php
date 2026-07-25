@@ -41,12 +41,203 @@
   <script src="{{asset('assets/a/dist/js/signature.js')}}"></script>
 </head>
 <style type="text/css">
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* ===== Bifonex · Agreement — premium design system (overrides theme) ===== */
+:root{
+  --ct-bg:#eef1f6; --ct-surface:#ffffff; --ct-surface-2:#f8fafc;
+  --ct-ink:#0f172a; --ct-body:#3a4756; --ct-muted:#64748b; --ct-faint:#94a3b8;
+  --ct-line:#e6eaf0; --ct-line-strong:#d2dae5;
+  --ct-primary:#4f46e5; --ct-primary-h:#4338ca; --ct-primary-a:#3730a3; --ct-primary-soft:#eef2ff;
+  --ct-success:#16a34a; --ct-warning:#b45309; --ct-danger:#dc2626;
+  --ct-radius:18px; --ct-radius-sm:12px; --ct-radius-xs:8px;
+  --ct-shadow:0 18px 40px -22px rgba(15,23,42,.28), 0 6px 14px -8px rgba(15,23,42,.10);
+  --ct-shadow-sm:0 1px 2px rgba(15,23,42,.06);
+  --ct-font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+}
+*{ box-sizing:border-box; }
+body{
+  margin:0!important;
+  background:var(--ct-bg)!important;
+  font-family:var(--ct-font)!important;
+  color:var(--ct-body)!important;
+  line-height:1.6!important;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+
+/* ---------- Top bar ---------- */
+.ct-topbar{
+  position:sticky; top:0; z-index:50;
+  background:rgba(255,255,255,.86); backdrop-filter:saturate(180%) blur(10px);
+  border-bottom:1px solid var(--ct-line);
+}
+.ct-topbar__in{
+  max-width:880px; margin:0 auto; padding:13px 20px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.ct-brand{ display:flex; align-items:center; gap:12px; }
+.ct-brand__mark{
+  width:38px; height:38px; border-radius:11px; flex:none;
+  background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff;
+  display:grid; place-items:center; font-weight:800; font-size:17px;
+  box-shadow:0 6px 14px -6px rgba(79,70,229,.6);
+}
+.ct-brand__name{ display:block; font-weight:800; color:var(--ct-ink); font-size:.98rem; letter-spacing:-.01em; line-height:1.1; }
+.ct-brand__sub{ display:block; font-size:.7rem; color:var(--ct-faint); font-weight:500; }
+.ct-secure{
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  font-size:.74rem; font-weight:600; color:var(--ct-success);
+  background:#ecfdf5; border:1px solid #bbf7d6; padding:6px 12px; border-radius:999px;
+}
+.ct-secure i{ font-size:.8rem; }
+
+/* ---------- Document card ---------- */
+.contract{
+  background:var(--ct-surface)!important; color:var(--ct-body)!important;
+  max-width:880px!important; width:100%!important; margin:28px auto!important;
+  padding:44px 48px!important;
+  border:1px solid var(--ct-line)!important; border-radius:var(--ct-radius)!important;
+  box-shadow:var(--ct-shadow)!important;
+  font-family:var(--ct-font)!important;
+  overflow-x:auto; overflow-wrap:break-word; word-wrap:break-word;
+}
+.ct-doc-head{ margin-bottom:8px; }
+.ct-eyebrow{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ct-primary); background:var(--ct-primary-soft);
+  padding:6px 12px; border-radius:999px; margin-bottom:14px;
+}
+.ct-eyebrow i{ font-size:.78rem; }
+.contract .main-header,
+.contract .main-header.head1,
+.contract h1.main-header{
+  font-family:var(--ct-font)!important;
+  font-size:2rem!important; font-weight:800!important; color:var(--ct-ink)!important;
+  letter-spacing:-.02em!important; line-height:1.15!important;
+  margin:0 0 10px 0!important; padding:0!important;
+  border:none!important; background:transparent!important; text-align:left!important;
+}
+.ct-lede{ font-size:1rem; color:var(--ct-muted); margin:0 0 24px; max-width:62ch; }
+.ct-divider{ height:1px; background:var(--ct-line); border:0; margin:0 0 28px; }
+
+.contract .secondary-header{
+  font-family:var(--ct-font)!important;
+  font-size:1.18rem!important; font-weight:700!important; color:var(--ct-ink)!important;
+  line-height:1.35!important; margin:30px 0 12px!important; padding:0!important;
+  border:none!important; background:transparent!important; scroll-margin-top:80px;
+}
+.contract .main-par,
+.contract .par,
+.contract .main-par .par{
+  font-family:var(--ct-font)!important;
+  font-size:.975rem!important; line-height:1.85!important; color:var(--ct-body)!important;
+  text-align:justify!important; margin:0 0 15px!important; padding:0!important; border:none!important;
+  overflow-wrap:break-word!important;
+}
+.contract .font-weight-bold, .contract strong, .contract b{ color:var(--ct-ink)!important; font-weight:700!important; }
+.contract ol, .contract ul,
+.contract .alpha-li li, .contract .num-li li, .contract .num-li-2, .contract .roman-li li,
+.contract .alpha-li-2 li, .contract .num-li-3 li{
+  font-size:.975rem!important; line-height:1.8!important; color:var(--ct-body)!important;
+}
+.contract ol, .contract ul{ margin:0 0 15px!important; padding-left:24px!important; }
+.contract li{ margin-bottom:6px!important; }
+
+/* ---------- Signature panel ---------- */
+.ct-sign{
+  margin-top:34px;
+  background:var(--ct-surface-2)!important;
+  border:1px solid var(--ct-line)!important; border-radius:var(--ct-radius)!important;
+  padding:28px!important; box-shadow:var(--ct-shadow-sm);
+}
+.ct-sign__head{ display:flex; align-items:flex-start; gap:14px; }
+.ct-sign__icon{
+  flex:none; width:42px; height:42px; border-radius:11px;
+  background:var(--ct-primary-soft); color:var(--ct-primary);
+  display:grid; place-items:center; font-size:1.05rem;
+}
+.ct-sign__title{ font-size:1.25rem; font-weight:800; color:var(--ct-ink); margin:0 0 3px; letter-spacing:-.01em; }
+.ct-sign__sub{ font-size:.875rem; color:var(--ct-muted); margin:0; max-width:60ch; }
+.ct-alert{
+  display:flex; align-items:flex-start; gap:10px;
+  background:#fff7ed; border:1px solid #fed7aa; color:#9a3412;
+  padding:12px 14px; border-radius:var(--ct-radius-xs); font-size:.86rem; margin:16px 0 0;
+}
+.ct-alert i{ margin-top:2px; }
+.ct-pad{ margin-top:20px; }
+.ct-pad__box{
+  position:relative; background:#fff; border:2px dashed var(--ct-line-strong);
+  border-radius:var(--ct-radius-sm); padding:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:fit-content; max-width:100%; margin:0 auto; min-width:0;
+  transition:border-color .15s ease, background .15s ease;
+}
+.ct-pad__box:hover, .ct-pad__box:focus-within{ border-color:var(--ct-primary); background:#fcfcff; }
+.ct-pad__hint{
+  position:static!important; left:auto!important; top:auto!important; padding:0 0 10px!important; margin:0!important;
+  font-size:.74rem!important; color:var(--ct-faint)!important; font-style:italic; cursor:default;
+}
+.ct-pad__canvas{ display:block; touch-action:none; cursor:crosshair; background:transparent; max-width:100%; }
+.ct-actions{ display:flex; gap:12px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap; }
+.ct-note{
+  display:flex; align-items:center; gap:8px; justify-content:center; text-align:center;
+  margin-top:18px; font-size:.76rem; color:var(--ct-faint);
+}
+.ct-note i{ color:var(--ct-success); }
+
+/* ---------- Buttons ---------- */
+.ct-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; white-space:nowrap;
+  font-family:var(--ct-font); font-size:.92rem; font-weight:600;
+  padding:12px 22px; border-radius:11px; border:1px solid transparent; cursor:pointer;
+  line-height:1; transition:background .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .04s ease;
+}
+.ct-btn i{ font-size:.9rem; }
+.ct-btn:focus-visible{ outline:none; box-shadow:0 0 0 4px rgba(79,70,229,.25); }
+.ct-btn--primary{ background:var(--ct-primary); color:#fff; box-shadow:0 8px 18px -8px rgba(79,70,229,.65); }
+.ct-btn--primary:hover{ background:var(--ct-primary-h); }
+.ct-btn--primary:active{ background:var(--ct-primary-a); transform:translateY(1px); }
+.ct-btn--ghost{ background:#fff; color:var(--ct-ink); border-color:var(--ct-line-strong); }
+.ct-btn--ghost:hover{ background:var(--ct-surface-2); border-color:#c2cbd6; }
+.ct-btn--ghost:active{ transform:translateY(1px); }
+.ct-btn:disabled, .ct-btn[disabled]{ opacity:.55; cursor:not-allowed; box-shadow:none; transform:none; }
+
+/* ---------- Footer ---------- */
+.ct-foot{ max-width:880px; margin:0 auto; padding:22px 20px 46px; text-align:center; }
+.ct-foot p{ margin:0; font-size:.78rem; color:var(--ct-faint); }
+
+/* ---------- Responsive ---------- */
+@media (max-width:640px){
+  .contract{ padding:26px 20px!important; border-radius:14px!important; margin:18px auto!important; }
+  .ct-sign{ padding:20px!important; }
+  .contract .main-header.head1{ font-size:1.6rem!important; }
+  .ct-sign__title{ font-size:1.1rem; }
+  .ct-actions{ justify-content:stretch; }
+  .ct-actions .ct-btn{ flex:1; }
+}
 </style>
 <body>
+        <header class="ct-topbar">
+            <div class="ct-topbar__in">
+                <div class="ct-brand">
+                    <span class="ct-brand__mark">{{ strtoupper(mb_substr(env('APP_NAME', 'Bifonex'), 0, 1)) }}</span>
+                    <span>
+                        <span class="ct-brand__name">{{ strtoupper(env('APP_NAME', 'Bifonex')) }}</span>
+                        <span class="ct-brand__sub">Affiliate Agreement</span>
+                    </span>
+                </div>
+                <span class="ct-secure"><i class="fa fa-lock"></i> Secured &middot; Encrypted</span>
+            </div>
+        </header>
         <div class="contract ">
 
-                        <h1 class="main-header head1">Agreement</h1>
+                        <div class="ct-doc-head">
+                            <span class="ct-eyebrow"><i class="fa fa-file-text-o"></i> Affiliate Agreement</span>
+                            <h1 class="main-header head1">Agreement</h1>
+                            <p class="ct-lede">Please review the agreement below carefully. To finish activating your account, read these terms and add your signature at the bottom.</p>
+                            <hr class="ct-divider">
+                        </div>
                         <div class="main-par ">
                                 <p class="par">The Independent Marketing affiliate ("IMA") Agreement, the Compensation Plan and the
                                         General Terms and Conditions (forming inseparable part of one document and entire
@@ -1573,25 +1764,46 @@ authorized representative as of the date first set forth above.
 </style>
 </head>
 <body>
-	<center>
-<h2>Sign contract</h2><br>
-@if($message)
-<span class="alert alert-danger"> {{$message??''}}</span><br><br>@endif
-
-   <form method="post" action="{{route('user.contract.save')}}" enctype="multipart/form-data">
-    @csrf
-    <div id="signature-pad">
-        <div style="border:solid 1px teal; width:360px;height:110px;padding:3px;position:relative;">
-            <div id="note" onmouseover="my_function();">The signature should be inside box</div>
-            <canvas id="the_canvas" width="350px" height="100px"></canvas>
-        </div>
-        <div style="margin:10px;">
-            <input type="hidden" id="signature" name="signature">
-            <button type="button" id="clear_btn" class="btn btn-danger" data-action="clear"><i class="fa fa-eraser"></i> Clear</button>
-            <button type="submit" id="save_btn" class="btn btn-primary" data-action="save-png"><i class="fa fa-floppy-o"></i> Save contract</button>
+	<section class="ct-sign">
+    <div class="ct-sign__head">
+        <span class="ct-sign__icon"><i class="fa fa-pencil"></i></span>
+        <div>
+            <h2 class="ct-sign__title">Sign your agreement</h2>
+            <p class="ct-sign__sub">Draw your signature in the box below to complete your activation. By signing, you confirm that you have read and agree to the terms above.</p>
         </div>
     </div>
-<form>
+
+    @if($message)
+        <div class="ct-alert" role="alert">
+            <i class="fa fa-info-circle"></i>
+            <span>{{ $message ?? '' }}</span>
+        </div>
+    @endif
+
+    <form method="post" action="{{route('user.contract.save')}}" enctype="multipart/form-data" class="ct-form">
+        @csrf
+        <div id="signature-pad" class="ct-pad">
+            <div class="ct-pad__box">
+                <div id="note" class="ct-pad__hint" onmouseover="my_function();">Sign inside the box</div>
+                <canvas id="the_canvas" class="ct-pad__canvas" width="350px" height="100px"></canvas>
+            </div>
+            <input type="hidden" id="signature" name="signature">
+            <div class="ct-actions">
+                <button type="button" id="clear_btn" class="ct-btn ct-btn--ghost" data-action="clear">
+                    <i class="fa fa-eraser"></i><span>Clear</span>
+                </button>
+                <button type="submit" id="save_btn" class="ct-btn ct-btn--primary" data-action="save-png">
+                    <i class="fa fa-check"></i><span>Sign &amp; Continue</span>
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="ct-note">
+        <i class="fa fa-shield"></i>
+        <span>Your signature is legally binding. Your data is protected with industry-standard encryption.</span>
+    </div>
+</section>
 
 <script>
 var wrapper = document.getElementById("signature-pad");

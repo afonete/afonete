@@ -74,34 +74,9 @@ class TeamLeaderController extends Controller
 
     public function apply(Request $request)
     {
-        // First check for existing email or phone or username
-        $existingUser = TeamLeader::where('User_name', $request->username)->first();
-        if ($existingUser) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This user name is already registered'
-            ], 422);
-        }
-
-        $existingEmail = TeamLeader::where('Email', $request->email)->first();
-        if ($existingEmail) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This email is already registered'
-            ], 422);
-        }
-
-        $existingPhone = TeamLeader::where('Phone', $request->phone)->first();
-        if ($existingPhone) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This phone number is already registered'
-            ], 422);
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:team_leaders,User_name',
+            'username' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'country' => 'required|string',
             'phone' => [
@@ -111,6 +86,72 @@ class TeamLeaderController extends Controller
             ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // If a Bifonex account already exists for this email, LINK the application to it
+        // (instead of creating a duplicate user, which would crash on the unique-email
+        // constraint). We verify the password first so nobody can apply using someone
+        // else's email and take over the account.
+        $existingUser = User::where('email', $validated['email'])->first();
+
+        if ($existingUser) {
+            if (!Hash::check($validated['password'], $existingUser->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An account with this email already exists. Please enter your account password to continue, or log in first.',
+                ], 422);
+            }
+
+            // Use the account's real username so the TeamLeader <-> User link stays intact.
+            $leaderUsername = $existingUser->user ?: $validated['username'];
+
+            // Reuse an existing leader application for this account if one exists
+            // (e.g. an orphan row left by an earlier failed attempt) instead of blocking;
+            // otherwise create a fresh one. NOTE: phone is intentionally NOT used as a
+            // unique key — numbers can be shared/reused and must not block an application.
+            $leader = TeamLeader::where('Email', $existingUser->email)
+                    ->orWhere('User_name', $leaderUsername)
+                    ->first();
+
+            $leaderData = [
+                'Names'     => $existingUser->name ?: $validated['name'],
+                'User_name' => $leaderUsername,
+                'Email'     => $existingUser->email,
+                'Country'   => $existingUser->country ?: $validated['country'],
+                'Phone'     => $existingUser->phone ?: $validated['phone'],
+            ];
+
+            if ($leader) {
+                $leaderData['status'] = $leader->status === 'confirmed' ? 'confirmed' : 'pending';
+                $leader->update($leaderData);
+            } else {
+                $leaderData['status'] = 'pending';
+                TeamLeader::create($leaderData);
+            }
+
+            $existingUser->has_request = 'registed';
+            $existingUser->save();
+
+            Auth::login($existingUser);
+            session(['team_leader_status' => 'pending']);
+            session(['team_leader_Usen_Name' => $existingUser->user]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Application submitted successfully',
+                'username' => $existingUser->user,
+            ]);
+        }
+
+        // Brand-new applicant: guard username/email against existing entries, then create.
+        if (User::where('user', $validated['username'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'This username is already taken. Please choose another.'], 422);
+        }
+        if (TeamLeader::where('User_name', $validated['username'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'This username is already taken by a Team Leader. Please choose another.'], 422);
+        }
+        if (TeamLeader::where('Email', $validated['email'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'This email has already applied as a Team Leader. Please log in with your leader account.'], 422);
+        }
 
         TeamLeader::create([
             'Names' => $validated['name'],

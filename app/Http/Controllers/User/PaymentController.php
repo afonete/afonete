@@ -1325,7 +1325,7 @@ public function pssuccess(Request $request)
     }
 
     if ($user->save() && $paybalance->save()) {
-      return redirect()->route('user.dashboard')->with('message', 'You have been  activated '.$pack.' account , Enjoy unlimited earning on Bifonex');
+      return redirect()->route('user.dashboard')->with('message', 'Activation successful! Your '.$pack.' account is ready. Enjoy unlimited earning opportunities.');
 
     } else {
       return redirect()->route('user.package')->with('message', 'error while savig');
