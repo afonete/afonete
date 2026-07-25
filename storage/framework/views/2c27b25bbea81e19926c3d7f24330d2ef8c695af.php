@@ -151,7 +151,7 @@ header h1 {
   border-radius: 5px;
 }
 
-@media screen and (max-width: 768px) {
+@media  screen and (max-width: 768px) {
   .cards-container {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
@@ -269,7 +269,7 @@ ul li a{
       <p>A</p>
     </div>
     <div>
-     <h3 class="font-semibold">Welcome! {{$name}} </h3>
+     <h3 class="font-semibold">Welcome! <?php echo e($name); ?> </h3>
      <p class="uppercase font-bold text-xs text-gray-500">Super Admin</p>
     </div>
  </div>
@@ -277,9 +277,9 @@ ul li a{
 
         <ul class="space-y-2 font-medium px-2">
            <li>
-              <a href="{{route('admin.dashboard')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <a href="<?php echo e(route('admin.dashboard')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                 <i class="fa-solid fa-house text-gray-500"></i>
-                 <span class="ms-3">Dashboard {{$unfixedClaims}} </span>
+                 <span class="ms-3">Dashboard <?php echo e($unfixedClaims); ?> </span>
               </a>
            </li>
            <li>
@@ -292,48 +292,14 @@ ul li a{
               </a>
               <ul class="submenu ml-2 py-2">
                  <li>
-                    <a href="{{ route('admin.enable-free-user.register') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.enable-free-user.register')); ?>" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                        <i class="fa-solid fa-arrow-right-to-bracket text-xs mr-2"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap text-sm">ON Register</span>
                     </a>
                  </li>
               </ul>
            </li>
-           {{-- <li>
-              <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                <i class="fa-solid fa-circle-info text-gray-500"></i>
-                 <span class="flex-1 ms-3 whitespace-nowrap">Useful Links</span>
-                 <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800  dark:text-gray-300">
-                    <i class="fa-solid fa-angle-right"></i>
-                 </span>
-              </a>
-              <ul class="submenu ml-2 py-2">
-                <li>
-                    <a href="#" class="flex items-center p-2 text-gray-400 dark:text-white
-                    hover:bg-gray-100 dark:hover:bg-gray-700 group">
-
-                       <span class="flex-1 ms-3 whitespace-nowrap text-sm">About</span>
-
-                    </a>
-                 </li>
-                 <li>
-                    <a href="#" class="flex items-center p-2 text-gray-400 dark:text-white
-                    hover:bg-gray-100 dark:hover:bg-gray-700 group">
-
-                       <span class="flex-1 ms-3 whitespace-nowrap text-sm">Investments</span>
-
-                    </a>
-                 </li>
-                 <li>
-                    <a href="#" class="flex items-center p-2 text-gray-400 dark:text-white
-                    hover:bg-gray-100 dark:hover:bg-gray-700 group">
-
-                       <span class="flex-1 ms-3 whitespace-nowrap text-sm">Social Media</span>
-
-                    </a>
-                 </li>
-              </ul>
-           </li> --}}
+           
 
 
 
@@ -352,7 +318,7 @@ ul li a{
 
 
             <li>
-                <a  href="{{route('admin.adventures')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a  href="<?php echo e(route('admin.adventures')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-box"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Manage UVP</span>
                 </a>
@@ -360,32 +326,32 @@ ul li a{
 
 
               <li>
-                <a  href="{{route('fcpackages')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a  href="<?php echo e(route('fcpackages')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-box"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Manage FC</span>
                 </a>
               </li>
                <li>
-                <a href="{{route('admin.token-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.token-settings')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-coins"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Token Price</span>
                 </a>
                </li>
                <li>
-                <a  href="{{route('admin.payments')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a  href="<?php echo e(route('admin.payments')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-credit-card"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Manage Payments</span>
                 </a>
                 </li>
 
                 <li>
-                    <a href="{{route('admin.settings.deposit-wallets')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.settings.deposit-wallets')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-wallet"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Deposit Wallets &amp; Accounts</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('admin.settings.withdrawal-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.settings.withdrawal-settings')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-sliders"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal &amp; Deposit Settings</span>
                     </a>
@@ -393,31 +359,31 @@ ul li a{
 
 
                 <li>
-                    <a href="{{route('admin.referral-bonuses')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.referral-bonuses')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-users"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Referral Bonuses</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('admin.token-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.token-settings')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-coins"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Token Prices</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('admin.token-withdrawals')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.token-withdrawals')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-arrow-up-from-bracket"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('admin.withdrawal')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.withdrawal')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-money-bill-transfer"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Withdrwal</span>
                     </a>
                 </li>
                 <li>
-                    <a href="{{route('admin.withdrawal-history')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.withdrawal-history')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-history"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal History</span>
                     </a>
@@ -451,7 +417,7 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
            <li>
-              <a href="{{ route('admin.contracts.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <a href="<?php echo e(route('admin.contracts.index')); ?>" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                  <i class="fa-solid fa-file-contract text-xs mr-2"></i>
                  <span class="flex-1 ms-3 whitespace-nowrap text-sm">Client Contract</span>
               </a>
@@ -460,14 +426,14 @@ ul li a{
        </li>
 
        <li>
-        <a href="{{route('admin.claims')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white
+        <a href="<?php echo e(route('admin.claims')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white
          hover:bg-gray-100 dark:hover:bg-gray-700 group relative">
           <i class="fa-solid fa-bell"></i>
            <div class="relative">
                <span class="flex-1 ms-3 whitespace-nowrap">Claims</span>
-               @if($unfixedClaims > 0)
-               <span class=" bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">{{$unfixedClaims}}</span>
-               @endif
+               <?php if($unfixedClaims > 0): ?>
+               <span class=" bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full"><?php echo e($unfixedClaims); ?></span>
+               <?php endif; ?>
            </div>
            <!-- <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800  dark:text-gray-300">
             <i class="fa-solid fa-angle-right"></i>
@@ -709,13 +675,7 @@ ul li a{
         </ul>
     </li>
 
-    {{-- <li>
-        <a href="{{route("admin.withdrawal")}}" class="flex items-center p-2 text-gray-900 rounded-lg
-         dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-            <i class="fa-solid fa-university"></i>
-            <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal</span>
-        </a>
-    </li> --}}
+    
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-wallet"></i>
@@ -727,7 +687,7 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
             <li>
-                <a  href="{{route('admin.campains')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a  href="<?php echo e(route('admin.campains')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-trophy"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Campains</span>
                 </a>
@@ -751,7 +711,7 @@ ul li a{
         </ul>
     </li>
 
-    {{-- ═══ Team Leaders ═══ --}}
+    
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-users-cog"></i>
@@ -762,19 +722,19 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
             <li>
-                <a href="{{ route('admin.team-leaders.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.team-leaders.index')); ?>" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                    <i class="fa-solid fa-list-check text-xs mr-2"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap text-sm">All Team Leaders</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.tm-auto-activations.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.tm-auto-activations.index')); ?>" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                    <i class="fa-solid fa-bolt text-xs mr-2 text-amber-500"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap text-sm">TM Auto Activation code</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.team-leaders.token-releases') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.team-leaders.token-releases')); ?>" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                    <i class="fa-solid fa-coins text-xs mr-2 text-yellow-500"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap text-sm">Team leader token releases</span>
                 </a>
@@ -782,7 +742,7 @@ ul li a{
         </ul>
     </li>
 
-    {{-- ═══ Official Video Promotions & Tutorials ═══ --}}
+    
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-video"></i>
@@ -793,13 +753,13 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
             <li>
-                <a href="{{ route('admin.leader-videos') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.leader-videos')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-list"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">All Videos</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.leader-videos.upload') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.leader-videos.upload')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-cloud-upload-alt"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Upload Video</span>
                 </a>
@@ -807,7 +767,7 @@ ul li a{
         </ul>
     </li>
 
-    {{-- ═══ Marketing Banners & Creatives ═══ --}}
+    
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-images"></i>
@@ -818,13 +778,13 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
             <li>
-                <a href="{{ route('admin.leader-banners') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.leader-banners')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-th-large"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">All Banners</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.leader-banners.upload') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.leader-banners.upload')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-cloud-upload-alt"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Upload Banner</span>
                 </a>
@@ -832,7 +792,7 @@ ul li a{
         </ul>
     </li>
 
-    {{-- ═══ Team Leaders Announcement ═══ --}}
+    
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-bullhorn"></i>
@@ -843,13 +803,13 @@ ul li a{
         </a>
         <ul class="submenu ml-2 py-2">
             <li>
-                <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.announcements.index')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-list"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">All Announcements</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.announcements.create') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                <a href="<?php echo e(route('admin.announcements.create')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-cloud-upload-alt"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Create Announcement</span>
                 </a>
@@ -1053,7 +1013,7 @@ ul li a{
          <li>
             <ul class="bg-indigo-900 p-2">
                 <li>
-                    <a href="{{route('admin.requested')}}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white
+                    <a href="<?php echo e(route('admin.requested')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white
                     hover:bg-gray-800 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-users "></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Requested Users</span>
@@ -1066,7 +1026,7 @@ ul li a{
 
 
                  <li>
-                    <a href="{{route('admin.contacted')}}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.contacted')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                         <i class="fa-regular fa-rectangle-list "></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Contacted</span>
 
@@ -1075,7 +1035,7 @@ ul li a{
                  </li>
 
                  <li>
-                    <a href="{{route('admin.ads')}}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.ads')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-bullhorn"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Manage Ads</span>
 
@@ -1084,7 +1044,7 @@ ul li a{
                  </li>
 
                  <li>
-                    <a href="{{route('admin.videos')}}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.videos')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-video "></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Manage Videos</span>
 
@@ -1093,7 +1053,7 @@ ul li a{
                  </li>
 
                  <li>
-                    <a href="{{ route('admin.clubs') }}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.clubs')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                         <i class="fa-solid fa-diagram-project "></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Manage Clubs</span>
 
@@ -1103,7 +1063,7 @@ ul li a{
 
 
                  <li>
-                    <a href="{{ route('admin.position') }}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.position')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                         <i class="fa-solid fa-ranking-star"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Positions</span>
 
@@ -1113,7 +1073,7 @@ ul li a{
 
 
                  <li>
-                    <a href="{{route('admin.subscribe')}}" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
+                    <a href="<?php echo e(route('admin.subscribe')); ?>" class="flex items-center p-2 text-gray-200 rounded-lg dark:text-white hover:bg-gray-800 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-user "></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Subscribed</span>
 
@@ -1126,8 +1086,8 @@ ul li a{
         <i class="fa-solid fa-right-from-bracket text-red-500"></i>
         <span class="flex-1 ms-3 whitespace-nowrap">Logout</span>
     </a>
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-        @csrf
+    <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST" style="display: none;">
+        <?php echo csrf_field(); ?>
     </form>
 </li>
 
@@ -1171,7 +1131,7 @@ ul li a{
         </nav>
 
 
-@yield('contents')
+<?php echo $__env->yieldContent('contents'); ?>
 
 
 
@@ -1182,7 +1142,7 @@ ul li a{
  <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
  <!-- <script src="js/app.js"></script> -->
- <script src="{{asset('js/app2.js')}}"></script>
+ <script src="<?php echo e(asset('js/app2.js')); ?>"></script>
  <script>
       document.addEventListener("DOMContentLoaded", function() {
     const dropdownToggles = document.querySelectorAll(".submenu");
@@ -1201,3 +1161,4 @@ ul li a{
 
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/admin/sidebar.blade.php ENDPATH**/ ?>

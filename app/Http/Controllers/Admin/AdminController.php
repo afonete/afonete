@@ -1360,16 +1360,17 @@ public function check(Request $request) {
 
         // Create the unique Activation Code
         $activation = \App\Models\Activations::create([
-            'code'        => strtoupper($request->activation_code),
-            'package'     => $level === 'SUPER_LEADER' ? 'SUPER_LEADER' : 'TEAM_LEADER',
-            'stutus'      => 'not',
-            'token'       => $request->tokens,
-            'price'       => $request->price,
-            'task'        => $request->tasks,
-            'period'      => $request->duration,
-            'percentage'  => 0.0,
-            'withdrawmax' => 999999.0,
-            'email'       => $leader->Email,
+            'code'         => strtoupper($request->activation_code),
+            'package'      => $level === 'SUPER_LEADER' ? 'SUPER_LEADER' : 'TEAM_LEADER',
+            'stutus'       => 'not',
+            'is_auto_code' => false,
+            'token'        => $request->tokens,
+            'price'        => $request->price,
+            'task'         => $request->tasks,
+            'period'       => $request->duration,
+            'percentage'   => 0.0,
+            'withdrawmax'  => 999999.0,
+            'email'        => $leader->Email,
         ]);
 
         // Update the associated User
@@ -1682,6 +1683,244 @@ public function check(Request $request) {
         $leader->update(['status' => 'confirmed']);
 
         return redirect()->back()->with('message', "Team Leader {$leader->Names} has been reactivated.");
+    }
+
+    public function teamLeaderTokenReleases()
+    {
+        // Fetch all Team Leader records with 'confirmed' status
+        $leaders = \App\Models\TeamLeader::where('status', 'confirmed')->latest()->get();
+
+        $releases = collect();
+
+        foreach ($leaders as $leader) {
+            $user = \App\Models\User::where('user', $leader->User_name)
+                ->orWhere('email', $leader->Email)
+                ->first();
+
+            if (!$user) {
+                continue;
+            }
+
+            // Find associated activation code
+            $activation = \App\Models\Activations::where('email', $user->email)
+                ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                ->first();
+
+            if (!$activation) {
+                $activation = \App\Models\Activations::where('user_id', $user->id)
+                    ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                    ->first();
+            }
+
+            // Find or create TeamLeaderTokenRelease record
+            $release = \App\Models\TeamLeaderTokenRelease::where('user_id', $user->id)->first();
+
+            $totalLockedTokens = $activation ? (float)$activation->token : 0.0;
+            if ($totalLockedTokens <= 0) {
+                $bal = \App\Models\balance::where('user', $user->id)->first();
+                if ($bal) {
+                    $totalLockedTokens = (float)$bal->reserved_token;
+                }
+            }
+
+            $activatedAt  = $activation ? \Carbon\Carbon::parse($activation->updated_at) : ($leader->created_at);
+            $durationDays = $activation ? (int)($activation->period ?? 60) : 60;
+            $eligibleAt   = $activatedAt ? $activatedAt->copy()->addDays($durationDays) : null;
+            $isDurationOver = $eligibleAt ? now()->greaterThanOrEqualTo($eligibleAt) : false;
+
+            if (!$release) {
+                $release = \App\Models\TeamLeaderTokenRelease::create([
+                    'user_id'                 => $user->id,
+                    'team_leader_id'          => $leader->id,
+                    'activation_id'           => $activation ? $activation->id : null,
+                    'total_locked_tokens'     => $totalLockedTokens,
+                    'released_tokens'         => 0,
+                    'remaining_locked_tokens' => $totalLockedTokens,
+                    'status'                  => 'pending',
+                    'duration_days'           => $durationDays,
+                    'activated_at'            => $activatedAt,
+                    'eligible_at'             => $eligibleAt,
+                ]);
+            } else {
+                if ($release->total_locked_tokens <= 0 && $totalLockedTokens > 0) {
+                    $release->update([
+                        'total_locked_tokens'     => $totalLockedTokens,
+                        'remaining_locked_tokens' => max(0, $totalLockedTokens - $release->released_tokens),
+                        'activation_id'           => $activation ? $activation->id : $release->activation_id,
+                        'activated_at'            => $activatedAt,
+                        'eligible_at'             => $eligibleAt,
+                    ]);
+                }
+            }
+
+            // Performance metrics snapshot for admin review
+            $taskList = \App\Models\TeamLeaderTaskCompletion::buildTaskList($user->id, $activation ? $activation->task : '');
+
+            $performance = [
+                'tasks_completed' => $taskList['completed'],
+                'tasks_total'     => $taskList['total'],
+                'events_approved' => \App\Models\TeamLeaderEvent::where('user_id', $user->id)->where('status', 'approved')->count(),
+                'events_total'    => \App\Models\TeamLeaderEvent::where('user_id', $user->id)->count(),
+                'socials_approved'=> \App\Models\TeamLeaderSocial::where('user_id', $user->id)->where('status', 'approved')->count(),
+                'referrals_count' => $user->referrals()->count(),
+                'active_referrals'=> $user->referrals()->where('has_paid_package', '!=', 'no')->where('has_paid_package', '!=', '')->count(),
+            ];
+
+            $releases->push([
+                'release'          => $release,
+                'leader'           => $leader,
+                'user'             => $user,
+                'activation'       => $activation,
+                'is_duration_over' => $isDurationOver,
+                'performance'      => $performance,
+            ]);
+        }
+
+        $pendingReleases   = $releases->where('release.status', 'pending')->values();
+        $approvedReleases  = $releases->where('release.status', 'approved')->values();
+        $rejectedReleases  = $releases->where('release.status', 'rejected')->values();
+
+        return view('admin.team-leader-token-releases', compact('releases', 'pendingReleases', 'approvedReleases', 'rejectedReleases'));
+    }
+
+    public function approveTokenRelease(\Illuminate\Http\Request $request, $id)
+    {
+        $release = \App\Models\TeamLeaderTokenRelease::findOrFail($id);
+
+        if ($release->status === 'approved') {
+            return redirect()->back()->with('error', 'Tokens for this leader have already been released.');
+        }
+
+        $user = \App\Models\User::findOrFail($release->user_id);
+        $amountToRelease = (float) ($request->input('release_amount') ?: $release->total_locked_tokens);
+
+        if ($amountToRelease <= 0) {
+            return redirect()->back()->with('error', 'Invalid release amount specified.');
+        }
+
+        // 1. Credit AVAILABLE_TOKEN in ChartAccount
+        $currentAvailable = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+            ['amount' => $currentAvailable + $amountToRelease]
+        );
+
+        // 2. Record Transaction
+        $trxNo = \App\Models\Transaction::generateTransactionNo();
+        \App\Models\Transaction::create([
+            'user_id'          => $user->id,
+            'transaction_no'   => $trxNo,
+            'transaction_type' => 'TOKEN_RELEASE',
+            'receiver_id'      => 0,
+            'transaction_details' => json_encode([
+                'type'        => 'TEAM_LEADER_TOKEN_RELEASE',
+                'amount'      => $amountToRelease,
+                'description' => 'Team Leader locked tokens released to Available Token by admin.',
+                'admin_id'    => \Illuminate\Support\Facades\Auth::id(),
+                'approved_at' => now()->toDateTimeString(),
+                'notes'       => $request->input('notes', ''),
+            ]),
+        ]);
+
+        // 3. Update release record
+        $release->update([
+            'released_tokens'         => $release->released_tokens + $amountToRelease,
+            'remaining_locked_tokens' => max(0, $release->total_locked_tokens - ($release->released_tokens + $amountToRelease)),
+            'status'                  => 'approved',
+            'approved_at'             => now(),
+            'admin_id'                => \Illuminate\Support\Facades\Auth::id(),
+            'admin_notes'             => $request->input('notes', 'Approved & tokens released to Available Token'),
+        ]);
+
+        return redirect()->back()->with('message', "Successfully approved and released " . number_format($amountToRelease, 0) . " tokens to Available Token for leader {$user->name}.");
+    }
+
+    public function rejectTokenRelease(\Illuminate\Http\Request $request, $id)
+    {
+        $release = \App\Models\TeamLeaderTokenRelease::findOrFail($id);
+
+        $release->update([
+            'status'      => 'rejected',
+            'admin_id'    => \Illuminate\Support\Facades\Auth::id(),
+            'admin_notes' => $request->input('notes', 'Release rejected by admin upon performance review.'),
+        ]);
+
+        return redirect()->back()->with('message', 'Team Leader token release request has been rejected.');
+    }
+
+    public function tmAutoActivationsIndex()
+    {
+        $activations = \App\Models\Activations::whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->latest()
+            ->get();
+
+        return view('admin.tm-auto-activations', compact('activations'));
+    }
+
+    public function tmAutoActivationStore(\Illuminate\Http\Request $request)
+    {
+        $rules = [
+            'activation_code' => 'required|string|max:50|unique:activations,code',
+            'leadership_level'  => 'required|string|in:TEAM_LEADER,SUPER_LEADER',
+            'duration'        => 'required|integer|min:1',
+            'tokens'          => 'required|numeric|min:0',
+            'price'           => 'required|numeric|min:0',
+            'tasks'           => 'required|string|max:1000',
+            'memo'            => 'nullable|string|max:255',
+        ];
+
+        if ($request->leadership_level === 'SUPER_LEADER') {
+            $rules['credit_amount']           = 'required|numeric|min:0';
+            $rules['sales_turnover_target']   = 'required|numeric|min:0';
+            $rules['turnover_target_percent'] = 'required|numeric|min:0|max:100';
+            $rules['turnover_reward_percent'] = 'required|numeric|min:0|max:100';
+            $rules['auto_withdrawal_percent'] = 'required|numeric|min:0|max:100';
+        }
+
+        $request->validate($rules);
+
+        $code = strtoupper(trim($request->activation_code));
+
+        $creditConditions = null;
+        if ($request->leadership_level === 'SUPER_LEADER') {
+            $creditConditions = json_encode([
+                'credit_amount'           => (float) $request->input('credit_amount', 1000),
+                'sales_turnover_target'   => (float) $request->input('sales_turnover_target', 10000),
+                'turnover_target_percent' => (float) $request->input('turnover_target_percent', 0),
+                'turnover_reward_percent' => (float) $request->input('turnover_reward_percent', 0),
+                'auto_withdrawal_percent' => (float) $request->input('auto_withdrawal_percent', 0),
+            ]);
+        }
+
+        \App\Models\Activations::create([
+            'code'              => $code,
+            'package'           => $request->leadership_level,
+            'stutus'            => 'not',
+            'is_auto_code'      => true,
+            'credit_conditions' => $creditConditions,
+            'token'             => $request->tokens,
+            'price'             => $request->price,
+            'task'              => $request->tasks,
+            'period'            => $request->duration,
+            'percentage'        => 0.0,
+            'withdrawmax'       => 999999.0,
+            'email'             => $request->memo ?: '',
+        ]);
+
+        return redirect()->back()->with('message', "TM Auto Activation Code '{$code}' ({$request->leadership_level}) generated successfully with custom credit conditions! Any user redeeming this code will automatically activate with those exact credit conditions.");
+    }
+
+    public function tmAutoActivationDelete($id)
+    {
+        $activation = \App\Models\Activations::findOrFail($id);
+
+        if ($activation->stutus === 'used') {
+            return redirect()->back()->with('error', 'Cannot delete an activation code that has already been used.');
+        }
+
+        $activation->delete();
+
+        return redirect()->back()->with('message', 'TM Auto Activation Code deleted successfully.');
     }
 
 }

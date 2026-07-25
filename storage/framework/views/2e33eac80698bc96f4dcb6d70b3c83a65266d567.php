@@ -62,7 +62,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
     ?>
 
  <div class="wrapper">
-     @include('user.user-dashboard-base')
+     <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <script>
@@ -123,11 +123,12 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
               <div style="padding: 10px 0;height:100%;">
         <div>
 
-             @if(session('message'))
+             <?php if(session('message')): ?>
              <p class="btn btn-success d-flex justify-content-center" >
-                 {{ session('message') }}
+                 <?php echo e(session('message')); ?>
+
              </p>
-             @endif
+             <?php endif; ?>
 
 
          </div>
@@ -171,7 +172,7 @@ $deposit = db::SELECT("SELECT user, SUM(deposit) as deposit FROM balances WHERE 
 
 
      @media (max-width: 768px),
-     @media screen and (min-width: 768px) {
+     @media  screen and (min-width: 768px) {
          .cc .col {
              /*  border: 1px solid #ccc; /* Add desired border style */
              */ background-color: red;
@@ -407,8 +408,8 @@ img{ max-width:100%;}
 
 
         <div>
-            {{-- @dump($venture->amount) --}}
-            @php
+            
+            <?php
 
                 $amount = $mypackage->amount;
 
@@ -448,7 +449,7 @@ img{ max-width:100%;}
 // dd($user->investments)
     //  dd($user);
 
-            @endphp
+            ?>
 
                 <!-- <div x-data="{ open: false }">
             <button @click="open = true" class="btn btn-primary">Open Modal</button>
@@ -607,14 +608,14 @@ img{ max-width:100%;}
     }
 </style>
 
-@php
+<?php
     $reserved = db::SELECT("SELECT user, SUM(reserved_token) as token FROM balances WHERE user = :user GROUP BY user", ['user' => $user->id]);
-@endphp
+?>
 
 <div class="dashboard-grid-container">
 
-    {{-- Dual Active Account Banner (When user has both an active UVP Package & Team Leader Status) --}}
-    @if(isset($mypackage) && $mypackage && isset($is_team_leader) && $is_team_leader)
+    
+    <?php if(isset($mypackage) && $mypackage && isset($is_team_leader) && $is_team_leader): ?>
     <div class="alert alert-info mb-4 p-3 border-0 shadow-sm text-white" style="border-radius:12px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 5px solid #f59e0b !important;">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center gap-3">
@@ -623,37 +624,38 @@ img{ max-width:100%;}
                 </div>
                 <div>
                     <h5 class="font-weight-bold mb-0 text-white" style="font-size: 1.05rem;">
-                        Dual Active Account: {{ $package_name ?? 'VENTURE' }} UVP (${{ number_format($package_paid ?? 0, 0) }}) + {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
+                        Dual Active Account: <?php echo e($package_name ?? 'VENTURE'); ?> UVP ($<?php echo e(number_format($package_paid ?? 0, 0)); ?>) + <?php echo e(in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER'); ?>
+
                     </h5>
                     <small class="text-light opacity-90">You hold an active UVP investment package and full Team Leader privileges simultaneously. Both ROI yield payouts and Team Leader portal tools are active.</small>
                 </div>
             </div>
             <div>
-                <a href="{{ route('team-leader.all') }}" class="btn btn-sm btn-warning font-weight-bold text-dark px-3 py-2" style="border-radius: 6px;">
+                <a href="<?php echo e(route('team-leader.all')); ?>" class="btn btn-sm btn-warning font-weight-bold text-dark px-3 py-2" style="border-radius: 6px;">
                     <i class="fas fa-crown mr-1"></i> Team Leader All-In-One Portal
                 </a>
             </div>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Package Expired Banner --}}
-    @if ($user->has_free_package == 'no' && $package_expired && !in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']))
+    
+    <?php if($user->has_free_package == 'no' && $package_expired && !in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER'])): ?>
     <div class="alert alert-danger mb-4 text-center p-3" role="alert" style="border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
         <i class="fas fa-times-circle mr-2" style="font-size: 1.2rem;"></i>
         <strong>Your package has expired!</strong> Daily ROI income has stopped. Purchase a new package to resume earnings.
         <div class="mt-2">
-            <a href="{{ route('user.buypackage') }}" class="btn btn-danger btn-sm font-weight-bold px-3 py-2" style="border-radius: 6px;">
+            <a href="<?php echo e(route('user.buypackage')); ?>" class="btn btn-danger btn-sm font-weight-bold px-3 py-2" style="border-radius: 6px;">
                 <i class="fas fa-shopping-cart mr-1"></i> Buy New Package
             </a>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- SECTION 1: SYSTEM & ACCOUNT STATUS --}}
+    
     <h3 class="dash-section-title">System &amp; Account</h3>
     <div class="row">
-        {{-- Card 1: Account Status – SHOWS BOTH UVP PACKAGE & TEAM LEADER STATUS --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
@@ -662,57 +664,64 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-user-shield"></i>
                     </div>
                     <div class="dash-card-value" style="font-size:1.15rem;">
-                        @if(isset($mypackage) && $mypackage)
+                        <?php if(isset($mypackage) && $mypackage): ?>
                             <div class="font-weight-bold">
-                                {{ $package_name ?? 'VENTURE' }}
-                                <span class="small opacity-90">${{ number_format($package_paid ?? 0, 0) }}</span>
+                                <?php echo e($package_name ?? 'VENTURE'); ?>
+
+                                <span class="small opacity-90">$<?php echo e(number_format($package_paid ?? 0, 0)); ?></span>
                             </div>
-                            @if(isset($is_team_leader) && $is_team_leader)
+                            <?php if(isset($is_team_leader) && $is_team_leader): ?>
                                 <div class="mt-1">
                                     <span class="badge badge-warning text-dark font-weight-bold px-2 py-1" style="font-size: 0.72rem; border-radius: 4px;">
-                                        <i class="fas fa-crown mr-1"></i> {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
+                                        <i class="fas fa-crown mr-1"></i> <?php echo e(in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER'); ?>
+
                                     </span>
                                 </div>
-                            @endif
-                        @elseif(isset($is_team_leader) && $is_team_leader)
+                            <?php endif; ?>
+                        <?php elseif(isset($is_team_leader) && $is_team_leader): ?>
                             <div class="font-weight-bold">
-                                {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
+                                <?php echo e(in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER'); ?>
+
                             </div>
                             <div style="font-size:0.85rem; opacity:0.95; margin-top:2px;">Official Leader Account</div>
-                        @elseif ($user->has_free_package == 'yes')
+                        <?php elseif($user->has_free_package == 'yes'): ?>
                             FREE
-                        @else
-                            {{ strtoupper($user->has_paid_package) }}
-                            @if(isset($portfolio_raw) && $portfolio_raw > 0)
-                                <div style="font-size:0.95rem; opacity:0.95; margin-top:4px;">${{ number_format($portfolio_raw,0) }}</div>
-                            @endif
-                        @endif
+                        <?php else: ?>
+                            <?php echo e(strtoupper($user->has_paid_package)); ?>
+
+                            <?php if(isset($portfolio_raw) && $portfolio_raw > 0): ?>
+                                <div style="font-size:0.95rem; opacity:0.95; margin-top:4px;">$<?php echo e(number_format($portfolio_raw,0)); ?></div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                     <div class="dash-card-footer">
-                        @if(isset($mypackage) && $mypackage)
-                            UVP Portfolio: ${{ number_format($package_paid ?? 0,2) }}
+                        <?php if(isset($mypackage) && $mypackage): ?>
+                            UVP Portfolio: $<?php echo e(number_format($package_paid ?? 0,2)); ?>
+
                             <span class="badge badge-light text-dark ml-1" style="font-size:10px;">
-                                {{ !$package_expired ? 'ACTIVE' : 'EXPIRED' }}
+                                <?php echo e(!$package_expired ? 'ACTIVE' : 'EXPIRED'); ?>
+
                             </span>
-                            @if(isset($is_team_leader) && $is_team_leader)
+                            <?php if(isset($is_team_leader) && $is_team_leader): ?>
                                 <br><small class="text-warning font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Active Team Leader Privileges</small>
-                            @elseif(isset($daysgone))
-                                <br><small style="opacity:.85;">Day {{ $daysgone }} / {{ $pkg_duration ?? 100 }}</small>
-                            @endif
-                        @elseif(isset($is_team_leader) && $is_team_leader)
+                            <?php elseif(isset($daysgone)): ?>
+                                <br><small style="opacity:.85;">Day <?php echo e($daysgone); ?> / <?php echo e($pkg_duration ?? 100); ?></small>
+                            <?php endif; ?>
+                        <?php elseif(isset($is_team_leader) && $is_team_leader): ?>
                             <span class="badge badge-light text-dark" style="font-size:10px;">ACTIVE LEADER</span>
                             <br><small style="opacity:.85;">Full Leader Portal Access</small>
-                        @elseif($user->has_free_package == 'no')
-                            Portfolio: {{ $portfolio }}
-                        @else
-                            <a href="{{ route('user.dashboard.activate') }}" class="text-white" style="text-decoration:underline;">Activate Package →</a>
-                        @endif
+                        <?php elseif($user->has_free_package == 'no'): ?>
+                            Portfolio: <?php echo e($portfolio); ?>
+
+                        <?php else: ?>
+                            <a href="<?php echo e(route('user.dashboard.activate')); ?>" class="text-white" style="text-decoration:underline;">Activate Package →</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Card 2: FOMO Earn --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card bg-grad-primary text-white">
                 <div class="card-body">
@@ -721,7 +730,8 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-window-restore"></i>
                     </div>
                     <div class="dash-card-value">
-                        {{ $gasFees }}
+                        <?php echo e($gasFees); ?>
+
                     </div>
                     <div class="dash-card-footer">
                         Completed actions tracker
@@ -730,7 +740,7 @@ img{ max-width:100%;}
             </div>
         </div>
 
-        {{-- Card 3: Wallet Balance --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card bg-grad-success text-white">
                 <div class="card-body">
@@ -750,9 +760,9 @@ img{ max-width:100%;}
             </div>
         </div>
 
-        {{-- Card 4: Cashout Credit / Activate Package --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
-            @if($user->has_free_package == 'yes')
+            <?php if($user->has_free_package == 'yes'): ?>
                 <div class="dash-card bg-grad-warning text-white">
                     <div class="card-body">
                         <div class="dash-card-header">
@@ -763,13 +773,13 @@ img{ max-width:100%;}
                             Inactive
                         </div>
                         <div class="dash-card-footer">
-                            <a href="{{ route('user.dashboard.activate') }}" class="btn btn-sm btn-light btn-block font-weight-bold text-dark mt-2" style="border-radius: 6px;">
+                            <a href="<?php echo e(route('user.dashboard.activate')); ?>" class="btn btn-sm btn-light btn-block font-weight-bold text-dark mt-2" style="border-radius: 6px;">
                                 <i class="fas fa-bolt mr-1"></i> Activate Package
                             </a>
                         </div>
                     </div>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="dash-card bg-grad-dark text-white">
                     <div class="card-body">
                         <div class="dash-card-header">
@@ -777,33 +787,35 @@ img{ max-width:100%;}
                             <i class="dash-card-icon fas fa-gift"></i>
                         </div>
                         <div class="dash-card-value">
-                            ${{ $credit }}
+                            $<?php echo e($credit); ?>
+
                         </div>
                         <div class="dash-card-footer d-flex align-items-center justify-content-between">
                             <span>Status:</span>
-                            @php
+                            <?php
                                 $status = $credit_status;
                                 $badgeClass = match($status) {
                                     'approved' => 'badge-success',
                                     'rejected' => 'badge-danger',
                                     default => 'badge-warning',
                                 };
-                            @endphp
-                            <span class="badge {{ $badgeClass }} px-2 py-1 text-uppercase" style="border-radius: 4px;">
-                                {{ $status ?: 'pending' }}
+                            ?>
+                            <span class="badge <?php echo e($badgeClass); ?> px-2 py-1 text-uppercase" style="border-radius: 4px;">
+                                <?php echo e($status ?: 'pending'); ?>
+
                             </span>
                         </div>
                     </div>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
 
-    {{-- SECTION 2: ACTIVE PACKAGE DAILY ROI (Shown for Paid Accounts) --}}
-    @if ($active_packages_count > 0)
+    
+    <?php if($active_packages_count > 0): ?>
     <h3 class="dash-section-title">Active Package Daily Yields (ROI)</h3>
     <div class="row">
-        {{-- ROI Card 1: Daily Income – VALIDATED balances --}}
+        
         <div class="col-12 col-md-4 mb-4">
             <div class="dash-card bg-grad-warning text-white">
                 <div class="card-body">
@@ -812,18 +824,19 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-money-bill-wave"></i>
                     </div>
                     <div class="dash-card-value">
-                        ${{ $daily_income_per_day }}
+                        $<?php echo e($daily_income_per_day); ?>
+
                         <small style="font-size:0.75rem; opacity:.9;">/day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available daily income: <strong>${{ $daily_income_per_day }}</strong><br>
-                        Total available daily income: <strong>{{ $dailyIncome }}</strong>
+                        Today available daily income: <strong>$<?php echo e($daily_income_per_day); ?></strong><br>
+                        Total available daily income: <strong><?php echo e($dailyIncome); ?></strong>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- ROI Card 2: Trading Voucher --}}
+        
         <div class="col-12 col-md-4 mb-4">
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
@@ -832,17 +845,17 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-shopping-bag"></i>
                     </div>
                     <div class="dash-card-value">
-                        ${{ $daily_trading }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                        $<?php echo e($daily_trading); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available Trading Voucher: <strong>${{ $daily_trading }}</strong><br>
-                        Total available Trading Voucher: <strong>${{ number_format($trading_raw, 2) }}</strong>
+                        Today available Trading Voucher: <strong>$<?php echo e($daily_trading); ?></strong><br>
+                        Total available Trading Voucher: <strong>$<?php echo e(number_format($trading_raw, 2)); ?></strong>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- ROI Card 3: Cashout Wallet --}}
+        
         <div class="col-12 col-md-4 mb-4">
             <div class="dash-card bg-grad-success text-white">
                 <div class="card-body">
@@ -851,15 +864,15 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-wallet"></i>
                     </div>
                     <div class="dash-card-value">
-                        ${{ $daily_cashout }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                        $<?php echo e($daily_cashout); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available Cashout: <strong>${{ $daily_cashout }}</strong><br>
-                        Total available Cashout: <strong>${{ number_format($cashout_raw, 2) }}</strong>
+                        Today available Cashout: <strong>$<?php echo e($daily_cashout); ?></strong><br>
+                        Total available Cashout: <strong>$<?php echo e(number_format($cashout_raw, 2)); ?></strong>
                     </div>
                     <div class="dash-card-footer d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 10px; margin-top: 10px;">
                         <span>Withdrawable funds</span>
-                        <a href="{{ route('user.dashboard.userwithdraw') }}" class="badge badge-light text-success px-2 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none;">
+                        <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="badge badge-light text-success px-2 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none;">
                             Withdraw →
                         </a>
                     </div>
@@ -867,32 +880,32 @@ img{ max-width:100%;}
             </div>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- SECTION 3: TOKEN WALLETS (Zero Duplicates!) --}}
-    @php
+    
+    <?php
         $isLeaderAccount = (isset($is_team_leader) && $is_team_leader) || in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
         $combinedTotalTokens = $total_tokens ?? ($locked + $available_token + $free_token);
-    @endphp
+    ?>
 
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 mb-3">
         <h3 class="dash-section-title my-0">
             Token Wallets
-            @if($isLeaderAccount)
+            <?php if($isLeaderAccount): ?>
                 <span class="badge badge-warning text-dark ml-2" style="font-size: 0.75rem; vertical-align: middle;">
                     <i class="fas fa-crown mr-1"></i> Team Leader Account
                 </span>
-            @endif
+            <?php endif; ?>
         </h3>
-        @if($isLeaderAccount)
+        <?php if($isLeaderAccount): ?>
             <div class="badge badge-dark px-3 py-2 font-weight-bold text-uppercase" style="font-size: 0.85rem; border-radius: 8px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(245, 158, 11, 0.4);">
-                <i class="fas fa-coins text-warning mr-1"></i> Total Tokens: <span class="text-warning" style="font-size: 1.05rem;">{{ number_format($combinedTotalTokens, 0) }}</span>
+                <i class="fas fa-coins text-warning mr-1"></i> Total Tokens: <span class="text-warning" style="font-size: 1.05rem;"><?php echo e(number_format($combinedTotalTokens, 0)); ?></span>
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 
-    @if($isLeaderAccount)
-    {{-- Dedicated Team Leader Token Box --}}
+    <?php if($isLeaderAccount): ?>
+    
     <div class="card mb-4 border-0 shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.15);">
@@ -910,7 +923,8 @@ img{ max-width:100%;}
                 <div class="text-right">
                     <span class="text-uppercase small d-block text-warning font-weight-bold" style="letter-spacing: 0.8px;">Total Combined Tokens</span>
                     <h2 class="font-weight-bold text-warning mb-0" style="font-size: 2.2rem; line-height: 1;">
-                        {{ number_format($combinedTotalTokens, 0) }}
+                        <?php echo e(number_format($combinedTotalTokens, 0)); ?>
+
                     </h2>
                 </div>
             </div>
@@ -919,31 +933,31 @@ img{ max-width:100%;}
                 <div class="col-12 col-sm-4 mb-3 mb-sm-0">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-lock text-secondary mr-1"></i> Locked Tokens</span>
-                        <h4 class="font-weight-bold text-white mb-0">{{ number_format($locked, 0) }}</h4>
+                        <h4 class="font-weight-bold text-white mb-0"><?php echo e(number_format($locked, 0)); ?></h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Investment / Activation tokens</small>
                     </div>
                 </div>
                 <div class="col-12 col-sm-4 mb-3 mb-sm-0">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-check-circle text-success mr-1"></i> Available Tokens</span>
-                        <h4 class="font-weight-bold text-success mb-0">{{ number_format($available_token, 0) }}</h4>
+                        <h4 class="font-weight-bold text-success mb-0"><?php echo e(number_format($available_token, 0)); ?></h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Released &amp; ready to claim</small>
                     </div>
                 </div>
                 <div class="col-12 col-sm-4">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-coins text-warning mr-1"></i> Free Tokens (FOCOIN)</span>
-                        <h4 class="font-weight-bold text-warning mb-0">{{ number_format($free_token, 0) }}</h4>
+                        <h4 class="font-weight-bold text-warning mb-0"><?php echo e(number_format($free_token, 0)); ?></h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Tradeable / Transferable</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    @endif
+    <?php endif; ?>
 
     <div class="row">
-        {{-- Token Card 1: Locked Token --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card border-left border-secondary" style="border-left-width: 5px !important;">
                 <div class="card-body">
@@ -952,23 +966,24 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-lock text-secondary"></i>
                     </div>
                     <div class="dash-card-value">
-                        {{ number_format($locked, 0) }}
+                        <?php echo e(number_format($locked, 0)); ?>
+
                     </div>
                     <div class="dash-card-subtitle">
                         Unreleased investment / leader tokens.
                     </div>
                     <div class="dash-card-footer text-muted" style="font-size: 0.75rem;">
-                        @if(isset($released_tokens) && $released_tokens > 0)
-                            Released to Available: <strong>{{ number_format($released_tokens, 0) }}</strong>
-                        @else
+                        <?php if(isset($released_tokens) && $released_tokens > 0): ?>
+                            Released to Available: <strong><?php echo e(number_format($released_tokens, 0)); ?></strong>
+                        <?php else: ?>
                             Transferred to Available upon admin approval.
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Token Card 2: Available Token --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card border-left border-success" style="border-left-width: 5px !important;">
                 <div class="card-body">
@@ -977,27 +992,28 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-check-circle text-success"></i>
                     </div>
                     <div class="dash-card-value">
-                        {{ number_format($available_token, 0) }}
+                        <?php echo e(number_format($available_token, 0)); ?>
+
                     </div>
                     <div class="dash-card-subtitle mb-2">
                         Released tokens and earned rewards.
                     </div>
                     <div class="dash-card-footer pt-2">
-                        @if($available_token > 0)
-                            <a href="{{ route('user.token.available') }}" class="btn btn-sm btn-success btn-block font-weight-bold" style="border-radius: 6px;">
+                        <?php if($available_token > 0): ?>
+                            <a href="<?php echo e(route('user.token.available')); ?>" class="btn btn-sm btn-success btn-block font-weight-bold" style="border-radius: 6px;">
                                 Claim to Free Token <i class="fas fa-arrow-right ml-1"></i>
                             </a>
-                        @else
+                        <?php else: ?>
                             <button class="btn btn-sm btn-block btn-light font-weight-bold text-muted" disabled style="border-radius: 6px;">
                                 No Tokens Available
                             </button>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Token Card 3: Free Token (FOCOIN) --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card border-left border-warning" style="border-left-width: 5px !important;">
                 <div class="card-body">
@@ -1006,29 +1022,30 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-coins text-warning"></i>
                     </div>
                     <div class="dash-card-value">
-                        {{ number_format($free_token, 0) }}
+                        <?php echo e(number_format($free_token, 0)); ?>
+
                     </div>
                     <div class="dash-card-subtitle mb-2">
                         Fully tradeable and transferable FOCOIN tokens.
                     </div>
                     <div class="dash-card-footer pt-2">
-                        @if($free_token > 0)
+                        <?php if($free_token > 0): ?>
                             <div class="d-flex gap-2">
-                                <a href="{{ route('user.token.transfer') }}" class="btn btn-xs btn-dark flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Transfer</a>
-                                <a href="{{ route('user.token.swap') }}" class="btn btn-xs btn-success flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Swap</a>
-                                <a href="{{ route('user.token.withdraw') }}" class="btn btn-xs btn-danger flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px;">Withdraw</a>
+                                <a href="<?php echo e(route('user.token.transfer')); ?>" class="btn btn-xs btn-dark flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Transfer</a>
+                                <a href="<?php echo e(route('user.token.swap')); ?>" class="btn btn-xs btn-success flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Swap</a>
+                                <a href="<?php echo e(route('user.token.withdraw')); ?>" class="btn btn-xs btn-danger flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px;">Withdraw</a>
                             </div>
-                        @else
+                        <?php else: ?>
                             <button class="btn btn-sm btn-block btn-light font-weight-bold text-muted" disabled style="border-radius: 6px;">
                                 0 FOCOIN Balance
                             </button>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Token Card 4: Total Token Balance --}}
+        
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card border-left border-primary" style="border-left-width: 5px !important;">
                 <div class="card-body">
@@ -1037,7 +1054,8 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-layer-group text-primary"></i>
                     </div>
                     <div class="dash-card-value text-primary">
-                        {{ number_format($combinedTotalTokens, 0) }}
+                        <?php echo e(number_format($combinedTotalTokens, 0)); ?>
+
                     </div>
                     <div class="dash-card-subtitle mb-2">
                         Sum of Locked, Available &amp; Free Tokens.
@@ -1050,10 +1068,10 @@ img{ max-width:100%;}
         </div>
     </div>
 
-    {{-- SECTION 4: DEPOSITS & LIQUIDITY --}}
+    
     <h3 class="dash-section-title">Deposits &amp; Liquidity</h3>
     <div class="row">
-        {{-- Deposit Card 1: Cash & Deposits – Available deposit balance --}}
+        
         <div class="col-12 col-sm-6 col-lg-4 mb-4">
             <div class="dash-card border-left border-primary" style="border-left-width:5px !important;">
                 <div class="card-body">
@@ -1062,17 +1080,18 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-university text-primary"></i>
                     </div>
                     <div class="dash-card-value text-primary">
-                        ${{ $deposits }}
+                        $<?php echo e($deposits); ?>
+
                     </div>
                     <div class="dash-card-subtitle text-muted mb-2" style="font-size:0.78rem;">
                         Available deposit balance<br>
                         <span class="text-success">Approved – Used = Available</span>
                     </div>
                     <div class="dash-card-footer">
-                        <a href="{{ route('mypayments') }}" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" style="border-radius: 6px;">
+                        <a href="<?php echo e(route('mypayments')); ?>" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" style="border-radius: 6px;">
                             <i class="fas fa-history mr-1"></i> Deposit Records
                         </a>
-                        <a href="{{ route('user.dashboard.deposit') }}" class="btn btn-sm btn-primary btn-block font-weight-bold mt-1" style="border-radius: 6px;">
+                        <a href="<?php echo e(route('user.dashboard.deposit')); ?>" class="btn btn-sm btn-primary btn-block font-weight-bold mt-1" style="border-radius: 6px;">
                             <i class="fas fa-plus mr-1"></i> Add Deposit
                         </a>
                     </div>
@@ -1080,7 +1099,7 @@ img{ max-width:100%;}
             </div>
         </div>
 
-        {{-- Deposit Card 2: Cumulative Cashout – WITH WITHDRAWAL LINK --}}
+        
         <div class="col-12 col-sm-6 col-lg-4 mb-4">
             <div class="dash-card border-left border-danger" style="border-left-width:5px !important;">
                 <div class="card-body">
@@ -1089,18 +1108,19 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-wallet text-danger"></i>
                     </div>
                     <div class="dash-card-value text-danger">
-                        {{ $cashout }}
+                        <?php echo e($cashout); ?>
+
                     </div>
                     <div class="dash-card-subtitle text-muted" style="font-size:0.78rem;">
                         Available cashout balance to be withdrawn<br>
                         <span class="text-success">Min withdrawal: $10.00</span>
                     </div>
                     <div class="dash-card-footer">
-                        <a href="{{ route('user.dashboard.userwithdraw') }}" class="btn btn-sm btn-danger btn-block font-weight-bold" style="border-radius:6px;">
+                        <a href="<?php echo e(route('user.dashboard.userwithdraw')); ?>" class="btn btn-sm btn-danger btn-block font-weight-bold" style="border-radius:6px;">
                             <i class="fas fa-arrow-circle-up mr-1"></i> Withdraw Now
                         </a>
                         <div class="d-flex justify-content-between mt-2" style="font-size:0.72rem;">
-                            <a href="{{ route('user.withdrawal-history') }}" class="text-muted">Withdrawal history →</a>
+                            <a href="<?php echo e(route('user.withdrawal-history')); ?>" class="text-muted">Withdrawal history →</a>
                             <span class="text-muted">Fee: 0%</span>
                         </div>
                     </div>
@@ -1108,7 +1128,7 @@ img{ max-width:100%;}
             </div>
         </div>
 
-        {{-- Deposit Card 3: Reserved Tokens --}}
+        
         <div class="col-12 col-lg-4 mb-4">
             <div class="dash-card">
                 <div class="card-body">
@@ -1127,16 +1147,16 @@ img{ max-width:100%;}
         </div>
     </div>
 
-    {{-- SECTION 5: OPERATIONS & QUICK ACTIONS --}}
+    
     <h3 class="dash-section-title">Quick Actions</h3>
     <div class="row mb-4">
         <div class="col-6 col-md-3 mb-3">
-            <a href="{{ route('user.investments') }}" class="btn btn-block btn-success btn-quick-action py-3 text-white">
+            <a href="<?php echo e(route('user.investments')); ?>" class="btn btn-block btn-success btn-quick-action py-3 text-white">
                 <i class="fas fa-cog" style="font-size: 1.1rem;"></i> My Investments
             </a>
         </div>
         <div class="col-6 col-md-3 mb-3">
-            <a href="{{ route('user.referral.downline') }}" class="btn btn-block btn-primary btn-quick-action py-3 text-white">
+            <a href="<?php echo e(route('user.referral.downline')); ?>" class="btn btn-block btn-primary btn-quick-action py-3 text-white">
                 <i class="fas fa-user" style="font-size: 1.1rem;"></i> My Referrals
             </a>
         </div>
@@ -1155,7 +1175,7 @@ img{ max-width:100%;}
 </div>
 
 <script>
-    const targetDate = "{{ $expirationDate }}";
+    const targetDate = "<?php echo e($expirationDate); ?>";
     if (typeof startCountdown === 'function') {
         startCountdown(targetDate);
     }
@@ -1187,7 +1207,7 @@ img{ max-width:100%;}
                  </div>
                  <!-- /.col -->
                  <div class="col-12 col-sm-6 col-md-3">
-                     <a href="{{route('user.referral.show')}}">
+                     <a href="<?php echo e(route('user.referral.show')); ?>">
                          <div class="info-box mb-3">
                              <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-users"></i></span>
                                  <?php
@@ -1202,7 +1222,7 @@ img{ max-width:100%;}
                                  ?>
                              <div class="info-box-content">
                                  <span class="info-box-text">Referrals</span>
-                                 <span class="info-box-number">{{$referals}}</span>
+                                 <span class="info-box-number"><?php echo e($referals); ?></span>
                              </div>
 
                          </div>
@@ -1215,13 +1235,13 @@ img{ max-width:100%;}
                  <div class="clearfix hidden-md-up"></div>
 
                  <div class="col-12 col-sm-6 col-md-3">
-                    <a href="{{route('user.task.show')}}">
+                    <a href="<?php echo e(route('user.task.show')); ?>">
                      <div class="info-box mb-3">
                          <span class="info-box-icon bg-success elevation-1"><i class="fas fa-list"></i></span>
 
                          <div class="info-box-content">
                              <span class="info-box-text">Tasks</span>
-                             <span class="info-box-number">{{count($task)}}</span>
+                             <span class="info-box-number"><?php echo e(count($task)); ?></span>
                          </div>
 
                      </div>
@@ -1235,7 +1255,7 @@ img{ max-width:100%;}
 
                          <div class="info-box-content">
                              <span class="info-box-text">Earnings</span>
-                             <span class="info-box-number text-sm">{{number_format($earnings)}}</span>
+                             <span class="info-box-number text-sm"><?php echo e(number_format($earnings)); ?></span>
                          </div>
 
                      </div>
@@ -1251,7 +1271,7 @@ img{ max-width:100%;}
                  <div class="subZoom row">
                     <div class="img col-2">
                         <div class="zoomImg">
-                            <img src="{{asset('assets/a/img/zoom.png')}}" alt="">
+                            <img src="<?php echo e(asset('assets/a/img/zoom.png')); ?>" alt="">
                         </div>
                     </div>
                     <div class="col-10 zoom-content">
@@ -1267,7 +1287,7 @@ img{ max-width:100%;}
           </div><!-- /.container-fluid -->
          </div>
          <div>
-            @include('user.chatonline')
+            <?php echo $__env->make('user.chatonline', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
          <!--   <div class="d-flex flex-column justify-content-between  mt-2 position-relative containers w-25 ">
                 <button class="btn btn-warning  btn-sm text-sm
                  d-flex align-items-center justify-content-center gap-2 font-weight-bold p-0" style="padding:0,margin:0" onclick="handleOpen()" >
@@ -1288,21 +1308,23 @@ img{ max-width:100%;}
          <div class="content">
              <div class="container-fluid ">
 
-             @if($have_pending_deposits)
+             <?php if($have_pending_deposits): ?>
 <div id="myModal" class="modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-top warning " role="document">
         <div class="modal-content p-4 shadow border rounded " style="background:#27445D; color: #fff;">
-            @if (session('success'))
+            <?php if(session('success')): ?>
                 <div class="text-success mb-2">
-                    {{ session('success') }}
-                </div>
-            @endif
+                    <?php echo e(session('success')); ?>
 
-            @if (session('error'))
-                <div class="text-danger mb-2">
-                    {{ session('error') }}
                 </div>
-            @endif
+            <?php endif; ?>
+
+            <?php if(session('error')): ?>
+                <div class="text-danger mb-2">
+                    <?php echo e(session('error')); ?>
+
+                </div>
+            <?php endif; ?>
 
             <div class="text-center mb-3">
                 <h2 class="text-uppercase fw-bold text-white" style="font-size: 1.4rem;">YOU HAVE PENDING DEPOSIT</h2>
@@ -1310,27 +1332,27 @@ img{ max-width:100%;}
             
             <p class="text-light small mb-2">You still have a pending order.</p>
 
-            @if(!empty($have_pending_deposits->comment))
+            <?php if(!empty($have_pending_deposits->comment)): ?>
                 <div class="alert alert-info text-left small mb-3 p-3" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 8px;">
                     <strong class="text-white d-block mb-1"><i class="fas fa-comment-dots mr-1 text-warning"></i> Admin Note / Response:</strong>
-                    <p class="mb-0 text-light" style="font-size: 0.85rem;">{{ $have_pending_deposits->comment }}</p>
+                    <p class="mb-0 text-light" style="font-size: 0.85rem;"><?php echo e($have_pending_deposits->comment); ?></p>
                 </div>
-            @endif
+            <?php endif; ?>
 
             <p class="text-light small py-1">If your transaction is not approved, please submit your transaction ID below:</p>
             
-            <form class="d-flex justify-content-center align-items-center gap-2 mb-3" method="POST" action="{{route('user.claim')}}">
-                @csrf
+            <form class="d-flex justify-content-center align-items-center gap-2 mb-3" method="POST" action="<?php echo e(route('user.claim')); ?>">
+                <?php echo csrf_field(); ?>
                 <input type="text" 
                   class="form-control me-2" 
                   placeholder="Transaction ID" name="transactionId" 
-                  value="{{ $have_pending_deposits->transaction_id ?? '' }}" readonly>
+                  value="<?php echo e($have_pending_deposits->transaction_id ?? ''); ?>" readonly>
                 <button type="submit" class="btn btn-success text-white mx-2">Send</button>
             </form>
             <p class="text-sm mb-3">Please wait for the admin to approve your deposit.</p>
             
             <div class="d-flex justify-content-between align-items-center pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.15);">
-                <a class="btn btn-info btn-sm font-weight-bold px-3 py-2" href="{{ route('mypayments') }}" style="border-radius: 6px;">
+                <a class="btn btn-info btn-sm font-weight-bold px-3 py-2" href="<?php echo e(route('mypayments')); ?>" style="border-radius: 6px;">
                     <i class="fas fa-history mr-1"></i> View Order Status
                 </a>
                 <a class="btn btn-danger btn-sm font-weight-bold px-3 py-2" href="#" style="border-radius: 6px;"
@@ -1341,7 +1363,7 @@ img{ max-width:100%;}
         </div>
     </div>
 </div>
-@endif
+<?php endif; ?>
 
                  <div class="row ">
                              <div class="card card-primary card-outline col-lg-4">
@@ -1350,29 +1372,29 @@ img{ max-width:100%;}
                                     Refferral id:
                                     <button class="btn btn-default font-weight-bold" type="submit" id="btn2" disabled>
                                          <i class="las la-link" style="font-size: 20px;"></i>
-                                          <input type="hidden" value="{{$ref_code}}" id="link1">
+                                          <input type="hidden" value="<?php echo e($ref_code); ?>" id="link1">
 <a href="#" style="color:red;text-decoration:none;">
-    @if($package!='standard')
-  <span style="visibility: visible;">{{$ref_code}}</span>
-  @else
+    <?php if($package!='standard'): ?>
+  <span style="visibility: visible;"><?php echo e($ref_code); ?></span>
+  <?php else: ?>
   <span style="visibility: visible;">*********</span>
-  @endif
+  <?php endif; ?>
 </a></h5><br>
                                     </button>
 
                                             <div class="input-group">
-                                            @if($package!='standard')
-                                            <!-- value="http://bifonex.com/register?referral={{$ref_code}}" -->
+                                            <?php if($package!='standard'): ?>
+                                            <!-- value="http://bifonex.com/register?referral=<?php echo e($ref_code); ?>" -->
                                                 <input type="text" id="link" 
-                                                value="{{$baseUrl}}/register?referral={{$ref_code}}"
+                                                value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>"
                                               class="form-control" readonly class="form-control">
 
                                                 <button class="btn btn-default" type="submit" id="btn">
                                                     <i class="las la-link" style="font-size: 20px;"></i>
                                                 </button>
-                                              @else
+                                              <?php else: ?>
                                                 <input type="text" id="link"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control">@endif
+                                              class="form-control" readonly class="form-control"><?php endif; ?>
 
                                             </div>
 
@@ -1382,39 +1404,39 @@ img{ max-width:100%;}
 
 
                                             <div class="input-group">
-                                            @if($package!='standard')
+                                            <?php if($package!='standard'): ?>
                                                <button class="btn btn-info  "  onclick="copyToClipboard('link-right')">
                                                     Right
                                                 </button>
                                                 
                                                 <input type="text" id="link-right"
-                                                value="{{$baseUrl}}/register?referral={{$ref_code}}&side=RIGHT"
+                                                value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=RIGHT"
                                               class="form-control" readonly class="form-control">
 
                                                 <button class="btn btn-default"  onclick="copyToClipboard('link-right')">
                                                     <i class="las la-link" style="font-size: 20px;"></i>
                                                 </button>
-                                              @else
+                                              <?php else: ?>
                                                 <input type="text" id="link-right"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control">@endif
+                                              class="form-control" readonly class="form-control"><?php endif; ?>
 
                                             </div>
 
 
                                             <div class="input-group my-1">
-                                            @if($package!='standard')
+                                            <?php if($package!='standard'): ?>
                                               <button class="btn btn-primary"  onclick="copyToClipboard('link-right')">
                                                     Left
                                                 </button>
-                                                <input type="text" id="link-left" value="{{$baseUrl}}/register?referral={{$ref_code}}&side=LEFT"
+                                                <input type="text" id="link-left" value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=LEFT"
                                               class="form-control" readonly class="form-control">
 
                                                 <button class="btn btn-default" onclick="copyToClipboard('link-left')">
                                                     <i class="las la-link" style="font-size: 20px;"></i>
                                                 </button>
-                                              @else
+                                              <?php else: ?>
                                                 <input type="text" id="link-left"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control">@endif
+                                              class="form-control" readonly class="form-control"><?php endif; ?>
 
                                             </div>
 
@@ -1495,7 +1517,7 @@ $user=db::SELECT("SELECT * from users");
                                                 <div class="topUser_title">Top Users</div>
                                                 <div class="soon">comming soon</div>
                                                 <div class="topUser_img">
-                                                    <img src="{{asset('assets/a/img/team.png')}}" alt="">
+                                                    <img src="<?php echo e(asset('assets/a/img/team.png')); ?>" alt="">
                                                 </div>
                                                 <div class="Usersmsg">
                                                     <span class=""> No users joined yet</span>
@@ -1538,7 +1560,7 @@ $user=db::SELECT("SELECT * from users");
 
 
 
-                     {{-- start OF LEADER --}}
+                     
                  </div>
                  <span style="color: blue;font-size: 20px;"><b>Upcoming Projects</b> </span>
 
@@ -1550,7 +1572,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box main-upcoming">
                                         <div class="upcoming ">
                                             <div>
-                                                <img src="{{asset('assets/a/img/upcoming.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/upcoming.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                                 <b></b>Future shoop
@@ -1565,7 +1587,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/booking.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/booking.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                             <b>booking system</b>
@@ -1586,7 +1608,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/shopping.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/shopping.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                              <b>Market Place</b>
@@ -1602,7 +1624,7 @@ $user=db::SELECT("SELECT * from users");
                                      <div class="info-box mb-3  main-upcoming">
                                         <div class="upcoming">
                                             <div>
-                                                <img src="{{asset('assets/a/img/crypto.png')}}" alt="">
+                                                <img src="<?php echo e(asset('assets/a/img/crypto.png')); ?>" alt="">
                                             </div>
                                             <div class="info-box-content text-center">
                                             <b>crypto loans </b>
@@ -1783,7 +1805,7 @@ $user=db::SELECT("SELECT * from users");
 
                          </div>
 
-                         {{-- END OF LEADER --}}
+                         
 
 
 
@@ -1903,7 +1925,7 @@ $user=db::SELECT("SELECT * from users");
     // Function to handle the Facebook sharing
    function shareOnFacebook() {
     // Replace "YOUR_SHARE_URL" with the URL you want to share
-    var shareUrl = 'https://www.bifonex.com/register?referral={{$ref_code}}';
+    var shareUrl = 'https://www.bifonex.com/register?referral=<?php echo e($ref_code); ?>';
 
     // Open the Facebook share dialog
     window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl), '_blank');
@@ -1912,7 +1934,7 @@ $user=db::SELECT("SELECT * from users");
   // Function to handle the WhatsApp sharing
     function shareOnWhatsApp() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = encodeURIComponent('Infinite earning: https:www.bifonex.com/register?referral={{$ref_code}}');
+      var shareText = encodeURIComponent('Infinite earning: https:www.bifonex.com/register?referral=<?php echo e($ref_code); ?>');
       var whatsappURL = 'https://api.whatsapp.com/send?text=' + shareText;
       window.open(whatsappURL, '_blank');
     }
@@ -1920,7 +1942,7 @@ $user=db::SELECT("SELECT * from users");
    // Function to handle the Twitter sharing
     function shareOnTwitter() {
       // Replace 'YOUR_SHARE_TEXT' with the desired text to share
-      var shareText = 'Infinite earning: https://www.bifonex.com/register?referral={{$ref_code}}';
+      var shareText = 'Infinite earning: https://www.bifonex.com/register?referral=<?php echo e($ref_code); ?>';
 
       // Open the Twitter share popup
       window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText), '_blank');
@@ -2043,34 +2065,34 @@ $user=db::SELECT("SELECT * from users");
 
                          <div class="card-body card-warning p-4">
                              
-                             {{-- ROW 1: TOTAL VOLUME & COMMISSIONS (Team and Network Stats) --}}
+                             
                              <div class="row mb-4">
                                  
-                                 {{-- COLUMN 1: TOTAL VOLUME (col-md-5) --}}
+                                 
                                  <div class="col-md-5 mb-4 mb-md-0 d-flex flex-column">
                                      <h3 class="font-weight-bold text-dark mb-3" style="font-size: 1.4rem;"><i class="fas fa-chart-bar mr-2 text-info"></i> TOTAL VOLUME</h3>
                                      <div class="card border-0 shadow-sm h-100 mb-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff;">
                                          <div class="card-body p-4 d-flex align-items-center">
                                              <div class="row w-100">
-                                                 {{-- Left Team --}}
+                                                 
                                                  <div class="col-6">
                                                      <div class="p-3 text-center" style="border-radius: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0;">
                                                          <span class="badge badge-info px-2 py-1 mb-2 text-uppercase" style="font-size: 0.68rem; border-radius: 4px;">Left Team</span>
                                                          <div class="text-muted small">Members</div>
-                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;">{{ $left ?? 0 }}</div>
+                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;"><?php echo e($left ?? 0); ?></div>
                                                          <div class="text-muted small mt-2">Volume Points</div>
-                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ ($left_direct_uvp ?? 0) + ($left_indirect_uvp ?? 0) }} <small class="text-muted">Vp</small></div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;"><?php echo e(($left_direct_uvp ?? 0) + ($left_indirect_uvp ?? 0)); ?> <small class="text-muted">Vp</small></div>
                                                          <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
                                                      </div>
                                                  </div>
-                                                 {{-- Right Team --}}
+                                                 
                                                  <div class="col-6">
                                                      <div class="p-3 text-center" style="border-radius: 10px; background-color: #f8fafc; border: 1px solid #e2e8f0;">
                                                          <span class="badge badge-primary px-2 py-1 mb-2 text-uppercase" style="font-size: 0.68rem; border-radius: 4px;">Right Team</span>
                                                          <div class="text-muted small">Members</div>
-                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;">{{ $right ?? 0 }}</div>
+                                                         <div class="font-weight-bold text-dark" style="font-size: 1.4rem;"><?php echo e($right ?? 0); ?></div>
                                                          <div class="text-muted small mt-2">Volume Points</div>
-                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ ($right_direct_uvp ?? 0) + ($right_indirect_uvp ?? 0) }} <small class="text-muted">Vp</small></div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;"><?php echo e(($right_direct_uvp ?? 0) + ($right_indirect_uvp ?? 0)); ?> <small class="text-muted">Vp</small></div>
                                                          <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
                                                      </div>
                                                  </div>
@@ -2079,14 +2101,14 @@ $user=db::SELECT("SELECT * from users");
                                      </div>
                                  </div>
 
-                                 {{-- COLUMN 2: COMMISSIONS (col-md-7) --}}
+                                 
                                  <div class="col-md-7 d-flex flex-column">
                                      <h3 class="font-weight-bold text-dark mb-3" style="font-size: 1.4rem;"><i class="fas fa-wallet mr-2 text-primary"></i> COMMISSIONS</h3>
                                      <div class="card border-0 shadow-sm h-100 mb-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff;">
                                          <div class="card-body p-4 d-flex flex-column justify-content-center">
                                              <div class="row">
                                                  
-                                                 {{-- Left side of Commissions: Zone and Volume Bonus Metrics --}}
+                                                 
                                                  <div class="col-md-6 mb-4 mb-md-0 border-right" style="border-right-color: #f1f5f9 !important;">
                                                      <div class="d-flex justify-content-between align-items-center mb-3">
                                                          <h6 class="font-weight-bold text-dark mb-0" style="font-size: 0.95rem;"><i class="fas fa-chart-pie mr-1 text-primary"></i> Team Earnings Vp</h6>
@@ -2094,25 +2116,25 @@ $user=db::SELECT("SELECT * from users");
                                                      </div>
                                                      
                                                      <div class="row">
-                                                         {{-- Zone A --}}
+                                                         
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
                                                                  <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone A</small>
-                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;">{{$zoneAearning ?? 0}} <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;"><?php echo e($zoneAearning ?? 0); ?> <span style="font-size: 0.8rem;">Vp</span></h4>
                                                              </div>
                                                          </div>
 
-                                                         {{-- Zone B --}}
+                                                         
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
                                                                  <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone B</small>
-                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;">{{$zoneBearning ?? 0}} <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;"><?php echo e($zoneBearning ?? 0); ?> <span style="font-size: 0.8rem;">Vp</span></h4>
                                                              </div>
                                                          </div>
                                                      </div>
 
                                                      <div class="row">
-                                                         {{-- Volume Bonus --}}
+                                                         
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 rounded text-center" style="border-radius: 8px; background-color: #fef3c7; border: 1px solid #fde68a;">
                                                                  <small class="text-amber-800 text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Volume Bonus</small>
@@ -2120,7 +2142,7 @@ $user=db::SELECT("SELECT * from users");
                                                              </div>
                                                          </div>
 
-                                                         {{-- Earn VP --}}
+                                                         
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 rounded text-center bg-light" style="border-radius: 8px;">
                                                                  <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Earn VP</small>
@@ -2130,7 +2152,7 @@ $user=db::SELECT("SELECT * from users");
                                                      </div>
                                                  </div>
 
-                                                 {{-- Right side of Commissions: Earnings Filter & Cards --}}
+                                                 
                                                  <div class="col-md-6 pl-md-4">
                                                      <div class="d-flex justify-content-between align-items-center mb-3">
                                                          <h6 class="font-weight-bold text-dark mb-0" style="font-size: 0.95rem;"><i class="fas fa-filter mr-1 text-info"></i> Earnings</h6>
@@ -2146,7 +2168,7 @@ $user=db::SELECT("SELECT * from users");
                                                      </div>
 
                                                      <div class="row">
-                                                         {{-- Left Earning --}}
+                                                         
                                                          <div class="col-6">
                                                              <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
                                                                  <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
@@ -2155,7 +2177,7 @@ $user=db::SELECT("SELECT * from users");
                                                              </div>
                                                          </div>
 
-                                                         {{-- Right Earning --}}
+                                                         
                                                          <div class="col-6">
                                                              <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
                                                                  <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
@@ -2189,36 +2211,36 @@ $user=db::SELECT("SELECT * from users");
 
                              </div>
 
-                             {{-- ROW 2: PERSONAL ACHIEVEMENTS & BONUSES (Referral & Rank) --}}
+                             
                              <div class="row">
                                  
-                                 {{-- Column 1: Total Referral Bonus (col-md-6) --}}
+                                 
                                  <div class="col-md-6 mb-4 mb-md-0">
                                      <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff; margin-bottom: 0;">
                                          <div class="card-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
                                              <i class="fas fa-wallet text-white px-3 rounded-lg py-3 mb-2" style="background-color: rgb(238, 193, 71); font-size: 1.8rem; border-radius: 10px; width: fit-content;"></i>
-                                             <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.6rem;">${{ number_format($referral_bonus_totals['total'] ?? 0, 2) }}</h3>
+                                             <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.6rem;">$<?php echo e(number_format($referral_bonus_totals['total'] ?? 0, 2)); ?></h3>
                                              <span class="text-slate-600 font-weight-bold small d-block mb-1">Total Referral Bonus</span>
                                              <small class="text-muted d-block mb-3">
-                                                 {{ $direct_referral_count }} referrals ({{ $active_referral_count }} active)
+                                                 <?php echo e($direct_referral_count); ?> referrals (<?php echo e($active_referral_count); ?> active)
                                              </small>
                                              
                                              <div class="w-100 p-3 rounded bg-light mb-3 text-left" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid #f1f5f9;">
                                                  <div class="d-flex justify-content-between mb-2">
                                                      <span class="text-muted">Withdrawable:</span>
-                                                     <span class="text-success font-weight-bold" style="font-size: 0.95rem;">${{ number_format($referral_bonus_totals['withdrawable'] ?? 0, 2) }}</span>
+                                                     <span class="text-success font-weight-bold" style="font-size: 0.95rem;">$<?php echo e(number_format($referral_bonus_totals['withdrawable'] ?? 0, 2)); ?></span>
                                                  </div>
                                                  <div class="d-flex justify-content-between">
                                                      <span class="text-muted">Pending (next Monday):</span>
-                                                     <span class="text-warning font-weight-bold" style="font-size: 0.95rem;">${{ number_format($referral_bonus_totals['pending'] ?? 0, 2) }}</span>
+                                                     <span class="text-warning font-weight-bold" style="font-size: 0.95rem;">$<?php echo e(number_format($referral_bonus_totals['pending'] ?? 0, 2)); ?></span>
                                                  </div>
                                              </div>
                                              
                                              <div class="d-flex justify-content-center gap-3 w-100 mt-2">
-                                                 <a href="{{ route('user.referral.bonus') }}" class="btn btn-warning font-weight-bold px-3 py-2 text-dark" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                                                 <a href="<?php echo e(route('user.referral.bonus')); ?>" class="btn btn-warning font-weight-bold px-3 py-2 text-dark" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
                                                      <i class="fas fa-coins mr-1"></i> Bonus &amp; Withdraw
                                                  </a>
-                                                 <a href="{{ route('user.referral.downline') }}" class="btn btn-outline-info font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+                                                 <a href="<?php echo e(route('user.referral.downline')); ?>" class="btn btn-outline-info font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
                                                      <i class="fas fa-sitemap mr-1"></i> Downline
                                                  </a>
                                              </div>
@@ -2226,31 +2248,31 @@ $user=db::SELECT("SELECT * from users");
                                      </div>
                                  </div>
 
-                                 {{-- Column 2: Rank Progress (col-md-6) --}}
+                                 
                                  <div class="col-md-6">
                                      <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff; margin-bottom: 0;">
                                          <div class="card-body p-4 text-center d-flex flex-column align-items-center justify-content-center">
                                              <i class="fas fa-trophy text-white px-3 rounded-lg py-3 mb-2" style="background-color: rgb(167, 139, 250); font-size: 1.8rem; border-radius: 10px; width: fit-content;"></i>
-                                             @if($current_rank)
-                                                 <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.4rem;">🏆 {{ $current_rank->rank_name }}</h3>
+                                             <?php if($current_rank): ?>
+                                                 <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.4rem;">🏆 <?php echo e($current_rank->rank_name); ?></h3>
                                                  <span class="text-slate-600 font-weight-bold small d-block mb-1">Current Rank</span>
-                                                 @if($current_rank->congratulation_image)
+                                                 <?php if($current_rank->congratulation_image): ?>
                                                      <small class="text-success font-weight-bold mb-3 d-block"><i class="fas fa-check-circle mr-1"></i> Picture available</small>
-                                                 @endif
-                                             @else
+                                                 <?php endif; ?>
+                                             <?php else: ?>
                                                  <h3 class="font-weight-bold text-dark mb-1" style="font-size: 1.4rem;">🎯 No rank yet</h3>
                                                  <span class="text-slate-600 font-weight-bold small d-block mb-3">Build your network</span>
-                                             @endif
+                                             <?php endif; ?>
                                              
-                                             @if($next_rank)
+                                             <?php if($next_rank): ?>
                                                  <div class="w-100 p-3 rounded bg-light mb-3 text-left" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid #f1f5f9;">
                                                      <span class="text-muted d-block mb-1">Next Rank Objective:</span>
-                                                     <strong class="text-primary d-block" style="font-size: 0.95rem;">{{ $next_rank->name }}</strong>
-                                                     <small class="text-muted d-block mt-1">Reward: <strong>{{ $next_rank->rewardLabel() }}</strong></small>
+                                                     <strong class="text-primary d-block" style="font-size: 0.95rem;"><?php echo e($next_rank->name); ?></strong>
+                                                     <small class="text-muted d-block mt-1">Reward: <strong><?php echo e($next_rank->rewardLabel()); ?></strong></small>
                                                  </div>
-                                             @endif
+                                             <?php endif; ?>
                                              
-                                             <a href="{{ route('user.referral.rank') }}" class="btn btn-outline-primary font-weight-bold w-100 py-2 mt-2" style="border-radius: 8px; font-size: 12px;">
+                                             <a href="<?php echo e(route('user.referral.rank')); ?>" class="btn btn-outline-primary font-weight-bold w-100 py-2 mt-2" style="border-radius: 8px; font-size: 12px;">
                                                  <i class="fas fa-award mr-1"></i> View Ranks
                                              </a>
                                          </div>
@@ -2272,7 +2294,7 @@ $user=db::SELECT("SELECT * from users");
 
  </div>
  </div>
- @if($package!='FT')
+ <?php if($package!='FT'): ?>
 
 
  <div class="row">
@@ -2356,12 +2378,12 @@ $user=db::SELECT("SELECT * from users");
 
 
 
-<!-- <a href="{{route('user.dashboard.events')}}" class="btn btn-primary">all events</a> -->
+<!-- <a href="<?php echo e(route('user.dashboard.events')); ?>" class="btn btn-primary">all events</a> -->
 
           <div class="recentEvent col-12 col-sm-6 shadow col-md mx-md-2 my-2 py-3 px-4">
 
             <div class="recbox">
-                <a href="{{route('user.dashboard.events')}}" class="box  d-flex justify-content-between align-items-center py-2  px-5">
+                <a href="<?php echo e(route('user.dashboard.events')); ?>" class="box  d-flex justify-content-between align-items-center py-2  px-5">
                     <div class="font-weight-bold"> <h4 class="my-3 mx-2 font-weight-bold">Recent Events </h4></div>
                     <div>
 
@@ -2369,25 +2391,25 @@ $user=db::SELECT("SELECT * from users");
                         <div class="allevents">all events</div>
                     </div>
                 </a>
-                @if($events)
+                <?php if($events): ?>
                <span class="ml-2 bg bg-primary"> No events reported yet</span>
 
-               @else
+               <?php else: ?>
            <?php foreach ($events as $event) { ?>
                 <div class="recbox">
                 <a href="#" class="box  d-flex justify-content-between align-items-center py-2  px-5">
-                    <div class="font-weight-bold">{{$event->desc}}</div>
+                    <div class="font-weight-bold"><?php echo e($event->desc); ?></div>
                     <div>
-                        <div class="date">{{$event->date_on}}</div>
-                         @if($event->status=='pending')
-                              <div class="status status-pending">{{$event->status}}</div>
-                              @else
-                              <div class="status status-verified">{{$event->status}}</div>
-                              @endif
+                        <div class="date"><?php echo e($event->date_on); ?></div>
+                         <?php if($event->status=='pending'): ?>
+                              <div class="status status-pending"><?php echo e($event->status); ?></div>
+                              <?php else: ?>
+                              <div class="status status-verified"><?php echo e($event->status); ?></div>
+                              <?php endif; ?>
                     </div>
                 </a>
             </div>
-            <?php } ?>@endif
+            <?php } ?><?php endif; ?>
         </div>
 
 
@@ -2446,7 +2468,7 @@ $user=db::SELECT("SELECT * from users");
 
 
         </script>
-@endif
+<?php endif; ?>
 
 
 
@@ -2456,27 +2478,27 @@ $user=db::SELECT("SELECT * from users");
 
  </div>
 
-  <script src="{{asset('assets/a/plugins/jquery/jquery.min.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery/jquery.min.js')); ?>"></script>
   <!-- Bootstrap 4 -->
-  <script src="{{asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/sparklines/sparkline.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/sparklines/sparkline.js')); ?>"></script>
 
   <!-- AdminLTE App -->
 
-  <script src="{{asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/adminlte.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/adminlte.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/pages/dashboard2.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/tree.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/chart.js/Chart.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery-ui/jquery-ui.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/adminlte.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/adminlte.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard2.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/tree.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/chart.js/Chart.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/jquery-knob/jquery.knob.min.js')); ?>"></script>
 
-  <script src="{{asset('assets/a/dist/js/pages/dashboard.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/summernote/summernote-bs4.min.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/daterangepicker/daterangepicker.js')}}"></script>
-  <script src="{{asset('assets/a/plugins/moment/moment.min.js')}}"></script>
-  <script src="{{asset('assets/a/dist/js/pages/dashboard3.js')}}"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/summernote/summernote-bs4.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/daterangepicker/daterangepicker.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/plugins/moment/moment.min.js')); ?>"></script>
+  <script src="<?php echo e(asset('assets/a/dist/js/pages/dashboard3.js')); ?>"></script>
     <script>
 
       var options = {
@@ -2581,3 +2603,4 @@ chart2.render();
 
 
   </script>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/dashboard.blade.php ENDPATH**/ ?>

@@ -248,6 +248,14 @@ class UserDashboardController extends Controller{
         }
         $freeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
         $availableToken = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+
+        $teamLeaderRecord = \App\Models\TeamLeader::where('User_name', $user->user)->first();
+        $isTeamLeader     = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) || ($teamLeaderRecord && $teamLeaderRecord->status === 'confirmed');
+
+        // Net unreleased locked tokens (excluding tokens already approved/released to Available)
+        $alreadyReleasedTokens = \App\Models\TeamLeaderTokenRelease::releasedTokensForUser($user->id);
+        $remainingLockedTokens = max(0, $lockedToken - $alreadyReleasedTokens);
+        $totalTokens           = (float) ($remainingLockedTokens + $freeToken + $availableToken);
         // GAS_FEE is admin-only — not read here
         $COMMISSION = (float) $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
 
@@ -347,9 +355,13 @@ class UserDashboardController extends Controller{
             "ranks"                  => $ranks,
             "amount"                 => 0,
             // Token balances
-            "locked"                 => $lockedToken,
+            "locked"                 => $remainingLockedTokens,
+            "initial_locked"         => $lockedToken,
+            "released_tokens"        => $alreadyReleasedTokens,
             "free_token"             => $freeToken,
             "available_token"        => $availableToken,
+            "total_tokens"           => $totalTokens,
+            "is_team_leader"         => $isTeamLeader,
             "fcoin"                  => number_format($freeToken, 0),
             "commission"             => $COMMISSION,
             "referral_bonus_totals"  => $referralBonusTotals,

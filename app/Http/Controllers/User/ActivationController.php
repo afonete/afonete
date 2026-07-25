@@ -65,6 +65,30 @@ public function upgrade(Request $request){
             if ($results->stutus=="used") {
                 return redirect()->route('user.dashboard.activate')->with('message',' the activation code  has been expired, please try to buy an other');
              }
+
+            // Exclusivity check: Application-generated leader codes are restricted exclusively to that specific team leader
+            $isApplicationLeaderCode = in_array($results->package, ['TEAM_LEADER', 'SUPER_LEADER']) && !$results->is_auto_code;
+
+            if ($isApplicationLeaderCode) {
+                $assignedEmail = strtolower(trim((string)$results->email));
+                $userEmail     = strtolower(trim((string)$user->email));
+
+                $matchingLeader = TeamLeader::where('User_name', $user->user)
+                    ->orWhere('Email', $user->email)
+                    ->first();
+
+                $isEmailMatch = ($assignedEmail !== '' && $assignedEmail === $userEmail);
+                $isLeaderMatch = $matchingLeader && (
+                    strtolower(trim((string)$matchingLeader->Email)) === $assignedEmail ||
+                    strtolower(trim((string)$matchingLeader->Email)) === $userEmail
+                );
+
+                if (!$isEmailMatch && !$isLeaderMatch) {
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$results->email}'). You cannot use it on this account.");
+                }
+            }
+
            else{
             try {
 
@@ -140,6 +164,9 @@ public function upgrade(Request $request){
                         "category_id" => 1
                     ]);
                     $pay =  $results->payments()->save($create_payable);
+
+                    // Ensure Team Leader record & Super Leader credits if leader code
+                    $this->ensureTeamLeaderRecord($user, $results);
 
                     $user->refresh();
                     $target = $this->dashboardRouteForUser($user);
@@ -221,6 +248,30 @@ public function g_upgrade(Request $request){
             return redirect()->route('user.package')->with('message', 'Invalid Activation Code. Please try to buy another.');
 
         }
+
+        // Exclusivity check: Application-generated leader codes are restricted exclusively to that specific team leader
+        $isApplicationLeaderCode = in_array($activation->package, ['TEAM_LEADER', 'SUPER_LEADER']) && !$activation->is_auto_code;
+
+        if ($isApplicationLeaderCode) {
+            $assignedEmail = strtolower(trim((string)$activation->email));
+            $userEmail     = strtolower(trim((string)$userA->email));
+
+            $matchingLeader = TeamLeader::where('User_name', $userA->user)
+                ->orWhere('Email', $userA->email)
+                ->first();
+
+            $isEmailMatch = ($assignedEmail !== '' && $assignedEmail === $userEmail);
+            $isLeaderMatch = $matchingLeader && (
+                strtolower(trim((string)$matchingLeader->Email)) === $assignedEmail ||
+                strtolower(trim((string)$matchingLeader->Email)) === $userEmail
+            );
+
+            if (!$isEmailMatch && !$isLeaderMatch) {
+                return redirect()->route('user.package')
+                    ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$activation->email}'). You cannot use it on this account.");
+            }
+        }
+
         else{
 
                     $user->has_paid_package=$activation->package;
@@ -286,6 +337,9 @@ public function g_upgrade(Request $request){
                         "category_id" => 1
                     ]);
                     $pay =  $activation->payments()->save($create_payable);
+
+                    // Ensure Team Leader record & Super Leader credits if leader code
+                    $this->ensureTeamLeaderRecord($userA, $activation);
 
                     if($user_update && $update){
                             $user = User::find($userA->id);
@@ -514,4 +568,80 @@ public function reactivateCredit(Request $request){
     }
 
 }
+
+    private function ensureTeamLeaderRecord($user, $activation)
+    {
+        if (in_array($activation->package, ['TEAM_LEADER', 'SUPER_LEADER'])) {
+            $teamLeader = TeamLeader::where('User_name', $user->user)
+                ->orWhere('Email', $user->email)
+                ->first();
+
+            $leaderData = [
+                'Names'            => $user->name ?: $user->user,
+                'User_name'        => $user->user,
+                'Email'            => $user->email,
+                'Phone'            => $user->phone ?: '',
+                'Country'          => $user->country ?: '',
+                'status'           => 'confirmed',
+                'leadership_level' => $activation->package,
+            ];
+
+            if ($teamLeader) {
+                $teamLeader->update($leaderData);
+            } else {
+                $teamLeader = TeamLeader::create($leaderData);
+            }
+
+            if ($activation->package === 'SUPER_LEADER') {
+                $conditions = [];
+                if (!empty($activation->credit_conditions)) {
+                    $conditions = json_decode($activation->credit_conditions, true) ?: [];
+                }
+
+                $creditAmt             = isset($conditions['credit_amount']) ? (float)$conditions['credit_amount'] : (float)($activation->price ?: 1000);
+                $salesTurnoverTarget   = isset($conditions['sales_turnover_target']) ? (float)$conditions['sales_turnover_target'] : 10000;
+                $turnoverTargetPercent = isset($conditions['turnover_target_percent']) ? (float)$conditions['turnover_target_percent'] : 0;
+                $turnoverRewardPercent = isset($conditions['turnover_reward_percent']) ? (float)$conditions['turnover_reward_percent'] : 0;
+                $autoWithdrawalPercent = isset($conditions['auto_withdrawal_percent']) ? (float)$conditions['auto_withdrawal_percent'] : 0;
+
+                $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $teamLeader->id)->first();
+
+                if (!$slCredit) {
+                    \App\Models\SuperLeaderCredit::create([
+                        'team_leader_id'          => $teamLeader->id,
+                        'user_id'                 => $user->id,
+                        'activation_id'           => $activation->id,
+                        'credit_amount'           => $creditAmt,
+                        'remaining_credit'        => $creditAmt,
+                        'cashout_amount'          => 0,
+                        'sales_turnover_target'   => $salesTurnoverTarget,
+                        'turnover_target_percent' => $turnoverTargetPercent,
+                        'turnover_reward_percent' => $turnoverRewardPercent,
+                        'auto_withdrawal_percent' => $autoWithdrawalPercent,
+                        'status'                  => 'active',
+                        'activated_at'            => now(),
+                    ]);
+                } else {
+                    $slCredit->update([
+                        'user_id'                 => $user->id,
+                        'activation_id'           => $activation->id,
+                        'credit_amount'           => $creditAmt,
+                        'remaining_credit'        => $creditAmt,
+                        'sales_turnover_target'   => $salesTurnoverTarget,
+                        'turnover_target_percent' => $turnoverTargetPercent,
+                        'turnover_reward_percent' => $turnoverRewardPercent,
+                        'auto_withdrawal_percent' => $autoWithdrawalPercent,
+                        'status'                  => 'active',
+                        'activated_at'            => now(),
+                    ]);
+                }
+
+                // Sync to legacy credits table for dashboard compatibility
+                \App\Models\Credit::updateOrCreate(
+                    ['activation_id' => $activation->id],
+                    ['amount' => $creditAmt, 'status' => 'approved']
+                );
+            }
+        }
+    }
 }

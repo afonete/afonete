@@ -16,6 +16,8 @@ class Activations extends Model
 'code',
 'package',
 'stutus',
+'is_auto_code',
+'credit_conditions',
 'token',
 'price','email','task','withdrawmax','period',
 'percentage','countdown'

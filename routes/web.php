@@ -384,6 +384,12 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     
     // ── TEAM LEADERS MANAGEMENT (admin) ──
     Route::get('admin/team-leaders', [AdminController::class, 'teamLeadersList'])->name('admin.team-leaders.index');
+    Route::get('admin/tm-auto-activations', [AdminController::class, 'tmAutoActivationsIndex'])->name('admin.tm-auto-activations.index');
+    Route::post('admin/tm-auto-activations/store', [AdminController::class, 'tmAutoActivationStore'])->name('admin.tm-auto-activations.store');
+    Route::post('admin/tm-auto-activations/{id}/delete', [AdminController::class, 'tmAutoActivationDelete'])->name('admin.tm-auto-activations.delete');
+    Route::get('admin/team-leaders-token-releases', [AdminController::class, 'teamLeaderTokenReleases'])->name('admin.team-leaders.token-releases');
+    Route::post('admin/team-leaders-token-releases/{id}/approve', [AdminController::class, 'approveTokenRelease'])->name('admin.team-leaders.token-releases.approve');
+    Route::post('admin/team-leaders-token-releases/{id}/reject', [AdminController::class, 'rejectTokenRelease'])->name('admin.team-leaders.token-releases.reject');
     Route::get('admin/team-leaders/{id}', [AdminController::class, 'showTeamLeader'])->name('admin.team-leaders.show');
     Route::post('admin/team-leaders/{id}/approve', [AdminController::class, 'approveTeamLeader'])->name('admin.team-leaders.approve');
     Route::post('admin/team-leaders/credit/{creditId}/update', [AdminController::class, 'updateCredit'])->name('admin.team-leaders.credit.update');
