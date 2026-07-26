@@ -43,9 +43,25 @@ class CalculateDailyIncome extends Command
                 continue;
             }
 
-            $package2 = Adventures::find($package->payable_id);
+            $package2 = null;
+            if ($package->payable_type && $package->payable_id) {
+                $package2 = $package->payable_type::find($package->payable_id);
+            }
+            if (!$package2 && $package->payable_id) {
+                $package2 = Adventures::find($package->payable_id);
+            }
+            if (!$package2 && $package->package) {
+                $package2 = Adventures::where('name', $package->package)->first();
+            }
+            if (!$package2 && (float)($package->paid ?? $package->amount ?? 0) > 0) {
+                $pPaid = (float) ($package->paid ?? $package->amount ?? 0);
+                $package2 = Adventures::where('min_amount', '<=', $pPaid)
+                    ->where('max_amount', '>=', $pPaid)
+                    ->first();
+            }
+
             if (!$package2) {
-                $this->warn("Adventure package {$package->payable_id} not found for payment {$package->id}, skipping.");
+                $this->warn("Adventure package could not be resolved for payment {$package->id}, skipping.");
                 continue;
             }
 

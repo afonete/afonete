@@ -136,7 +136,9 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $rows->links() }}</div>
+            <div class="p-3 d-flex justify-content-center border-top">
+                {{ $rows->links('pagination::bootstrap-4') }}
+            </div>
             @endif
         </div>
     </div>

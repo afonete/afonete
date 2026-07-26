@@ -148,12 +148,11 @@ class PaymentController extends Controller
         if ($deposit->status === 'pending') {
             $deposit->update([
                 'status'  => 'cancelled',
-                'comment' => trim(($deposit->comment ? $deposit->comment . "\n" : '') . 'User cancelled this automatic TRC-20 payment invoice.'),
+                'comment' => trim(($deposit->comment ? $deposit->comment . "\n" : '') . 'User cancelled this automatic TRC-20 payment invoice to use manual deposit option.'),
             ]);
         }
 
-        $route = $deposit->package_type === 'FC' ? 'user.package' : 'user.venture';
-        return redirect()->route($route)->with('message', 'Automatic TRC-20 payment cancelled. You can choose another payment option.');
+        return redirect()->route('user.manual-deposit')->with('message', 'Automatic TRC-20 payment order cancelled. You can now complete your payment using the manual deposit option.');
     }
 
     public function manualDepositPage()
@@ -1407,6 +1406,9 @@ $email=$emaili;
  public function ventures(Request $venture){ // 2000
 
     $user = Auth::user();
+    $highestUvpAmount = $user->highestUvpPackageAmount();
+    $newAmount = (float) $venture->amount_invest;
+
     $recent = $user->investments()
                         ->where("is_expired", 0)
                         ->where('status', 1)
@@ -1422,6 +1424,18 @@ $email=$emaili;
         $requiredAmount = -($requiredAmount);
     }
     
+    if ($highestUvpAmount > 0 && $newAmount < $highestUvpAmount) {
+        return view("user.confirm-package-payments-error",[
+            "amount"=>$venture->amount_invest,
+            "venture"=>$adventure,
+            "currentBalance"=>$currentBalance,
+            "requiredAmount"=>$requiredAmount,
+            "status"=>$status,
+            "recent"=>(object)['paid' => $highestUvpAmount],
+            "error_message" => "UVP Package Purchase Error: You cannot purchase a UVP package ($" . number_format($newAmount, 2) . ") below your highest previously purchased UVP package amount ($" . number_format($highestUvpAmount, 2) . "). Please enter an investment amount of $" . number_format($highestUvpAmount, 2) . " or higher."
+        ]);
+    }
+
     if($recent && $recent->paid >= $venture->amount_invest  && $recent->category == 'VENTURE' ){
         return view("user.confirm-package-payments-error",[
             "amount"=>$venture->amount_invest,

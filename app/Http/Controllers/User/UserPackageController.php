@@ -41,11 +41,19 @@ class UserpackageController extends Controller
     }
 
     public function buypackages(){
+        $user = Auth::user();
         $Adventures = Adventures::all();
         $MyDepositBalance = $this->MyDepositBalance();
         $fc = FCpackage::all();
+        $highestUvpPackageAmount = $user ? $user->highestUvpPackageAmount() : 0.0;
         
-        return view("user.buypackages",['Adventures'=>$Adventures,'balance'=>$MyDepositBalance,'fc'=>$fc]);
+        return view("user.buypackages", [
+            'Adventures'              => $Adventures,
+            'balance'                 => $MyDepositBalance,
+            'fc'                      => $fc,
+            'highestUvpPackageAmount' => $highestUvpPackageAmount,
+            'highestPackageAmount'    => $highestUvpPackageAmount
+        ]);
     }
 
     public function claim(Request $request){

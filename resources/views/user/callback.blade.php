@@ -1407,11 +1407,27 @@ width:138px;
 }
 </style>
 
+@php
+    $authUser = Auth::user();
+    $smartBackUrl = url('/');
+
+    if ($authUser) {
+        $isSignedContract = ($authUser->contract === 'Signed');
+        $isVerified       = ($authUser->email_verified_at !== null || $authUser->activation_status === 'verified' || $authUser->has_request === 'approved');
+        $isFreeUser       = ($authUser->has_free_package === 'yes');
+        $hasPaidPackage   = !empty($authUser->has_paid_package) && !in_array(strtolower(trim($authUser->has_paid_package)), ['no', 'standard', '']);
+
+        if ($isSignedContract || $isVerified || $isFreeUser || $hasPaidPackage) {
+            $smartBackUrl = route('user.dashboard');
+        }
+    }
+@endphp
+
 <div id="exampleModal" class="modal" data-backdrop="static" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
         <div class="modal-content" style="background: linear-gradient(190deg, #2ecd71 60%, #27ae60 40.1%); color: black; width: auto; margin: 0 auto;">
             <div class="flex justify-content-between mb-4 fc_container"">
-                <a href="/"><button type="button" class="btn btn-outline-info btn-primary"> Back</button></a>
+                <a href="{{ $smartBackUrl }}"><button type="button" class="btn btn-outline-info btn-primary"><i class="fas fa-arrow-left mr-1"></i> Back</button></a>
                 <a class="float-right" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()">
                     <button type="button" class="btn btn-outline-info btn-danger"> Logout</button>
                 </a>

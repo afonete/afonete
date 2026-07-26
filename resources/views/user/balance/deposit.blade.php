@@ -31,8 +31,8 @@ $directDepositAddress = $directDepositAddress ?? null;
 
         <div class="container-fluid py-3">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="main_head mb-0" style="font-color: white">Deposit to Your Account</h1>
-            <a href="{{ route('user.deposits.history') }}" class="btn btn-sm btn-outline-light">
+            <h1 class="main_head mb-0 text-white font-weight-bold" style="color: #ffffff !important; font-size: 1.75rem;">Deposit to Your Account</h1>
+            <a href="{{ route('user.deposits.history') }}" class="btn btn-sm btn-outline-light font-weight-bold">
                 <i class="fas fa-list mr-1"></i> Full Deposit History
             </a>
         </div>
@@ -42,17 +42,12 @@ $directDepositAddress = $directDepositAddress ?? null;
         @if($errors->any())<div class="alert alert-danger mx-3">{{ $errors->first() }}</div>@endif
 
         {{-- ═══════════════════════════════════════════════════
-             DEPOSIT METHOD TABS (Crypto / Advcash / Perfect Money)
+             DEPOSIT METHOD TABS (Manual Crypto / Advcash / Perfect Money)
         ═══════════════════════════════════════════════════ --}}
         <div class="px-3">
             <ul class="nav nav-pills mb-3" role="tablist" id="depositTabs">
                 <li class="nav-item">
-                    <a class="nav-link active text-white" data-toggle="pill" href="#tab-direct-tron">
-                        <i class="fas fa-bolt mr-1"></i>Auto USDT TRC20
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-white" data-toggle="pill" href="#tab-crypto">
+                    <a class="nav-link active text-white" data-toggle="pill" href="#tab-crypto">
                         <i class="fab fa-bitcoin mr-1"></i>Manual Crypto <small class="text-muted">({{ $cryptoWallets->count() }})</small>
                     </a>
                 </li>
@@ -66,64 +61,11 @@ $directDepositAddress = $directDepositAddress ?? null;
                         <i class="fas fa-coins mr-1"></i>Perfect Money <small class="text-muted">({{ $perfectMoneyWallets->count() }})</small>
                     </a>
                 </li>
-                {{-- <li class="nav-item">
-                    <a class="nav-link text-white" data-toggle="pill" href="#tab-auto">
-                        <i class="fas fa-bolt mr-1"></i>Auto (Legacy)
-                    </a>
-                </li> --}}
             </ul>
 
             <div class="tab-content">
-                {{-- ───────────────── AUTO USDT TRC20 TAB ───────────────── --}}
-                <div class="tab-pane fade show active" id="tab-direct-tron">
-                    <div class="card mb-3" style="background:#111; border:1px solid #333; border-radius:8px;">
-                        <div class="card-header" style="background:#222; border-bottom:1px solid #444;">
-                            <h5 class="text-white mb-0"><i class="fas fa-bolt text-warning mr-2"></i>Automatic USDT TRC20 Deposit</h5>
-                            <small class="text-muted">Send USDT on the TRON/TRC20 network to your unique address. The system checks TronGrid and credits your DEPOSIT balance automatically.</small>
-                        </div>
-                        <div class="card-body">
-                            @if($directDepositAddress)
-                                @php
-                                    $directPayload = $directDepositAddress->address;
-                                    $directQr = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . urlencode($directPayload) . '&margin=10';
-                                @endphp
-                                <div class="row align-items-center">
-                                    <div class="col-md-4 text-center mb-3">
-                                        <img src="{{ $directQr }}" alt="USDT TRC20 QR" style="width:180px; height:180px; background:#fff; padding:8px; border-radius:8px;">
-                                        <div class="small text-muted mt-2">Scan with a TRON-compatible wallet</div>
-                                    </div>
-                                    <div class="col-md-8">
-                                        <div class="alert alert-info">
-                                            <strong>Network:</strong> TRON / TRC20<br>
-                                            <strong>Currency:</strong> USDT<br>
-                                            <strong>Minimum:</strong> ${{ number_format($minDeposit, 2) }}
-                                        </div>
-                                        <label class="text-white font-weight-bold">Your unique deposit address</label>
-                                        <div class="d-flex align-items-center">
-                                            <code id="directTronAddress" class="text-warning flex-grow-1" style="word-break:break-all; font-size:14px; background:#000; padding:8px 10px; border-radius:4px;">{{ $directDepositAddress->address }}</code>
-                                            <button type="button" class="btn btn-sm btn-outline-warning ml-2" data-copy-target="#directTronAddress">
-                                                <i class="fas fa-copy"></i> Copy
-                                            </button>
-                                        </div>
-                                        <div class="small text-danger mt-3">
-                                            ⚠ Only send <strong>USDT TRC20</strong>. Do not send ERC20/BEP20/other tokens to this address.
-                                        </div>
-                                        <div class="small text-muted mt-2">
-                                            Deposits usually appear after the scheduled blockchain scanner runs. Keep your transaction hash for support.
-                                        </div>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="alert alert-warning mb-0">
-                                    Automatic address generation is not available right now. The signer service may not be running/configured yet. You can still use manual crypto deposit below.
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
                 {{-- ───────────────── CRYPTO TAB ───────────────── --}}
-                <div class="tab-pane fade" id="tab-crypto">
+                <div class="tab-pane fade show active" id="tab-crypto">
                     @if($cryptoWallets->isEmpty())
                         <div class="alert alert-warning">No crypto deposit wallets configured yet. Contact admin.</div>
                     @else
@@ -484,30 +426,6 @@ $directDepositAddress = $directDepositAddress ?? null;
                         </div>
                     </div>
                 </div> --}}
-            </div>
-        </div>
-
-        {{-- ═══════════════════════════════════════════════════
-             AUTOMATIC UNIQUE TRC-20 ADDRESS
-        ═══════════════════════════════════════════════════ --}}
-        <div class="mt-4 px-3">
-            <h4 class="text-white mb-3"><i class="fas fa-bolt mr-2 text-warning"></i>Automatic USDT TRC-20 Deposit</h4>
-            <div class="row">
-                @if($directDepositAddress)
-                    <div class="col-md-8 mb-3">
-                        <div class="card" style="background:#111; border:1px solid #1e3a8a; border-radius:8px;">
-                            <div class="card-header" style="background:#0f172a; border-bottom:1px solid #1e3a8a;">
-                                <h5 class="text-white mb-0">USDT TRC-20 Automatic Deposit</h5>
-                                <small class="text-muted">TRON / TRC-20 only</small>
-                            </div>
-                            <div class="card-body">
-                                <code id="tronAutoDepositAddr" class="d-block text-info" style="word-break:break-all; background:#000; padding:10px; border-radius:4px;">{{ $directDepositAddress->address }}</code>
-                                <button type="button" class="btn btn-sm btn-outline-info mt-2" data-copy-target="#tronAutoDepositAddr"><i class="fas fa-copy mr-1"></i>Copy TRC-20 Address</button>
-                                <div class="alert alert-warning py-2 small mt-3 mb-0"><strong>Important:</strong> Only send USDT on <strong>TRC-20 / TRON</strong>. Network fees must be paid separately by your wallet/exchange so the full deposit amount arrives.</div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
             </div>
         </div>
 

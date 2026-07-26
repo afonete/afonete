@@ -104,7 +104,10 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3"><?php echo e($investments->links()); ?></div>
+            <div class="p-3 d-flex justify-content-center border-top">
+                <?php echo e($investments->links('pagination::bootstrap-4')); ?>
+
+            </div>
             <?php endif; ?>
         </div>
     </div>

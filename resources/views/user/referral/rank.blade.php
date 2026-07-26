@@ -113,7 +113,9 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $history->links() }}</div>
+            <div class="p-3 d-flex justify-content-center border-top">
+                {{ $history->links('pagination::bootstrap-4') }}
+            </div>
             @endif
         </div>
     </div>

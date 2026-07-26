@@ -25,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Blade::component('x-button', \App\View\Components\Button::class);
+        \Illuminate\Pagination\Paginator::useBootstrap();
     }
 }

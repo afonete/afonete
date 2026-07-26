@@ -1026,22 +1026,24 @@ public function getTeamTree(Request $request,$id){
         $user    = Auth::user();
         $freeBal = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
         $symbol  = \App\Models\TokenSetting::currentSymbol();
+        $myTransferCode = $user->getTransferCode();
+
         $history = \App\Models\Transaction::where('user_id', $user->id)
                     ->where('transaction_type', 'TOKEN_TRANSFER')
                     ->latest()->take(20)->get()
                     ->map(function ($t) {
                         $d = json_decode($t->transaction_details, true) ?? [];
-                        $t->to_name       = $d['to_name'] ?? ($d['to_user'] ?? '—');
-                        $t->to_username   = $d['to_username'] ?? ($d['to_user_column'] ?? '—');
-                        $t->to_activation = $d['to_activation'] ?? '—';
-                        $t->tok_amt       = $d['token_amount'] ?? 0;
+                        $t->to_name          = $d['to_name'] ?? ($d['to_user'] ?? '—');
+                        $t->to_username      = $d['to_username'] ?? ($d['to_user_column'] ?? '—');
+                        $t->to_transfer_code = $d['to_transfer_code'] ?? ($d['to_activation'] ?? '—');
+                        $t->tok_amt          = $d['token_amount'] ?? 0;
                         return $t;
                     });
 
-        return view('user.token.transfer', compact('freeBal', 'symbol', 'history'));
+        return view('user.token.transfer', compact('freeBal', 'symbol', 'history', 'myTransferCode'));
     }
 
-    /** AJAX: look up recipient by activation code OR username (`users.user`). */
+    /** AJAX: look up recipient by 7-digit Transfer Code OR username (`users.user`). */
     public function tokenTransferLookup(Request $request)
     {
         $identifier = trim((string) $request->query('identifier', $request->query('recipient', $request->query('q', ''))));
@@ -1049,7 +1051,7 @@ public function getTeamTree(Request $request,$id){
         if ($identifier === '') {
             return response()->json([
                 'found' => false,
-                'message' => 'Enter recipient activation code or username.',
+                'message' => 'Enter recipient username or 7-digit Transfer Code.',
             ]);
         }
 
@@ -1058,15 +1060,15 @@ public function getTeamTree(Request $request,$id){
         if (!$recipient) {
             return response()->json([
                 'found' => false,
-                'message' => 'No user found with that activation code or username.',
+                'message' => 'No user found with that username or 7-digit Transfer Code.',
             ]);
         }
 
         return response()->json([
-            'found'      => true,
-            'name'       => $recipient->name,
-            'username'   => $recipient->user,
-            'activation' => $recipient->activation,
+            'found'         => true,
+            'name'          => $recipient->name,
+            'username'      => $recipient->user,
+            'transfer_code' => $recipient->getTransferCode(),
         ]);
     }
 
@@ -1080,13 +1082,13 @@ public function getTeamTree(Request $request,$id){
 
         return \App\Models\User::query()
             ->where(function ($query) use ($identifier) {
-                $query->where('activation', $identifier)
-                    ->orWhere('user', $identifier);
+                $query->where('user', $identifier)
+                    ->orWhere('transfer_code', $identifier);
             })
             ->when($excludeUserId, function ($query) use ($excludeUserId) {
                 $query->where('id', '!=', $excludeUserId);
             })
-            ->select('id', 'name', 'user', 'activation')
+            ->select('id', 'name', 'user', 'transfer_code', 'email')
             ->first();
     }
 
@@ -1097,14 +1099,14 @@ public function getTeamTree(Request $request,$id){
             'recipient_identifier' => 'required|string|max:100',
             'token_amount'         => 'required|numeric|min:1',
         ], [
-            'recipient_identifier.required' => 'Please enter recipient activation code or username.',
+            'recipient_identifier.required' => 'Please enter recipient username or 7-digit Transfer Code.',
         ]);
 
         $identifier = trim((string) $request->recipient_identifier);
         $recipient  = $this->findTokenTransferRecipient($identifier, $user->id);
 
         if (!$recipient) {
-            return back()->withInput()->with('error', 'No user found with that activation code or username.');
+            return back()->withInput()->with('error', 'No user found with that username or 7-digit Transfer Code.');
         }
 
         if ($recipient->id === $user->id) {
@@ -1140,20 +1142,20 @@ public function getTeamTree(Request $request,$id){
             'transaction_type'    => 'TOKEN_TRANSFER',
             'receiver_id'         => $recipient->id,
             'transaction_details' => json_encode([
-                'token_amount' => $tokenAmount,
-                'to_name'       => $recipient->name,
-                'to_username'   => $recipient->user,
-                'to_activation' => $recipient->activation,
-                'to_user'       => $recipient->name,
-                'from_user'     => $user->name,
-                'from_username' => $user->user,
-                'date'         => now()->toDateTimeString(),
-                'status'       => 'completed',
+                'token_amount'      => $tokenAmount,
+                'to_name'           => $recipient->name,
+                'to_username'       => $recipient->user,
+                'to_transfer_code'  => $recipient->getTransferCode(),
+                'to_user'           => $recipient->name,
+                'from_user'         => $user->name,
+                'from_username'     => $user->user,
+                'date'              => now()->toDateTimeString(),
+                'status'            => 'completed',
             ]),
         ]);
 
         return back()->with('success', number_format($tokenAmount, 0) . ' ' .
-            \App\Models\TokenSetting::currentSymbol() . ' transferred to ' . $recipient->name . ' (@' . $recipient->user . ').');
+            \App\Models\TokenSetting::currentSymbol() . ' transferred to ' . $recipient->name . ' (@' . $recipient->user . ', Transfer Code: ' . $recipient->getTransferCode() . ').');
     }
 
     // ═══════════════════════════════════════════════════════════════════════

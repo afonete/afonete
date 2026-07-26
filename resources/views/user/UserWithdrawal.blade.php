@@ -185,7 +185,7 @@
             {{-- Pagination Links --}}
             @if($history->hasPages())
                 <div class="mt-4 flex justify-center text-sm">
-                    {{ $history->links() }}
+                    {{ $history->links('pagination::bootstrap-4') }}
                 </div>
             @endif
         </div>

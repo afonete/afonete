@@ -50,6 +50,39 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $appends = ['profile_photo_url'];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->transfer_code)) {
+                do {
+                    $code = (string) rand(1000000, 9999999);
+                } while (static::where('transfer_code', $code)->exists());
+                $user->transfer_code = $code;
+            }
+        });
+    }
+
+    /**
+     * Get or auto-generate unique 7-digit transfer code for token transfers.
+     */
+    public function getTransferCode(): string
+    {
+        if (!empty($this->transfer_code)) {
+            return (string) $this->transfer_code;
+        }
+
+        do {
+            $code = (string) rand(1000000, 9999999);
+        } while (static::where('transfer_code', $code)->exists());
+
+        $this->transfer_code = $code;
+        $this->save();
+
+        return $code;
+    }
+
     /* ===========================================================
      *  REFERRAL RELATIONSHIPS
      * =========================================================== */
@@ -68,6 +101,41 @@ class User extends Authenticatable implements MustVerifyEmail
     public function referralBonuses(): HasMany
     {
         return $this->hasMany(ReferralBonus::class, 'user_id');
+    }
+
+    /**
+     * Get the highest previously purchased UVP (VENTURE) package amount for this user.
+     * Enforces the rule that users cannot buy or activate a UVP package below their highest UVP package tier.
+     */
+    public function highestUvpPackageAmount(): float
+    {
+        $maxPayment = \App\Models\Payment::where('user', $this->id)
+            ->where('status', 1)
+            ->where(function ($q) {
+                $q->where('category', 'VENTURE')
+                  ->orWhere('category', 'UVP')
+                  ->orWhere('payable_type', \App\Models\Adventures::class);
+            })
+            ->max(\Illuminate\Support\Facades\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(10,2))'));
+
+        $adventureNames = \App\Models\Adventures::pluck('name')->toArray();
+        $maxActivation = \App\Models\Activations::where('user_id', $this->id)
+            ->where('stutus', 'used')
+            ->where(function ($q) use ($adventureNames) {
+                $q->whereIn('package', ['VENTURE', 'UVP'])
+                  ->orWhereIn('package', $adventureNames);
+            })
+            ->max(\Illuminate\Support\Facades\DB::raw('CAST(COALESCE(price, 0) AS DECIMAL(10,2))'));
+
+        return max((float) ($maxPayment ?: 0.0), (float) ($maxActivation ?: 0.0));
+    }
+
+    /**
+     * Alias for general package checks.
+     */
+    public function highestPackageAmount(): float
+    {
+        return $this->highestUvpPackageAmount();
     }
 
     /** Bonuses this user generated for their upline (because of their own purchases) */

@@ -120,16 +120,29 @@ class UserDashboardController extends Controller{
         }
 
         foreach ($activePackages as $p) {
-            $pAdv = \App\Models\Adventures::find($p->payable_id);
-            $packagePaid = (float) ($p->paid ?? 0);
-            if ($pAdv && (float)$pAdv->percentage > 0) {
-                $poolCapital = $packagePaid * 80 / 100;
-                $pkgRate = $poolCapital * ((float) $pAdv->percentage / 100);
-            } else {
-                // Fallback to 2% daily as shown in UI "Rate: 2% / day"
-                $poolCapital = $packagePaid * 80 / 100;
-                $pkgRate = $poolCapital * 0.02;
+            $pAdv = null;
+            if ($p->payable_type && $p->payable_id) {
+                $pAdv = $p->payable_type::find($p->payable_id);
             }
+            if (!$pAdv && $p->payable_id) {
+                $pAdv = \App\Models\Adventures::find($p->payable_id);
+            }
+            if (!$pAdv && $p->package) {
+                $pAdv = \App\Models\Adventures::where('name', $p->package)->first();
+            }
+            if (!$pAdv && (float)($p->paid ?? $p->amount ?? 0) > 0) {
+                $pPaid = (float) ($p->paid ?? $p->amount ?? 0);
+                $pAdv = \App\Models\Adventures::where('min_amount', '<=', $pPaid)
+                    ->where('max_amount', '>=', $pPaid)
+                    ->first();
+            }
+
+            $packagePaid = (float) ($p->paid ?? $p->amount ?? 0);
+            $percentage = $pAdv && (float)$pAdv->percentage > 0 ? (float)$pAdv->percentage : 2.5;
+
+            $poolCapital = $packagePaid * 80 / 100;
+            $pkgRate = $poolCapital * ($percentage / 100);
+
             $dailyIncomePerDay += $pkgRate;
         }
 
@@ -241,21 +254,52 @@ class UserDashboardController extends Controller{
         $earnings = (float) $user->earnings->sum("amount");
 
         $ChartAccount = $user->ChartAccount()->where("acc_type","TRADING")->first();
-        // Only read LOCKED_TOKEN from ChartAccount if not already set
-        // by the TEAM_LEADER / SUPER_LEADER switch case above.
-        if (!isset($lockedToken)) {
-            $lockedToken = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+
+        // ── 1. UVP Package Tokens (Bottom 4 light cards) ──
+        $uvpLockedToken = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+
+        // Fallback for active UVP packages if ChartAccount LOCKED_TOKEN is 0
+        if ($uvpLockedToken <= 0 && isset($activePackages) && $activePackages->isNotEmpty()) {
+            $uvpPrice = \App\Models\TokenSetting::uvpPrice();
+            if ($uvpPrice > 0) {
+                foreach ($activePackages as $actPkg) {
+                    $paidAmt = (float) ($actPkg->paid ?? 0);
+                    if ($paidAmt > 0) {
+                        $uvpLockedToken += round($paidAmt / $uvpPrice, 4);
+                    }
+                }
+            }
         }
-        $freeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
-        $availableToken = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+
+        $uvpFreeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
+        $uvpAvailableToken = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+
+        $alreadyReleasedLeaderTokens = \App\Models\TeamLeaderTokenRelease::releasedTokensForUser($user->id);
+        $netUvpAvailableToken        = max(0, $uvpAvailableToken - $alreadyReleasedLeaderTokens);
+        $uvpTotalTokens             = (float) ($uvpLockedToken + $netUvpAvailableToken + $uvpFreeToken);
+
+        // ── 2. Team Leader Tokens (Top dark box) ──
+        $leaderLockedToken = 0.0;
+        $activation = $user->have_activation_code ?? null;
+
+        if ($activation && (float)($activation->token ?? 0) > 0) {
+            $leaderLockedToken = (float) $activation->token;
+        } else {
+            $bal = \App\Models\balance::where('user', $user->id)->first();
+            if ($bal) {
+                $leaderLockedToken = (float) ($bal->reserved_token ?? 0);
+            }
+        }
+
+        $leaderRemainingLocked = max(0, $leaderLockedToken - $alreadyReleasedLeaderTokens);
+        $leaderTotalTokens     = (float) $leaderLockedToken;
+
+        // ── 3. Combined Grand Total Tokens ──
+        // Total UVP tokens of all user packages + Total of team leaders token
+        $grandTotalTokens = (float) ($uvpTotalTokens + $leaderTotalTokens);
 
         $teamLeaderRecord = \App\Models\TeamLeader::where('User_name', $user->user)->first();
         $isTeamLeader     = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) || ($teamLeaderRecord && $teamLeaderRecord->status === 'confirmed');
-
-        // Net unreleased locked tokens (excluding tokens already approved/released to Available)
-        $alreadyReleasedTokens = \App\Models\TeamLeaderTokenRelease::releasedTokensForUser($user->id);
-        $remainingLockedTokens = max(0, $lockedToken - $alreadyReleasedTokens);
-        $totalTokens           = (float) ($remainingLockedTokens + $freeToken + $availableToken);
         // GAS_FEE is admin-only — not read here
         $COMMISSION = (float) $user->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
 
@@ -355,14 +399,23 @@ class UserDashboardController extends Controller{
             "ranks"                  => $ranks,
             "amount"                 => 0,
             // Token balances
-            "locked"                 => $remainingLockedTokens,
-            "initial_locked"         => $lockedToken,
-            "released_tokens"        => $alreadyReleasedTokens,
-            "free_token"             => $freeToken,
-            "available_token"        => $availableToken,
-            "total_tokens"           => $totalTokens,
+            "uvp_locked"             => $uvpLockedToken,
+            "uvp_available"          => $netUvpAvailableToken,
+            "uvp_free"               => $uvpFreeToken,
+            "uvp_total"              => $uvpTotalTokens,
+            "leader_locked"          => $leaderRemainingLocked,
+            "leader_initial_locked"  => $leaderLockedToken,
+            "leader_released"        => $alreadyReleasedLeaderTokens,
+            "leader_total"           => $leaderTotalTokens,
+            "grand_total_tokens"     => $grandTotalTokens,
+
+            // Legacy & Card mapping
+            "locked"                 => $uvpLockedToken,
+            "free_token"             => $uvpFreeToken,
+            "available_token"        => $netUvpAvailableToken,
+            "total_tokens"           => $grandTotalTokens,
             "is_team_leader"         => $isTeamLeader,
-            "fcoin"                  => number_format($freeToken, 0),
+            "fcoin"                  => number_format($uvpFreeToken, 0),
             "commission"             => $COMMISSION,
             "referral_bonus_totals"  => $referralBonusTotals,
             "current_rank"           => $currentRank,
@@ -689,129 +742,139 @@ class UserDashboardController extends Controller{
      */
     public function showDailyIncome($userId)
     {
-        // Only VENTURE packages generate daily income
-        $package = Paymodel::where("category", "VENTURE")
+        // Get ALL active VENTURE packages for the user
+        $packages = Paymodel::where("category", "VENTURE")
                             ->where("user", $userId)
                             ->where("is_expired", 0)
                             ->where("status", 1)
-                            ->first();
-
-        if (!$package) {
-            return;
-        }
-
-        $package2 = Adventures::where("id", $package->payable_id)->first();
-        if (!$package2) {
-            return;
-        }
-
-        $percentcharge = $package2->percentage;
-        $amount        = (float) $package->paid;
-        $user          = User::find($userId);
-        $now           = Carbon::now();
-
-        $startDate      = Carbon::parse($package->created_at);
-        $expirationDate = Carbon::parse($package->expiration_date);
-
-        // How many renewals has the user completed for this package?
-        $renewalsDone = \App\Models\PackageRenewal::where("user_id", $userId)
-                            ->where("payment_id", $package->id)
-                            ->orderBy("renewal_number")
                             ->get();
 
-        // Build lookup: renewal_number => date completed
-        $renewalCompletedAt = [];
-        foreach ($renewalsDone as $renewal) {
-            $renewalCompletedAt[$renewal->renewal_number] = Carbon::parse($renewal->renewed_at);
+        if ($packages->isEmpty()) {
+            return;
         }
 
-        // Ceiling: don't generate income past expiration_date or today
-        $ceiling    = $expirationDate->lt($now) ? $expirationDate : $now;
-        $daysPassed = (int) $startDate->diffInDays($ceiling);
+        $user = User::find($userId);
+        if (!$user) return;
+        $now  = Carbon::now();
 
-        for ($i = 1; $i <= $daysPassed; $i++) {
-            $earnedAt  = $startDate->copy()->addDays($i);
-
-            // Hard stop at expiration
-            if ($earnedAt->gt($expirationDate)) {
-                break;
+        foreach ($packages as $package) {
+            $package2 = null;
+            if ($package->payable_type && $package->payable_id) {
+                $package2 = $package->payable_type::find($package->payable_id);
+            }
+            if (!$package2 && $package->payable_id) {
+                $package2 = Adventures::find($package->payable_id);
+            }
+            if (!$package2 && $package->package) {
+                $package2 = Adventures::where('name', $package->package)->first();
+            }
+            if (!$package2 && (float)($package->paid ?? $package->amount ?? 0) > 0) {
+                $pPaid = (float) ($package->paid ?? $package->amount ?? 0);
+                $package2 = Adventures::where('min_amount', '<=', $pPaid)
+                    ->where('max_amount', '>=', $pPaid)
+                    ->first();
             }
 
-            // Renewal pause logic — delegated to RenewalCalculator.
-            // See RenewalCalculator::renewalsRequiredForDay() for the formula.
-            $packageDuration = (int) $package2->duration;
-            $maxRenewals     = \App\Services\RenewalCalculator::maxRenewals($packageDuration);
-            $blocked         = false;
-
-            $neededRenewal = \App\Services\RenewalCalculator::renewalsRequiredForDay($i);
-            if ($neededRenewal > 0 && $neededRenewal <= $maxRenewals) {
-                if (!isset($renewalCompletedAt[$neededRenewal]) ||
-                    $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
-                    $blocked = true;
-                }
-            }
-
-            if ($blocked) {
-                continue; // skipped days are never back-filled
-            }
-
-            // Already recorded?
-            $incomeExists = DailyIncome::where("user_id", $userId)
-                                        ->where("payment_id", $package->id)
-                                        ->whereDate("earned_at", $earnedAt->toDateString())
-                                        ->exists();
-            if ($incomeExists) {
+            if (!$package2 || !$package->expiration_date) {
                 continue;
             }
 
-            // Calculate income
-            $poolCapital = $amount * 80 / 100;
-            $dailyIncome = $poolCapital * $percentcharge / 100;
-            $trading     = $dailyIncome * 75 / 100;  // 75% Trading Voucher
-            $cashout     = $dailyIncome * 25 / 100;  // 25% Cashout
+            $percentcharge  = (float) $package2->percentage;
+            $amount         = (float) ($package->paid ?? $package->amount ?? 0);
+            $startDate      = Carbon::parse($package->created_at);
+            $expirationDate = Carbon::parse($package->expiration_date);
 
-            DailyIncome::create([
-                "user_id"    => $userId,
-                "payment_id" => $package->id,
-                "amount"     => $dailyIncome,
-                "earned_at"  => $earnedAt,
-            ]);
+            $ceiling    = $expirationDate->lt($now) ? $expirationDate : $now;
+            $daysPassed = (int) $startDate->diffInDays($ceiling);
 
-            $transactionNo = Transaction::generateTransactionNo();
-            Transaction::create([
-                "user_id"             => $userId,
-                "transaction_no"      => $transactionNo,
-                "transaction_type"    => "INCOME",
-                "receiver_id"         => 0,
-                "transaction_details" => json_encode([
-                    "type"            => "UVP",
-                    "user"            => $user->name,
-                    "date"            => $earnedAt->toDateTimeString(),
-                    "cash_25"         => $cashout,
-                    "trading_75"      => $trading,
-                    "amount"          => $dailyIncome,
-                    "trx_name"        => "UVP INCOME",
-                    "description"     => "Payment From Pool Capital",
-                    "day_number"      => $i,
-                    "status"          => "success",
-                    "username"        => $user->name,
-                    "leadership_bonus"=> 0,
-                ]),
-            ]);
+            $renewalsDone = \App\Models\PackageRenewal::where("user_id", $userId)
+                                ->where("payment_id", $package->id)
+                                ->orderBy("renewal_number")
+                                ->get();
 
-            // Credit accounts — FIX: CASHOUT now uses $beforeCashout (was $beforeTrading)
-            $beforeCashout = $user->ChartAccount()->where("acc_type", "CASHOUT")->sum("amount");
-            $beforeTrading = $user->ChartAccount()->where("acc_type", "TRADING")->sum("amount");
+            $renewalCompletedAt = [];
+            foreach ($renewalsDone as $renewal) {
+                $renewalCompletedAt[$renewal->renewal_number] = Carbon::parse($renewal->renewed_at);
+            }
 
-            ChartAccount::updateOrCreate(
-                ["user_id" => $userId, "acc_type" => "TRADING"],
-                ["amount"  => $beforeTrading + $trading]
-            );
+            $packageDuration = (int) $package2->duration;
+            $maxRenewals     = (int) floor(($packageDuration - 1) / 30);
 
-            ChartAccount::updateOrCreate(
-                ["user_id" => $userId, "acc_type" => "CASHOUT"],
-                ["amount"  => $beforeCashout + $cashout]
-            );
+            for ($i = 1; $i <= $daysPassed; $i++) {
+                $earnedAt = $startDate->copy()->addDays($i);
+
+                if ($earnedAt->gt($expirationDate)) {
+                    break;
+                }
+
+                $neededRenewal = \App\Services\RenewalCalculator::renewalsRequiredForDay($i);
+                $blocked = false;
+                if ($neededRenewal > 0 && $neededRenewal <= $maxRenewals) {
+                    if (!isset($renewalCompletedAt[$neededRenewal]) ||
+                        $earnedAt->lt($renewalCompletedAt[$neededRenewal])) {
+                        $blocked = true;
+                    }
+                }
+
+                if ($blocked) {
+                    continue;
+                }
+
+                $incomeExists = DailyIncome::where("user_id", $userId)
+                                            ->where("payment_id", $package->id)
+                                            ->whereDate("earned_at", $earnedAt->toDateString())
+                                            ->exists();
+                if ($incomeExists) {
+                    continue;
+                }
+
+                $poolCapital = $amount * 80 / 100;
+                $dailyIncome = $poolCapital * $percentcharge / 100;
+                $trading     = $dailyIncome * 75 / 100;
+                $cashout     = $dailyIncome * 25 / 100;
+
+                DailyIncome::create([
+                    "user_id"    => $userId,
+                    "payment_id" => $package->id,
+                    "amount"     => $dailyIncome,
+                    "earned_at"  => $earnedAt,
+                ]);
+
+                $transactionNo = Transaction::generateTransactionNo();
+                Transaction::create([
+                    "user_id"             => $userId,
+                    "transaction_no"      => $transactionNo,
+                    "transaction_type"    => "INCOME",
+                    "receiver_id"         => 0,
+                    "transaction_details" => json_encode([
+                        "type"            => "UVP",
+                        "user"            => $user->name,
+                        "date"            => $earnedAt->toDateTimeString(),
+                        "cash_25"         => $cashout,
+                        "trading_75"      => $trading,
+                        "amount"          => $dailyIncome,
+                        "trx_name"        => "UVP INCOME",
+                        "description"     => "Payment From Pool Capital",
+                        "day_number"      => $i,
+                        "status"          => "success",
+                        "username"        => $user->name,
+                        "leadership_bonus"=> 0,
+                    ]),
+                ]);
+
+                $beforeCashout = $user->ChartAccount()->where("acc_type", "CASHOUT")->sum("amount");
+                $beforeTrading = $user->ChartAccount()->where("acc_type", "TRADING")->sum("amount");
+
+                ChartAccount::updateOrCreate(
+                    ["user_id" => $userId, "acc_type" => "TRADING"],
+                    ["amount"  => $beforeTrading + $trading]
+                );
+
+                ChartAccount::updateOrCreate(
+                    ["user_id" => $userId, "acc_type" => "CASHOUT"],
+                    ["amount"  => $beforeCashout + $cashout]
+                );
+            }
         }
     }
 

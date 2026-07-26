@@ -32,7 +32,7 @@ class DirectPackagePaymentService
     public function createPendingIntent(User $user, string $packageType, int $packageId, ?float $amount = null, string $network = 'TRC-20'): Deposits
     {
         $network = 'TRC-20';
-        $resolved = $this->resolvePackage($packageType, $packageId, $amount);
+        $resolved = $this->resolvePackage($packageType, $packageId, $amount, $user);
 
         $depositAddress = app(TronBlockchainService::class)->getOrCreateDepositAddressForUser($user);
         $depositMethod = self::DEPOSIT_METHOD;
@@ -200,7 +200,7 @@ class DirectPackagePaymentService
         return 'TRC-20';
     }
 
-    public function resolvePackage(string $packageType, int $packageId, ?float $amount = null): array
+    public function resolvePackage(string $packageType, int $packageId, ?float $amount = null, ?User $user = null): array
     {
         $type = strtoupper(trim($packageType));
 
@@ -210,6 +210,13 @@ class DirectPackagePaymentService
 
             if ($investmentAmount <= 0) {
                 throw new \InvalidArgumentException('Please enter a valid UVP investment amount.');
+            }
+
+            if ($user) {
+                $highestUvp = $user->highestUvpPackageAmount();
+                if ($highestUvp > 0 && $investmentAmount < $highestUvp) {
+                    throw new \InvalidArgumentException('UVP Package Error: You cannot purchase a UVP package ($' . number_format($investmentAmount, 2) . ') below your highest previously purchased UVP package amount ($' . number_format($highestUvp, 2) . '). Please select an investment amount of $' . number_format($highestUvp, 2) . ' or higher.');
+                }
             }
 
             $min = (float) ($adventure->min_amount ?? 0);
@@ -237,6 +244,13 @@ class DirectPackagePaymentService
 
             if ($price <= 0) {
                 throw new \InvalidArgumentException('This FC package has an invalid price.');
+            }
+
+            if ($user) {
+                $highestAmount = $user->highestPackageAmount();
+                if ($highestAmount > 0 && $price < $highestAmount) {
+                    throw new \InvalidArgumentException('Package Purchase Error: You cannot purchase a package ($' . number_format($price, 2) . ') below your highest previously purchased package amount ($' . number_format($highestAmount, 2) . ').');
+                }
             }
 
             return [

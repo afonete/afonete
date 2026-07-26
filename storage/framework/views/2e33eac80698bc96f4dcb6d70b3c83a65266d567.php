@@ -813,7 +813,14 @@ img{ max-width:100%;}
 
     
     <?php if($active_packages_count > 0): ?>
-    <h3 class="dash-section-title">Active Package Daily Yields (ROI)</h3>
+    <h3 class="dash-section-title d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span>Active Package Daily Yields (ROI)</span>
+        <?php if($active_packages_count > 1): ?>
+            <span class="badge badge-info px-2.5 py-1 text-white font-weight-bold" style="font-size: 0.75rem; border-radius: 6px;">
+                <i class="fas fa-layer-group mr-1"></i> Combined Total: <?php echo e($active_packages_count); ?> Active Packages
+            </span>
+        <?php endif; ?>
+    </h3>
     <div class="row">
         
         <div class="col-12 col-md-4 mb-4">
@@ -829,8 +836,8 @@ img{ max-width:100%;}
                         <small style="font-size:0.75rem; opacity:.9;">/day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available daily income: <strong>$<?php echo e($daily_income_per_day); ?></strong><br>
-                        Total available daily income: <strong><?php echo e($dailyIncome); ?></strong>
+                        Combined daily rate (<?php echo e($active_packages_count); ?> active <?php echo e(Str::plural('package', $active_packages_count)); ?>): <strong>$<?php echo e($daily_income_per_day); ?>/day</strong><br>
+                        Total generated daily income: <strong><?php echo e($dailyIncome); ?></strong>
                     </div>
                 </div>
             </div>
@@ -841,14 +848,14 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Trading Voucher</span>
+                        <span class="dash-card-title">Trading Voucher (75%)</span>
                         <i class="dash-card-icon fas fa-shopping-bag"></i>
                     </div>
                     <div class="dash-card-value">
                         $<?php echo e($daily_trading); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available Trading Voucher: <strong>$<?php echo e($daily_trading); ?></strong><br>
+                        Combined Trading Voucher rate: <strong>$<?php echo e($daily_trading); ?>/day</strong><br>
                         Total available Trading Voucher: <strong>$<?php echo e(number_format($trading_raw, 2)); ?></strong>
                     </div>
                 </div>
@@ -860,14 +867,14 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-success text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Cashout Wallet</span>
+                        <span class="dash-card-title">Cashout Wallet (25%)</span>
                         <i class="dash-card-icon fas fa-wallet"></i>
                     </div>
                     <div class="dash-card-value">
                         $<?php echo e($daily_cashout); ?> <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
                     </div>
                     <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Today available Cashout: <strong>$<?php echo e($daily_cashout); ?></strong><br>
+                        Combined Cashout rate: <strong>$<?php echo e($daily_cashout); ?>/day</strong><br>
                         Total available Cashout: <strong>$<?php echo e(number_format($cashout_raw, 2)); ?></strong>
                     </div>
                     <div class="dash-card-footer d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 10px; margin-top: 10px;">
@@ -885,7 +892,8 @@ img{ max-width:100%;}
     
     <?php
         $isLeaderAccount = (isset($is_team_leader) && $is_team_leader) || in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
-        $combinedTotalTokens = $total_tokens ?? ($locked + $available_token + $free_token);
+        $leaderPortfolioTotal = $leader_total ?? $leader_initial_locked ?? 0;
+        $combinedGrandTotal = $grand_total_tokens ?? ($uvp_total ?? 0) + $leaderPortfolioTotal;
     ?>
 
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 mb-3">
@@ -899,7 +907,7 @@ img{ max-width:100%;}
         </h3>
         <?php if($isLeaderAccount): ?>
             <div class="badge badge-dark px-3 py-2 font-weight-bold text-uppercase" style="font-size: 0.85rem; border-radius: 8px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(245, 158, 11, 0.4);">
-                <i class="fas fa-coins text-warning mr-1"></i> Total Tokens: <span class="text-warning" style="font-size: 1.05rem;"><?php echo e(number_format($combinedTotalTokens, 0)); ?></span>
+                <i class="fas fa-coins text-warning mr-1"></i> Grand Total Tokens: <span class="text-warning" style="font-size: 1.05rem;"><?php echo e(number_format($combinedGrandTotal, 0)); ?></span>
             </div>
         <?php endif; ?>
     </div>
@@ -923,7 +931,7 @@ img{ max-width:100%;}
                 <div class="text-right">
                     <span class="text-uppercase small d-block text-warning font-weight-bold" style="letter-spacing: 0.8px;">Total Combined Tokens</span>
                     <h2 class="font-weight-bold text-warning mb-0" style="font-size: 2.2rem; line-height: 1;">
-                        <?php echo e(number_format($combinedTotalTokens, 0)); ?>
+                        <?php echo e(number_format($leaderPortfolioTotal, 0)); ?>
 
                     </h2>
                 </div>
@@ -933,21 +941,21 @@ img{ max-width:100%;}
                 <div class="col-12 col-sm-4 mb-3 mb-sm-0">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-lock text-secondary mr-1"></i> Locked Tokens</span>
-                        <h4 class="font-weight-bold text-white mb-0"><?php echo e(number_format($locked, 0)); ?></h4>
+                        <h4 class="font-weight-bold text-white mb-0"><?php echo e(number_format($leader_locked ?? 0, 0)); ?></h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Investment / Activation tokens</small>
                     </div>
                 </div>
                 <div class="col-12 col-sm-4 mb-3 mb-sm-0">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-check-circle text-success mr-1"></i> Available Tokens</span>
-                        <h4 class="font-weight-bold text-success mb-0"><?php echo e(number_format($available_token, 0)); ?></h4>
+                        <h4 class="font-weight-bold text-success mb-0"><?php echo e(number_format($leader_released ?? 0, 0)); ?></h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Released &amp; ready to claim</small>
                     </div>
                 </div>
                 <div class="col-12 col-sm-4">
                     <div class="p-3 rounded" style="background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px;">
                         <span class="text-uppercase text-light small d-block font-weight-bold mb-1" style="font-size: 0.72rem;"><i class="fas fa-coins text-warning mr-1"></i> Free Tokens (FOCOIN)</span>
-                        <h4 class="font-weight-bold text-warning mb-0"><?php echo e(number_format($free_token, 0)); ?></h4>
+                        <h4 class="font-weight-bold text-warning mb-0">0</h4>
                         <small class="text-muted" style="font-size: 0.7rem;">Tradeable / Transferable</small>
                     </div>
                 </div>
@@ -956,6 +964,7 @@ img{ max-width:100%;}
     </div>
     <?php endif; ?>
 
+    
     <div class="row">
         
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
@@ -966,18 +975,14 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-lock text-secondary"></i>
                     </div>
                     <div class="dash-card-value">
-                        <?php echo e(number_format($locked, 0)); ?>
+                        <?php echo e(number_format($uvp_locked ?? $locked ?? 0, 0)); ?>
 
                     </div>
                     <div class="dash-card-subtitle">
-                        Unreleased investment / leader tokens.
+                        Total UVP tokens of all user packages.
                     </div>
                     <div class="dash-card-footer text-muted" style="font-size: 0.75rem;">
-                        <?php if(isset($released_tokens) && $released_tokens > 0): ?>
-                            Released to Available: <strong><?php echo e(number_format($released_tokens, 0)); ?></strong>
-                        <?php else: ?>
-                            Transferred to Available upon admin approval.
-                        <?php endif; ?>
+                        Transferred to Available upon admin approval.
                     </div>
                 </div>
             </div>
@@ -992,14 +997,14 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-check-circle text-success"></i>
                     </div>
                     <div class="dash-card-value">
-                        <?php echo e(number_format($available_token, 0)); ?>
+                        <?php echo e(number_format($uvp_available ?? $available_token ?? 0, 0)); ?>
 
                     </div>
                     <div class="dash-card-subtitle mb-2">
                         Released tokens and earned rewards.
                     </div>
                     <div class="dash-card-footer pt-2">
-                        <?php if($available_token > 0): ?>
+                        <?php if(($uvp_available ?? $available_token ?? 0) > 0): ?>
                             <a href="<?php echo e(route('user.token.available')); ?>" class="btn btn-sm btn-success btn-block font-weight-bold" style="border-radius: 6px;">
                                 Claim to Free Token <i class="fas fa-arrow-right ml-1"></i>
                             </a>
@@ -1022,14 +1027,14 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-coins text-warning"></i>
                     </div>
                     <div class="dash-card-value">
-                        <?php echo e(number_format($free_token, 0)); ?>
+                        <?php echo e(number_format($uvp_free ?? $free_token ?? 0, 0)); ?>
 
                     </div>
                     <div class="dash-card-subtitle mb-2">
                         Fully tradeable and transferable FOCOIN tokens.
                     </div>
                     <div class="dash-card-footer pt-2">
-                        <?php if($free_token > 0): ?>
+                        <?php if(($uvp_free ?? $free_token ?? 0) > 0): ?>
                             <div class="d-flex gap-2">
                                 <a href="<?php echo e(route('user.token.transfer')); ?>" class="btn btn-xs btn-dark flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Transfer</a>
                                 <a href="<?php echo e(route('user.token.swap')); ?>" class="btn btn-xs btn-success flex-fill py-1 font-weight-bold" style="border-radius: 4px; font-size: 11px; margin-right: 4px;">Swap</a>
@@ -1054,11 +1059,11 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-layer-group text-primary"></i>
                     </div>
                     <div class="dash-card-value text-primary">
-                        <?php echo e(number_format($combinedTotalTokens, 0)); ?>
+                        <?php echo e(number_format($combinedGrandTotal, 0)); ?>
 
                     </div>
                     <div class="dash-card-subtitle mb-2">
-                        Sum of Locked, Available &amp; Free Tokens.
+                        Sum of UVP tokens + Team Leaders token.
                     </div>
                     <div class="dash-card-footer pt-2 text-muted" style="font-size: 0.75rem;">
                         <span class="font-weight-bold text-dark">Combined Portfolio Total</span>

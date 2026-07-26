@@ -89,6 +89,20 @@ public function upgrade(Request $request){
                 }
             }
 
+            // UVP Package Tier progression check: Cannot activate a UVP package below highest previously purchased UVP package amount
+            $isUvpPackage = in_array(strtoupper((string)$results->package), ['VENTURE', 'UVP'])
+                || \App\Models\Adventures::where('name', $results->package)->exists();
+
+            if ($isUvpPackage) {
+                $highestUvp = $user->highestUvpPackageAmount();
+                $codePrice  = (float) ($results->price ?? 0);
+
+                if ($highestUvp > 0 && $codePrice > 0 && $codePrice < $highestUvp) {
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', "UVP Activation Error: This UVP activation code ($" . number_format($codePrice, 2) . ") is below your highest previously purchased UVP package amount ($" . number_format($highestUvp, 2) . "). You can only activate UVP packages of $" . number_format($highestUvp, 2) . " or higher.");
+                }
+            }
+
            else{
             try {
 
@@ -269,6 +283,20 @@ public function g_upgrade(Request $request){
             if (!$isEmailMatch && !$isLeaderMatch) {
                 return redirect()->route('user.package')
                     ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$activation->email}'). You cannot use it on this account.");
+            }
+        }
+
+        // UVP Package Tier progression check: Cannot activate a UVP package below highest previously purchased UVP package amount
+        $isUvpPackage = in_array(strtoupper((string)$activation->package), ['VENTURE', 'UVP'])
+            || \App\Models\Adventures::where('name', $activation->package)->exists();
+
+        if ($isUvpPackage) {
+            $highestUvp = $userA->highestUvpPackageAmount();
+            $codePrice  = (float) ($activation->price ?? 0);
+
+            if ($highestUvp > 0 && $codePrice > 0 && $codePrice < $highestUvp) {
+                return redirect()->route('user.package')
+                    ->with('message', "UVP Activation Error: This UVP activation code ($" . number_format($codePrice, 2) . ") is below your highest previously purchased UVP package amount ($" . number_format($highestUvp, 2) . "). You can only activate UVP packages of $" . number_format($highestUvp, 2) . " or higher.");
             }
         }
 

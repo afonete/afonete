@@ -63,7 +63,16 @@
         </div>
         <div class="row">
             <a class="btn btn-dark" href="{{ $deposit->package_type === 'FC' ? route('user.package') : route('user.venture') }}">Back to packages</a>
-            <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use manual deposit</a>
+            @if($deposit->status === 'pending')
+                <form method="POST" action="{{ route('payment.directPackage.cancel', $deposit->id) }}" style="display:inline;">
+                    @csrf
+                    <button class="btn btn-dark" type="submit" onclick="return confirm('Cancel this automatic payment order and switch to manual payment option?');">
+                        Use another payment option
+                    </button>
+                </form>
+            @else
+                <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use another payment option</a>
+            @endif
             <a class="btn btn-dark" href="{{ route('user.dashboard') }}">Dashboard</a>
         </div>
     </div>
@@ -124,12 +133,19 @@
                 <div class="row">
                     <button class="btn btn-green" type="button" data-copy="payAddress">Copy address</button>
                     <button class="btn btn-dark" type="button" data-copy-text="{{ $paymentUrl }}">Copy payment URL</button>
-                    <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use another payment option</a>
                     @if($deposit->status === 'pending')
+                        <form method="POST" action="{{ route('payment.directPackage.cancel', $deposit->id) }}" style="display:inline;">
+                            @csrf
+                            <button class="btn btn-dark" type="submit" onclick="return confirm('Cancel this automatic payment order and switch to manual payment option?');">
+                                Use another payment option
+                            </button>
+                        </form>
                         <form method="POST" action="{{ route('payment.directPackage.cancel', $deposit->id) }}" onsubmit="return confirm('Cancel this automatic TRC-20 payment invoice?');" style="display:inline;">
                             @csrf
                             <button class="btn btn-red" type="submit">Cancel payment</button>
                         </form>
+                    @else
+                        <a class="btn btn-dark" href="{{ route('user.manual-deposit') }}">Use another payment option</a>
                     @endif
                 </div>
 

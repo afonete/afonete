@@ -96,7 +96,9 @@
                     </tbody>
                 </table>
             </div>
-            <div class="p-3">{{ $deposits->links() }}</div>
+            <div class="p-3 d-flex justify-content-center border-top">
+                {{ $deposits->links('pagination::bootstrap-4') }}
+            </div>
             @endif
         </div>
     </div>
