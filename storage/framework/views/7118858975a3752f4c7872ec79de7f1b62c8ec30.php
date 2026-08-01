@@ -1,5 +1,5 @@
 <div class="wrapper">
-    @include('user.user-dashboard-base')
+    <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     <title>Overview</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +14,7 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Team Members</h3>
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-3xl font-extrabold text-white">{{ $team_members }}</p>
+                            <p class="text-3xl font-extrabold text-white"><?php echo e($team_members); ?></p>
                             <small class="text-slate-400 text-[11px] font-medium block mt-1">Direct &amp; Indirect Referral</small>
                         </div>
                         <div class="mr-1">
@@ -28,7 +28,7 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Person Members</h3>
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-2xl font-extrabold text-slate-900">{{ $person_members }}</p>
+                            <p class="text-2xl font-extrabold text-slate-900"><?php echo e($person_members); ?></p>
                             <small class="text-slate-500 text-[11px] font-medium block mt-1">Network Investment (Direct &amp; Indirect)</small>
                         </div>
                         <div class="mr-1">
@@ -39,7 +39,7 @@
 
                 <!-- Referrals Navigation Links -->
                 <div class="bg-slate-900 text-white shadow-md rounded-xl p-4 col-span-2 grid grid-cols-2 gap-3 items-center border border-slate-800">
-                    <a href="{{ route('referrals.free') }}" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg font-bold text-xs transition border border-slate-700">
+                    <a href="<?php echo e(route('referrals.free')); ?>" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg font-bold text-xs transition border border-slate-700">
                         <div>
                             <span class="block text-amber-400 uppercase font-extrabold">Free Referrals</span>
                             <span class="text-[11px] text-slate-300 font-normal">View Free Accounts</span>
@@ -47,7 +47,7 @@
                         <i class="fa fa-arrow-right text-amber-400 text-sm"></i>
                     </a>
 
-                    <a href="{{ route('referrals.paid') }}" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg font-bold text-xs transition border border-slate-700">
+                    <a href="<?php echo e(route('referrals.paid')); ?>" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg font-bold text-xs transition border border-slate-700">
                         <div>
                             <span class="block text-emerald-400 uppercase font-extrabold">Paid Referrals</span>
                             <span class="text-[11px] text-slate-300 font-normal">View Active Packages</span>
@@ -61,7 +61,7 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Person Customers</h3>
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-3xl font-extrabold text-slate-900">{{ $person_customers }}</p>
+                            <p class="text-3xl font-extrabold text-slate-900"><?php echo e($person_customers); ?></p>
                             <small class="text-slate-500 text-[11px] font-medium block mt-1">Total Direct Referral</small>
                         </div>
                         <div class="mr-1">
@@ -75,7 +75,7 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Merchants</h3>
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-2xl font-extrabold text-slate-900">{{ $merchants }}</p>
+                            <p class="text-2xl font-extrabold text-slate-900"><?php echo e($merchants); ?></p>
                             <small class="text-slate-500 text-[11px] font-medium block mt-1">Total Direct Ref Investment</small>
                         </div>
                         <div class="mr-1">
@@ -87,38 +87,38 @@
 
             <!-- Team Information Summary Section -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {{-- Total Members Card --}}
+                
                 <div class="bg-white shadow-md rounded-xl p-4 flex items-center gap-4 border border-slate-200">
                     <div class="p-3 bg-amber-50 rounded-xl text-amber-600">
                         <i class="fas fa-users text-2xl"></i>
                     </div>
                     <div>
                         <h4 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider">TOTAL</h4>
-                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ $total_members }}</div>
+                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5"><?php echo e($total_members); ?></div>
                         <small class="text-slate-500 text-xs">Total Referral (Direct &amp; Indirect)</small>
                     </div>
                 </div>
 
-                {{-- Left Team Card --}}
+                
                 <div class="bg-white shadow-md rounded-xl p-4 flex items-center gap-4 border border-slate-200">
                     <div class="p-3 bg-sky-50 rounded-xl text-sky-600">
                         <i class="fas fa-arrow-left text-2xl"></i>
                     </div>
                     <div>
                         <h4 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider">LEFT TEAM</h4>
-                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ $left_team }}</div>
+                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5"><?php echo e($left_team); ?></div>
                         <small class="text-slate-500 text-xs">Total Referral on Left Side (Direct &amp; Indirect)</small>
                     </div>
                 </div>
 
-                {{-- Right Team Card --}}
+                
                 <div class="bg-white shadow-md rounded-xl p-4 flex items-center gap-4 border border-slate-200">
                     <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600">
                         <i class="fas fa-arrow-right text-2xl"></i>
                     </div>
                     <div>
                         <h4 class="text-xs font-extrabold uppercase text-slate-500 tracking-wider">RIGHT TEAM</h4>
-                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ $right_team }}</div>
+                        <div class="text-2xl font-extrabold text-slate-900 mt-0.5"><?php echo e($right_team); ?></div>
                         <small class="text-slate-500 text-xs">Total Referral on Right Side (Direct &amp; Indirect)</small>
                     </div>
                 </div>
@@ -134,7 +134,8 @@
                         <p class="text-xs text-slate-500 mt-0.5">Complete list of all direct and indirect referrals in your downline network.</p>
                     </div>
                     <span class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full">
-                        Total: {{ count($members) }}
+                        Total: <?php echo e(count($members)); ?>
+
                     </span>
                 </header>
 
@@ -153,8 +154,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse ($members as $member)
-                            @php
+                        <?php $__empty_1 = true; $__currentLoopData = $members; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $member): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                            <?php
                                 $side = $member->teamSide ? $member->teamSide->side : null;
                                 if (!$side) {
                                     $side = $member->referee_id == Auth::id() ? 'DIRECT' : 'INDIRECT';
@@ -163,59 +164,66 @@
                                 $rank = $member->currentRank();
                                 $sponsor = $member->referrer;
                                 $activationObj = $member->have_activation_code;
-                            @endphp
+                            ?>
                             <tr class="hover:bg-slate-50/80 transition">
-                                <td class="py-3.5 px-4 font-bold text-slate-400 text-xs">{{ $loop->iteration + ($members->currentPage() - 1) * $members->perPage() }}</td>
+                                <td class="py-3.5 px-4 font-bold text-slate-400 text-xs"><?php echo e($loop->iteration + ($members->currentPage() - 1) * $members->perPage()); ?></td>
                                 <td class="py-3.5 px-4 font-bold text-slate-900">
-                                    {{ $member->name ?: $member->user }}
-                                    <small class="text-slate-400 block font-normal text-xs">@ {{ $member->user }}</small>
+                                    <?php echo e($member->name ?: $member->user); ?>
+
+                                    <small class="text-slate-400 block font-normal text-xs">@ <?php echo e($member->user); ?></small>
                                 </td>
                                 <td class="py-3.5 px-4 text-xs font-medium">
-                                    @if($hasPkg && $activationObj && $activationObj->created_at)
-                                        <span class="text-slate-800 font-semibold">{{ \Carbon\Carbon::parse($activationObj->created_at)->format('d M Y') }}</span>
-                                    @elseif($hasPkg)
-                                        <span class="text-slate-800 font-semibold">{{ $member->created_at ? $member->created_at->format('d M Y') : 'Active' }}</span>
-                                    @else
+                                    <?php if($hasPkg && $activationObj && $activationObj->created_at): ?>
+                                        <span class="text-slate-800 font-semibold"><?php echo e(\Carbon\Carbon::parse($activationObj->created_at)->format('d M Y')); ?></span>
+                                    <?php elseif($hasPkg): ?>
+                                        <span class="text-slate-800 font-semibold"><?php echo e($member->created_at ? $member->created_at->format('d M Y') : 'Active'); ?></span>
+                                    <?php else: ?>
                                         <span class="text-slate-400 italic">Not Activated Yet</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </td>
                                 <td class="py-3.5 px-4 text-xs">
-                                    <span class="px-2.5 py-1 font-extrabold rounded text-[11px] {{ $hasPkg ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600' }}">
-                                        {{ $hasPkg ? strtoupper($member->has_paid_package) : 'STANDARD / FREE' }}
+                                    <span class="px-2.5 py-1 font-extrabold rounded text-[11px] <?php echo e($hasPkg ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600'); ?>">
+                                        <?php echo e($hasPkg ? strtoupper($member->has_paid_package) : 'STANDARD / FREE'); ?>
+
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 text-xs font-medium text-slate-700">{{ $member->country ?: 'N/A' }}</td>
-                                <td class="py-3.5 px-4 text-xs text-slate-500">{{ $member->created_at ? $member->created_at->format('d M Y') : 'N/A' }}</td>
+                                <td class="py-3.5 px-4 text-xs font-medium text-slate-700"><?php echo e($member->country ?: 'N/A'); ?></td>
+                                <td class="py-3.5 px-4 text-xs text-slate-500"><?php echo e($member->created_at ? $member->created_at->format('d M Y') : 'N/A'); ?></td>
                                 <td class="py-3.5 px-4 text-xs font-bold text-amber-600">
-                                    {{ $rank ? $rank->rank_name : 'No Rank' }}
+                                    <?php echo e($rank ? $rank->rank_name : 'No Rank'); ?>
+
                                 </td>
                                 <td class="py-3.5 px-4 text-xs font-bold text-indigo-600">
-                                    {{ $sponsor ? '@' . $sponsor->user : 'Direct' }}
+                                    <?php echo e($sponsor ? '@' . $sponsor->user : 'Direct'); ?>
+
                                 </td>
                                 <td class="py-3.5 px-4">
-                                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded {{ $side === 'LEFT' ? 'bg-sky-600 text-white' : ($side === 'RIGHT' ? 'bg-indigo-600 text-white' : 'bg-slate-600 text-white') }}">
-                                        {{ $side }}
+                                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded <?php echo e($side === 'LEFT' ? 'bg-sky-600 text-white' : ($side === 'RIGHT' ? 'bg-indigo-600 text-white' : 'bg-slate-600 text-white')); ?>">
+                                        <?php echo e($side); ?>
+
                                     </span>
                                 </td>
                             </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr>
                                 <td colspan="9" class="py-8 text-center text-slate-400">
                                     <i class="fas fa-users text-3xl mb-2 text-slate-300 block"></i>
                                     No team members in your downline network yet.
                                 </td>
                             </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-            @if($members->hasPages())
+            <?php if($members->hasPages()): ?>
                 <div class="p-3 d-flex justify-content-center border-t border-slate-200">
-                    {{ $members->links('pagination::bootstrap-4') }}
+                    <?php echo e($members->links('pagination::bootstrap-4')); ?>
+
                 </div>
-            @endif
+            <?php endif; ?>
 
         </div>
     </div>
 </div>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/team/downline.blade.php ENDPATH**/ ?>

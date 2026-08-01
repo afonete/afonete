@@ -492,39 +492,106 @@ class FinanceController extends Controller
         ));
     }
 
-    public function downline()
+    public function downline(Request $request)
     {
+        $user = Auth::user();
 
-        $user = Auth::User();
+        // 1. Walk the ENTIRE network tree (Direct + Indirect downline)
+        $allDownlineUsers = collect();
+        $queue = collect([$user->id]);
 
-        $personM = $user->referrals;
-        $person = $user->referrals()->count();
+        while ($queue->isNotEmpty()) {
+            $currentId = $queue->shift();
+            $directs = User::where('referee_id', $currentId)->get();
 
-        $teams_members = $user->ownedTeams()->count();
-        $members = $user->teamMembers;
+            foreach ($directs as $direct) {
+                if (!$allDownlineUsers->contains('id', $direct->id)) {
+                    $allDownlineUsers->push($direct);
+                    $queue->push($direct->id);
+                }
+            }
+        }
 
-        $left_team = $user->ownedTeams->filter(function ($mbr){
-            return $mbr->side == 'LEFT';
-        })->count();
+        // Direct Referrals (Level 1)
+        $directReferrals = User::where('referee_id', $user->id)->get();
+        $directCount     = $directReferrals->count();
 
-        $right_team =  $user->ownedTeams->filter(function ($mbr){
-            return $mbr->side == 'RIGHT';
-        })->count();
+        // Total Direct + Indirect Referral Count
+        $totalNetworkCount = $allDownlineUsers->count();
 
-        $total = $left_team + $right_team + $person;
+        // Direct Referral Investment Total ($ USD)
+        $directInvestment = \App\Models\Payment::whereIn('user', $directReferrals->pluck('id'))
+            ->where('status', 1)
+            ->sum(\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(12,2))'));
 
+        // Total Network Investment ($ USD) (Direct + Indirect)
+        $totalNetworkInvestment = \App\Models\Payment::whereIn('user', $allDownlineUsers->pluck('id'))
+            ->where('status', 1)
+            ->sum(\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(12,2))'));
 
-        // dd(array_merge($members->toArray(),$personM->toArray()));
+        // Left vs Right Team Counts (Direct + Indirect)
+        $leftCount = 0;
+        $rightCount = 0;
 
-        return view('user.team.downline',[
-            'team_members'=>$teams_members,
-            'person_members'=>$person,
-            'left_team'=>$left_team,
-            'right_team'=>$right_team,
-            'members'=>$members,
-            'personM'=>$personM,
-            'total_members'=>$total
+        foreach ($allDownlineUsers as $downlineUser) {
+            $teamSide = $downlineUser->teamSide ? $downlineUser->teamSide->side : null;
+            if ($teamSide === 'LEFT') {
+                $leftCount++;
+            } elseif ($teamSide === 'RIGHT') {
+                $rightCount++;
+            } else {
+                $rootSide = $this->determineRootTeamSide($user->id, $downlineUser->id);
+                if ($rootSide === 'LEFT') $leftCount++;
+                elseif ($rootSide === 'RIGHT') $rightCount++;
+            }
+        }
+
+        // Table List: Combine Direct + Indirect Downline Users (Sorted by newest)
+        $sortedMembers = $allDownlineUsers->sortByDesc('created_at')->values();
+
+        // Paginate table list by 10 records per page
+        $page    = (int) $request->query('page', 1);
+        $perPage = 10;
+        $offset  = ($page - 1) * $perPage;
+
+        $paginatedMembers = new \Illuminate\Pagination\LengthAwarePaginator(
+            $sortedMembers->slice($offset, $perPage)->values(),
+            $sortedMembers->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('user.team.downline', [
+            'team_members'     => $totalNetworkCount,                            // Total direct and indirect referral count
+            'person_members'   => '$' . number_format($totalNetworkInvestment, 2), // Total network investment (Direct and indirect)
+            'person_customers' => $directCount,                                  // Total direct referral count
+            'merchants'        => '$' . number_format($directInvestment, 2),       // Total Direct referral investment
+            'total_members'    => $totalNetworkCount,                            // Total referral (Direct and indirect)
+            'left_team'        => $leftCount,                                    // Total referral on left side
+            'right_team'       => $rightCount,                                   // Total referral on right side
+            'members'          => $paginatedMembers,                             // Paginated table list (10 per page)
+            'personM'          => collect(),                                     // Empty collection for legacy compatibility
         ]);
+    }
+
+    private function determineRootTeamSide(int $rootUserId, int $targetUserId): ?string
+    {
+        $current = User::find($targetUserId);
+        $side = null;
+
+        while ($current && $current->referee_id && $current->referee_id !== $rootUserId) {
+            if ($current->teamSide) {
+                $side = $current->teamSide->side;
+            }
+            $current = User::find($current->referee_id);
+        }
+
+        if ($current && $current->referee_id === $rootUserId && $current->teamSide) {
+            return $current->teamSide->side;
+        }
+
+        return $side;
     }
 
 
@@ -566,10 +633,197 @@ public function getTeamTree(Request $request,$id){
 }
     public function teamStructure()
     {
-        
-        
+        $user = Auth::user();
+        $adventures = \App\Models\Adventures::all();
 
-        return view('user.team.team-structure');
+        $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+        $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+        $depositBalance  = max(0, $approvedDeposit - $usedDeposit);
+
+        $highestUvpAmount = $user->highestUvpPackageAmount();
+
+        return view('user.team.team-structure', compact('adventures', 'depositBalance', 'highestUvpAmount'));
+    }
+
+    public function registerTeamMemberFromDeposit(Request $request)
+    {
+        $sponsor = Auth::user();
+
+        // 1. Calculate sponsor's available Deposit Wallet Balance
+        $approvedDeposit = (float) $sponsor->deposits()->where('status', 'approved')->sum('amount_deposited');
+        $usedDeposit     = (float) $sponsor->deposits()->where('status', 'used')->sum('amount_removed');
+        $availableDeposit = max(0, $approvedDeposit - $usedDeposit);
+
+        // 2. Validate form fields
+        $request->validate([
+            'name'         => 'required|string|max:255',
+            'user'         => 'required|string|min:4|max:10|unique:users,user',
+            'email'        => 'required|email|max:255|unique:users,email',
+            'phone'        => 'required|string|max:50',
+            'country'      => 'required|string|max:100',
+            'password'     => 'required|string|min:6|confirmed',
+            'side'         => 'required|in:LEFT,RIGHT',
+            'package_id'   => 'required|exists:adventures,id',
+            'amount'       => 'required|numeric|min:1',
+        ], [
+            'user.unique'  => 'This username is already taken. Please choose another username.',
+            'email.unique' => 'An account with this email address already exists.',
+            'side.in'      => 'Please select either LEFT or RIGHT team placement.',
+        ]);
+
+        if ($message = $this->transactionPasswordError($request, $sponsor)) {
+            return back()->withInput()->with('error', $message);
+        }
+
+        $amount = (float) $request->amount;
+        $adventure = \App\Models\Adventures::findOrFail($request->package_id);
+
+        // Check min/max for package
+        $min = (float) ($adventure->min_amount ?? 0);
+        $max = (float) ($adventure->max_amount ?? 0);
+        if ($min > 0 && $amount < $min) {
+            return back()->withInput()->with('error', "Minimum investment amount for {$adventure->name} is $" . number_format($min, 2) . ".");
+        }
+        if ($max > 0 && $amount > $max) {
+            return back()->withInput()->with('error', "Maximum investment amount for {$adventure->name} is $" . number_format($max, 2) . ".");
+        }
+
+        // Check sponsor's deposit wallet balance
+        if ($amount > $availableDeposit) {
+            return back()->withInput()->with('error', "Insufficient deposit balance. You have $" . number_format($availableDeposit, 2) . " in your deposit wallet, but $" . number_format($amount, 2) . " is required for this activation.");
+        }
+
+        // 3. Create the new team member user account
+        $newUser = User::create([
+            'name'             => $request->name,
+            'email'            => $request->email,
+            'user'             => $request->user,
+            'password'         => \Illuminate\Support\Facades\Hash::make($request->password),
+            'phone'            => $request->phone,
+            'country'          => $request->country,
+            'activation'       => rand(1111111, 9999999),
+            'referee_id'       => $sponsor->id, // ALWAYS link to sponsor for referral commissions
+            'father'           => null,
+            'has_request'      => 'approved',
+            'contract'         => 'Not Signed', // Contract NOT signed upon registration; user signs on dashboard later
+            'has_paid_package' => $adventure->name ?: $adventure->plan,
+            'has_free_package' => 'no',
+        ]);
+
+        // 4. Create team placement
+        \App\Models\Teams::create([
+            'user_id'      => $sponsor->id,
+            'team_user_id' => $newUser->id,
+            'side'         => strtoupper($request->side),
+        ]);
+
+        // 5. Deduct amount from sponsor's deposit balance
+        $lastDeposit = \App\Models\Deposits::where('user_id', $sponsor->id)
+            ->whereNotNull('user_wallet_address')
+            ->latest()
+            ->first();
+
+        $userWalletAddress = ($lastDeposit && !empty($lastDeposit->user_wallet_address))
+            ? $lastDeposit->user_wallet_address
+            : 'INTERNAL_DEPOSIT_WALLET';
+
+        $network = ($lastDeposit && !empty($lastDeposit->network))
+            ? $lastDeposit->network
+            : 'TRC-20';
+
+        $trxNo = \App\Models\Deposits::generateTransactionNo();
+        \App\Models\Deposits::create([
+            'user_id'             => $sponsor->id,
+            'amount_deposited'    => 0,
+            'amount_removed'      => $amount,
+            'currency_type'       => 'DOLLAR',
+            'deposit_method'      => 'DEPOSIT_WALLET_TEAM_ACTIVATION',
+            'user_wallet_address' => $userWalletAddress,
+            'network'             => $network,
+            'status'              => 'used',
+            'transaction_id'      => $trxNo,
+            'comment'             => 'Used deposit balance to register and activate team member @' . $newUser->user . ' (' . $newUser->email . ')',
+        ]);
+
+        // Update sponsor's ChartAccount DEPOSIT balance
+        $currentDepChart = (float) $sponsor->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $sponsor->id, 'acc_type' => 'DEPOSIT'],
+            ['amount'  => max(0, $currentDepChart - $amount)]
+        );
+
+        // 6. Create active investment record for new team member (100% identical to normal package activation)
+        $newPayment = \App\Services\InvestmentFactory::buildVenture(
+            userId:    $newUser->id,
+            adventure: $adventure,
+            amount:    $amount,
+            paid:      $amount,
+            status:    1
+        );
+        $pSaved = $adventure->payments()->save($newPayment);
+
+        // Update new user's package status
+        $newUser->update([
+            'has_paid_package' => $adventure->name ?: $adventure->plan,
+            'has_free_package' => 'no',
+            'has_request'      => 'approved',
+        ]);
+
+        // Token & Gas Fee crediting on package purchase
+        $uvpPrice     = \App\Models\TokenSetting::uvpPrice();
+        $lockedTokens = $uvpPrice > 0 ? round($amount / $uvpPrice, 4) : 0;
+        $gasFeeTokens = $uvpPrice > 0 ? round(($amount * 20 / 100) / $uvpPrice, 4) : 0;
+
+        // Credit LOCKED_TOKEN to new team member
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $newUser->id, 'acc_type' => 'LOCKED_TOKEN'],
+            ['amount'  => $lockedTokens]
+        );
+
+        // Credit GAS_FEE (20% internal accounting)
+        \App\Models\ChartAccount::updateOrCreate(
+            ['user_id' => $newUser->id, 'acc_type' => 'GAS_FEE'],
+            ['amount'  => $gasFeeTokens]
+        );
+
+        // Record Subscription Transaction for new team member
+        $subTrxNo  = \App\Models\Transaction::generateTransactionNo();
+        $startDate = \Carbon\Carbon::now();
+        $endDate   = $startDate->copy()->addDays((int) $adventure->duration);
+
+        \App\Models\Transaction::create([
+            'user_id'          => $newUser->id,
+            'transaction_no'   => $subTrxNo,
+            'transaction_type' => 'SUBSCRIPTION',
+            'receiver_id'      => 0,
+            'transaction_details' => json_encode([
+                'product'             => $adventure->name ?: $adventure->plan,
+                'user'                => $newUser->name,
+                'plan'                => $adventure->plan,
+                'start_date'          => $startDate->toDateTimeString(),
+                'end_date'            => $endDate->toDateTimeString(),
+                'package'             => $adventure->name ?: $adventure->plan,
+                'price'               => $amount,
+                'current_price'       => $amount,
+                'token'               => $lockedTokens,
+                'current_token'       => $lockedTokens,
+                'poolcapital'         => $amount * 80 / 100,
+                'current_poolcapital' => $amount * 80 / 100,
+                'LP'                  => $amount * 20 / 100,
+                'current_LP'          => $amount * 20 / 100,
+                'period'              => $adventure->duration . ' days',
+                'status'              => 'success',
+                'purchase_date'       => $startDate->toDateTimeString(),
+                'username'            => $newUser->user,
+            ]),
+        ]);
+
+        // 7. Credit 10% L1 Referral Bonus to Sponsor immediately
+        if ($pSaved) {
+            \App\Services\ReferralService::creditForPayment($pSaved);
+        }
+
+        return redirect()->route('team.structure')->with('success', "Team member @{$newUser->user} ({$newUser->name}) successfully registered and activated on {$request->side} side! $" . number_format($amount, 2) . " deducted from your deposit balance.");
     }
 
     public function teamGenealogy()
@@ -587,8 +841,7 @@ public function getTeamTree(Request $request,$id){
 
     public function teamRanking()
     {
-
-        return view('user.team.team-ranking');
+        return redirect()->route('user.referral.rank');
     }
 
     public function teamsGroups()

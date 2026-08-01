@@ -71,6 +71,8 @@ class ReferralBonus extends Model
      */
     public static function totalsForUser(int $userId): array
     {
+        \App\Services\ReferralService::syncMissingBonuses();
+
         $row = self::where('user_id', $userId)
             ->selectRaw('
                 SUM(CASE WHEN status = "pending"      THEN bonus_amount ELSE 0 END) AS pending_total,

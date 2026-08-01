@@ -71,46 +71,68 @@ class RegisteredUserController extends Controller
 
 
 
-        if ((!empty($request->referee_id) && $request->referee_id != '') && isset($request->referee_id)) {
-            $ref = User::where('activation', $request->referee_id)->exists();
-            if (!$ref) {
-                return Redirect::back()->withErrors(['ref' => 'Invalid referee_id, retry with another one']);
-            }
-            else {
-                $indirect = User::where('activation', $referedBy)->first();
-                $father = $indirect->father;
-                $refferal = $indirect->id;
-                if($request->side == 'LEFT' || $request->side == 'RIGHT'){
-                    $refferal = 0;
+        if (!empty($request->referee_id) && $request->referee_id != '') {
+            $refereeInput = trim((string) $request->referee_id);
+            $indirect = null;
+
+            // Handle legacy REF-20-d274ac format if someone clicks an old link
+            if (str_starts_with(strtoupper($refereeInput), 'REF-')) {
+                $parts = explode('-', $refereeInput);
+                if (count($parts) >= 2) {
+                    $base36Id = $parts[1];
+                    $decodedId = base_convert(strtolower($base36Id), 36, 10);
+                    $indirect = User::find($decodedId);
                 }
-
-
-
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => Hash::make($request->password),
-                    'phone' => $request->phone,
-                    'user' => $request->user,
-                    'country' => $request->country,
-                    'activation' => rand(1111111, 9999999),
-                    'referee_id' => $refferal,
-                    'father' => null,
-                    'has_request' => 'registed',
-                ]);
-                if($request->side){
-                Teams::create([
-                    'user_id'=>$indirect->id,
-                    'team_user_id'=>$user->id,
-                    'side'=>$request->side
-                ]);
             }
 
-         event(new Registered($user));
-        Auth::login($user);
-        return redirect(RouteServiceProvider::HOME);
-
+            if (!$indirect) {
+                $indirect = User::where('activation', $refereeInput)
+                    ->orWhere('user', $refereeInput)
+                    ->orWhere('id', $refereeInput)
+                    ->orWhere('transfer_code', $refereeInput)
+                    ->first();
             }
+
+            if (!$indirect) {
+                return Redirect::back()->withErrors(['ref' => 'Invalid referee referral code. Please check and try again.']);
+            }
+
+            // ALWAYS link referee_id to the referrer's user ID so referral bonuses generate
+            $refferal = $indirect->id;
+
+            $user = User::create([
+                'name'        => $request->name,
+                'email'       => $request->email,
+                'password'    => Hash::make($request->password),
+                'phone'       => $request->phone,
+                'user'        => $request->user,
+                'country'     => $request->country,
+                'activation'  => rand(1111111, 9999999),
+                'referee_id'  => $refferal,
+                'father'      => null,
+                'has_request' => 'registed',
+            ]);
+
+            // Determine team placement side
+            $reqSide = strtoupper(trim((string) $request->side));
+            if ($reqSide === 'LEFT' || $reqSide === 'RIGHT') {
+                $placedSide = $reqSide;
+            } else {
+                // Main link without side parameter: auto-balance side placement
+                $leftCount  = Teams::where('user_id', $indirect->id)->where('side', 'LEFT')->count();
+                $rightCount = Teams::where('user_id', $indirect->id)->where('side', 'RIGHT')->count();
+                $placedSide = ($leftCount <= $rightCount) ? 'LEFT' : 'RIGHT';
+            }
+
+            Teams::create([
+                'user_id'      => $indirect->id,
+                'team_user_id' => $user->id,
+                'side'         => $placedSide,
+            ]);
+
+            event(new Registered($user));
+            Auth::login($user);
+            return redirect(RouteServiceProvider::HOME);
         }
 
         $user = User::create([

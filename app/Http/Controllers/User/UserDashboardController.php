@@ -388,6 +388,27 @@ class UserDashboardController extends Controller{
         $depositBalance = (float) $sum;
         $cashoutBalance = $cashout;
 
+        // Initial Left and Right Referral Bonus Earnings (all_time)
+        $allTimeBonuses = \App\Models\ReferralBonus::where('user_id', $user->id)
+            ->whereNotIn('status', ['reversed', 'expired'])
+            ->get();
+
+        $leftEarning  = 0.0;
+        $rightEarning = 0.0;
+
+        foreach ($allTimeBonuses as $b) {
+            $sourceUserId = $b->source_user_id;
+            if (!$sourceUserId) continue;
+
+            $side = $this->determineRootTeamSide($user->id, $sourceUserId);
+
+            if ($side === 'LEFT') {
+                $leftEarning += (float) $b->bonus_amount;
+            } elseif ($side === 'RIGHT') {
+                $rightEarning += (float) $b->bonus_amount;
+            }
+        }
+
         return view('user.dashboard',
         [
             "mypackage"              => $package,
@@ -396,6 +417,8 @@ class UserDashboardController extends Controller{
             "show_timer"             => $show,
             "deposits"               => number_format($depositBalance,2),
             "deposit_raw"            => $depositBalance,
+            "left_earning"           => $leftEarning,
+            "right_earning"          => $rightEarning,
             "ranks"                  => $ranks,
             "amount"                 => 0,
             // Token balances
@@ -546,14 +569,33 @@ class UserDashboardController extends Controller{
     }
 
 
-    private function getPeriodDates($period)
+    private function determineRootTeamSide(int $rootUserId, int $targetUserId): ?string
+    {
+        $current = User::find($targetUserId);
+        $side = null;
+
+        while ($current && $current->referee_id && (int)$current->referee_id !== (int)$rootUserId) {
+            if ($current->teamSide) {
+                $side = $current->teamSide->side;
+            }
+            $current = User::find($current->referee_id);
+        }
+
+        if ($current && (int)$current->referee_id === (int)$rootUserId && $current->teamSide) {
+            return $current->teamSide->side;
+        }
+
+        return $side;
+    }
+
+    private function getPeriodDates($period): array
     {
         switch ($period) {
             case 'this_week':
                 return [now()->startOfWeek(), now()->endOfWeek()];
 
             case 'last_week':
-                return [now()-> Week()->startOfWeek(), now()->subWeek()->endOfWeek()];
+                return [now()->subWeek()->startOfWeek(), now()->subWeek()->endOfWeek()];
 
             case 'this_month':
                 return [now()->startOfMonth(), now()->endOfMonth()];
@@ -567,94 +609,54 @@ class UserDashboardController extends Controller{
             case 'last_year':
                 return [now()->subYear()->startOfYear(), now()->subYear()->endOfYear()];
 
+            case 'all_time':
             default:
-                return [now()->startOfDay(), now()->endOfDay()];
+                return [\Carbon\Carbon::parse('2020-01-01')->startOfDay(), now()->endOfCentury()];
         }
     }
 
-    private function getEarnings($user,$period,$side){
-        $directUsers = $user->ownedTeams()->where('side', $side)->get();
-        $indirectUvpCount = 0;
-        $zone = 0;
-        $d = [];
-        foreach ($directUsers as $directUser) {
-            $indirectUsers = $this->findIndirectUsers($directUser->teamMember, $side);
-            foreach ($indirectUsers as $indirectUser) {
-                $individualUser = $indirectUser->teamMember;
-                //  dd($indirectUser);
-                $hasUvpInvestment = $individualUser->investments()->where('category', 'VENTURE')->exists();
+    public function fetchCommissions(Request $request)
+    {
+        $user   = Auth::user();
+        $period = $request->query('period', 'all_time');
 
-                if($hasUvpInvestment){
-                    $com = $individualUser->transactions()
-                    ->whereBetween('created_at', $this->getPeriodDates($period))->get();
+        // Ensure missing referral bonuses are synced
+        \App\Services\ReferralService::syncMissingBonuses();
 
-                    $commission = $com->filter(function($data) {
-                        return $data->transaction_type == "COMMISSION";
-                    })->sum(function ($data) {
-                        $details = json_decode($data->transaction_details, true);
-                        return $details['amount'] ?? 0;
-                    });
+        $dates     = $this->getPeriodDates($period);
+        $startDate = $dates[0];
+        $endDate   = $dates[1];
 
-                    $zone += $commission;
+        $bonusesQuery = \App\Models\ReferralBonus::where('user_id', $user->id)
+            ->whereNotIn('status', ['reversed', 'expired']);
 
+        if ($period !== 'all_time') {
+            $bonusesQuery->whereBetween('created_at', [$startDate, $endDate]);
+        }
 
-                }
+        $bonuses = $bonusesQuery->get();
 
+        $leftEarned  = 0.0;
+        $rightEarned = 0.0;
+
+        foreach ($bonuses as $b) {
+            $sourceUserId = $b->source_user_id;
+            if (!$sourceUserId) continue;
+
+            $side = $this->determineRootTeamSide($user->id, $sourceUserId);
+
+            if ($side === 'LEFT') {
+                $leftEarned += (float) $b->bonus_amount;
+            } elseif ($side === 'RIGHT') {
+                $rightEarned += (float) $b->bonus_amount;
             }
         }
-        return $zone;
-
-    }
-
-
-    private function getDirectUvpPeriodically($teamMembers, $packageType,$period,$side) {
-        $directUvpCount = 0;
-        $commission = 0;
-
-        // dd($teamMembers);
-        foreach ($teamMembers as $teamMember) {
-            // dd($teamMember->teamMember);
-            $individualUser = $teamMember->teamMember;
-
-            // $hasUvpInvestment = $du->investments()->where('category', 'VENTURE')->exists();
-            // $earns = $du->ChartAccount()->where("acc_type","COMMISSION")->sum("amount");
-
-            $co = $individualUser->transactions()
-                        ->whereBetween('created_at', $this->getPeriodDates($period))->get();
-
-                    $com = $co->filter(function($data) {
-                            return $data->transaction_type == "COMMISSION";
-                        })->sum(function ($data) {
-                            $details = json_decode($data->transaction_details, true);
-                            return $details['amount'] ?? 0;
-                        });
-            $commission += $com;
-
-        }
-
-        return $commission;
-    }
-
-    public function fetchCommissions (Request $request){
-        $user   =   Auth::User();
-        $myteam = $user->ownedTeams();
-        $right  = $myteam->where("side","RIGHT")->get();
-        $left   = $myteam->where("side","LEFT")->get();
-        $period = $request->query('period');
-
-        $data = $this->getEarnings($user,$period,'RIGHT');
-        $left_data = $this->getEarnings($user,$period,'LEFT');
-        $direct_left = $this->getDirectUvpPeriodically($left,"VENTURE",$period,"LEFT");
-        $direct_right = $this->getDirectUvpPeriodically($right,"VENTURE",$period,"RIGHT");
 
         return response()->json([
-
-            'iright'=>$data,
-            'ileft'=>$left_data,
-            'direct_left'=>$direct_left,
-            'direct_right'=>$direct_right,
-            'right'=>$data+$direct_right,
-            'left'=>$left_data+$direct_left
+            'left'      => number_format($leftEarned, 2, '.', ''),
+            'right'     => number_format($rightEarned, 2, '.', ''),
+            'left_raw'  => $leftEarned,
+            'right_raw' => $rightEarned,
         ]);
     }
     private  function commissions(){
@@ -1200,13 +1202,43 @@ class UserDashboardController extends Controller{
 
 
 
-    public function referral()
+    public function referral(Request $request)
     {
-
-
         $user = Auth::user();
+
+        // 1. Referred By (Referrer of current user)
+        $referrerUser = $user->referrer ?: (\App\Models\User::find($user->referee_id));
+
+        // 2. Direct Referrals (Level 1) - Paginated by 5 records
+        $directReferrals = User::where('referee_id', $user->id)
+            ->latest()
+            ->paginate(5, ['*'], 'direct_page');
+
+        // 3. Indirect Referrals (Level 2+) - Paginated by 5 records
+        $allDownlineIds = collect();
+        $queue = collect([$user->id]);
+
+        while ($queue->isNotEmpty()) {
+            $currentId = $queue->shift();
+            $directs = User::where('referee_id', $currentId)->pluck('id');
+            foreach ($directs as $dId) {
+                if (!$allDownlineIds->contains($dId)) {
+                    $allDownlineIds->push($dId);
+                    $queue->push($dId);
+                }
+            }
+        }
+
+        $directIds = User::where('referee_id', $user->id)->pluck('id')->toArray();
+        $indirectIds = $allDownlineIds->reject(function ($id) use ($user, $directIds) {
+            return $id === $user->id || in_array($id, $directIds);
+        })->values()->all();
+
+        $indirectReferrals = User::whereIn('id', $indirectIds)
+            ->latest()
+            ->paginate(5, ['*'], 'indirect_page');
+
         $allUsers = $this->getAllDownlineUsers($user);
-        
 
         $right_referrals = $allUsers->filter(function($refer){
             return $refer->side == "RIGHT";
@@ -1215,8 +1247,14 @@ class UserDashboardController extends Controller{
             return $refer->side == "LEFT";
         });
 
-        // dd($right_referrals);
-        return view('user.referral',["right_referrals"=>$right_referrals,"left_referrals"=>$left_referrals,"all_referal"=>$allUsers]);
+        return view('user.referral', [
+            "referrerUser"      => $referrerUser,
+            "directReferrals"   => $directReferrals,
+            "indirectReferrals" => $indirectReferrals,
+            "right_referrals"   => $right_referrals,
+            "left_referrals"    => $left_referrals,
+            "all_referal"       => $allUsers
+        ]);
     }
      public function showTask()
     {

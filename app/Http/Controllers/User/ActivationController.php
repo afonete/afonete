@@ -179,6 +179,11 @@ public function upgrade(Request $request){
                     ]);
                     $pay =  $results->payments()->save($create_payable);
 
+                    // Credit referral bonus to upline
+                    if ($pay) {
+                        \App\Services\ReferralService::creditForPayment($pay);
+                    }
+
                     // Ensure Team Leader record & Super Leader credits if leader code
                     $this->ensureTeamLeaderRecord($user, $results);
 
@@ -365,6 +370,11 @@ public function g_upgrade(Request $request){
                         "category_id" => 1
                     ]);
                     $pay =  $activation->payments()->save($create_payable);
+
+                    // Credit referral bonus to upline
+                    if ($pay) {
+                        \App\Services\ReferralService::creditForPayment($pay);
+                    }
 
                     // Ensure Team Leader record & Super Leader credits if leader code
                     $this->ensureTeamLeaderRecord($userA, $activation);

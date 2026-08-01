@@ -130,6 +130,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     Route::get('user/teambuilding/team-structure', [FinanceController::class, 'teamStructure'])->name('team.structure');
+    Route::post('user/teambuilding/add-team-member', [FinanceController::class, 'registerTeamMemberFromDeposit'])->name('user.team.add-member');
     // api
     Route::get('api/getReferralTree/{userId}', [FinanceController::class, 'getTeamTree'])->name('team.structure.tree');
     // 

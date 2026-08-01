@@ -1,10 +1,10 @@
 <div class="wrapper">
-    @include('user.user-dashboard-base')
+    <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     
     <div class="content-wrapper" style="">   
         <section class="content">
             <div class="container-fluid">
-                @php
+                <?php
                     $user = Auth::user();
                     $name = $user->user;
                     $email = $user->email;
@@ -12,7 +12,7 @@
                     $ref_code = $user->activation;
                     $totalReferrals = 0;
                     $baseUrl =  url('/');
-                @endphp
+                ?>
 
 
 
@@ -68,14 +68,14 @@
                                 <div class="referral-link-container">
                                  <h6>Left Referral Link</h6>
                                     <div class="input-group mb-3">
-                                        @if($activated != 'standard')
+                                        <?php if($activated != 'standard'): ?>
                                             <input type="text" class="form-control" id="leftRefLink" 
-                                            value="{{$baseUrl}}/register?referral={{$ref_code}}&side=LEFT"
+                                            value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=LEFT"
 
                                                  readonly>
-                                        @else
+                                        <?php else: ?>
                                             <input type="text" class="form-control" value="https://bifonex.com/register?referral=*******" readonly>
-                                        @endif
+                                        <?php endif; ?>
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-primary copy-btn" type="button" onclick="copyToClipboard('leftRefLink')">
                                                 <i class="las la-copy"></i>
@@ -83,8 +83,8 @@
                                         </div>                                      
                                     </div>
                                     <div>
-                                <h6><i class="las la-users"></i> Left Referrals: {{$left_referrals->count()}}</h6>
-                                <h6><i class="las la-coins"></i> Left Earning Coins: {{$leftEarnings ?? 0}}</h6>
+                                <h6><i class="las la-users"></i> Left Referrals: <?php echo e($left_referrals->count()); ?></h6>
+                                <h6><i class="las la-coins"></i> Left Earning Coins: <?php echo e($leftEarnings ?? 0); ?></h6>
                                         </div>
                                 </div>
                                 
@@ -103,14 +103,14 @@
                                 <div class="referral-link-container">
                                 <h6>Right Referral Link</h6>
                                     <div class="input-group mb-3">
-                                        @if($activated != 'standard')
+                                        <?php if($activated != 'standard'): ?>
                                             <input type="text" class="form-control" id="rightRefLink" 
-                                            value="{{$baseUrl}}/register?referral={{$ref_code}}&side=RIGHT"
+                                            value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=RIGHT"
 
                                                 readonly>
-                                        @else
+                                        <?php else: ?>
                                             <input type="text" class="form-control" value="https://bifonex.com/register?referral=*******" readonly>
-                                        @endif
+                                        <?php endif; ?>
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                                 <i class="las la-copy"></i>
@@ -118,8 +118,8 @@
                                         </div>
                                     </div>
                                     <div>
-                                <h6><i class="las la-users"></i> Right Referrals: {{$right_referrals->count()}}</h6>
-                                <h6><i class="las la-coins"></i> Right Earning Coins: {{$leftEarnings ?? 0}}</h6>
+                                <h6><i class="las la-users"></i> Right Referrals: <?php echo e($right_referrals->count()); ?></h6>
+                                <h6><i class="las la-coins"></i> Right Earning Coins: <?php echo e($leftEarnings ?? 0); ?></h6>
                                         </div>
                                 </div>
 
@@ -128,26 +128,26 @@
                     </div>
                 </div>
 
-                {{-- Referred By (Referrer) Card --}}
+                
                 <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff;">
                     <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                         <div>
                             <span class="badge badge-warning text-dark font-weight-bold text-uppercase px-2.5 py-1 mb-2" style="border-radius: 4px; font-size: 0.72rem;">
                                 <i class="fas fa-user-check mr-1"></i> Your Referrer (Referred By)
                             </span>
-                            @if(isset($referrerUser) && $referrerUser)
+                            <?php if(isset($referrerUser) && $referrerUser): ?>
                                 <h4 class="font-weight-bold text-white mb-1" style="font-size: 1.3rem;">
-                                    {{ $referrerUser->name }} <span class="text-warning small font-weight-normal">(@ {{ $referrerUser->user }})</span>
+                                    <?php echo e($referrerUser->name); ?> <span class="text-warning small font-weight-normal">(@ <?php echo e($referrerUser->user); ?>)</span>
                                 </h4>
                                 <div class="text-light small opacity-90">
-                                    Email: <strong>{{ $referrerUser->email }}</strong> · Transfer Code: <strong>{{ $referrerUser->getTransferCode() }}</strong> · Joined: <strong>{{ $referrerUser->created_at ? $referrerUser->created_at->format('d M Y') : 'N/A' }}</strong>
+                                    Email: <strong><?php echo e($referrerUser->email); ?></strong> · Transfer Code: <strong><?php echo e($referrerUser->getTransferCode()); ?></strong> · Joined: <strong><?php echo e($referrerUser->created_at ? $referrerUser->created_at->format('d M Y') : 'N/A'); ?></strong>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <h4 class="font-weight-bold text-white mb-1" style="font-size: 1.2rem;">
                                     Registered Directly / System Master Account
                                 </h4>
                                 <div class="text-light small opacity-75">You joined directly without a referee link.</div>
-                            @endif
+                            <?php endif; ?>
                         </div>
                         <div>
                             <span class="badge badge-dark px-3 py-2 font-weight-bold text-uppercase border border-secondary" style="border-radius: 8px;">
@@ -157,16 +157,16 @@
                     </div>
                 </div>
 
-                {{-- Direct Referrals Table (Level 1) --}}
+                
                 <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; overflow: hidden;">
                     <div class="card-header bg-primary text-white font-weight-bold py-3 d-flex align-items-center justify-content-between">
                         <span><i class="fas fa-user-friends mr-2"></i> Direct Referrals (Level 1 — 10% Bonus)</span>
-                        <span class="badge badge-light text-primary font-weight-bold">{{ $directReferrals->total() }} Direct {{ Str::plural('Referral', $directReferrals->total()) }}</span>
+                        <span class="badge badge-light text-primary font-weight-bold"><?php echo e($directReferrals->total()); ?> Direct <?php echo e(Str::plural('Referral', $directReferrals->total())); ?></span>
                     </div>
                     <div class="card-body p-0">
-                        @if($directReferrals->isEmpty())
+                        <?php if($directReferrals->isEmpty()): ?>
                             <p class="text-muted p-4 mb-0 text-center"><i class="fas fa-users text-muted mb-2 d-block fa-2x"></i>No direct referrals yet. Share your referral link above to invite new members.</p>
-                        @else
+                        <?php else: ?>
                             <div class="table-responsive">
                                 <table class="table table-hover table-striped text-center mb-0">
                                     <thead class="thead-light">
@@ -181,53 +181,57 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($directReferrals as $refer)
-                                            @php
+                                        <?php $__currentLoopData = $directReferrals; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $refer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $side = $refer->teamSide ? $refer->teamSide->side : 'N/A';
                                                 $hasPkg = !empty($refer->has_paid_package) && !in_array(strtolower(trim($refer->has_paid_package)), ['no', 'standard', '']);
-                                            @endphp
+                                            ?>
                                             <tr>
-                                                <td>{{ $loop->iteration + ($directReferrals->currentPage() - 1) * $directReferrals->perPage() }}</td>
-                                                <td class="font-weight-bold text-dark">{{ $refer->name }}</td>
-                                                <td><span class="badge badge-light border">@ {{ $refer->user }}</span></td>
+                                                <td><?php echo e($loop->iteration + ($directReferrals->currentPage() - 1) * $directReferrals->perPage()); ?></td>
+                                                <td class="font-weight-bold text-dark"><?php echo e($refer->name); ?></td>
+                                                <td><span class="badge badge-light border">@ <?php echo e($refer->user); ?></span></td>
                                                 <td>
-                                                    <span class="badge badge-{{ $side === 'LEFT' ? 'info' : ($side === 'RIGHT' ? 'primary' : 'secondary') }} px-2 py-1">
-                                                        {{ $side }}
+                                                    <span class="badge badge-<?php echo e($side === 'LEFT' ? 'info' : ($side === 'RIGHT' ? 'primary' : 'secondary')); ?> px-2 py-1">
+                                                        <?php echo e($side); ?>
+
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <span class="font-weight-bold text-slate-800">
-                                                        {{ $hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD' }}
+                                                        <?php echo e($hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD'); ?>
+
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge badge-{{ $hasPkg ? 'success' : 'warning' }} px-2 py-1">
-                                                        {{ $hasPkg ? 'Active Package' : 'Registered' }}
+                                                    <span class="badge badge-<?php echo e($hasPkg ? 'success' : 'warning'); ?> px-2 py-1">
+                                                        <?php echo e($hasPkg ? 'Active Package' : 'Registered'); ?>
+
                                                     </span>
                                                 </td>
-                                                <td><small class="text-muted">{{ $refer->created_at ? $refer->created_at->format('d M Y') : 'N/A' }}</small></td>
+                                                <td><small class="text-muted"><?php echo e($refer->created_at ? $refer->created_at->format('d M Y') : 'N/A'); ?></small></td>
                                             </tr>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="p-3 d-flex justify-content-center border-top">
-                                {{ $directReferrals->links('pagination::bootstrap-4') }}
+                                <?php echo e($directReferrals->links('pagination::bootstrap-4')); ?>
+
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
 
-                {{-- Indirect Referrals Table (Level 2+) --}}
+                
                 <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; overflow: hidden;">
                     <div class="card-header bg-dark text-white font-weight-bold py-3 d-flex align-items-center justify-content-between">
                         <span><i class="fas fa-sitemap mr-2"></i> Indirect Referrals (Level 2+ Downline)</span>
-                        <span class="badge badge-light text-dark font-weight-bold">{{ $indirectReferrals->total() }} Indirect {{ Str::plural('Referral', $indirectReferrals->total()) }}</span>
+                        <span class="badge badge-light text-dark font-weight-bold"><?php echo e($indirectReferrals->total()); ?> Indirect <?php echo e(Str::plural('Referral', $indirectReferrals->total())); ?></span>
                     </div>
                     <div class="card-body p-0">
-                        @if($indirectReferrals->isEmpty())
+                        <?php if($indirectReferrals->isEmpty()): ?>
                             <p class="text-muted p-4 mb-0 text-center"><i class="fas fa-network-wired text-muted mb-2 d-block fa-2x"></i>No indirect referrals yet.</p>
-                        @else
+                        <?php else: ?>
                             <div class="table-responsive">
                                 <table class="table table-hover table-striped text-center mb-0">
                                     <thead class="thead-light">
@@ -242,37 +246,40 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($indirectReferrals as $refer)
-                                            @php
+                                        <?php $__currentLoopData = $indirectReferrals; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $refer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <?php
                                                 $side = $refer->teamSide ? $refer->teamSide->side : 'N/A';
                                                 $hasPkg = !empty($refer->has_paid_package) && !in_array(strtolower(trim($refer->has_paid_package)), ['no', 'standard', '']);
                                                 $directRef = $refer->referrer;
-                                            @endphp
+                                            ?>
                                             <tr>
-                                                <td>{{ $loop->iteration + ($indirectReferrals->currentPage() - 1) * $indirectReferrals->perPage() }}</td>
-                                                <td class="font-weight-bold text-dark">{{ $refer->name }}</td>
-                                                <td><span class="badge badge-light border">@ {{ $refer->user }}</span></td>
-                                                <td><small class="text-primary font-weight-bold">{{ $directRef ? '@' . $directRef->user : '—' }}</small></td>
+                                                <td><?php echo e($loop->iteration + ($indirectReferrals->currentPage() - 1) * $indirectReferrals->perPage()); ?></td>
+                                                <td class="font-weight-bold text-dark"><?php echo e($refer->name); ?></td>
+                                                <td><span class="badge badge-light border">@ <?php echo e($refer->user); ?></span></td>
+                                                <td><small class="text-primary font-weight-bold"><?php echo e($directRef ? '@' . $directRef->user : '—'); ?></small></td>
                                                 <td>
-                                                    <span class="badge badge-{{ $side === 'LEFT' ? 'info' : ($side === 'RIGHT' ? 'primary' : 'secondary') }} px-2 py-1">
-                                                        {{ $side }}
+                                                    <span class="badge badge-<?php echo e($side === 'LEFT' ? 'info' : ($side === 'RIGHT' ? 'primary' : 'secondary')); ?> px-2 py-1">
+                                                        <?php echo e($side); ?>
+
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <span class="font-weight-bold text-slate-800">
-                                                        {{ $hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD' }}
+                                                        <?php echo e($hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD'); ?>
+
                                                     </span>
                                                 </td>
-                                                <td><small class="text-muted">{{ $refer->created_at ? $refer->created_at->format('d M Y') : 'N/A' }}</small></td>
+                                                <td><small class="text-muted"><?php echo e($refer->created_at ? $refer->created_at->format('d M Y') : 'N/A'); ?></small></td>
                                             </tr>
-                                        @endforeach
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="p-3 d-flex justify-content-center border-top">
-                                {{ $indirectReferrals->links('pagination::bootstrap-4') }}
+                                <?php echo e($indirectReferrals->links('pagination::bootstrap-4')); ?>
+
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -291,12 +298,12 @@
                                 <div class="referral-link-container">
                                  
                                     <div class="input-group mb-3">
-                                        @if($activated != 'standard')
+                                        <?php if($activated != 'standard'): ?>
                                             <input type="text" class="form-control" id="leftRefLink" 
-                                                value="{{ url('/register?referral=' . $ref_code . '&side=LEFT') }}" readonly>
-                                        @else
+                                                value="<?php echo e(url('/register?referral=' . $ref_code . '&side=LEFT')); ?>" readonly>
+                                        <?php else: ?>
                                             <input type="text" class="form-control" value="https://bifonex.com/register?referral=*******" readonly>
-                                        @endif
+                                        <?php endif; ?>
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-primary copy-btn" type="button" onclick="copyToClipboard('leftRefLink')">
                                                 <i class="las la-copy"></i>
@@ -320,12 +327,12 @@
                                 <div class="referral-link-container">
                                     
                                     <div class="input-group mb-3">
-                                        @if($activated != 'standard')
+                                        <?php if($activated != 'standard'): ?>
                                             <input type="text" class="form-control" id="rightRefLink" 
-                                                value="{{ url('/register?referral=' . $ref_code . '&side=RIGHT') }}" readonly>
-                                        @else
+                                                value="<?php echo e(url('/register?referral=' . $ref_code . '&side=RIGHT')); ?>" readonly>
+                                        <?php else: ?>
                                             <input type="text" class="form-control" value="https://bifonex.com/register?referral=*******" readonly>
-                                        @endif
+                                        <?php endif; ?>
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                                 <i class="las la-copy"></i>
@@ -351,13 +358,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/tm1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 120px; height: 60px;">
+            <img src="<?php echo e(asset('image/tm1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 120px; height: 60px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -378,13 +385,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/tm2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 30%; height: 50%;">
+            <img src="<?php echo e(asset('image/tm2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 30%; height: 50%;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -410,13 +417,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm3.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
+            <img src="<?php echo e(asset('image/dm3.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -438,13 +445,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
+            <img src="<?php echo e(asset('image/dm1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
             </div>              
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -465,13 +472,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
+            <img src="<?php echo e(asset('image/dm2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 125px ; height: 125px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -497,13 +504,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm3.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
+            <img src="<?php echo e(asset('image/dm3.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -525,13 +532,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
+            <img src="<?php echo e(asset('image/dm1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
             </div>              
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -552,13 +559,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/dm2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
+            <img src="<?php echo e(asset('image/dm2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 160px ; height: 160px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -584,13 +591,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 440px; height: 60px;">
+            <img src="<?php echo e(asset('image/bn1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 440px; height: 60px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -612,13 +619,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 440px; height: 60px;">
+            <img src="<?php echo e(asset('image/bn2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 440px; height: 60px;">
             </div>                
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -643,13 +650,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 455px; height: 70px;">
+            <img src="<?php echo e(asset('image/bn1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 455px; height: 70px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -671,13 +678,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 455px; height: 70px;">
+            <img src="<?php echo e(asset('image/bn2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="max-width: 455px; height: 70px;">
             </div>                
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -705,13 +712,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn1.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 1200px; height: 120px;">
+            <img src="<?php echo e(asset('image/bn1.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 1200px; height: 120px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -736,13 +743,13 @@
             <div class="card-body">
 
             <div class="text-center">
-            <img src="{{asset('image/bn2.png')}}" alt="Right Referral Image" class="img-fluid mb-3" style="width: 1200px; height: 120px;">
+            <img src="<?php echo e(asset('image/bn2.png')); ?>" alt="Right Referral Image" class="img-fluid mb-3" style="width: 1200px; height: 120px;">
             </div>               
                 <div class="referral-link-container">
                
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -769,12 +776,12 @@
                               </div>
              <div class="card-body">
                  <div class="text-center">
-                     <img src="{{asset('image/dmcard.png')}}" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
+                     <img src="<?php echo e(asset('image/dmcard.png')); ?>" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
                  </div>
 
                  <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -793,12 +800,12 @@
                               </div>
              <div class="card-body">
                  <div class="text-center">
-                     <img src="{{asset('image/dm3.png')}}" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
+                     <img src="<?php echo e(asset('image/dm3.png')); ?>" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
                  </div>
 
                  <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -817,13 +824,13 @@
                               </div>
              <div class="card-body">
                  <div class="text-center">
-                     <img src="{{asset('image/dm1.png')}}" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
+                     <img src="<?php echo e(asset('image/dm1.png')); ?>" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
                  </div>
 
 
                  <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -841,13 +848,13 @@
                               </div>
              <div class="card-body">
                  <div class="text-center">
-                     <img src="{{asset('image/dm2.png')}}" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
+                     <img src="<?php echo e(asset('image/dm2.png')); ?>" alt="DM Card" class="img-fluid mb-3" style="width: 100%; height: 220px;">
                  </div>
 
 
                  <div class="input-group mb-3">
                         <input type="text" class="form-control" id="rightRefLink" 
-                            value="{{ url('/register?referral=' . $ref_code) }}" readonly>
+                            value="<?php echo e(url('/register?referral=' . $ref_code)); ?>" readonly>
                         <div class="input-group-append">
                             <button class="btn btn-outline-success copy-btn" type="button" onclick="copyToClipboard('rightRefLink')">
                                 <i class="las la-copy"></i>
@@ -914,7 +921,7 @@
 
 <script>
 function copyToClipboard(elementId) {
-    if ("{{$activated}}" === "standard") {
+    if ("<?php echo e($activated); ?>" === "standard") {
         alert('Activate package to use this feature');
         return;
     }
@@ -926,3 +933,4 @@ function copyToClipboard(elementId) {
     alert('Referral link copied to clipboard!');
 }
 </script>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/referral.blade.php ENDPATH**/ ?>

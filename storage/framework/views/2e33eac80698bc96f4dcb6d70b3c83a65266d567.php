@@ -2177,7 +2177,7 @@ $user=db::SELECT("SELECT * from users");
                                                          <div class="col-6">
                                                              <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
                                                                  <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
-                                                                 <h3 class="font-weight-bold text-info mb-1" id="left-amount" style="font-size: 1.2rem;">0.00 $</h3>
+                                                                 <h3 class="font-weight-bold text-info mb-1" id="left-amount" style="font-size: 1.2rem;">$<?php echo e(number_format($left_earning ?? 0, 2)); ?></h3>
                                                                  <small class="text-muted font-weight-bold" id="left-for" style="font-size: 0.72rem;">Left Earning</small>
                                                              </div>
                                                          </div>
@@ -2186,7 +2186,7 @@ $user=db::SELECT("SELECT * from users");
                                                          <div class="col-6">
                                                              <div class="card border-0 shadow-sm text-center py-3" style="border-radius: 10px; border: 1px solid #f1f5f9 !important; background-color: #fcfcfd; margin-bottom: 0;">
                                                                  <i class="fa fa-chart-line text-warning mb-2" style="font-size: 1.3rem;"></i>
-                                                                 <h3 class="font-weight-bold text-info mb-1" id="right-amount" style="font-size: 1.2rem;">0.00 $</h3>
+                                                                 <h3 class="font-weight-bold text-info mb-1" id="right-amount" style="font-size: 1.2rem;">$<?php echo e(number_format($right_earning ?? 0, 2)); ?></h3>
                                                                  <small class="text-muted font-weight-bold" id="right-for" style="font-size: 0.72rem;">Right Earning</small>
                                                              </div>
                                                          </div>
@@ -2203,8 +2203,8 @@ $user=db::SELECT("SELECT * from users");
                                                      .then(response => response.json())
                                                      .then(data => {
                                                          console.log(data);
-                                                         document.querySelector("#right-amount").innerHTML = data.right+".0 $"
-                                                         document.querySelector("#left-amount").innerHTML = data.left+".0 $"
+                                                         document.querySelector("#right-amount").innerHTML = "$" + data.right;
+                                                         document.querySelector("#left-amount").innerHTML = "$" + data.left;
                                                      })
                                                      .catch(error => console.error('Error:', error));
                                              });
