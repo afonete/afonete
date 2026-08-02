@@ -94,14 +94,14 @@
                                 <td class="py-4 px-4">
                                     <div class="flex items-center gap-3">
                                         <div class="h-10 w-10 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-sm border border-amber-200">
-                                            {{ strtoupper(substr($lead->User_name, 0, 2)) }}
+                                            {{ strtoupper(substr(($usr && !empty($usr->name)) ? $usr->name : ($lead->Names ?: $lead->User_name), 0, 2)) }}
                                         </div>
                                         <div>
                                             <a href="{{ route('admin.team-leaders.show', $lead->id) }}" class="font-bold text-slate-900 hover:text-indigo-600 flex items-center gap-1.5">
-                                                {{ $lead->User_name }}
+                                                {{ ($usr && !empty($usr->name)) ? $usr->name : ($lead->Names ?: $lead->User_name) }}
                                                 <i class="fas fa-external-link-alt text-xs text-slate-400"></i>
                                             </a>
-                                            <div class="text-xs text-slate-500 font-medium">{{ $usr ? $usr->email : $lead->Email }}</div>
+                                            <div class="text-xs text-slate-500 font-mono mt-0.5">&#64;{{ $lead->User_name }} &middot; {{ $usr ? $usr->email : $lead->Email }}</div>
                                             <span class="inline-block mt-1 px-2 py-0.5 text-[10px] font-extrabold rounded-md uppercase tracking-wider {{ ($lead->leadership_level ?? '') === 'SUPER_LEADER' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-200' }}">
                                                 {{ $lead->leadership_level ?? 'TEAM_LEADER' }}
                                             </span>

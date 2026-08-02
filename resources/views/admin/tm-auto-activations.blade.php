@@ -224,10 +224,24 @@ Guide downline members</textarea>
                             {{-- Credit Conditions (Super Leader) --}}
                             <td class="py-4 px-4 text-xs">
                                 @if($act->package === 'SUPER_LEADER' && $cond)
-                                    <div class="space-y-0.5 font-medium">
+                                    @php
+                                        $credStatus = $cond['credit_status'] ?? 'pending';
+                                    @endphp
+                                    <div class="space-y-1 font-medium">
                                         <div class="text-indigo-900 font-bold"><i class="fas fa-gift text-indigo-500 mr-1"></i> Credit: ${{ number_format($cond['credit_amount'] ?? 0, 2) }}</div>
                                         <div class="text-slate-600">Target: ${{ number_format($cond['sales_turnover_target'] ?? 0, 0) }} ({{ $cond['turnover_target_percent'] ?? 0 }}%)</div>
                                         <div class="text-slate-600">Reward: {{ $cond['turnover_reward_percent'] ?? 0 }}% | Auto WD: {{ $cond['auto_withdrawal_percent'] ?? 0 }}%</div>
+                                        <div class="mt-1">
+                                            @if($credStatus === 'active')
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-green-100 text-green-800 border border-green-200">
+                                                    <i class="fas fa-check-circle mr-1 text-green-600"></i> CREDIT ACTIVE
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+                                                    <i class="fas fa-hourglass-half mr-1 text-amber-600"></i> CREDIT PENDING
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                 @else
                                     <span class="text-slate-400 italic">N/A (Standard)</span>
@@ -259,16 +273,36 @@ Guide downline members</textarea>
 
                             {{-- Actions --}}
                             <td class="py-4 px-4 text-right">
-                                @if($act->stutus !== 'used')
-                                    <form method="POST" action="{{ route('admin.tm-auto-activations.delete', $act->id) }}" onsubmit="return confirm('Delete this unused TM Auto Activation Code?');" class="inline-block">
-                                        @csrf
-                                        <button type="submit" class="text-red-600 hover:text-red-800 font-bold text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
-                                            <i class="fas fa-trash mr-1"></i> Delete
-                                        </button>
-                                    </form>
-                                @else
-                                    <span class="text-slate-400 text-xs italic">No actions</span>
-                                @endif
+                                <div class="flex items-center justify-end gap-2">
+                                    @if($act->package === 'SUPER_LEADER')
+                                        @if(($cond['credit_status'] ?? 'pending') === 'active')
+                                            <form method="POST" action="{{ route('admin.tm-auto-activations.toggle-credit', $act->id) }}" class="inline-block">
+                                                @csrf
+                                                <input type="hidden" name="status" value="pending">
+                                                <button type="submit" class="text-amber-800 hover:text-amber-950 font-bold text-xs bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1.5 rounded-lg transition" title="Deactivate Super Leader Credit">
+                                                    <i class="fas fa-pause-circle mr-1"></i> Deactivate Credit
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form method="POST" action="{{ route('admin.tm-auto-activations.toggle-credit', $act->id) }}" class="inline-block">
+                                                @csrf
+                                                <input type="hidden" name="status" value="active">
+                                                <button type="submit" class="text-emerald-700 hover:text-emerald-900 font-bold text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition" title="Activate Super Leader Credit">
+                                                    <i class="fas fa-check-circle mr-1"></i> Activate Credit
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @endif
+
+                                    @if($act->stutus !== 'used')
+                                        <form method="POST" action="{{ route('admin.tm-auto-activations.delete', $act->id) }}" onsubmit="return confirm('Delete this unused TM Auto Activation Code?');" class="inline-block">
+                                            @csrf
+                                            <button type="submit" class="text-red-600 hover:text-red-800 font-bold text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">
+                                                <i class="fas fa-trash mr-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -364,17 +364,19 @@ class PaymentController extends Controller
                              ->store('deposits/proofs', 'public');
     }
 
-    Deposits::create([
+    $deposit = Deposits::create([
         'user_id'            => $userId,
         'amount_deposited'   => $request->amount,
         'amount_removed'     => 0,
-        'currency_type'      => 'USD',
+        'currency_type'      => $request->currency ?? 'USD',
         'deposit_method'     => $request->paymentMethod,
         'transaction_id'     => $transactionId,
-        'network'            => $request->network,
-        'user_wallet_address'=> $request->paymentaccount,
+        'network'            => $request->network ?? 'TRC-20',
+        'user_wallet_address'=> $request->paymentaccount ?? 'User Wallet',
         'proof_of_payment'   => $proofPath,
         'status'             => 'pending',
+        'expires_at'         => now()->addMinutes(15),
+        'comment'            => 'Manual deposit submitted from user dashboard deposit page. 15-minute countdown active.',
     ]);
 
     // FIX (D3): A deposit alone should NOT mark the user as "paid" —
@@ -386,8 +388,8 @@ class PaymentController extends Controller
         $user->save();
     }
 
-    return redirect()->route('user.dashboard')
-        ->with('message', 'Deposit of $'.$request->amount.' submitted. Awaiting admin approval.');
+    return redirect()->route('user.manual-deposit.waiting', $deposit->id)
+        ->with('message', 'Deposit of $'.$request->amount.' submitted. Please wait for admin approval.');
 
 
 
@@ -1337,12 +1339,26 @@ public function pssuccess(Request $request)
 
 public function free(Request $request)
     {
-      $activation = $this->generateActivationCode(20);
-        response()->json($activation);
       $user = Auth::user();
       $userId = $user->id;
-      $email =$user->email;
       $user = User::find($userId);
+
+      // Block users holding active UVP packages or Team Leader status
+      $hasActiveUvp = \App\Models\Payment::where('user', $user->id)
+          ->where('status', 1)
+          ->where(function ($q) {
+              $q->where('category', 'VENTURE')
+                ->orWhere('category', 'UVP')
+                ->orWhere('payable_type', \App\Models\Adventures::class);
+          })
+          ->exists();
+
+      if ($hasActiveUvp || in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER'])) {
+          return redirect()->back()->with('error', 'Users holding active UVP packages or Team Leader status cannot activate a free account.');
+      }
+
+      $activation = $this->generateActivationCode(20);
+      $email =$user->email;
       $user->has_paid_package = 'standard';
       // Do not auto-sign. User must sign contract before dashboard access.
       $package='standard';
@@ -1350,7 +1366,6 @@ public function free(Request $request)
       $user->has_free_package = 'yes';
 
       $send = $this->SendCode($email, $activation,$package);
-      response()->json($send);
 
 
       if ($user->save() ) {

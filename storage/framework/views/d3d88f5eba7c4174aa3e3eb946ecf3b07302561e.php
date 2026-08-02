@@ -73,12 +73,6 @@
                     <a href="<?php echo e(route('user.package')); ?>" class="btn btn-warning font-weight-bold text-dark px-3 py-2" style="border-radius: 8px;">
                         FC Packages <i class="fas fa-arrow-right ml-1"></i>
                     </a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit()" class="btn btn-danger font-weight-bold px-3 py-2" style="border-radius: 8px;">
-                        Logout <i class="fas fa-sign-out-alt ml-1"></i>
-                    </a>
-                    <form id="logout-form" action="<?php echo e(route('logout')); ?>" method="POST" style="display: none;">
-                        <?php echo csrf_field(); ?>
-                    </form>
                 </div>
             </div>
 
@@ -115,9 +109,18 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                             <div class="dash-card h-100 p-3 d-flex flex-column justify-content-between text-center border">
                                 <div>
-                                    <div class="p-2 mb-2 rounded bg-dark text-white font-weight-bold" style="font-size: 0.85rem; border-radius: 8px;">
-                                        <span class="text-warning d-block"><?php echo e($venture->name ?: $venture->plan); ?></span>
-                                        <small class="text-light" style="font-size: 0.72rem;">Duration: <?php echo e($venture->duration); ?> days</small>
+                                    <div class="p-2.5 mb-2.5 rounded bg-dark text-white font-weight-bold" style="border-radius: 10px;">
+                                        <span class="badge badge-warning text-dark font-weight-bold text-uppercase px-2 py-1 mb-1 d-inline-block" style="font-size: 0.72rem;">
+                                            <i class="fas fa-layer-group mr-1"></i> <?php echo e($venture->plan ?: 'VENTURE LIGHT'); ?>
+
+                                        </span>
+                                        <span class="text-white d-block font-weight-bold" style="font-size: 0.95rem;">
+                                            <?php echo e($venture->name ?: 'UVP AI License'); ?>
+
+                                        </span>
+                                        <small class="text-light opacity-90 d-block mt-0.5" style="font-size: 0.72rem;">
+                                            Duration: <?php echo e($venture->duration); ?> Days
+                                        </small>
                                     </div>
 
                                     <div class="my-3">
@@ -183,33 +186,63 @@
 
             
             <div class="row">
-                <div class="col-12 col-md-4 mb-3">
-                    <div class="dash-card p-3 text-center">
-                        <h6 class="font-weight-bold text-dark mb-1"><i class="fas fa-code text-primary mr-1"></i> Have Activation Code?</h6>
-                        <p class="text-muted small mb-2">Redeem an activation code to activate immediately.</p>
-                        <a href="<?php echo e(route('user.dashboard.activate')); ?>" class="btn btn-sm btn-outline-primary font-weight-bold btn-block" style="border-radius: 6px;">
-                            Enter Code →
-                        </a>
+                
+                <div class="col-12 col-md-4 mb-4">
+                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="p-2 mb-3 rounded bg-warning text-dark font-weight-bold" style="border-radius: 8px;">
+                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-key mr-1"></i> Activation Code</span>
+                            </div>
+                            <h4 class="font-weight-bold text-dark mb-2">Have a Code?</h4>
+                            <p class="text-muted small mb-3">Redeem your package or Team Leader activation code.</p>
+                        </div>
+                        <div>
+                            <form action="<?php echo e(route('validate')); ?>" method="POST">
+                                <?php echo csrf_field(); ?>
+                                <div class="form-group mb-2">
+                                    <input type="text" name="code" placeholder="Enter Activation Code" required class="form-control text-center font-mono font-weight-bold" style="border-radius: 8px; font-size: 13px;">
+                                </div>
+                                <button type="submit" class="btn btn-dark btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #1e293b, #0f172a); border: none;">
+                                    <i class="fas fa-bolt text-warning mr-1"></i> Submit Code
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4 mb-3">
-                    <div class="dash-card p-3 text-center">
-                        <h6 class="font-weight-bold text-dark mb-1"><i class="fas fa-wallet text-success mr-1"></i> Deposit Funds</h6>
-                        <p class="text-muted small mb-2">Add USDT TRC-20 deposit balance to purchase packages.</p>
-                        <a href="<?php echo e(route('user.manual-deposit')); ?>" class="btn btn-sm btn-outline-success font-weight-bold btn-block" style="border-radius: 6px;">
-                            Deposit Now →
-                        </a>
+                
+                <div class="col-12 col-md-4 mb-4">
+                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="p-2 mb-3 rounded bg-success text-white font-weight-bold" style="border-radius: 8px;">
+                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-wallet mr-1"></i> Deposit Funds</span>
+                            </div>
+                            <h4 class="font-weight-bold text-dark mb-2">Add Balance</h4>
+                            <p class="text-muted small mb-3">Deposit USDT TRC-20 to purchase packages anytime.</p>
+                        </div>
+                        <div>
+                            <a href="<?php echo e(route('user.manual-deposit')); ?>" class="btn btn-success btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px;">
+                                <i class="fas fa-plus-circle mr-1"></i> Make Deposit
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-12 col-md-4 mb-3">
-                    <div class="dash-card p-3 text-center">
-                        <h6 class="font-weight-bold text-dark mb-1"><i class="fas fa-gem text-warning mr-1"></i> FC Packages</h6>
-                        <p class="text-muted small mb-2">Explore FC VIP packages and membership tiers.</p>
-                        <a href="<?php echo e(route('user.package')); ?>" class="btn btn-sm btn-outline-warning font-weight-bold btn-block text-dark" style="border-radius: 6px;">
-                            View FC Packages →
-                        </a>
+                
+                <div class="col-12 col-md-4 mb-4">
+                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="p-2 mb-3 rounded bg-primary text-white font-weight-bold" style="border-radius: 8px;">
+                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-gem mr-1"></i> FC Packages</span>
+                            </div>
+                            <h4 class="font-weight-bold text-dark mb-2">VIP Membership</h4>
+                            <p class="text-muted small mb-3">Explore FC VIP packages and membership tiers.</p>
+                        </div>
+                        <div>
+                            <a href="<?php echo e(route('user.package')); ?>" class="btn btn-outline-primary btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px;">
+                                View FC Packages <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

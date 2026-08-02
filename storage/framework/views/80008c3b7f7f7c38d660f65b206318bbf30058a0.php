@@ -42,6 +42,115 @@ $directDepositAddress = $directDepositAddress ?? null;
         <?php if($errors->any()): ?><div class="alert alert-danger mx-3"><?php echo e($errors->first()); ?></div><?php endif; ?>
 
         
+        <?php
+            $pendingDeposit = $deposits->where('status', 'pending')->first();
+            $pendingExpiresAtIso = ($pendingDeposit && $pendingDeposit->expires_at) ? $pendingDeposit->expires_at->toIso8601String() : null;
+            $pendingSecs = ($pendingDeposit && $pendingDeposit->expires_at) ? max(0, now()->diffInSeconds($pendingDeposit->expires_at, false)) : null;
+            $pendingIsExpired = $pendingDeposit && $pendingDeposit->expires_at && now()->greaterThan($pendingDeposit->expires_at);
+        ?>
+
+        <?php if($pendingDeposit): ?>
+        <div class="px-3 mb-4">
+            <div class="card text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid #f59e0b; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3 border-bottom pb-3" style="border-color: rgba(255,255,255,0.1) !important;">
+                        <div>
+                            <span class="badge badge-warning text-dark font-weight-bold px-3 py-1 text-uppercase" id="dashPendingBadge" style="font-size: 0.8rem; border-radius: 6px;">
+                                <?php echo e($pendingIsExpired ? 'EXPIRED' : 'PENDING APPROVAL'); ?>
+
+                            </span>
+                            <h4 class="font-weight-bold text-white mb-0 mt-2">
+                                <i class="fas fa-hourglass-half text-warning mr-2"></i> Deposit Review in Progress
+                            </h4>
+                            <small class="text-light opacity-80">Reference: <strong><?php echo e($pendingDeposit->transaction_id); ?></strong></small>
+                        </div>
+                        <div class="text-center bg-dark p-3 rounded border border-warning" style="min-width: 180px; border-radius: 10px !important;">
+                            <div class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7rem; letter-spacing: 1px;">15-Min Review Countdown</div>
+                            <div id="dashCountdown" class="font-mono font-weight-bold text-warning" style="font-size: 2.2rem; line-height: 1;">
+                                <?php echo e($pendingSecs !== null ? gmdate('i:s', $pendingSecs) : '15:00'); ?>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row align-items-center">
+                        <div class="col-md-8 mb-2 mb-md-0">
+                            <div class="row text-sm">
+                                <div class="col-6 col-sm-3 mb-2">
+                                    <span class="text-muted d-block small">AMOUNT</span>
+                                    <strong class="text-warning" style="font-size: 1.1rem;">$<?php echo e(number_format($pendingDeposit->amount_deposited, 2)); ?></strong>
+                                </div>
+                                <div class="col-6 col-sm-3 mb-2">
+                                    <span class="text-muted d-block small">METHOD</span>
+                                    <strong><?php echo e($pendingDeposit->deposit_method ?? 'MANUAL'); ?></strong>
+                                </div>
+                                <div class="col-6 col-sm-3 mb-2">
+                                    <span class="text-muted d-block small">SUBMITTED</span>
+                                    <strong><?php echo e($pendingDeposit->created_at->format('M d, H:i')); ?></strong>
+                                </div>
+                                <div class="col-6 col-sm-3 mb-2">
+                                    <span class="text-muted d-block small">NETWORK</span>
+                                    <strong><?php echo e($pendingDeposit->network ?? 'TRC-20'); ?></strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-right">
+                            <a href="<?php echo e(route('user.manual-deposit.waiting', $pendingDeposit->id)); ?>" class="btn btn-warning font-weight-bold px-3 py-2" style="border-radius: 8px;">
+                                <i class="fas fa-external-link-alt mr-1"></i> Open Waiting Page
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        (function(){
+            var expiresAt = <?php echo json_encode($pendingExpiresAtIso, 15, 512) ?>;
+            var statusUrl = <?php echo json_encode(route('user.manual-deposit.status', $pendingDeposit->id), 512) ?>;
+            var cdEl = document.getElementById('dashCountdown');
+            var badgeEl = document.getElementById('dashPendingBadge');
+
+            function pad(n) { return String(n).padStart(2, '0'); }
+            function formatSecs(s) {
+                s = Math.max(0, s || 0);
+                return pad(Math.floor(s / 60)) + ':' + pad(s % 60);
+            }
+
+            function tick() {
+                if (!expiresAt) return;
+                var rem = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000);
+                if (cdEl) cdEl.textContent = formatSecs(rem);
+                if (rem <= 0 && cdEl) {
+                    cdEl.textContent = '00:00';
+                    cdEl.style.color = '#ef4444';
+                }
+            }
+
+            function checkStatus() {
+                fetch(statusUrl, { headers: { 'Accept': 'application/json' } })
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (typeof data.seconds_remaining === 'number' && cdEl) {
+                            cdEl.textContent = formatSecs(data.seconds_remaining);
+                        }
+                        if (data.status === 'approved') {
+                            if (badgeEl) { badgeEl.textContent = 'APPROVED'; badgeEl.className = 'badge badge-success text-white font-weight-bold px-3 py-1'; }
+                            setTimeout(function(){ window.location.reload(); }, 1200);
+                        } else if (data.status === 'rejected' || data.status === 'cancelled') {
+                            if (badgeEl) { badgeEl.textContent = String(data.status).toUpperCase(); badgeEl.className = 'badge badge-danger text-white font-weight-bold px-3 py-1'; }
+                        }
+                    }).catch(function(){});
+            }
+
+            tick();
+            setInterval(tick, 1000);
+            setInterval(checkStatus, 15000);
+        })();
+        </script>
+        <?php endif; ?>
+
+        
         <div class="px-3">
             <ul class="nav nav-pills mb-3" role="tablist" id="depositTabs">
                 <li class="nav-item">

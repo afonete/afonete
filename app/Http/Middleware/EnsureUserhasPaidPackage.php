@@ -35,6 +35,26 @@ class EnsureUserhasPaidPackage
         $isLeaderPackage = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
 
         if ($isLeaderPackage) {
+            $user->has_free_package = 'no';
+            $user->save();
+            return $next($request);
+        }
+
+        // ── Check if user has active UVP / VENTURE package ──
+        $hasActiveUvp = \App\Models\Payment::where('user', $user->id)
+            ->where('status', 1)
+            ->where(function ($q) {
+                $q->where('category', 'VENTURE')
+                  ->orWhere('category', 'UVP')
+                  ->orWhere('payable_type', \App\Models\Adventures::class);
+            })
+            ->exists();
+
+        if ($hasActiveUvp) {
+            if ($user->has_free_package === 'yes') {
+                $user->has_free_package = 'no';
+                $user->save();
+            }
             return $next($request);
         }
 

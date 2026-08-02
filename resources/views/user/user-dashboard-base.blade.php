@@ -541,22 +541,25 @@ if (showAlertBtn) {
 
                     {{-- ═══════════════════════════════════════════════════
                          TEAM LEADER / SUPER LEADER MENU
-                         Shows below "My Contract" for activated leaders
+                         Visible to ALL users in sidebar.
+                         Non-leaders clicking it are redirected with access restrictions.
                          ═══════════════════════════════════════════════════ --}}
                     @php
-                        $isTeamLeader = in_array($user->has_paid_package ?? '', ['TEAM_LEADER', 'SUPER_LEADER']);
-                        $leaderLabel  = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'Super Leader' : 'Team Leader';
-                        $leaderIcon   = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'fa-crown' : 'fa-users-cog';
-                        $leaderColor  = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'group-tokens' : 'group-team';
+                        $isTeamLeaderCheck = in_array($user->has_paid_package ?? '', ['TEAM_LEADER', 'SUPER_LEADER']) || (\App\Models\TeamLeader::where('User_name', $user->user ?? '')->where('status', 'confirmed')->exists());
+                        $leaderLabel       = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'Super Leader' : 'Team Leader';
+                        $leaderIcon        = ($user->has_paid_package ?? '') === 'SUPER_LEADER' ? 'fa-crown' : 'fa-users-cog';
                     @endphp
-                    @if($isTeamLeader)
                     <li class="nav-item">
-                        <a href="{{ route('team-leader.all') }}" class="nav-link {{ request()->routeIs('team-leader.all') ? 'active' : '' }}">
+                        <a href="{{ route('team-leader.all') }}" class="nav-link {{ request()->routeIs('team-leader.all', 'team.leader', 'team-leader.*') ? 'active' : '' }}">
                             <i class="nav-icon fas {{ $leaderIcon }}"></i>
-                            <p>{{ $leaderLabel }}</p>
+                            <p>
+                                {{ $leaderLabel }}
+                                @if(!$isTeamLeaderCheck)
+                                    <span class="right badge badge-info" style="font-size: 10px;">Apply</span>
+                                @endif
+                            </p>
                         </a>
                     </li>
-                    @endif
 
                     {{-- Other --}}
                     <li class="nav-item has-treeview {{ request()->routeIs('profile.edit','password.show') ? 'menu-open' : '' }}">

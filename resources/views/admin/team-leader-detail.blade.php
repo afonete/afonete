@@ -69,8 +69,8 @@
                     <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <i class="fas fa-user text-3xl"></i>
                     </div>
-                    <h2 class="text-xl font-extrabold">{{ $leader->Names }}</h2>
-                    <p class="text-blue-100 text-sm font-mono mt-1">@{{ $leader->User_name }}</p>
+                    <h2 class="text-xl font-extrabold">{{ ($user && !empty($user->name)) ? $user->name : ($leader->Names ?: $leader->User_name) }}</h2>
+                    <p class="text-blue-100 text-sm font-mono mt-1">&#64;{{ $leader->User_name }}</p>
                 </div>
                 <div class="p-6 space-y-4">
                     <div class="flex items-start gap-3">
@@ -386,46 +386,50 @@
 
                     {{-- Admin Performance Actions --}}
                     <div class="pt-3 border-t">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Performance Actions</h4>
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Performance &amp; Credit Actions</h4>
                         <div class="flex flex-wrap gap-3">
                             @if($performance['is_expired'] && $performance['active_referrals'] > 0)
                                 {{-- Conditions met — continue rewards --}}
-                                <div class="flex-1 bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+                                <div class="w-full bg-green-50 border border-green-200 rounded-xl p-3 text-center mb-2">
                                     <p class="text-xs text-green-700 font-bold"><i class="fas fa-check-circle mr-1"></i> Conditions Met</p>
                                     <p class="text-[10px] text-green-600 mt-1">Leader has active referrals. Referral rewards continue beyond duration.</p>
                                 </div>
                             @elseif($performance['is_expired'])
                                 {{-- Conditions NOT met — warn admin --}}
-                                <div class="flex-1 bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                                <div class="w-full bg-red-50 border border-red-200 rounded-xl p-3 text-center mb-2">
                                     <p class="text-xs text-red-700 font-bold"><i class="fas fa-exclamation-triangle mr-1"></i> Duration Expired — No Active Referrals</p>
-                                    <p class="text-[10px] text-red-600 mt-1">Consider suspending or reviewing this leader.</p>
+                                    <p class="text-[10px] text-red-600 mt-1">Consider suspending, revoking credit, or converting to a free user.</p>
                                 </div>
                             @endif
 
                             {{-- Suspend button --}}
                             <form action="{{ route('admin.team-leaders.suspend', $leader->id) }}" method="POST" class="inline">
                                 @csrf
-                                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150"
+                                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150"
                                         onclick="return confirm('Suspend this team leader? They will lose dashboard access.')">
                                     <i class="fas fa-pause mr-1"></i> Suspend Account
                                 </button>
                             </form>
 
-                            {{-- Stop Credit Bonus (SUPER LEADER only) --}}
-                            @if(($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' && $credit && $credit->status === 'active')
-                            <form action="{{ route('admin.team-leaders.credit.update', $credit->id) }}" method="POST" class="inline">
+                            {{-- Remove & Revoke Credits (SUPER LEADER) --}}
+                            @if(($leader->leadership_level ?? 'TEAM_LEADER') === 'SUPER_LEADER' || $credit)
+                            <form action="{{ route('admin.team-leaders.revoke-credit', $leader->id) }}" method="POST" class="inline">
                                 @csrf
-                                <input type="hidden" name="sales_turnover_target" value="{{ $credit->sales_turnover_target }}">
-                                <input type="hidden" name="turnover_target_percent" value="{{ $credit->turnover_target_percent }}">
-                                <input type="hidden" name="turnover_reward_percent" value="{{ $credit->turnover_reward_percent }}">
-                                <input type="hidden" name="auto_withdrawal_percent" value="{{ $credit->auto_withdrawal_percent }}">
-                                <input type="hidden" name="credit_status" value="pending">
-                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150"
-                                        onclick="return confirm('Stop credit bonus flow for this SUPER LEADER?')">
-                                    <i class="fas fa-stop-circle mr-1"></i> Stop Credit Bonus
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150"
+                                        onclick="return confirm('Remove and revoke all credits for this Super Leader?')">
+                                    <i class="fas fa-trash-alt mr-1"></i> Remove &amp; Revoke Credits
                                 </button>
                             </form>
                             @endif
+
+                            {{-- Convert to Free User --}}
+                            <form action="{{ route('admin.team-leaders.convert-to-free', $leader->id) }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" class="bg-rose-700 hover:bg-rose-800 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150"
+                                        onclick="return confirm('Downgrade this leader and convert them into a Free Standard User? All credits will be revoked.')">
+                                    <i class="fas fa-user-minus mr-1"></i> Convert to Free User
+                                </button>
+                            </form>
                         </div>
                     </div>
 
@@ -474,14 +478,35 @@
                             <i class="fas fa-check-circle text-green-600"></i>
                             This application has already been approved.
                         </div>
-                        <form action="{{ route('admin.team-leaders.suspend', $leader->id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                    class="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-xl shadow-sm transition duration-150 text-sm"
-                                    onclick="return confirm('Suspend this team leader?')">
-                                <i class="fas fa-pause"></i> Suspend Leader
-                            </button>
-                        </form>
+
+                        @if(isset($activeUvpAmount) && $activeUvpAmount > 0)
+                            <div class="bg-amber-50 border border-amber-300 rounded-xl p-3.5 mb-4 text-xs text-amber-900 font-bold flex items-start gap-2.5 shadow-sm">
+                                <i class="fas fa-exclamation-triangle text-amber-600 text-base mt-0.5"></i>
+                                <div>
+                                    <span class="uppercase tracking-wider text-amber-950 block font-extrabold mb-0.5">Active UVP Package Notice</span>
+                                    This leader holds an active UVP Package worth <strong>${{ number_format($activeUvpAmount, 2) }}</strong>. Converting them to a free user will revoke leader privileges, but their UVP investment will remain active.
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="flex flex-wrap gap-3">
+                            <form action="{{ route('admin.team-leaders.suspend', $leader->id) }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition duration-150 text-sm"
+                                        onclick="return confirm('Suspend this team leader?')">
+                                    <i class="fas fa-pause"></i> Suspend Leader
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.team-leaders.convert-to-free', $leader->id) }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full flex items-center justify-center gap-2 bg-rose-700 hover:bg-rose-800 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition duration-150 text-sm"
+                                        onclick="return confirm('WARNING: This leader holds an active UVP Package worth ${{ number_format($activeUvpAmount ?? 0, 2) }}. Are you sure you want to convert them to a Free Standard User? All leader credits will be revoked.');">
+                                    <i class="fas fa-user-minus"></i> Convert to Free User
+                                </button>
+                            </form>
+                        </div>
                     @elseif($leader->status === 'suspended')
                         <div class="flex items-center gap-2 text-sm text-gray-700 font-bold bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
                             <i class="fas fa-ban text-gray-500"></i>

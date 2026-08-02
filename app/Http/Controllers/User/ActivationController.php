@@ -264,7 +264,7 @@ public function g_upgrade(Request $request){
 
         // dd($activation);
         if(!$activation){
-            return redirect()->route('user.package')->with('message', 'Invalid Activation Code. Please try to buy another.');
+            return redirect()->back()->with('message', 'Invalid Activation Code. Please try to buy another.');
 
         }
 
@@ -286,7 +286,7 @@ public function g_upgrade(Request $request){
             );
 
             if (!$isEmailMatch && !$isLeaderMatch) {
-                return redirect()->route('user.package')
+                return redirect()->back()
                     ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$activation->email}'). You cannot use it on this account.");
             }
         }
@@ -300,7 +300,7 @@ public function g_upgrade(Request $request){
             $codePrice  = (float) ($activation->price ?? 0);
 
             if ($highestUvp > 0 && $codePrice > 0 && $codePrice < $highestUvp) {
-                return redirect()->route('user.package')
+                return redirect()->back()
                     ->with('message', "UVP Activation Error: This UVP activation code ($" . number_format($codePrice, 2) . ") is below your highest previously purchased UVP package amount ($" . number_format($highestUvp, 2) . "). You can only activate UVP packages of $" . number_format($highestUvp, 2) . " or higher.");
             }
         }
@@ -642,7 +642,16 @@ public function reactivateCredit(Request $request){
                 $turnoverRewardPercent = isset($conditions['turnover_reward_percent']) ? (float)$conditions['turnover_reward_percent'] : 0;
                 $autoWithdrawalPercent = isset($conditions['auto_withdrawal_percent']) ? (float)$conditions['auto_withdrawal_percent'] : 0;
 
+                $creditStatusSetting   = isset($conditions['credit_status']) ? $conditions['credit_status'] : 'active';
+                $slStatus              = ($creditStatusSetting === 'pending') ? 'pending' : 'active';
+
                 $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $teamLeader->id)->first();
+                if (!$slCredit) {
+                    $slCredit = \App\Models\SuperLeaderCredit::where('user_id', $user->id)->first();
+                }
+                if (!$slCredit) {
+                    $slCredit = \App\Models\SuperLeaderCredit::where('activation_id', $activation->id)->first();
+                }
 
                 if (!$slCredit) {
                     \App\Models\SuperLeaderCredit::create([
@@ -656,8 +665,8 @@ public function reactivateCredit(Request $request){
                         'turnover_target_percent' => $turnoverTargetPercent,
                         'turnover_reward_percent' => $turnoverRewardPercent,
                         'auto_withdrawal_percent' => $autoWithdrawalPercent,
-                        'status'                  => 'active',
-                        'activated_at'            => now(),
+                        'status'                  => $slStatus,
+                        'activated_at'            => $slStatus === 'active' ? now() : null,
                     ]);
                 } else {
                     $slCredit->update([
@@ -669,15 +678,15 @@ public function reactivateCredit(Request $request){
                         'turnover_target_percent' => $turnoverTargetPercent,
                         'turnover_reward_percent' => $turnoverRewardPercent,
                         'auto_withdrawal_percent' => $autoWithdrawalPercent,
-                        'status'                  => 'active',
-                        'activated_at'            => now(),
+                        'status'                  => $slStatus,
+                        'activated_at'            => $slStatus === 'active' ? ($slCredit->activated_at ?: now()) : $slCredit->activated_at,
                     ]);
                 }
 
                 // Sync to legacy credits table for dashboard compatibility
                 \App\Models\Credit::updateOrCreate(
                     ['activation_id' => $activation->id],
-                    ['amount' => $creditAmt, 'status' => 'approved']
+                    ['amount' => $creditAmt, 'status' => ($slStatus === 'active' ? 'approved' : 'pending')]
                 );
             }
         }

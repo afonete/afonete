@@ -66,35 +66,66 @@ class Balance extends Controller{
     }
     
     public function index(){
-        $user = Auth::User();
-        $CASHOUT = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
-        $TRADING = $user->ChartAccount()->where("acc_type","TRADING")->sum("amount");
-        $PAYOUT  = $user->ChartAccount()->where("acc_type","PAYOUT")->sum("amount");
+        $user = Auth::user();
 
-        $total = $CASHOUT + $TRADING;
-        $todayEarning = $user->earnings()->orderBy("created_at","desc")->first();
-        $totalEarning = $user->earnings()->sum("amount");
-        $credit = $user->have_activation_code->myCredit;
-        $fomo = 0;
-        $incomeventure = 0;
-        $freecoin = 0;
+        // ChartAccounts
+        $CASHOUT        = (float) $user->ChartAccount()->where("acc_type", "CASHOUT")->sum("amount");
+        $TRADING        = (float) $user->ChartAccount()->where("acc_type", "TRADING")->sum("amount");
+        $PAYOUT         = (float) $user->ChartAccount()->where("acc_type", "PAYOUT")->sum("amount");
+        $AVAILABLE      = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
+        $FREE_TOKEN     = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
+        $LOCKED_TOKEN   = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        $COMMISSION     = (float) $user->ChartAccount()->where("acc_type", "COMMISSION")->sum("amount");
+        $FOMO           = (float) $user->ChartAccount()->where("acc_type", "FOMO")->sum("amount");
 
-        $initial = $user->deposits()->sum("amount_deposited");
-        $used = $user->deposits()->sum("amount_removed");
-        $deposit = $initial - $used;
+        // Earnings
+        $todayEarning   = (float) $user->earnings()->whereDate("created_at", now()->toDateString())->sum("amount");
+        $totalEarning   = (float) $user->earnings()->sum("amount");
+        $incomeventure  = (float) $user->DailyIncomes()->sum("amount");
+        $referralBonus  = (float) \App\Models\ReferralBonus::where('user_id', $user->id)->sum('bonus_amount');
 
-        return view('user.balance.balance',[
-            "trading"=>$TRADING,
-            "cashout"=>$CASHOUT,
-            "payout" => $PAYOUT,
-            "total"=>$total,
-            "todayEarning"=>$todayEarning ? $todayEarning->amount : 0,
-            "totalEarning"=>$totalEarning,
-            "credit"=>$credit ?? 0,
-            "fomo"=>$fomo,
-            "incomeventure"=>$incomeventure,
-            "freecoin"=>$freecoin,
-            'deposit'=>$deposit
+        // Total combined earnings
+        $grandTotalEarnings = $totalEarning + $referralBonus;
+
+        // Credit / Super Leader Credit
+        $creditAmount = 0.0;
+        $teamLeader   = \App\Models\TeamLeader::where('User_name', $user->user)->first();
+        if ($teamLeader && $teamLeader->superLeaderCredit) {
+            $creditAmount = (float) $teamLeader->superLeaderCredit->credit_amount;
+        } elseif (isset($user->have_activation_code) && $user->have_activation_code->myCredit) {
+            $creditAmount = (float) $user->have_activation_code->myCredit->amount;
+        }
+
+        // Deposits
+        $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+        $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+        $deposit         = max(0, $approvedDeposit - $usedDeposit);
+
+        // Network Teams
+        $leftCount  = $user->ownedTeams()->where('side', 'LEFT')->count();
+        $rightCount = $user->ownedTeams()->where('side', 'RIGHT')->count();
+
+        // Current Rank
+        $currentRank = $user->currentRank();
+
+        return view('user.balance.balance', [
+            "trading"        => $TRADING,
+            "cashout"        => $CASHOUT,
+            "payout"         => $PAYOUT,
+            "available_token"=> $AVAILABLE,
+            "freecoin"       => $FREE_TOKEN,
+            "locked_token"   => $LOCKED_TOKEN,
+            "commission"     => $COMMISSION,
+            "fomo"           => $FOMO,
+            "incomeventure"  => $incomeventure,
+            "todayEarning"   => $todayEarning,
+            "totalEarning"   => $grandTotalEarnings,
+            "referralBonus"  => $referralBonus,
+            "credit"         => $creditAmount,
+            "deposit"        => $deposit,
+            "left_count"     => $leftCount,
+            "right_count"    => $rightCount,
+            "current_rank"   => $currentRank ? $currentRank->rank_name : 'No Rank',
         ]);
     }
 
@@ -363,7 +394,7 @@ class Balance extends Controller{
 
         $transactionId = Deposits::generateTransactionNo();
 
-        Deposits::create([
+        $deposit = Deposits::create([
             'user_id'           => $user->id,
             'amount_deposited'  => $amount,
             'amount_removed'    => 0,
@@ -371,9 +402,12 @@ class Balance extends Controller{
             'deposit_method'    => $request->paymentMethod ?? 'MANUAL',
             'transaction_id'    => $transactionId,
             'status'            => 'pending',
+            'expires_at'        => now()->addMinutes(15),
+            'comment'           => 'Deposit submitted. 15-minute review countdown active.',
         ]);
 
-        return back()->with('message', 'Deposit request submitted. Awaiting approval.');
+        return redirect()->route('user.manual-deposit.waiting', $deposit->id)
+            ->with('message', 'Deposit request submitted. Please wait for admin approval.');
     }
 
      public function status(Request $request)

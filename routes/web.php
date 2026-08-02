@@ -387,6 +387,8 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/team-leaders', [AdminController::class, 'teamLeadersList'])->name('admin.team-leaders.index');
     Route::get('admin/tm-auto-activations', [AdminController::class, 'tmAutoActivationsIndex'])->name('admin.tm-auto-activations.index');
     Route::post('admin/tm-auto-activations/store', [AdminController::class, 'tmAutoActivationStore'])->name('admin.tm-auto-activations.store');
+    Route::post('admin/tm-auto-activations/{id}/activate-credit', [AdminController::class, 'activateTmAutoCredit'])->name('admin.tm-auto-activations.activate-credit');
+    Route::post('admin/tm-auto-activations/{id}/toggle-credit', [AdminController::class, 'toggleTmAutoCredit'])->name('admin.tm-auto-activations.toggle-credit');
     Route::post('admin/tm-auto-activations/{id}/delete', [AdminController::class, 'tmAutoActivationDelete'])->name('admin.tm-auto-activations.delete');
     Route::get('admin/team-leaders-token-releases', [AdminController::class, 'teamLeaderTokenReleases'])->name('admin.team-leaders.token-releases');
     Route::post('admin/team-leaders-token-releases/{id}/approve', [AdminController::class, 'approveTokenRelease'])->name('admin.team-leaders.token-releases.approve');
@@ -396,6 +398,8 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post('admin/team-leaders/credit/{creditId}/update', [AdminController::class, 'updateCredit'])->name('admin.team-leaders.credit.update');
     Route::post('admin/team-leaders/{leaderId}/credit/create', [AdminController::class, 'createCredit'])->name('admin.team-leaders.credit.create');
     Route::post('admin/team-leaders/{id}/reject', [AdminController::class, 'rejectTeamLeader'])->name('admin.team-leaders.reject');
+    Route::post('admin/team-leaders/{id}/revoke-credit', [AdminController::class, 'revokeCredit'])->name('admin.team-leaders.revoke-credit');
+    Route::post('admin/team-leaders/{id}/convert-to-free', [AdminController::class, 'convertToFreeUser'])->name('admin.team-leaders.convert-to-free');
 
     // Official Video Promotions & Tutorials
     Route::get('admin/leader-videos', [AdminController::class, 'leaderVideos'])->name('admin.leader-videos');

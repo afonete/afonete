@@ -653,29 +653,24 @@ img{ max-width:100%;}
     {{-- SECTION 1: SYSTEM & ACCOUNT STATUS --}}
     <h3 class="dash-section-title">System &amp; Account</h3>
     <div class="row">
-        {{-- Card 1: Account Status – SHOWS BOTH UVP PACKAGE & TEAM LEADER STATUS --}}
+        {{-- Card 1: Account Status – UVP PORTFOLIO HAS PRIMARY VISIBILITY --}}
         <div class="col-12 col-sm-6 col-lg-3 mb-4">
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
                         <span class="dash-card-title">Account Status</span>
-                        <i class="dash-card-icon fas fa-user-shield"></i>
+                        <i class="dash-card-icon fas fa-chart-line"></i>
                     </div>
-                    <div class="dash-card-value" style="font-size:1.15rem;">
+                    <div class="dash-card-value">
                         @if(isset($mypackage) && $mypackage)
-                            <div class="font-weight-bold">
-                                {{ $package_name ?? 'VENTURE' }}
-                                <span class="small opacity-90">${{ number_format($package_paid ?? 0, 0) }}</span>
+                            <div class="font-weight-extrabold" style="font-size: 1.7rem; line-height: 1.1;">
+                                ${{ number_format($package_paid ?? 0, 0) }}
                             </div>
-                            @if(isset($is_team_leader) && $is_team_leader)
-                                <div class="mt-1">
-                                    <span class="badge badge-warning text-dark font-weight-bold px-2 py-1" style="font-size: 0.72rem; border-radius: 4px;">
-                                        <i class="fas fa-crown mr-1"></i> {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
-                                    </span>
-                                </div>
-                            @endif
+                            <div class="text-uppercase font-weight-bold text-light opacity-90 mt-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                                {{ $package_name ?? 'VENTURE' }} UVP
+                            </div>
                         @elseif(isset($is_team_leader) && $is_team_leader)
-                            <div class="font-weight-bold">
+                            <div class="font-weight-bold" style="font-size: 1.3rem;">
                                 {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
                             </div>
                             <div style="font-size:0.85rem; opacity:0.95; margin-top:2px;">Official Leader Account</div>
@@ -690,14 +685,20 @@ img{ max-width:100%;}
                     </div>
                     <div class="dash-card-footer">
                         @if(isset($mypackage) && $mypackage)
-                            UVP Portfolio: ${{ number_format($package_paid ?? 0,2) }}
-                            <span class="badge badge-light text-dark ml-1" style="font-size:10px;">
-                                {{ !$package_expired ? 'ACTIVE' : 'EXPIRED' }}
-                            </span>
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span>UVP Portfolio: <strong>${{ number_format($package_paid ?? 0, 2) }}</strong></span>
+                                <span class="badge badge-light text-dark font-weight-bold" style="font-size: 10px;">
+                                    {{ !$package_expired ? 'ACTIVE' : 'EXPIRED' }}
+                                </span>
+                            </div>
                             @if(isset($is_team_leader) && $is_team_leader)
-                                <br><small class="text-warning font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Active Team Leader Privileges</small>
+                                <div class="mt-1 pt-1 border-top" style="border-top-color: rgba(255,255,255,0.2) !important;">
+                                    <span class="badge badge-warning text-dark font-weight-bold px-2 py-0.5" style="font-size: 0.7rem; border-radius: 4px;">
+                                        <i class="fas fa-crown mr-1"></i> {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
+                                    </span>
+                                </div>
                             @elseif(isset($daysgone))
-                                <br><small style="opacity:.85;">Day {{ $daysgone }} / {{ $pkg_duration ?? 100 }}</small>
+                                <small style="opacity:.85;">Day {{ $daysgone }} / {{ $pkg_duration ?? 100 }}</small>
                             @endif
                         @elseif(isset($is_team_leader) && $is_team_leader)
                             <span class="badge badge-light text-dark" style="font-size:10px;">ACTIVE LEADER</span>
@@ -777,15 +778,15 @@ img{ max-width:100%;}
                             <i class="dash-card-icon fas fa-gift"></i>
                         </div>
                         <div class="dash-card-value">
-                            ${{ $credit }}
+                            ${{ number_format((float)$credit, 2) }}
                         </div>
                         <div class="dash-card-footer d-flex align-items-center justify-content-between">
                             <span>Status:</span>
                             @php
-                                $status = $credit_status;
+                                $status = strtolower((string)$credit_status);
                                 $badgeClass = match($status) {
-                                    'approved' => 'badge-success',
-                                    'rejected' => 'badge-danger',
+                                    'approved', 'active' => 'badge-success',
+                                    'rejected', 'deactive', 'deactivated' => 'badge-danger',
                                     default => 'badge-warning',
                                 };
                             @endphp
@@ -815,16 +816,15 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-warning text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Daily Income</span>
+                        <span class="dash-card-title">Total Generated Daily Income</span>
                         <i class="dash-card-icon fas fa-money-bill-wave"></i>
                     </div>
-                    <div class="dash-card-value">
-                        ${{ $daily_income_per_day }}
-                        <small style="font-size:0.75rem; opacity:.9;">/day</small>
+                    <div class="dash-card-value" style="font-size: 1.8rem; font-weight: 900;">
+                        {{ $dailyIncome }}
                     </div>
-                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Combined daily rate ({{ $active_packages_count }} active {{ Str::plural('package', $active_packages_count) }}): <strong>${{ $daily_income_per_day }}/day</strong><br>
-                        Total generated daily income: <strong>{{ $dailyIncome }}</strong>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.8rem; opacity:.95; line-height: 1.6;">
+                        <i class="fas fa-chart-line mr-1"></i> Daily yield rate: <strong>+${{ $daily_income_per_day }}/day</strong><br>
+                        <small style="opacity:.85;">Accumulated across {{ $active_packages_count }} active {{ Str::plural('package', $active_packages_count) }}</small>
                     </div>
                 </div>
             </div>
@@ -835,15 +835,15 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-info text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Trading Voucher (75%)</span>
+                        <span class="dash-card-title">Total Trading Voucher</span>
                         <i class="dash-card-icon fas fa-shopping-bag"></i>
                     </div>
-                    <div class="dash-card-value">
-                        ${{ $daily_trading }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                    <div class="dash-card-value" style="font-size: 1.8rem; font-weight: 900;">
+                        ${{ number_format($trading_raw, 2) }}
                     </div>
-                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Combined Trading Voucher rate: <strong>${{ $daily_trading }}/day</strong><br>
-                        Total available Trading Voucher: <strong>${{ number_format($trading_raw, 2) }}</strong>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.8rem; opacity:.95; line-height: 1.6;">
+                        <i class="fas fa-plus-circle mr-1"></i> Daily Trading Voucher rate: <strong>+${{ $daily_trading }}/day</strong><br>
+                        <small style="opacity:.85;">Accumulates for package renewals</small>
                     </div>
                 </div>
             </div>
@@ -854,20 +854,20 @@ img{ max-width:100%;}
             <div class="dash-card bg-grad-success text-white">
                 <div class="card-body">
                     <div class="dash-card-header">
-                        <span class="dash-card-title">Cashout Wallet (25%)</span>
+                        <span class="dash-card-title">Total Cashout Wallet</span>
                         <i class="dash-card-icon fas fa-wallet"></i>
                     </div>
-                    <div class="dash-card-value">
-                        ${{ $daily_cashout }} <small style="font-size: 0.8rem; opacity: 0.85;">/ day</small>
+                    <div class="dash-card-value" style="font-size: 1.8rem; font-weight: 900;">
+                        ${{ number_format($cashout_raw, 2) }}
                     </div>
-                    <div class="dash-card-subtitle mt-1" style="font-size:0.78rem; opacity:.92; line-height: 1.6;">
-                        Combined Cashout rate: <strong>${{ $daily_cashout }}/day</strong><br>
-                        Total available Cashout: <strong>${{ number_format($cashout_raw, 2) }}</strong>
+                    <div class="dash-card-subtitle mt-1" style="font-size:0.8rem; opacity:.95; line-height: 1.6;">
+                        <i class="fas fa-plus-circle mr-1"></i> Daily Cashout rate: <strong>+${{ $daily_cashout }}/day</strong><br>
+                        <small style="opacity:.85;">Withdrawable funds balance</small>
                     </div>
                     <div class="dash-card-footer d-flex justify-content-between align-items-center" style="border-top: 1px solid rgba(255, 255, 255, 0.15); padding-top: 10px; margin-top: 10px;">
                         <span>Withdrawable funds</span>
-                        <a href="{{ route('user.dashboard.userwithdraw') }}" class="badge badge-light text-success px-2 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none;">
-                            Withdraw →
+                        <a href="{{ route('user.dashboard.userwithdraw') }}" class="badge badge-light text-success px-2.5 py-1 font-weight-bold" style="border-radius:4px; text-decoration:none; font-size: 0.78rem;">
+                            Withdraw Now →
                         </a>
                     </div>
                 </div>

@@ -227,10 +227,24 @@ Guide downline members</textarea>
                             
                             <td class="py-4 px-4 text-xs">
                                 <?php if($act->package === 'SUPER_LEADER' && $cond): ?>
-                                    <div class="space-y-0.5 font-medium">
+                                    <?php
+                                        $credStatus = $cond['credit_status'] ?? 'pending';
+                                    ?>
+                                    <div class="space-y-1 font-medium">
                                         <div class="text-indigo-900 font-bold"><i class="fas fa-gift text-indigo-500 mr-1"></i> Credit: $<?php echo e(number_format($cond['credit_amount'] ?? 0, 2)); ?></div>
                                         <div class="text-slate-600">Target: $<?php echo e(number_format($cond['sales_turnover_target'] ?? 0, 0)); ?> (<?php echo e($cond['turnover_target_percent'] ?? 0); ?>%)</div>
                                         <div class="text-slate-600">Reward: <?php echo e($cond['turnover_reward_percent'] ?? 0); ?>% | Auto WD: <?php echo e($cond['auto_withdrawal_percent'] ?? 0); ?>%</div>
+                                        <div class="mt-1">
+                                            <?php if($credStatus === 'active'): ?>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-green-100 text-green-800 border border-green-200">
+                                                    <i class="fas fa-check-circle mr-1 text-green-600"></i> CREDIT ACTIVE
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+                                                    <i class="fas fa-hourglass-half mr-1 text-amber-600"></i> CREDIT PENDING
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php else: ?>
                                     <span class="text-slate-400 italic">N/A (Standard)</span>
@@ -262,16 +276,36 @@ Guide downline members</textarea>
 
                             
                             <td class="py-4 px-4 text-right">
-                                <?php if($act->stutus !== 'used'): ?>
-                                    <form method="POST" action="<?php echo e(route('admin.tm-auto-activations.delete', $act->id)); ?>" onsubmit="return confirm('Delete this unused TM Auto Activation Code?');" class="inline-block">
-                                        <?php echo csrf_field(); ?>
-                                        <button type="submit" class="text-red-600 hover:text-red-800 font-bold text-xs bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
-                                            <i class="fas fa-trash mr-1"></i> Delete
-                                        </button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="text-slate-400 text-xs italic">No actions</span>
-                                <?php endif; ?>
+                                <div class="flex items-center justify-end gap-2">
+                                    <?php if($act->package === 'SUPER_LEADER'): ?>
+                                        <?php if(($cond['credit_status'] ?? 'pending') === 'active'): ?>
+                                            <form method="POST" action="<?php echo e(route('admin.tm-auto-activations.toggle-credit', $act->id)); ?>" class="inline-block">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="status" value="pending">
+                                                <button type="submit" class="text-amber-800 hover:text-amber-950 font-bold text-xs bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2.5 py-1.5 rounded-lg transition" title="Deactivate Super Leader Credit">
+                                                    <i class="fas fa-pause-circle mr-1"></i> Deactivate Credit
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="POST" action="<?php echo e(route('admin.tm-auto-activations.toggle-credit', $act->id)); ?>" class="inline-block">
+                                                <?php echo csrf_field(); ?>
+                                                <input type="hidden" name="status" value="active">
+                                                <button type="submit" class="text-emerald-700 hover:text-emerald-900 font-bold text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition" title="Activate Super Leader Credit">
+                                                    <i class="fas fa-check-circle mr-1"></i> Activate Credit
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+
+                                    <?php if($act->stutus !== 'used'): ?>
+                                        <form method="POST" action="<?php echo e(route('admin.tm-auto-activations.delete', $act->id)); ?>" onsubmit="return confirm('Delete this unused TM Auto Activation Code?');" class="inline-block">
+                                            <?php echo csrf_field(); ?>
+                                            <button type="submit" class="text-red-600 hover:text-red-800 font-bold text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">
+                                                <i class="fas fa-trash mr-1"></i> Delete
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>

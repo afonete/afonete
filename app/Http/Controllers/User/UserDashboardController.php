@@ -188,10 +188,6 @@ class UserDashboardController extends Controller{
                 $p = $user->have_activation_code ?? null;
                 if ($p) {
                     $portfolio = (float) ($p->price ?? 0);
-                    if (isset($p->myCredit)) {
-                        $credit = (float) ($p->myCredit->amount ?? 0);
-                        $credit_status = $p->myCredit->status ?? '';
-                    }
                 }
                 break;
             case 'TEAM_LEADER':
@@ -201,41 +197,57 @@ class UserDashboardController extends Controller{
                 if ($activation) {
                     $portfolio = (float) ($activation->price ?? 0);
                 }
-
-                // Credit wallet (SUPER_LEADER only — legacy + new table)
-                if ($user->has_paid_package === 'SUPER_LEADER' && $activation) {
-                    // Try legacy credits table first (synced by admin)
-                    if (isset($activation->myCredit)) {
-                        $credit = (float) ($activation->myCredit->amount ?? 0);
-                        $credit_status = $activation->myCredit->status ?? '';
-                    }
-                    // Also check super_leader_credits for display
-                    $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)->first();
-                    if ($teamLeader) {
-                        $slCredit = $teamLeader->superLeaderCredit;
-                        if ($slCredit) {
-                            $credit = (float) $slCredit->credit_amount;
-                            $credit_status = $slCredit->status;
-                            // NOTE: Do NOT add cashout_amount here — the command
-                            // already deposited it into ChartAccount CASHOUT,
-                            // which is read by $cashout above. Adding it again
-                            // would double-count.
-                        }
-                    }
-                }
-
-                // Locked Token — from activation token or balance reserved_token
-                if ($activation && (float)($activation->token ?? 0) > 0) {
-                    $lockedToken = (float) $activation->token;
-                } else {
-                    $bal = \App\Models\balance::where('user', $user->id)->first();
-                    if ($bal) {
-                        $lockedToken = (float) ($bal->reserved_token ?? 0);
-                    }
-                }
                 break;
             default:
                 $portfolio = $package ? (float)$package->paid : 0;
+        }
+
+        // ── Universal Super Leader & Activation Credit Resolution ──
+        $slCredit = \App\Models\SuperLeaderCredit::where('user_id', $user->id)->first();
+        if (!$slCredit) {
+            $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)
+                ->orWhere('Email', $user->email)
+                ->first();
+            if ($teamLeader) {
+                $slCredit = $teamLeader->superLeaderCredit;
+            }
+        }
+        if (!$slCredit) {
+            $activation = \App\Models\Activations::where('user_id', $user->id)
+                ->orWhere('email', $user->email)
+                ->whereIn('package', ['SUPER_LEADER', 'TEAM_LEADER'])
+                ->first();
+            if ($activation) {
+                $slCredit = \App\Models\SuperLeaderCredit::where('activation_id', $activation->id)->first();
+            }
+        }
+
+        if ($slCredit) {
+            $credit = (float) $slCredit->credit_amount;
+            $credit_status = $slCredit->status; // 'active', 'pending', 'deactive'
+
+            // If active, process super leader credits (turnover rewards, auto-withdrawals, pending cashouts)
+            if ($slCredit->status === 'active') {
+                try {
+                    \Illuminate\Support\Facades\Artisan::call('credits:process-super-leaders');
+                } catch (\Throwable $e) {}
+            }
+        } else {
+            // Fallback to legacy activation credit / myCredit / credit_conditions
+            $activation = $user->have_activation_code 
+                ?? \App\Models\Activations::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+            if ($activation) {
+                if (isset($activation->myCredit) && $activation->myCredit) {
+                    $credit = (float) ($activation->myCredit->amount ?? 0);
+                    $credit_status = $activation->myCredit->status ?? '';
+                } elseif (!empty($activation->credit_conditions)) {
+                    $conds = json_decode($activation->credit_conditions, true) ?: [];
+                    if (isset($conds['credit_amount'])) {
+                        $credit = (float) $conds['credit_amount'];
+                        $credit_status = $conds['credit_status'] ?? 'pending';
+                    }
+                }
+            }
         }
 
         $ranks = [

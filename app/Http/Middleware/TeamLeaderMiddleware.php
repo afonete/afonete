@@ -26,33 +26,44 @@ class TeamLeaderMiddleware
 
         $teamLeader = $username ? TeamLeader::where('User_name', $username)->first() : null;
 
-        if (!$teamLeader) {
-            return redirect()->route('team.leader');
+        // Check if user has TEAM_LEADER or SUPER_LEADER package directly
+        $isLeaderPackage = $request->user() && in_array($request->user()->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
+
+        if (!$teamLeader && !$isLeaderPackage) {
+            return redirect()->route('team.leader')
+                ->with('message', 'Access Restricted: The Team Leader portal is reserved for confirmed Team Leaders. You can submit an application or log in below.');
         }
 
-        // Store team leader data in session for easy access
-        session(['team_leader_status' => $teamLeader->status]);
-        session(['team_leader_Usen_Name' => $username]);
+        if ($teamLeader) {
+            session(['team_leader_status' => $teamLeader->status]);
+            session(['team_leader_Usen_Name' => $username]);
 
-        // Route based on application status
-        switch ($teamLeader->status) {
-            case 'pending':
-                return $next($request);
+            switch ($teamLeader->status) {
+                case 'pending':
+                    return $next($request);
 
-            case 'confirmed':
-                return $next($request);
+                case 'confirmed':
+                    return $next($request);
 
-            case 'rejected':
-                return redirect()->route('team-leader.rejected')
-                               ->with('message', 'Your application was not approved.');
+                case 'rejected':
+                    return redirect()->route('team-leader.rejected')
+                                   ->with('message', 'Your application was not approved.');
 
-            case 'suspended':
-                return redirect()->route('team.leader')
-                               ->with('message', 'Your account has been suspended.');
+                case 'suspended':
+                    return redirect()->route('team.leader')
+                                   ->with('message', 'Your account has been suspended.');
 
-            default:
-                return redirect()->route('team.leader');
+                default:
+                    return redirect()->route('team.leader')
+                                   ->with('message', 'Access Restricted: The Team Leader portal is reserved for confirmed Team Leaders.');
+            }
         }
+
+        if ($isLeaderPackage) {
+            return $next($request);
+        }
+
+        return redirect()->route('team.leader')
+            ->with('message', 'Access Restricted: The Team Leader portal is reserved for confirmed Team Leaders.');
     }
-    
 }

@@ -1183,8 +1183,114 @@ public function check(Request $request) {
         return view('admin.withdrawal-history', compact('history'));
     }
 
+    public static function syncAutoLeaderRecords(): void
+    {
+        try {
+            // 1. Find all users with TEAM_LEADER or SUPER_LEADER package
+            $leaderUsers = User::whereIn('has_paid_package', ['TEAM_LEADER', 'SUPER_LEADER'])->get();
+
+            foreach ($leaderUsers as $u) {
+                $teamLeader = \App\Models\TeamLeader::where('User_name', $u->user)
+                    ->orWhere('Email', $u->email)
+                    ->first();
+
+                $realName = !empty($u->name) ? $u->name : $u->user;
+
+                $leaderData = [
+                    'Names'            => $realName,
+                    'User_name'        => $u->user,
+                    'Email'            => $u->email,
+                    'Phone'            => $u->phone ?: '',
+                    'Country'          => $u->country ?: '',
+                    'status'           => 'confirmed',
+                    'leadership_level' => $u->has_paid_package,
+                ];
+
+                if ($teamLeader) {
+                    if ($teamLeader->status !== 'suspended' && $teamLeader->status !== 'rejected') {
+                        $teamLeader->update($leaderData);
+                    }
+                } else {
+                    $teamLeader = \App\Models\TeamLeader::create($leaderData);
+                }
+
+                // Sync SuperLeaderCredit if SUPER_LEADER
+                if ($u->has_paid_package === 'SUPER_LEADER') {
+                    $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $teamLeader->id)->first();
+                    if (!$slCredit) {
+                        $act = \App\Models\Activations::where('email', $u->email)
+                            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                            ->first();
+
+                        $creditAmt = $act ? (float)($act->price ?: 1000) : 1000.0;
+                        \App\Models\SuperLeaderCredit::create([
+                            'team_leader_id'          => $teamLeader->id,
+                            'user_id'                 => $u->id,
+                            'activation_id'           => $act ? $act->id : null,
+                            'credit_amount'           => $creditAmt,
+                            'remaining_credit'        => $creditAmt,
+                            'cashout_amount'          => 0,
+                            'sales_turnover_target'   => 10000,
+                            'turnover_target_percent' => 0,
+                            'turnover_reward_percent' => 0,
+                            'auto_withdrawal_percent' => 0,
+                            'status'                  => 'pending',
+                        ]);
+                    }
+                }
+            }
+
+            // 2. Find all redeemed TM Auto Activation codes for TEAM_LEADER / SUPER_LEADER
+            $usedActivations = \App\Models\Activations::whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                ->where('stutus', 'used')
+                ->get();
+
+            foreach ($usedActivations as $act) {
+                if (empty($act->email)) continue;
+
+                $u = User::where('email', $act->email)->orWhere('id', $act->user_id)->first();
+                if (!$u) continue;
+
+                $teamLeader = \App\Models\TeamLeader::where('User_name', $u->user)
+                    ->orWhere('Email', $u->email)
+                    ->first();
+
+                $realName = !empty($u->name) ? $u->name : $u->user;
+
+                $leaderData = [
+                    'Names'            => $realName,
+                    'User_name'        => $u->user,
+                    'Email'            => $u->email,
+                    'Phone'            => $u->phone ?: '',
+                    'Country'          => $u->country ?: '',
+                    'status'           => 'confirmed',
+                    'leadership_level' => $act->package,
+                ];
+
+                if ($teamLeader) {
+                    if ($teamLeader->status !== 'suspended' && $teamLeader->status !== 'rejected') {
+                        $teamLeader->update($leaderData);
+                    }
+                } else {
+                    $teamLeader = \App\Models\TeamLeader::create($leaderData);
+                }
+
+                if ($u->has_paid_package !== 'TEAM_LEADER' && $u->has_paid_package !== 'SUPER_LEADER') {
+                    $u->update([
+                        'has_paid_package' => $act->package,
+                        'has_free_package' => 'no',
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Error in AdminController::syncAutoLeaderRecords: ' . $e->getMessage());
+        }
+    }
+
     public function teamLeadersList()
     {
+        self::syncAutoLeaderRecords();
+
         $pending = \App\Models\TeamLeader::where('status', 'pending')->latest()->get();
         $confirmed = \App\Models\TeamLeader::where('status', 'confirmed')->latest()->get();
         $rejected = \App\Models\TeamLeader::where('status', 'rejected')->latest()->get();
@@ -1206,6 +1312,8 @@ public function check(Request $request) {
      */
     public function showTeamLeader($id)
     {
+        self::syncAutoLeaderRecords();
+
         $leader = \App\Models\TeamLeader::findOrFail($id);
 
         // ── Performance / monitoring data ──
@@ -1292,7 +1400,20 @@ public function check(Request $request) {
 
         $credit = $leader->superLeaderCredit;
 
-        return view('admin.team-leader-detail', compact('leader', 'performance', 'credit', 'user'));
+        $activeUvpAmount = 0.0;
+        if ($user) {
+            $activeUvpAmount = (float) \App\Models\Payment::where('user', $user->id)
+                ->where('status', 1)
+                ->where('is_expired', false)
+                ->where(function ($q) {
+                    $q->where('category', 'VENTURE')
+                      ->orWhere('category', 'UVP')
+                      ->orWhere('payable_type', \App\Models\Adventures::class);
+                })
+                ->sum(\Illuminate\Support\Facades\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(10,2))'));
+        }
+
+        return view('admin.team-leader-detail', compact('leader', 'performance', 'credit', 'user', 'activeUvpAmount'));
     }
 
     public function approveEventPlan($id)
@@ -1357,6 +1478,20 @@ public function check(Request $request) {
         $request->validate($rules);
 
         $leader->update(['status' => 'confirmed']);
+
+        // On-the-fly schema check to ensure activations table has missing columns
+        if (\Illuminate\Support\Facades\Schema::hasTable('activations')) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('activations', 'is_auto_code')) {
+                try {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE `activations` ADD COLUMN `is_auto_code` TINYINT(1) NOT NULL DEFAULT 0");
+                } catch (\Throwable $e) {}
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('activations', 'credit_conditions')) {
+                try {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE `activations` ADD COLUMN `credit_conditions` TEXT NULL");
+                } catch (\Throwable $e) {}
+            }
+        }
 
         // Create the unique Activation Code
         $activation = \App\Models\Activations::create([
@@ -1881,6 +2016,20 @@ public function check(Request $request) {
 
         $code = strtoupper(trim($request->activation_code));
 
+        // On-the-fly schema check to ensure activations table has missing columns
+        if (\Illuminate\Support\Facades\Schema::hasTable('activations')) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('activations', 'is_auto_code')) {
+                try {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE `activations` ADD COLUMN `is_auto_code` TINYINT(1) NOT NULL DEFAULT 0");
+                } catch (\Throwable $e) {}
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('activations', 'credit_conditions')) {
+                try {
+                    \Illuminate\Support\Facades\DB::statement("ALTER TABLE `activations` ADD COLUMN `credit_conditions` TEXT NULL");
+                } catch (\Throwable $e) {}
+            }
+        }
+
         $creditConditions = null;
         if ($request->leadership_level === 'SUPER_LEADER') {
             $creditConditions = json_encode([
@@ -1889,6 +2038,7 @@ public function check(Request $request) {
                 'turnover_target_percent' => (float) $request->input('turnover_target_percent', 0),
                 'turnover_reward_percent' => (float) $request->input('turnover_reward_percent', 0),
                 'auto_withdrawal_percent' => (float) $request->input('auto_withdrawal_percent', 0),
+                'credit_status'           => 'pending', // Starts PENDING upon creation!
             ]);
         }
 
@@ -1907,7 +2057,68 @@ public function check(Request $request) {
             'email'             => $request->memo ?: '',
         ]);
 
-        return redirect()->back()->with('message', "TM Auto Activation Code '{$code}' ({$request->leadership_level}) generated successfully with custom credit conditions! Any user redeeming this code will automatically activate with those exact credit conditions.");
+        return redirect()->back()->with('message', "TM Auto Activation Code '{$code}' ({$request->leadership_level}) generated successfully! The Super Leader credit is set to PENDING upon creation, and you can activate it later.");
+    }
+
+    public function activateTmAutoCredit($id)
+    {
+        return $this->toggleTmAutoCredit(request()->merge(['status' => 'active']), $id);
+    }
+
+    public function toggleTmAutoCredit(\Illuminate\Http\Request $request, $id)
+    {
+        $activation = \App\Models\Activations::findOrFail($id);
+
+        if ($activation->package !== 'SUPER_LEADER') {
+            return redirect()->back()->with('error', 'Credit actions are only applicable to Super Leader activation codes.');
+        }
+
+        $conditions = !empty($activation->credit_conditions) ? json_decode($activation->credit_conditions, true) : [];
+        $newStatus  = $request->input('status', 'active') === 'active' ? 'active' : 'pending';
+        $conditions['credit_status'] = $newStatus;
+
+        $activation->update([
+            'credit_conditions' => json_encode($conditions),
+        ]);
+
+        // If a SuperLeaderCredit record exists, update its status
+        $slCredit = \App\Models\SuperLeaderCredit::where('activation_id', $activation->id)->first();
+        if (!$slCredit && $activation->user_id) {
+            $slCredit = \App\Models\SuperLeaderCredit::where('user_id', $activation->user_id)->first();
+        }
+        if (!$slCredit && $activation->email) {
+            $user = \App\Models\User::where('email', $activation->email)->first();
+            if ($user) {
+                $teamLeader = \App\Models\TeamLeader::where('User_name', $user->user)->orWhere('Email', $user->email)->first();
+                if ($teamLeader) {
+                    $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $teamLeader->id)->first();
+                }
+            }
+        }
+
+        if ($slCredit) {
+            $slCredit->update([
+                'status'       => $newStatus,
+                'activated_at' => $newStatus === 'active' ? ($slCredit->activated_at ?: now()) : $slCredit->activated_at,
+            ]);
+        }
+
+        // Sync to legacy Credit model
+        $legacyCredit = \App\Models\Credit::where('activation_id', $activation->id)->first();
+        if ($legacyCredit) {
+            $legacyCredit->update([
+                'status' => $newStatus === 'active' ? 'approved' : 'pending',
+            ]);
+        }
+
+        if ($newStatus === 'active') {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('credits:process-super-leaders');
+            } catch (\Throwable $e) {}
+        }
+
+        $label = $newStatus === 'active' ? 'ACTIVATED' : 'DEACTIVATED / PENDING';
+        return redirect()->back()->with('message', "Super Leader credit for code '{$activation->code}' is now {$label}.");
     }
 
     public function tmAutoActivationDelete($id)
@@ -1921,6 +2132,91 @@ public function check(Request $request) {
         $activation->delete();
 
         return redirect()->back()->with('message', 'TM Auto Activation Code deleted successfully.');
+    }
+
+    public function revokeCredit($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $user = \App\Models\User::where('user', $leader->User_name)->orWhere('email', $leader->Email)->first();
+
+        // 1. Wipe SuperLeaderCredit
+        $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $leader->id)->first();
+        if ($slCredit) {
+            $slCredit->update([
+                'credit_amount'    => 0,
+                'remaining_credit' => 0,
+                'status'           => 'disabled',
+            ]);
+        }
+
+        // 2. Wipe legacy Credit
+        if ($user) {
+            $activation = \App\Models\Activations::where('email', $user->email)->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])->first();
+            if ($activation) {
+                \App\Models\Credit::where('activation_id', $activation->id)->update([
+                    'amount' => 0,
+                    'status' => 'rejected',
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('message', "Credits for Super Leader {$leader->Names} have been removed and revoked.");
+    }
+
+    public function convertToFreeUser($id)
+    {
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+        $user = \App\Models\User::where('user', $leader->User_name)->orWhere('email', $leader->Email)->first();
+
+        $activeUvpAmount = 0.0;
+        if ($user) {
+            $activeUvpAmount = (float) \App\Models\Payment::where('user', $user->id)
+                ->where('status', 1)
+                ->where('is_expired', false)
+                ->where(function ($q) {
+                    $q->where('category', 'VENTURE')
+                      ->orWhere('category', 'UVP')
+                      ->orWhere('payable_type', \App\Models\Adventures::class);
+                })
+                ->sum(\Illuminate\Support\Facades\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(10,2))'));
+        }
+
+        // 1. Update leader status to rejected
+        $leader->update(['status' => 'rejected']);
+
+        // 2. Update user to Free Standard User
+        if ($user) {
+            $user->update([
+                'has_paid_package' => 'standard',
+                'has_free_package' => 'yes',
+                'contract'         => 'Not Signed',
+            ]);
+
+            // Revoke credits if present
+            $activation = \App\Models\Activations::where('email', $user->email)->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])->first();
+            if ($activation) {
+                \App\Models\Credit::where('activation_id', $activation->id)->update([
+                    'amount' => 0,
+                    'status' => 'rejected',
+                ]);
+            }
+        }
+
+        $slCredit = \App\Models\SuperLeaderCredit::where('team_leader_id', $leader->id)->first();
+        if ($slCredit) {
+            $slCredit->update([
+                'credit_amount'    => 0,
+                'remaining_credit' => 0,
+                'status'           => 'disabled',
+            ]);
+        }
+
+        $msg = "Leader {$leader->Names} (@" . ($user ? $user->user : $leader->User_name) . ") has been converted to a Free Standard User, and all leader credits have been removed.";
+        if ($activeUvpAmount > 0) {
+            $msg .= " WARNING: This leader holds an active UVP Package worth $" . number_format($activeUvpAmount, 2) . ". Per system rules, users with active UVP packages will continue yielding daily ROI payouts.";
+        }
+
+        return redirect()->back()->with('message', $msg);
     }
 
 }
