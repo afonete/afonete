@@ -4,6 +4,11 @@
 // $user = Auth::user();
 // $name = $user->user ??'';
 $name = "Admin";
+$adminPendingDeposits  = (int) \App\Models\Deposits::where('status', 'pending')->count();
+$adminPendingWeeklyWd  = (int) \App\Models\WeeklyWithdrawal::where('status', 'pending')->count();
+$adminPendingTokenWd   = (int) \App\Models\withdrawals::where('status', 'pending')->count();
+$adminPendingWithdraws = $adminPendingWeeklyWd + $adminPendingTokenWd;
+$adminPendingLeaders   = (int) \App\Models\TeamLeader::where('status', 'pending')->count();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -375,6 +380,11 @@ ul li a{
                 <a  href="{{route('admin.payments')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-credit-card"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap">Manage Payments</span>
+                   @if($adminPendingDeposits > 0)
+                       <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingDeposits }} pending deposit(s) awaiting review">
+                           {{ $adminPendingDeposits }}
+                       </span>
+                   @endif
                 </a>
                 </li>
 
@@ -408,12 +418,22 @@ ul li a{
                     <a href="{{route('admin.token-withdrawals')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-arrow-up-from-bracket"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
+                       @if($adminPendingTokenWd > 0)
+                           <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingTokenWd }} pending token withdrawal(s)">
+                               {{ $adminPendingTokenWd }}
+                           </span>
+                       @endif
                     </a>
                 </li>
                 <li>
                     <a href="{{route('admin.withdrawal')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-money-bill-transfer"></i>
                        <span class="flex-1 ms-3 whitespace-nowrap">Withdrwal</span>
+                       @if($adminPendingWithdraws > 0)
+                           <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingWithdraws }} pending withdrawal(s) awaiting review">
+                               {{ $adminPendingWithdraws }}
+                           </span>
+                       @endif
                     </a>
                 </li>
                 <li>
@@ -751,12 +771,33 @@ ul li a{
         </ul>
     </li>
 
+    {{-- ═══ Zoom Meetings ═══ --}}
+    @php
+        $activeZoomSidebar = \App\Models\ZoomMeeting::activeMeeting();
+    @endphp
+    <li>
+        <a href="{{ route('admin.zoom.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.zoom.*') ? 'bg-gray-100 dark:bg-gray-700' : '' }}">
+            <i class="fa-solid fa-video text-rose-500"></i>
+            <span class="flex-1 ms-3 whitespace-nowrap">Zoom Meetings</span>
+            @if($activeZoomSidebar)
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-extrabold text-white bg-emerald-600 rounded-full shadow-sm animate-pulse" title="Zoom Live Now">
+                    LIVE
+                </span>
+            @endif
+        </a>
+    </li>
+
     {{-- ═══ Team Leaders ═══ --}}
     <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-users-cog"></i>
            <span class="flex-1 ms-3 whitespace-nowrap">Team Leaders</span>
-           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+           @if($adminPendingLeaders > 0)
+               <span class="inline-flex items-center justify-center px-2 py-0.5 me-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingLeaders }} pending leader application(s) awaiting review">
+                   {{ $adminPendingLeaders }}
+               </span>
+           @endif
+           <span class="inline-flex items-center justify-center px-2 ms-1 text-sm font-medium text-gray-800 dark:text-gray-300">
             <i class="fa-solid fa-angle-right"></i>
          </span>
         </a>
@@ -765,6 +806,11 @@ ul li a{
                 <a href="{{ route('admin.team-leaders.index') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                    <i class="fa-solid fa-list-check text-xs mr-2"></i>
                    <span class="flex-1 ms-3 whitespace-nowrap text-sm">All Team Leaders</span>
+                   @if($adminPendingLeaders > 0)
+                       <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse">
+                           {{ $adminPendingLeaders }}
+                       </span>
+                   @endif
                 </a>
             </li>
             <li>

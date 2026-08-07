@@ -57,21 +57,15 @@
             {{-- Top Navigation Header --}}
             <div class="dash-header-bg p-4 mb-4 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <a href="{{ $smartBackUrl }}" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
+                    <a href="javascript:history.back()" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
                         <i class="fas fa-arrow-left mr-1"></i> Back
                     </a>
                     <div>
                         <h4 class="font-weight-bold text-white mb-0" style="font-size: 1.25rem;">
                             <i class="fas fa-gem text-warning mr-2"></i> FC Packages &amp; Activation
                         </h4>
-                        <small class="text-light opacity-90">Manage membership activations, FC packages, and enter activation codes.</small>
+                        <small class="text-light opacity-90">Manage membership activations and FC package tiers.</small>
                     </div>
-                </div>
-
-                <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route('user.venture') }}" class="btn btn-warning font-weight-bold text-dark px-3 py-2" style="border-radius: 8px;">
-                        UVP Packages <i class="fas fa-arrow-right ml-1"></i>
-                    </a>
                 </div>
             </div>
 
@@ -130,15 +124,64 @@
                 </div>
             </div>
 
-            {{-- Free Tier, Activation Code & Deposit Cards --}}
+            @php
+                $isLeader = in_array(strtoupper((string) $user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER']);
+                $matchingLeader = \App\Models\TeamLeader::where('User_name', $user->user)->orWhere('Email', $user->email)->first();
+                $leaderCredit = $matchingLeader ? $matchingLeader->superLeaderCredit : null;
+                $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+                $latestLeaderPayment = \App\Models\Payment::where('user', $user->id)
+                    ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $isLeaderExpired = false;
+                if ($latestLeaderPayment) {
+                    if ($latestLeaderPayment->is_expired) {
+                        $isLeaderExpired = true;
+                    } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                        $isLeaderExpired = true;
+                    }
+                }
+
+                $isActiveLeader = $isLeader && $matchingLeader && $matchingLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
+            @endphp
+
+            @if(!$isActiveLeader)
             <div class="row">
-                {{-- Free / Standard (Hidden for UVP package holders) --}}
+                {{-- Activation Code (Hidden for active team leaders) --}}
+                <div class="col-12 col-md-6 mb-4">
+                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between border">
+                        <div>
+                            <div class="p-2 mb-3 rounded bg-warning text-dark font-weight-bold" style="border-radius: 8px;">
+                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-key mr-1"></i> Activation Code</span>
+                            </div>
+                            <h4 class="font-weight-bold text-dark mb-2">Have an Activation Code?</h4>
+                            <p class="text-muted small mb-3">Redeem your package or Team Leader activation code to activate or upgrade immediately.</p>
+                        </div>
+                        <div>
+                            <form action="{{ route('validate') }}" method="POST">
+                                @csrf
+                                <div class="form-group mb-2">
+                                    <input type="text" name="code" placeholder="Enter Activation Code" required class="form-control text-center font-mono font-weight-bold" style="border-radius: 8px; font-size: 13px;">
+                                </div>
+                                <button type="submit" class="btn btn-dark btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #1e293b, #0f172a); border: none;">
+                                    <i class="fas fa-bolt text-warning mr-1"></i> Submit Code
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Free Tier (Hidden for users who already activated free standard or UVP) --}}
                 @php
+                    $isAlreadyFree = ($user->has_free_package === 'yes') || (strtolower(trim((string)$user->has_paid_package)) === 'standard');
                     $userHasActiveUvp = ($highestUvpPackageAmount > 0) || (isset($hasPaidPackage) && $hasPaidPackage);
+                    $canSeeFreeTier = !$isAlreadyFree && !$userHasActiveUvp;
                 @endphp
-                @if(!$userHasActiveUvp)
-                <div class="col-12 col-md-4 mb-4">
-                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
+                @if($canSeeFreeTier)
+                <div class="col-12 col-md-6 mb-4">
+                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between border">
                         <div>
                             <div class="p-2 mb-3 rounded bg-light text-dark font-weight-bold border" style="border-radius: 8px;">
                                 <span class="text-uppercase" style="font-size: 0.85rem;">Free Tier</span>
@@ -158,49 +201,8 @@
                     </div>
                 </div>
                 @endif
-
-                {{-- Activation Code --}}
-                <div class="col-12 col-md-4 mb-4">
-                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
-                        <div>
-                            <div class="p-2 mb-3 rounded bg-warning text-dark font-weight-bold" style="border-radius: 8px;">
-                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-key mr-1"></i> Activation Code</span>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Have a Code?</h4>
-                            <p class="text-muted small mb-3">Redeem your package or Team Leader activation code.</p>
-                        </div>
-                        <div>
-                            <form action="{{ route('validate') }}" method="POST">
-                                @csrf
-                                <div class="form-group mb-2">
-                                    <input type="text" name="code" placeholder="Enter Activation Code" required class="form-control text-center font-mono font-weight-bold" style="border-radius: 8px; font-size: 13px;">
-                                </div>
-                                <button type="submit" class="btn btn-dark btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #1e293b, #0f172a); border: none;">
-                                    <i class="fas fa-bolt text-warning mr-1"></i> Submit Code
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Deposit Funds --}}
-                <div class="col-12 col-md-4 mb-4">
-                    <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
-                        <div>
-                            <div class="p-2 mb-3 rounded bg-success text-white font-weight-bold" style="border-radius: 8px;">
-                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-wallet mr-1"></i> Deposit Funds</span>
-                            </div>
-                            <h4 class="font-weight-bold text-dark mb-2">Add Balance</h4>
-                            <p class="text-muted small mb-3">Deposit USDT TRC-20 to purchase packages anytime.</p>
-                        </div>
-                        <div>
-                            <a href="{{ route('user.manual-deposit') }}" class="btn btn-success btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px;">
-                                <i class="fas fa-plus-circle mr-1"></i> Make Deposit
-                            </a>
-                        </div>
-                    </div>
-                </div>
             </div>
+            @endif
 
         </div>
     </div>

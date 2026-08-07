@@ -172,7 +172,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>Name</th>
+                                            <th>Transfer Code</th>
                                             <th>Username</th>
                                             <th>Position / Side</th>
                                             <th>Package</th>
@@ -188,7 +188,7 @@
                                             @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration + ($directReferrals->currentPage() - 1) * $directReferrals->perPage() }}</td>
-                                                <td class="font-weight-bold text-dark">{{ $refer->name }}</td>
+                                                <td class="font-weight-bold text-dark font-mono">{{ $refer->transfer_code ?? '—' }}</td>
                                                 <td><span class="badge badge-light border">@ {{ $refer->user }}</span></td>
                                                 <td>
                                                     <span class="badge badge-{{ $side === 'LEFT' ? 'info' : ($side === 'RIGHT' ? 'primary' : 'secondary') }} px-2 py-1">
@@ -233,7 +233,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>Name</th>
+                                            <th>Transfer Code</th>
                                             <th>Username</th>
                                             <th>Referred By</th>
                                             <th>Position / Side</th>
@@ -250,7 +250,7 @@
                                             @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration + ($indirectReferrals->currentPage() - 1) * $indirectReferrals->perPage() }}</td>
-                                                <td class="font-weight-bold text-dark">{{ $refer->name }}</td>
+                                                <td class="font-weight-bold text-dark font-mono">{{ $refer->transfer_code ?? '—' }}</td>
                                                 <td><span class="badge badge-light border">@ {{ $refer->user }}</span></td>
                                                 <td><small class="text-primary font-weight-bold">{{ $directRef ? '@' . $directRef->user : '—' }}</small></td>
                                                 <td>

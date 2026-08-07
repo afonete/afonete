@@ -366,8 +366,8 @@ if (showAlertBtn) {
                           <div class="d-flex flex-column align-items-center text-center">
                             <div class="sidebar-user-profile d-flex flex-column align-items-center text-center pb-3">
                                 <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="User Avatar" class="rounded-circle bg-white sidebar-user-avatar">
-                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="{{ $user->activation }}">{{ $user->activation }}</h5>
-                                <small class="sidebar-user-username text-muted" title="{{ $user->user }}">{{ $user->user }}</small>
+                                <h5 class="sidebar-user-name text-white mt-2 mb-0" title="Transfer Code: {{ $user->transfer_code ?? $user->getTransferCode() }}">{{ $user->transfer_code ?? $user->getTransferCode() }}</h5>
+                                <small class="sidebar-user-username text-muted" title="@ {{ $user->user }}">@ {{ $user->user }}</small>
                             </div>
 
                             <div class="d-flex flex-column align-items-center">

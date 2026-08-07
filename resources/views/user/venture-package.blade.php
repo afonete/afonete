@@ -58,7 +58,7 @@
             {{-- Top Navigation Header --}}
             <div class="dash-header-bg p-4 mb-4 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <a href="{{ $ventureBackUrl }}" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
+                    <a href="{{ url('/user/investments') }}" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
                         <i class="fas fa-arrow-left mr-1"></i> Back
                     </a>
                     <div>
@@ -71,7 +71,7 @@
 
                 <div class="d-flex align-items-center gap-2">
                     <a href="{{ route('user.package') }}" class="btn btn-warning font-weight-bold text-dark px-3 py-2" style="border-radius: 8px;">
-                        FC Packages <i class="fas fa-arrow-right ml-1"></i>
+                        Join Another Membership <i class="fas fa-arrow-right ml-1"></i>
                     </a>
                 </div>
             </div>
@@ -180,8 +180,32 @@
             </div>
 
             {{-- Universal Activation Code & Action Cards --}}
+            @php
+                $isLeader = in_array(strtoupper((string) $user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER']);
+                $matchingLeader = \App\Models\TeamLeader::where('User_name', $user->user)->orWhere('Email', $user->email)->first();
+                $leaderCredit = $matchingLeader ? $matchingLeader->superLeaderCredit : null;
+                $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+                $latestLeaderPayment = \App\Models\Payment::where('user', $user->id)
+                    ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $isLeaderExpired = false;
+                if ($latestLeaderPayment) {
+                    if ($latestLeaderPayment->is_expired) {
+                        $isLeaderExpired = true;
+                    } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                        $isLeaderExpired = true;
+                    }
+                }
+
+                $isActiveLeader = $isLeader && $matchingLeader && $matchingLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
+            @endphp
+
             <div class="row">
-                {{-- Activation Code --}}
+                {{-- Activation Code (Hidden for active team leaders) --}}
+                @if(!$isActiveLeader)
                 <div class="col-12 col-md-4 mb-4">
                     <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
                         <div>
@@ -204,6 +228,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 {{-- Deposit Funds --}}
                 <div class="col-12 col-md-4 mb-4">
@@ -223,19 +248,19 @@
                     </div>
                 </div>
 
-                {{-- FC Packages --}}
+                {{-- Join another membership --}}
                 <div class="col-12 col-md-4 mb-4">
                     <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-content-between">
                         <div>
                             <div class="p-2 mb-3 rounded bg-primary text-white font-weight-bold" style="border-radius: 8px;">
-                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-gem mr-1"></i> FC Packages</span>
+                                <span class="text-uppercase" style="font-size: 0.85rem;"><i class="fas fa-gem mr-1"></i> Join another membership</span>
                             </div>
-                            <h4 class="font-weight-bold text-dark mb-2">VIP Membership</h4>
-                            <p class="text-muted small mb-3">Explore FC VIP packages and membership tiers.</p>
+                            <h4 class="font-weight-bold text-dark mb-2">Additional Membership</h4>
+                            <p class="text-muted small mb-3">Explore additional membership options and package tiers.</p>
                         </div>
                         <div>
                             <a href="{{ route('user.package') }}" class="btn btn-outline-primary btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px;">
-                                View FC Packages <i class="fas fa-arrow-right ml-1"></i>
+                                Explore Memberships <i class="fas fa-arrow-right ml-1"></i>
                             </a>
                         </div>
                     </div>

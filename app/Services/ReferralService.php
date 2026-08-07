@@ -91,8 +91,9 @@ class ReferralService
      * @param  Payment  $payment  the package payment that was just paid
      * @return array    list of ReferralBonus rows created (one per level filled)
      */
-    public static function creditForPayment(Payment $payment): array
+    public static function creditForPayment(?Payment $payment): array
     {
+        if (!$payment) return [];
         $buyer = User::find($payment->user);
         if (!$buyer) return [];
 
@@ -118,6 +119,9 @@ class ReferralService
             $level    = $slot['level'];
             if (!$referrer) continue;
 
+            // Rule: Free users CANNOT earn referral bonuses (direct or indirect) as long as their account is free
+            if (self::isFreeUser($referrer)) continue;
+
             // Check if bonus already credited for this referrer and payment
             $alreadyCredited = ReferralBonus::where('user_id', $referrer->id)
                 ->where('source_payment_id', $payment->id)
@@ -131,7 +135,7 @@ class ReferralService
 
             $bonus = round($amount * $rate / 100, 4);
 
-            $created[] = ReferralBonus::create([
+            $bonusRow = ReferralBonus::create([
                 'user_id'           => $referrer->id,
                 'source_user_id'    => $buyer->id,
                 'source_payment_id' => $payment->id,
@@ -145,6 +149,29 @@ class ReferralService
                 'source_ref'        => 'L' . $level,
                 'notes'             => "L{$level} commission from " . ($buyer->name ?? $buyer->user ?? $buyer->email),
             ]);
+
+            // Sync to legacy Earnings table
+            \App\Models\Earnings::updateOrCreate(
+                [
+                    'user_id'     => $referrer->id,
+                    'source_id'   => $payment->id,
+                    'source_type' => Payment::class,
+                ],
+                [
+                    'amount' => (float) $bonus,
+                ]
+            );
+
+            // Sync to ChartAccount COMMISSION
+            $existingCommission = (float) \App\Models\ChartAccount::where('user_id', $referrer->id)
+                ->where('acc_type', 'COMMISSION')->sum('amount');
+
+            \App\Models\ChartAccount::updateOrCreate(
+                ['user_id' => $referrer->id, 'acc_type' => 'COMMISSION'],
+                ['amount'  => $existingCommission + $bonus]
+            );
+
+            $created[] = $bonusRow;
         }
         return $created;
     }
@@ -200,5 +227,28 @@ class ReferralService
     public static function isMondayNow(?Carbon $now = null): bool
     {
         return ($now ?? Carbon::now())->isMonday();
+    }
+
+    /**
+     * Check if a user is a Free User (no active paid package and no leader status).
+     * Per spec: Free users CANNOT earn referral bonuses for direct or indirect referrals.
+     */
+    public static function isFreeUser(User $user): bool
+    {
+        $paidPkg = strtolower(trim((string) $user->has_paid_package));
+        $isFreeFlag = ($user->has_free_package === 'yes' || in_array($paidPkg, ['no', 'standard', '']));
+
+        // Check if user holds active leader status
+        $isLeader = in_array(strtoupper($paidPkg), ['TEAM_LEADER', 'SUPER_LEADER']);
+        if ($isLeader) return false;
+
+        // Check if user has an active, unexpired paid package payment
+        $hasActivePaidPayment = Payment::where('user', $user->id)
+            ->where('status', 1)
+            ->where('is_expired', false)
+            ->whereNotIn('category', ['standard', 'FREE'])
+            ->exists();
+
+        return $isFreeFlag && !$hasActivePaidPayment;
     }
 }

@@ -679,7 +679,17 @@ img{ max-width:100%;}
                             </div>
                             <div style="font-size:0.85rem; opacity:0.95; margin-top:2px;">Official Leader Account</div>
                         <?php elseif($user->has_free_package == 'yes'): ?>
-                            FREE
+                            <?php
+                                $hasApprovedDeposit = $user->deposits->whereIn('status', ['approved', 'used'])->count() > 0;
+                            ?>
+                            <?php if($hasApprovedDeposit): ?>
+                                FREE
+                            <?php else: ?>
+                                <div class="font-weight-extrabold" style="font-size: 1.2rem;">
+                                    STANDARD FREE USER
+                                </div>
+                                <div style="font-size: 0.75rem; opacity: 0.9; margin-top: 2px;">Standard Free Access</div>
+                            <?php endif; ?>
                         <?php else: ?>
                             <?php echo e(strtoupper($user->has_paid_package)); ?>
 
@@ -1272,24 +1282,27 @@ img{ max-width:100%;}
 
             </div>
 
+            <?php
+                $activeZoomUser = \App\Models\ZoomMeeting::activeMeeting();
+            ?>
+            <?php if($activeZoomUser): ?>
             <div class="row2 col-md-3 mx-div zoom">
-                 <span style="color:#dc3545; font-size: 15px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coming soon</span>
-                 <div class="subZoom row">
+                 <span style="color:#22c55e; font-size: 13px; font-weight:700;"><i class="fas fa-circle text-xs text-danger mr-1" style="color:#dc3545;"></i> WE ARE LIVE NOW ON ZOOM</span>
+                 <div class="subZoom row mt-1">
                     <div class="img col-2">
                         <div class="zoomImg">
-                            <img src="<?php echo e(asset('assets/a/img/zoom.png')); ?>" alt="">
+                            <img src="<?php echo e(asset('assets/a/img/zoom.png')); ?>" alt="Zoom">
                         </div>
                     </div>
                     <div class="col-10 zoom-content">
-
                         <div>
-                            <span class="text-warning">  we are on zoom</span><br>
-                        <span class="font-weight-bold"><a href="#">CLICK  HERE  TO JOIN US</a></span>
+                            <span class="text-warning font-weight-bold" style="font-size:0.85rem;"><?php echo e($activeZoomUser->topic); ?></span><br>
+                            <span class="font-weight-bold"><a href="<?php echo e($activeZoomUser->zoom_link); ?>" target="_blank" rel="noopener noreferrer">CLICK HERE TO JOIN US <i class="fas fa-external-link-alt ml-1"></i></a></span>
                         </div>
-
                     </div>
                 </div>
-         </div>
+            </div>
+            <?php endif; ?>
           </div><!-- /.container-fluid -->
          </div>
          <div>
@@ -1313,6 +1326,75 @@ img{ max-width:100%;}
          <!-- Main content -->
          <div class="content">
              <div class="container-fluid ">
+
+             <?php
+                 $isDepositedFreeUser = ($user->has_free_package === 'yes' || $user->has_free_package === 'no')
+                     && ($active_packages_count == 0)
+                     && !in_array(strtoupper((string)$user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER'])
+                     && ($sum > 0 || $user->deposits->whereIn('status', ['approved', 'used'])->count() > 0);
+             ?>
+
+             <?php if($isDepositedFreeUser && !$have_pending_deposits): ?>
+             <div id="encourageActivationModal" class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1050;">
+                 <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px;">
+                     <div class="modal-content p-4 shadow-2xl border-0 rounded-2xl text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(245, 158, 11, 0.4) !important; border-radius: 18px !important;">
+                         <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom" style="border-bottom-color: rgba(255, 255, 255, 0.15) !important;">
+                             <div class="d-flex align-items-center gap-2">
+                                 <div class="p-2 rounded-circle bg-warning text-dark font-weight-bold d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-size: 1.1rem;">
+                                     <i class="fas fa-bolt"></i>
+                                 </div>
+                                 <div>
+                                     <h4 class="font-weight-bold text-white mb-0" style="font-size: 1.2rem;">Activate Package to Start Earning!</h4>
+                                     <small class="text-light opacity-80">You have active deposit balance ready to invest</small>
+                                 </div>
+                             </div>
+                             <button type="button" class="close text-white opacity-80" onclick="closeActivationPopup()" style="font-size: 1.5rem; outline: none; border: none; background: transparent;">
+                                 &times;
+                             </button>
+                         </div>
+
+                         <div class="text-center py-2">
+                             <div class="mb-3">
+                                 <span class="badge badge-warning text-dark font-weight-bold px-3 py-1.5 text-uppercase" style="font-size: 0.85rem; border-radius: 6px;">
+                                     Available Deposit Balance: $<?php echo e(number_format($sum ?? 0, 2)); ?>
+
+                                 </span>
+                             </div>
+                             <p class="text-light leading-relaxed mb-3" style="font-size: 0.95rem;">
+                                 You have active deposit funds in your account. Activate a <strong>UVP AI License</strong> or <strong>FC Package</strong> now to start generating daily yield ROI earnings!
+                             </p>
+                             <div class="p-3 rounded mb-3 text-left" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;">
+                                 <div class="text-warning font-weight-bold mb-1" style="font-size: 0.85rem;"><i class="fas fa-check-circle mr-1"></i> Membership Benefits:</div>
+                                 <ul class="text-light small pl-3 mb-0" style="line-height: 1.6;">
+                                     <li>Automated Daily Yield ROI Earnings (up to 200% Return)</li>
+                                     <li>Instant Referral Commission Eligibility (L1 10%, L2 1%, L3 0.5%)</li>
+                                     <li>Full Access to All Dashboard Tools &amp; Features</li>
+                                 </ul>
+                             </div>
+                         </div>
+
+                         <div class="d-flex items-center justify-content-between gap-3 pt-3 border-top" style="border-top-color: rgba(255, 255, 255, 0.15) !important;">
+                             <button type="button" class="btn btn-outline-light font-weight-bold px-3 py-2 flex-grow-1" onclick="closeActivationPopup()" style="border-radius: 8px; font-size: 12px;">
+                                 Continue to Dashboard
+                             </button>
+                             <a href="<?php echo e(route('user.venture')); ?>" class="btn btn-warning font-weight-bold text-dark px-4 py-2 flex-grow-1" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                                 Activate Package Now <i class="fas fa-arrow-right ml-1"></i>
+                             </a>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+
+             <script>
+             function closeActivationPopup() {
+                 var modal = document.getElementById('encourageActivationModal');
+                 if (modal) {
+                     modal.classList.remove('d-block');
+                     modal.style.display = 'none';
+                 }
+             }
+             </script>
+             <?php endif; ?>
 
              <?php if($have_pending_deposits): ?>
 <div id="myModal" class="modal fade show d-block" tabindex="-1" role="dialog">
@@ -1374,105 +1456,57 @@ img{ max-width:100%;}
                  <div class="row ">
                              <div class="card card-primary card-outline col-lg-4">
 
-                                 <h5 class="card-title">
-                                    Refferral id:
-                                    <button class="btn btn-default font-weight-bold" type="submit" id="btn2" disabled>
-                                         <i class="las la-link" style="font-size: 20px;"></i>
-                                          <input type="hidden" value="<?php echo e($ref_code); ?>" id="link1">
-<a href="#" style="color:red;text-decoration:none;">
-    <?php if($package!='standard'): ?>
-  <span style="visibility: visible;"><?php echo e($ref_code); ?></span>
-  <?php else: ?>
-  <span style="visibility: visible;">*********</span>
-  <?php endif; ?>
-</a></h5><br>
-                                    </button>
-
-                                            <div class="input-group">
-                                            <?php if($package!='standard'): ?>
-                                            <!-- value="http://bifonex.com/register?referral=<?php echo e($ref_code); ?>" -->
-                                                <input type="text" id="link" 
+                                 <div class="card-body p-3">
+                                     <label class="small text-muted font-weight-bold mb-1">Main Referral Link</label>
+                                     <div class="input-group mb-3">
+                                         <input type="text" id="link" 
                                                 value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>"
-                                              class="form-control" readonly class="form-control">
+                                                class="form-control font-mono text-sm" readonly>
+                                         <div class="input-group-append">
+                                             <button class="btn btn-primary font-weight-bold" type="button" onclick="copyToClipboard('link')">
+                                                 <i class="fas fa-copy mr-1"></i> Copy
+                                             </button>
+                                         </div>
+                                     </div>
 
-                                                <button class="btn btn-default" type="submit" id="btn">
-                                                    <i class="las la-link" style="font-size: 20px;"></i>
-                                                </button>
-                                              <?php else: ?>
-                                                <input type="text" id="link"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control"><?php endif; ?>
+                                     <p class="card-text text-center small text-muted py-1 border-top border-bottom my-2">
+                                         <i class="fas fa-share-alt text-primary mr-1"></i> Share side links below for direct Left or Right team placement!
+                                     </p>
 
-                                            </div>
-
-                                            <p class="card-text text-center py-1">
-                                            <i class="fas fa-arrow-circle-right"></i> Share this link and get 500 coin when they activate account!
-                                            </p>
-
-
-                                            <div class="input-group">
-                                            <?php if($package!='standard'): ?>
-                                               <button class="btn btn-info  "  onclick="copyToClipboard('link-right')">
-                                                    Right
-                                                </button>
-                                                
-                                                <input type="text" id="link-right"
+                                     <label class="small text-muted font-weight-bold mb-1">Right Team Referral Link</label>
+                                     <div class="input-group mb-2">
+                                         <div class="input-group-prepend">
+                                             <button class="btn btn-info font-weight-bold" type="button" onclick="copyToClipboard('link-right')">
+                                                 Right
+                                             </button>
+                                         </div>
+                                         <input type="text" id="link-right"
                                                 value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=RIGHT"
-                                              class="form-control" readonly class="form-control">
+                                                class="form-control font-mono text-sm" readonly>
+                                         <div class="input-group-append">
+                                             <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('link-right')">
+                                                 <i class="fas fa-copy"></i>
+                                             </button>
+                                         </div>
+                                     </div>
 
-                                                <button class="btn btn-default"  onclick="copyToClipboard('link-right')">
-                                                    <i class="las la-link" style="font-size: 20px;"></i>
-                                                </button>
-                                              <?php else: ?>
-                                                <input type="text" id="link-right"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control"><?php endif; ?>
-
-                                            </div>
-
-
-                                            <div class="input-group my-1">
-                                            <?php if($package!='standard'): ?>
-                                              <button class="btn btn-primary"  onclick="copyToClipboard('link-right')">
-                                                    Left
-                                                </button>
-                                                <input type="text" id="link-left" value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=LEFT"
-                                              class="form-control" readonly class="form-control">
-
-                                                <button class="btn btn-default" onclick="copyToClipboard('link-left')">
-                                                    <i class="las la-link" style="font-size: 20px;"></i>
-                                                </button>
-                                              <?php else: ?>
-                                                <input type="text" id="link-left"value="http://bifonex.com/register?referral=*******"
-                                              class="form-control" readonly class="form-control"><?php endif; ?>
-
-                                            </div>
-
-                                     <script type="text/javascript">
-                                         function getreferral() {
-                                             var package="<?php echo $package ?>";
-                                             if(package=="standard"){
-                                                 alert('Activate package to be allowed for this feature')
-                                             }
-                                             else{
-                                            var codeinput = document.getElementById('link1');
-                                            var newcode=codeinput.value;
-                                            var tempInput = document.createElement("input");
-                                            tempInput.value = newcode;
-                                            document.body.appendChild(tempInput);
-                                            tempInput.select();
-                                            document.execCommand("copy");
-                                            document.body.removeChild(tempInput);
-                                            alert('Referral code copied to clickboard ');
-                                        }}
-                                        var copybtn = document.getElementById('btn2');
-                                        copybtn.addEventListener("click", getreferral);
-
-                                     </script>
-
-                                        <br>
-
-                                            <!-- <a href="#" id="btn">  <img src="https://cdn-icons-png.flaticon.com/128/455/455691.png" style="width:20px;height: 20px;float: left;">
-                                        &nbsp;&nbsp;Copy Link</a></i><br> -->
-
+                                     <label class="small text-muted font-weight-bold mb-1">Left Team Referral Link</label>
+                                     <div class="input-group mb-2">
+                                         <div class="input-group-prepend">
+                                             <button class="btn btn-primary font-weight-bold" type="button" onclick="copyToClipboard('link-left')">
+                                                 Left
+                                             </button>
+                                         </div>
+                                         <input type="text" id="link-left"
+                                                value="<?php echo e($baseUrl); ?>/register?referral=<?php echo e($ref_code); ?>&side=LEFT"
+                                                class="form-control font-mono text-sm" readonly>
+                                         <div class="input-group-append">
+                                             <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('link-left')">
+                                                 <i class="fas fa-copy"></i>
+                                             </button>
+                                         </div>
+                                     </div>
+                                 </div>
                              </div>
                              <div class="col-lg-5">
 
@@ -1535,33 +1569,35 @@ $user=db::SELECT("SELECT * from users");
 
                             </div>
                          <script type="text/javascript">
-                         function copylink() {
-                              var package="<?php echo $package ?>";
-                                             if(package=="standard"){
-                                                 alert('Activate package to be allowed for this feature')
-                                             }
-                                             else{
-                             var linkinput = document.getElementById('btn2');
-                             linkinput.select();
-                             document.execCommand("copy");
-                             alert("Link copied to clipbord");
-                         }}
+                         function copyToClipboard(elementId) {
+                             var input = document.getElementById(elementId);
+                             if (!input) {
+                                 alert("Referral link element not found.");
+                                 return;
+                             }
+                             var linkVal = input.value;
+                             
+                             if (navigator.clipboard && window.isSecureContext) {
+                                 navigator.clipboard.writeText(linkVal).then(function() {
+                                     alert("Referral link copied to clipboard!\n\n" + linkVal);
+                                 }).catch(function() {
+                                     fallbackCopy(input, linkVal);
+                                 });
+                             } else {
+                                 fallbackCopy(input, linkVal);
+                             }
+                         }
 
-                         var copybtn = document.getElementById('btn');
-                         copybtn.addEventListener("click", copylink());
-
-
-
-        function copyToClipboard(elementId) {
-            const input = document.getElementById(elementId);
-            input.select();
-            input.setSelectionRange(0, 99999); // For mobile devices
-            document.execCommand("copy");
-            // input.value
-            alert("Link Copied to clickboard  " );
-        }
-
-
+                         function fallbackCopy(input, linkVal) {
+                             input.select();
+                             input.setSelectionRange(0, 99999);
+                             try {
+                                 document.execCommand("copy");
+                                 alert("Referral link copied to clipboard!\n\n" + linkVal);
+                             } catch (err) {
+                                 alert("Link: " + linkVal);
+                             }
+                         }
                          </script>
 
 

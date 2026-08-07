@@ -49,10 +49,10 @@
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center">
                 <div>
-                    <h5 class="font-weight-bold mb-1"><i class="fas fa-calendar-week mr-2 text-primary"></i>Weekly Withdrawal</h5>
+                    <h5 class="font-weight-bold mb-1"><i class="fas fa-calendar-week mr-2 text-primary"></i>Weekly Referral Withdrawal</h5>
                     <small class="text-muted">
                         @if($isMonday)
-                            ✅ <span class="text-success font-weight-bold">Today is Monday</span> — you can withdraw now.
+                            ✅ <span class="text-success font-weight-bold">Today is Monday</span> — transfer earnings to your Cashout wallet now.
                         @else
                             Next withdrawal window opens on <strong>{{ $nextMonday->format('l, d M Y') }}</strong>.
                         @endif
@@ -60,17 +60,18 @@
                 </div>
                 <div>
                     @if($isMonday && $totals['withdrawable'] > 0 && !$alreadyReq)
-                        <form method="POST" action="{{ route('user.referral.withdraw') }}" class="d-inline">
+                        <form method="POST" action="{{ route('user.referral.withdraw') }}" class="d-inline js-transaction-password-form">
                             @csrf
+                            <input type="hidden" name="transaction_password" class="js-transaction-password-value">
                             <button type="submit" class="btn btn-success btn-lg font-weight-bold"
-                                    onclick="return confirm('Submit withdrawal of ${{ number_format($totals['withdrawable'], 2) }} for this Monday?')">
-                                <i class="fas fa-money-bill-wave mr-1"></i>
-                                Withdraw ${{ number_format($totals['withdrawable'], 2) }}
+                                    onclick="return confirm('Transfer ${{ number_format($totals['withdrawable'], 2) }} referral bonus to your Cashout wallet for withdrawal?')">
+                                <i class="fas fa-wallet mr-1"></i>
+                                Transfer ${{ number_format($totals['withdrawable'], 2) }} to Cashout
                             </button>
                         </form>
                     @elseif($alreadyReq)
                         <button class="btn btn-secondary btn-lg" disabled>
-                            <i class="fas fa-hourglass-half mr-1"></i> Already requested this Monday
+                            <i class="fas fa-check-circle mr-1"></i> Transferred to Cashout this Monday
                         </button>
                     @elseif(!$isMonday)
                         <button class="btn btn-secondary btn-lg" disabled>
@@ -119,7 +120,7 @@
                         @endphp
                         <tr>
                             <td>{!! $r->sourceLabel() !!}</td>
-                            <td>{{ $r->sourceUser->name ?? '—' }} <small class="text-muted">({{ $r->sourceUser->email ?? '—' }})</small></td>
+                            <td>{{ $r->sourceUser->user ?? $r->sourceUser->name ?? '—' }}</td>
                             <td>
                                 @if($r->level > 0)
                                     <span class="badge badge-primary">L{{ $r->level }} · {{ rtrim(rtrim(number_format($r->percentage, 2), '0'), '.') }}%</span>
@@ -145,3 +146,4 @@
 
 </div>
 </div>
+@include('user.components.transaction-password-modal')

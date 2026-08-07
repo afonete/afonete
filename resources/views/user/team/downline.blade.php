@@ -8,9 +8,9 @@
         <div class="container-fluid max-w-7xl mx-auto flex flex-col gap-6">
 
             <!-- Stats Overview Section -->
-            <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <!-- Team Members Card: Total Direct & Indirect Referrals -->
-                <div class="bg-slate-800 text-white shadow-md rounded-xl p-4 self-start border border-slate-700">
+                <div class="bg-slate-800 text-white shadow-md rounded-xl p-4 border border-slate-700 col-span-1">
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-2">Team Members</h3>
                     <div class="flex items-center justify-between">
                         <div>
@@ -24,8 +24,8 @@
                 </div>
 
                 <!-- Person Members Card: Total Network Investment -->
-                <div class="bg-white shadow-md rounded-xl p-4 self-start border border-slate-200">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Person Members</h3>
+                <div class="bg-white shadow-md rounded-xl p-4 border border-slate-200 col-span-1">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Network Investment</h3>
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-2xl font-extrabold text-slate-900">{{ $person_members }}</p>
@@ -38,7 +38,7 @@
                 </div>
 
                 <!-- Referrals Navigation Links -->
-                <div class="bg-slate-900 text-white shadow-md rounded-xl p-4 col-span-2 grid grid-cols-2 gap-3 items-center border border-slate-800">
+                <div class="bg-slate-900 text-white shadow-md rounded-xl p-4 col-span-1 sm:col-span-2 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center border border-slate-800">
                     <a href="{{ route('referrals.free') }}" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-lg font-bold text-xs transition border border-slate-700">
                         <div>
                             <span class="block text-amber-400 uppercase font-extrabold">Free Referrals</span>
@@ -57,7 +57,7 @@
                 </div>
 
                 <!-- Person Customers Card: Total Direct Referral Count -->
-                <div class="bg-white shadow-md rounded-xl p-4 self-start border border-slate-200">
+                <div class="bg-white shadow-md rounded-xl p-4 border border-slate-200 col-span-1">
                     <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Person Customers</h3>
                     <div class="flex items-center justify-between">
                         <div>
@@ -71,8 +71,8 @@
                 </div>
 
                 <!-- Merchants Card: Total Direct Referral Investment -->
-                <div class="bg-white shadow-md rounded-xl p-4 self-start border border-slate-200">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Merchants</h3>
+                <div class="bg-white shadow-md rounded-xl p-4 border border-slate-200 col-span-1">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Direct Investment</h3>
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-2xl font-extrabold text-slate-900">{{ $merchants }}</p>
@@ -167,8 +167,7 @@
                             <tr class="hover:bg-slate-50/80 transition">
                                 <td class="py-3.5 px-4 font-bold text-slate-400 text-xs">{{ $loop->iteration + ($members->currentPage() - 1) * $members->perPage() }}</td>
                                 <td class="py-3.5 px-4 font-bold text-slate-900">
-                                    {{ $member->name ?: $member->user }}
-                                    <small class="text-slate-400 block font-normal text-xs">@ {{ $member->user }}</small>
+                                    @ {{ $member->user }}
                                 </td>
                                 <td class="py-3.5 px-4 text-xs font-medium">
                                     @if($hasPkg && $activationObj && $activationObj->created_at)

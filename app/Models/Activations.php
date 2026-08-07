@@ -44,7 +44,7 @@ public function myCredit():HasOne
 
     public function payments()
     {
-        return $this->morphTo(Payment::class, 'payable');
+        return $this->morphMany(Payment::class, 'payable');
     }
 }
 

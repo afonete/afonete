@@ -46,7 +46,7 @@
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0">
                     <thead class="thead-light">
-                        <tr><th>Name</th><th>Email</th><th>Active Package</th><th>Investment</th><th>Joined</th><th>Rank</th></tr>
+                        <tr><th>Username</th><th>Email</th><th>Active Package</th><th>Investment</th><th>Joined</th><th>Rank</th></tr>
                     </thead>
                     <tbody>
                         @foreach($directs as $d)
@@ -55,7 +55,7 @@
                                 $highest = $d->userRanks->first();
                             @endphp
                             <tr>
-                                <td>{{ $d->name }}</td>
+                                <td>{{ $d->user ?? $d->name }}</td>
                                 <td><small>{{ $d->email }}</small></td>
                                 <td>
                                     @if($active)

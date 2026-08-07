@@ -1337,42 +1337,47 @@ public function pssuccess(Request $request)
 
 
 
-public function free(Request $request)
+public function free(Request $request){
     {
       $user = Auth::user();
-      $userId = $user->id;
-      $user = User::find($userId);
+      if (!$user) {
+          return redirect()->route('login');
+      }
 
-      // Block users holding active UVP packages or Team Leader status
-      $hasActiveUvp = \App\Models\Payment::where('user', $user->id)
-          ->where('status', 1)
-          ->where(function ($q) {
-              $q->where('category', 'VENTURE')
-                ->orWhere('category', 'UVP')
-                ->orWhere('payable_type', \App\Models\Adventures::class);
-          })
-          ->exists();
+      // Requirement 1: Free user can't be free user again
+      $alreadyFree = ($user->has_free_package === 'yes') || (strtolower(trim((string)$user->has_paid_package)) === 'standard');
+      if ($alreadyFree) {
+          return redirect()->back()->with('error', 'You have already activated your Free Standard account.');
+      }
 
-      if ($hasActiveUvp || in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER'])) {
-          return redirect()->back()->with('error', 'Users holding active UVP packages or Team Leader status cannot activate a free account.');
+      // Requirement 2: User who activated UVP can't be free user
+      $hasActiveUvp = ($user->highestUvpPackageAmount() > 0)
+          || \App\Models\Payment::where('user', $user->id)
+              ->where('status', 1)
+              ->where('is_expired', false)
+              ->where(function ($q) {
+                  $q->where('category', 'VENTURE')
+                    ->orWhere('category', 'UVP')
+                    ->orWhere('payable_type', \App\Models\Adventures::class);
+              })
+              ->exists();
+
+      if ($hasActiveUvp || in_array(strtoupper(trim((string)$user->has_paid_package)), ['TEAM_LEADER', 'SUPER_LEADER'])) {
+          return redirect()->back()->with('error', 'Users who have activated UVP packages or Team Leader accounts cannot activate a Free Standard account.');
       }
 
       $activation = $this->generateActivationCode(20);
-      $email =$user->email;
+      $email = $user->email;
       $user->has_paid_package = 'standard';
-      // Do not auto-sign. User must sign contract before dashboard access.
-      $package='standard';
-      $name=$user->user;
       $user->has_free_package = 'yes';
 
-      $send = $this->SendCode($email, $activation,$package);
+      $send = $this->SendCode($email, $activation, 'standard');
 
-
-      if ($user->save() ) {
+      if ($user->save()) {
         return redirect()->route('user.dashboard')->with('message', 'Your standard account has been activated. You can access the dashboard as a free standard user.');
-
       } else {
-        return redirect()->route('user.package')->with('message', 'error while savig');
+        return redirect()->route('user.package')->with('error', 'Error while saving free standard account.');
+      }
       }
 
     }

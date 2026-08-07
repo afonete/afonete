@@ -33,16 +33,36 @@ public function index(){
     if ($teamLeader) {
         $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
 
-        if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
-            return redirect()->route('team-leader.all');
+        $leaderCredit = $teamLeader->superLeaderCredit;
+        $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+        $latestLeaderPayment = Paymodel::where('user', $user->id)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $isLeaderExpired = false;
+        if ($latestLeaderPayment) {
+            if ($latestLeaderPayment->is_expired) {
+                $isLeaderExpired = true;
+            } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                $isLeaderExpired = true;
+            }
         }
+
+        $isActiveLeader = $alreadyActivated && $teamLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
+
+        if ($isActiveLeader) {
+            return redirect()->route('team-leader.all')->with('message', 'Your Team Leader account is currently active.');
+        }
+
         if ($teamLeader->status === 'pending') {
             return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
         }
         if ($teamLeader->status === 'rejected') {
             return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
         }
-        // confirmed && NOT activated → fall through to show activation form
+        // confirmed && (deactivated or expired) → fall through to show activation form
     }
 
     return view('user.activation-controller',['user'=>$user,"packages"=>$package]);
@@ -86,6 +106,47 @@ public function upgrade(Request $request){
                 if (!$isEmailMatch && !$isLeaderMatch) {
                     return redirect()->route('user.dashboard.activate')
                         ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$results->email}'). You cannot use it on this account.");
+                }
+            }
+
+            // Active Team Leader double-activation check:
+            // Currently active Team Leaders CANNOT use a Team Leader activation code again
+            // UNLESS their Team Leader account has been deactivated or their leader package period has expired.
+            $isLeaderCode = in_array(strtoupper((string) $results->package), ['TEAM_LEADER', 'SUPER_LEADER']);
+
+            if ($isLeaderCode) {
+                $matchingLeader = TeamLeader::where('User_name', $user->user)
+                    ->orWhere('Email', $user->email)
+                    ->first();
+
+                $hasActiveLeaderPackage = in_array(strtoupper((string) $user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER']);
+
+                $leaderCredit = $matchingLeader ? $matchingLeader->superLeaderCredit : null;
+                $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+                $latestLeaderPayment = Paymodel::where('user', $user->id)
+                    ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $isLeaderExpired = false;
+                if ($latestLeaderPayment) {
+                    if ($latestLeaderPayment->is_expired) {
+                        $isLeaderExpired = true;
+                    } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                        $isLeaderExpired = true;
+                    }
+                }
+
+                $isCurrentlyActiveLeader = $hasActiveLeaderPackage
+                    && $matchingLeader
+                    && $matchingLeader->status === 'confirmed'
+                    && !$isCreditDisabled
+                    && !$isLeaderExpired;
+
+                if ($isCurrentlyActiveLeader) {
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', "Team Leader Activation Error: Your {$user->has_paid_package} account is currently active. You cannot redeem another Team Leader activation code while your current leader status is active unless it has expired or been deactivated.");
                 }
             }
 
@@ -175,12 +236,15 @@ public function upgrade(Request $request){
                         'expiration_date' => $expDate,
                         "duration" => 200,
                         "category" => $results->package,
-                        "category_id" => 1
+                        "category_id" => 1,
+                        "payable_id" => $results->id,
+                        "payable_type" => get_class($results)
                     ]);
-                    $pay =  $results->payments()->save($create_payable);
+                    $create_payable->save();
+                    $pay = $create_payable;
 
                     // Credit referral bonus to upline
-                    if ($pay) {
+                    if ($pay && $pay instanceof \App\Models\Payment) {
                         \App\Services\ReferralService::creditForPayment($pay);
                     }
 
@@ -239,12 +303,29 @@ public function g_upgrade(Request $request){
     \Log::info($teamLeader);
 
     if ($teamLeader) {
-        // Only block if NOT yet activated — let confirmed leaders
-        // who haven't activated yet continue through the activation flow.
         $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
 
-        if ($teamLeader->status === 'confirmed' && $alreadyActivated) {
-            return redirect()->route('team-leader.all');
+        $leaderCredit = $teamLeader->superLeaderCredit;
+        $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+        $latestLeaderPayment = Paymodel::where('user', $user->id)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $isLeaderExpired = false;
+        if ($latestLeaderPayment) {
+            if ($latestLeaderPayment->is_expired) {
+                $isLeaderExpired = true;
+            } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                $isLeaderExpired = true;
+            }
+        }
+
+        $isActiveLeader = $alreadyActivated && $teamLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
+
+        if ($isActiveLeader) {
+            return redirect()->route('team-leader.all')->with('message', 'Your Team Leader account is currently active.');
         }
 
         if ($teamLeader->status === 'pending') {
@@ -259,7 +340,7 @@ public function g_upgrade(Request $request){
             return redirect()->route('team.leader')->with('message', 'Your Team Leader account is suspended.');
         }
 
-        // status === 'confirmed' && NOT activated → fall through to activation flow below
+        // status === 'confirmed' && (deactivated or expired) → fall through to activation flow below
     }
 
         // dd($activation);
@@ -288,6 +369,47 @@ public function g_upgrade(Request $request){
             if (!$isEmailMatch && !$isLeaderMatch) {
                 return redirect()->back()
                     ->with('message', "This activation code is reserved exclusively for the designated team leader account ('{$activation->email}'). You cannot use it on this account.");
+            }
+        }
+
+        // Active Team Leader double-activation check:
+        // Currently active Team Leaders CANNOT use a Team Leader activation code again
+        // UNLESS their Team Leader account has been deactivated or their leader package period has expired.
+        $isLeaderCode = in_array(strtoupper((string) $activation->package), ['TEAM_LEADER', 'SUPER_LEADER']);
+
+        if ($isLeaderCode) {
+            $matchingLeader = TeamLeader::where('User_name', $userA->user)
+                ->orWhere('Email', $userA->email)
+                ->first();
+
+            $hasActiveLeaderPackage = in_array(strtoupper((string) $userA->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER']);
+
+            $leaderCredit = $matchingLeader ? $matchingLeader->superLeaderCredit : null;
+            $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
+
+            $latestLeaderPayment = Paymodel::where('user', $userA->id)
+                ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $isLeaderExpired = false;
+            if ($latestLeaderPayment) {
+                if ($latestLeaderPayment->is_expired) {
+                    $isLeaderExpired = true;
+                } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
+                    $isLeaderExpired = true;
+                }
+            }
+
+            $isCurrentlyActiveLeader = $hasActiveLeaderPackage
+                && $matchingLeader
+                && $matchingLeader->status === 'confirmed'
+                && !$isCreditDisabled
+                && !$isLeaderExpired;
+
+            if ($isCurrentlyActiveLeader) {
+                return redirect()->back()
+                    ->with('message', "Team Leader Activation Error: Your {$userA->has_paid_package} account is currently active. You cannot redeem another Team Leader activation code while your current leader status is active unless it has expired or been deactivated.");
             }
         }
 
@@ -367,12 +489,15 @@ public function g_upgrade(Request $request){
                         'expiration_date' => $expDate,
                         "duration" => 200,
                         "category" => $activation->package,
-                        "category_id" => 1
+                        "category_id" => 1,
+                        "payable_id" => $activation->id,
+                        "payable_type" => get_class($activation)
                     ]);
-                    $pay =  $activation->payments()->save($create_payable);
+                    $create_payable->save();
+                    $pay = $create_payable;
 
                     // Credit referral bonus to upline
-                    if ($pay) {
+                    if ($pay && $pay instanceof \App\Models\Payment) {
                         \App\Services\ReferralService::creditForPayment($pay);
                     }
 

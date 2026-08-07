@@ -642,7 +642,73 @@ public function getTeamTree(Request $request,$id){
 
         $highestUvpAmount = $user->highestUvpPackageAmount();
 
-        return view('user.team.team-structure', compact('adventures', 'depositBalance', 'highestUvpAmount'));
+        // Recursively traverse the full downline network (Direct + Indirect)
+        $directLeft  = \App\Models\Teams::where('user_id', $user->id)->where('side', 'LEFT')->get();
+        $directRight = \App\Models\Teams::where('user_id', $user->id)->where('side', 'RIGHT')->get();
+
+        $collectDownline = function ($directTeams, $branchSide) use ($user) {
+            $result = collect();
+            $visitedUserIds = [$user->id];
+            $queue = collect();
+
+            foreach ($directTeams as $t) {
+                if ($t->teamMember) {
+                    $queue->push([
+                        'user'         => $t->teamMember,
+                        'level'        => 1,
+                        'is_direct'    => true,
+                        'sponsor_user' => $user->user,
+                        'sponsor_id'   => $user->id,
+                        'branch_side'  => $branchSide,
+                    ]);
+                    $visitedUserIds[] = $t->teamMember->id;
+                }
+            }
+
+            while ($queue->isNotEmpty()) {
+                $item = $queue->shift();
+                $m = $item['user'];
+
+                $result->push([
+                    'id'            => $m->id,
+                    'user'          => $m->user ?? 'N/A',
+                    'name'          => $m->name ?? 'N/A',
+                    'transfer_code' => $m->transfer_code ?? '—',
+                    'package'       => !empty($m->has_paid_package) && !in_array(strtolower(trim($m->has_paid_package)), ['no', 'standard', '']) ? strtoupper($m->has_paid_package) : 'FREE',
+                    'joined'        => $m->created_at ? $m->created_at->format('M d, Y') : 'N/A',
+                    'created_at'    => $m->created_at,
+                    'level'         => $item['level'],
+                    'is_direct'     => $item['is_direct'],
+                    'sponsor_user'  => $item['sponsor_user'],
+                    'sponsor_id'    => $item['sponsor_id'],
+                    'branch_side'   => $item['branch_side'],
+                ]);
+
+                // Find next level downlines
+                $nextTeams = \App\Models\Teams::where('user_id', $m->id)->get();
+                foreach ($nextTeams as $nt) {
+                    if ($nt->teamMember && !in_array($nt->teamMember->id, $visitedUserIds)) {
+                        $visitedUserIds[] = $nt->teamMember->id;
+                        $queue->push([
+                            'user'         => $nt->teamMember,
+                            'level'        => $item['level'] + 1,
+                            'is_direct'    => false,
+                            'sponsor_user' => $m->user,
+                            'sponsor_id'   => $m->id,
+                            'branch_side'  => $item['branch_side'],
+                        ]);
+                    }
+                }
+            }
+
+            // Order chronologically by created_at ASC ("base on how they came")
+            return $result->sortBy('created_at')->values();
+        };
+
+        $leftMembers  = $collectDownline($directLeft, 'LEFT');
+        $rightMembers = $collectDownline($directRight, 'RIGHT');
+
+        return view('user.team.team-structure', compact('adventures', 'depositBalance', 'highestUvpAmount', 'leftMembers', 'rightMembers'));
     }
 
     public function registerTeamMemberFromDeposit(Request $request)

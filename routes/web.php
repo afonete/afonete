@@ -383,6 +383,12 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post('admin/withdrawal/reject', [AdminController::class, 'rejectWithdrawal'])->name('admin.withdrawal.reject');
     Route::get('admin/withdrawal-history', [AdminController::class, 'withdrawalHistory'])->name('admin.withdrawal-history');
     
+    // ── ZOOM MEETINGS MANAGEMENT (admin) ──
+    Route::get('admin/zoom-meetings', [AdminController::class, 'zoomIndex'])->name('admin.zoom.index');
+    Route::post('admin/zoom-meetings', [AdminController::class, 'zoomStore'])->name('admin.zoom.store');
+    Route::post('admin/zoom-meetings/{id}/toggle', [AdminController::class, 'zoomToggle'])->name('admin.zoom.toggle');
+    Route::post('admin/zoom-meetings/{id}/delete', [AdminController::class, 'zoomDelete'])->name('admin.zoom.delete');
+
     // ── TEAM LEADERS MANAGEMENT (admin) ──
     Route::get('admin/team-leaders', [AdminController::class, 'teamLeadersList'])->name('admin.team-leaders.index');
     Route::get('admin/tm-auto-activations', [AdminController::class, 'tmAutoActivationsIndex'])->name('admin.tm-auto-activations.index');

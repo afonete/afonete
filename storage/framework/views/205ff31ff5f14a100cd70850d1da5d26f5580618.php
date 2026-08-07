@@ -1,0 +1,18 @@
+<div class="flex flex-wrap items-center justify-center gap-2 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200 text-xs font-bold">
+    <a href="<?php echo e(route('teambuilding')); ?>" class="px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 <?php echo e(request()->routeIs('teambuilding') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">
+        <i class="fas fa-home"></i> <span>Overview</span>
+    </a>
+    <a href="<?php echo e(route('team.structure')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('team.structure') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Team Structure</a>
+    <a href="<?php echo e(route('team.genealogy')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('team.genealogy') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Team Genealogy</a>
+    <a href="<?php echo e(route('downline')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('downline') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Downline</a>
+    <a href="<?php echo e(route('volume.points')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('volume.points') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Volume Points</a>
+    <a href="<?php echo e(route('team.ranking')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('team.ranking') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Team Ranking</a>
+    <a href="<?php echo e(route('teams.groups')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('teams.groups') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Teams &amp; Groups</a>
+    <a href="<?php echo e(route('my.awards')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('my.awards') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">My Awards</a>
+    <a href="<?php echo e(route('commission')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('commission') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Commission</a>
+    <a href="<?php echo e(route('focoin.point')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('focoin.point') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Focoin Point</a>
+    <a href="<?php echo e(route('fone.commission')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('fone.commission') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Fone Commission</a>
+    <a href="<?php echo e(route('fomo.commission')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('fomo.commission') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">FOMO Commission</a>
+    <a href="<?php echo e(route('merchant')); ?>" class="px-3 py-1.5 rounded-xl transition <?php echo e(request()->routeIs('merchant') ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'); ?>">Merchant</a>
+</div>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/components/navbar.blade.php ENDPATH**/ ?>

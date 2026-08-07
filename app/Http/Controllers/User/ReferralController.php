@@ -46,19 +46,24 @@ class ReferralController extends Controller
 
     /**
      * Submit a weekly withdrawal request.
-     * Per spec: only on Monday.
+     * Moves withdrawable referral bonuses directly to user's CASHOUT wallet for withdrawal.
+     * Per spec: allowed on Monday.
      */
     public function withdraw(Request $request)
     {
         $user = Auth::user();
 
-        $request->validate([
-            'transaction_password' => ['required', new \App\Rules\ValidTransactionPassword($user)],
-        ]);
+        if (!empty($user->transaction_password)) {
+            $request->validate([
+                'transaction_password' => ['required', new \App\Rules\ValidTransactionPassword($user)],
+            ]);
+        }
 
         if (!ReferralService::isMondayNow()) {
             return back()->with('error', 'Referral bonuses can only be withdrawn on Monday.');
         }
+
+        ReferralService::promotePendingToWithdrawable();
 
         $withdrawable = (float) ReferralBonus::where('user_id', $user->id)
             ->where('status', 'withdrawable')
@@ -68,48 +73,62 @@ class ReferralController extends Controller
             return back()->with('error', 'No withdrawable referral bonus available this week.');
         }
 
-        // Already requested for this Monday?
+        // Already requested / transferred for this Monday?
         $nextMonday = ReferralService::nextMonday();
         if (WeeklyWithdrawal::where('user_id', $user->id)
             ->where('week_start', $nextMonday->toDateString())
-            ->whereIn('status', ['pending','approved'])
+            ->whereIn('status', ['pending', 'approved', 'paid'])
             ->exists()) {
-            return back()->with('error', 'You already submitted a withdrawal for this Monday.');
+            return back()->with('error', 'You have already transferred your referral bonus to Cashout for this Monday.');
         }
 
         DB::transaction(function () use ($user, $withdrawable, $nextMonday) {
             $trxNo = 'RWD-' . strtoupper(\Illuminate\Support\Str::random(10));
+
+            // 1. Credit the withdrawable referral bonus directly into ChartAccount CASHOUT
+            $existingCashout = (float) \App\Models\ChartAccount::where('user_id', $user->id)
+                ->where('acc_type', 'CASHOUT')->sum('amount');
+
+            \App\Models\ChartAccount::updateOrCreate(
+                ['user_id' => $user->id, 'acc_type' => 'CASHOUT'],
+                ['amount' => $existingCashout + $withdrawable]
+            );
+
+            // 2. Create the WeeklyWithdrawal audit record (marked PAID to CASHOUT)
             WeeklyWithdrawal::create([
                 'user_id'        => $user->id,
                 'week_start'     => $nextMonday->toDateString(),
                 'amount'         => $withdrawable,
                 'transaction_no' => $trxNo,
-                'status'         => 'pending',
+                'status'         => 'paid',
+                'payment_method' => 'CASHOUT_WALLET',
+                'admin_notes'    => 'Transferred directly to user CASHOUT wallet for withdrawal.',
+                'processed_at'   => now(),
             ]);
 
-            // Move all withdrawable rows for this user into a "withdrawn" pending state
-            // (we mark them with withdrawn_at = null + a flag so admin can re-mark on payment)
+            // 3. Mark all withdrawable bonus rows as withdrawn
             ReferralBonus::where('user_id', $user->id)
                 ->where('status', 'withdrawable')
                 ->update(['status' => 'withdrawn', 'withdrawn_at' => now()]);
 
-            // Log a Transaction entry for the user history
+            // 4. Log Transaction history record
             Transaction::create([
                 'user_id'             => $user->id,
                 'transaction_no'      => $trxNo,
-                'transaction_type'    => 'REFERRAL_WITHDRAWAL',
+                'transaction_type'    => 'REFERRAL_BONUS_TO_CASHOUT',
                 'receiver_id'         => 0,
                 'transaction_details' => json_encode([
                     'amount'    => $withdrawable,
                     'week'      => $nextMonday->toDateString(),
-                    'status'    => 'pending',
+                    'status'    => 'transferred_to_cashout',
                     'date'      => now()->toDateTimeString(),
                     'username'  => $user->name,
                 ]),
             ]);
         });
 
-        return back()->with('success', 'Weekly withdrawal request submitted. Awaiting admin approval.');
+        return redirect()->route('user.dashboard.withdraw')
+            ->with('message', 'Success! Referral bonus of $' . number_format($withdrawable, 2) . ' has been transferred to your Cashout wallet. You can now request your withdrawal below.');
     }
 
     /* ===========================================================

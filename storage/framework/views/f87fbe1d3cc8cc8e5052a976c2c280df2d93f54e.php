@@ -451,13 +451,18 @@
                         </div>
                         <?php endif; ?>
 
-                        <div class="zoom-live" onclick="window.location='https://zoom.us'">
+                        <?php
+                            $activeZoomLeader = \App\Models\ZoomMeeting::activeMeeting();
+                        ?>
+                        <?php if($activeZoomLeader): ?>
+                        <div class="zoom-live" onclick="window.open('<?php echo e($activeZoomLeader->zoom_link); ?>', '_blank')" style="cursor:pointer;">
                             <i class="fas fa-video fa-lg"></i>
                             <div>
                                 <div style="font-weight:800;color:#f87171;">WE ARE LIVE NOW ON ZOOM</div>
-                                <div style="font-size:0.7rem;color:#94a3b8;">CLICK HERE TO JOIN US</div>
+                                <div style="font-size:0.75rem;color:#f8fafc;font-weight:700;"><?php echo e($activeZoomLeader->topic); ?> · CLICK HERE TO JOIN US</div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <!-- ASSIGNED TASKS (moved here — swapped with System Announcement) -->
                         <div style="margin-top:16px;border:1px solid #c7d2fe;border-radius:8px;background:#eef2ff;padding:14px;">

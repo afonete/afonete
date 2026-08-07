@@ -37,7 +37,7 @@
                         <div class="flex flex-col justify-center items-center">
                             <img src="{{asset('image/rf5.png')}}" class="w-16 sm:w-20 md:w-24 lg:w-32 xl:w-40 2xl:w-48" alt="Image description">
 
-                            <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->name}}</p>
+                            <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->user ?? $member->name}}</p>
                             <p><i class="fa fa-arrow-down"></i></p>
                         </div>
                         @endforeach
@@ -55,7 +55,7 @@
                         <div class="flex flex-col justify-center items-center">
                             <img src="{{asset('image/rf5.png')}}" class="w-16 sm:w-20 md:w-24 lg:w-32 xl:w-40 2xl:w-48" alt="Image description">
 
-                            <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->name}}</p>
+                            <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->user ?? $member->name}}</p>
                             <p><i class="fa fa-arrow-down"></i></p>
                         </div>
                         @endforeach
@@ -73,7 +73,7 @@
                     <div class="flex flex-col justify-center items-center">
                         <img src="{{asset('image/rf5.png')}}" class="w-16 sm:w-20 md:w-24 lg:w-32 xl:w-40 2xl:w-48" alt="Image description">
 
-                        <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->name}}</p>
+                        <p class="py-2 bg-gray-700 text-white px-2 rounded-lg">{{$member->user ?? $member->name}}</p>
                         <p><i class="fa fa-arrow-down"></i></p>
                     </div>
                     @endforeach

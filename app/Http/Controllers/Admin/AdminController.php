@@ -2219,4 +2219,71 @@ public function check(Request $request) {
         return redirect()->back()->with('message', $msg);
     }
 
+    /* ===========================================================
+     *  ZOOM MEETINGS MANAGEMENT
+     * =========================================================== */
+
+    public function zoomIndex()
+    {
+        \App\Models\ZoomMeeting::activeMeeting();
+        $meetings = \App\Models\ZoomMeeting::latest()->get();
+
+        return view('admin.zoom-meetings', compact('meetings'));
+    }
+
+    public function zoomStore(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'topic'     => 'required|string|max:255',
+            'zoom_link' => 'required|url|max:1000',
+            'status'    => 'required|in:active,ended',
+        ]);
+
+        if ($request->status === 'active') {
+            \App\Models\ZoomMeeting::where('status', 'active')->update(['status' => 'ended']);
+        }
+
+        \App\Models\ZoomMeeting::create([
+            'topic'       => $request->topic,
+            'zoom_link'   => $request->zoom_link,
+            'meeting_id'  => $request->input('meeting_id'),
+            'passcode'    => $request->input('passcode'),
+            'description' => $request->input('description'),
+            'status'      => $request->status,
+            'created_by'  => \Illuminate\Support\Facades\Auth::id(),
+        ]);
+
+        $statusMsg = $request->status === 'active'
+            ? 'Zoom meeting is now LIVE and visible on user/team leader dashboards!'
+            : 'Zoom meeting saved as ENDED (hidden from dashboards).';
+
+        return redirect()->back()->with('message', $statusMsg);
+    }
+
+    public function zoomToggle(\Illuminate\Http\Request $request, $id)
+    {
+        $meeting = \App\Models\ZoomMeeting::findOrFail($id);
+        $newStatus = $request->input('status', 'active') === 'active' ? 'active' : 'ended';
+
+        if ($newStatus === 'active') {
+            \App\Models\ZoomMeeting::where('status', 'active')->update(['status' => 'ended']);
+        }
+
+        $meeting->update(['status' => $newStatus]);
+
+        $statusMsg = $newStatus === 'active'
+            ? "Zoom meeting '{$meeting->topic}' is now LIVE and visible on user/team leader dashboards!"
+            : "Zoom meeting '{$meeting->topic}' is now ENDED and hidden from user/team leader dashboards.";
+
+        return redirect()->back()->with('message', $statusMsg);
+    }
+
+    public function zoomDelete($id)
+    {
+        $meeting = \App\Models\ZoomMeeting::findOrFail($id);
+        $meeting->delete();
+
+        return redirect()->back()->with('message', 'Zoom meeting record deleted.');
+    }
+
 }
