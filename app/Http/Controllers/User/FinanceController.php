@@ -1762,4 +1762,386 @@ public function getTeamTree(Request $request,$id){
         return null;
     }
 
+    /* ===========================================================
+     *  INTERNAL EXCHANGE & WALLET TRANSFERS
+     * =========================================================== */
+
+    public function internalExchangePage()
+    {
+        $user = Auth::user();
+
+        // 6 Internal Wallets + Available Token
+        $cashoutBal = (float) $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+
+        // 2. Reward Wallet (REWARD — separate from COMMISSION / Referral Bonus)
+        $rewardBal = (float) $user->ChartAccount()->where('acc_type', 'REWARD')->sum('amount');
+
+        // 3. Deposit Wallet (Available Deposit Balance = Approved Deposits - Used Deposits)
+        $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+        $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+        $depositBal      = max(0, $approvedDeposit - $usedDeposit);
+
+        // Keep ChartAccount DEPOSIT synced with available deposit balance
+        ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+            ['amount'  => $depositBal]
+        );
+
+        // 4. Fomo Wallet
+        $fomoBal = (float) $user->ChartAccount()->where('acc_type', 'FOMO')->sum('amount');
+
+        // 5. Trading Wallet (TRADING_WALLET — separate from Trading Voucher TRADING)
+        $tradingBal = (float) $user->ChartAccount()->where('acc_type', 'TRADING_WALLET')->sum('amount');
+
+        // 6. Purchase Wallet
+        $purchaseBal = (float) $user->ChartAccount()->where('acc_type', 'PURCHASE')->sum('amount');
+
+        // Available Tokens
+        $availableTokenBal = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+
+        $swapPrice    = \App\Models\TokenSetting::swapPrice() ?: 0.0025;
+        $tradingPrice = \App\Models\TokenSetting::tradingPrice() ?: 0.0025;
+        $symbol       = \App\Models\TokenSetting::currentSymbol() ?: 'FOCOIN';
+
+        $transactions = Transaction::where('user_id', $user->id)
+            ->whereIn('transaction_type', [
+                'INTERNAL_WALLET_TRANSFER',
+                'CASHOUT_TRANSFER_SENT',
+                'CASHOUT_TRANSFER_RECEIVED',
+                'TOKEN_SWAP',
+                'TOKEN_PURCHASE',
+                'TOKEN_TRANSFER'
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(15);
+
+        return view('user.internal-exchange', compact(
+            'cashoutBal', 'rewardBal', 'depositBal', 'fomoBal',
+            'tradingBal', 'purchaseBal', 'availableTokenBal',
+            'swapPrice', 'tradingPrice', 'symbol', 'transactions'
+        ));
+    }
+
+    public function internalWalletTransfer(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'from_wallet' => 'required|string|in:CASHOUT,REWARD,DEPOSIT,FOMO,PURCHASE',
+            'to_wallet'   => 'required|string|in:CASHOUT,REWARD,DEPOSIT,FOMO,TRADING_WALLET,PURCHASE',
+            'amount'      => 'required|numeric|min:0.01',
+        ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
+
+        $from = strtoupper(trim($request->from_wallet));
+        $to   = strtoupper(trim($request->to_wallet));
+        $amount = (float) $request->amount;
+
+        if ($from === $to) {
+            return back()->with('error', 'Source and destination wallets cannot be the same.');
+        }
+
+        // Enforce Wallet Transfer Matrix Rules:
+        $allowedMatrix = [
+            'CASHOUT'    => ['REWARD', 'DEPOSIT', 'FOMO', 'TRADING_WALLET', 'PURCHASE'],
+            'REWARD'     => ['DEPOSIT', 'FOMO', 'TRADING_WALLET', 'PURCHASE'],
+            'DEPOSIT'    => ['TRADING_WALLET', 'PURCHASE'],
+            'FOMO'       => ['DEPOSIT', 'TRADING_WALLET', 'PURCHASE'],
+            'PURCHASE'   => ['FOMO', 'TRADING_WALLET'],
+        ];
+
+        $allowedTo = $allowedMatrix[$from] ?? [];
+        if (!in_array($to, $allowedTo, true)) {
+            return back()->with('error', "Transfer from {$from} to {$to} is not permitted per internal exchange rules.");
+        }
+
+        // Calculate available source balance
+        if ($from === 'DEPOSIT') {
+            $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+            $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+            $sourceBal       = max(0, $approvedDeposit - $usedDeposit);
+        } else {
+            $sourceBal = (float) $user->ChartAccount()->where('acc_type', $from)->sum('amount');
+        }
+
+        if ($sourceBal < $amount) {
+            return back()->with('error', "Insufficient Funds in {$from} Wallet. You have $" . number_format($sourceBal, 2) . ' available.');
+        }
+
+        DB::transaction(function () use ($user, $from, $to, $amount, $sourceBal) {
+            // Deduct from Source Wallet
+            if ($from === 'DEPOSIT') {
+                \App\Models\Deposits::create([
+                    'user_id'          => $user->id,
+                    'amount_deposited' => 0,
+                    'amount_removed'   => $amount,
+                    'currency_type'    => 'USD',
+                    'deposit_method'   => 'INTERNAL_TRANSFER_' . $to,
+                    'transaction_id'   => \App\Models\Deposits::generateTransactionNo(),
+                    'status'           => 'used',
+                    'comment'          => "Deposit balance transferred to {$to} Wallet.",
+                ]);
+                $newDepBal = max(0, $sourceBal - $amount);
+                ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+                    ['amount'  => $newDepBal]
+                );
+            } else {
+                $user->ChartAccount()->where('acc_type', $from)
+                    ->update(['amount' => $sourceBal - $amount]);
+            }
+
+            // Credit Destination Wallet
+            if ($to === 'DEPOSIT') {
+                $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+                $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+                $newDepBal       = max(0, $approvedDeposit - $usedDeposit) + $amount;
+
+                ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+                    ['amount'  => $newDepBal]
+                );
+            } else {
+                $destBal = (float) $user->ChartAccount()->where('acc_type', $to)->sum('amount');
+                ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => $to],
+                    ['amount'  => $destBal + $amount]
+                );
+            }
+
+            $trxNo = Transaction::generateTransactionNo();
+            Transaction::create([
+                'user_id'             => $user->id,
+                'transaction_no'      => $trxNo,
+                'transaction_type'    => 'INTERNAL_WALLET_TRANSFER',
+                'receiver_id'         => 0,
+                'transaction_details' => json_encode([
+                    'amount'      => $amount,
+                    'from_wallet' => $from,
+                    'to_wallet'   => $to,
+                    'date'        => now()->toDateTimeString(),
+                    'username'    => $user->name,
+                ]),
+            ]);
+        });
+
+        $displayNames = [
+            'CASHOUT'        => 'Cashout Wallet',
+            'REWARD'         => 'Reward Wallet',
+            'DEPOSIT'        => 'Deposit Wallet',
+            'FOMO'           => 'Fomo Wallet',
+            'TRADING_WALLET' => 'Trading Wallet',
+            'PURCHASE'       => 'Purchase Wallet',
+        ];
+
+        $fromName = $displayNames[$from] ?? $from;
+        $toName   = $displayNames[$to] ?? $to;
+
+        return back()->with('success', "Transferred $" . number_format($amount, 2) . " from {$fromName} to {$toName} successfully!");
+    }
+
+    public function userToUserTransfer(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'recipient' => 'required|string|max:255',
+            'amount'    => 'required|numeric|min:0.01',
+        ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
+
+        $amount     = (float) $request->amount;
+        $identifier = trim($request->recipient);
+
+        // Lookup recipient by Username, Transfer Code, or Email
+        $recipient = User::where('user', $identifier)
+            ->orWhere('transfer_code', $identifier)
+            ->orWhere('email', $identifier)
+            ->first();
+
+        if (!$recipient) {
+            return back()->with('error', "Recipient user ('{$identifier}') not found. Please verify the Username or 7-Digit Transfer Code.");
+        }
+
+        if ($recipient->id === $user->id) {
+            return back()->with('error', 'You cannot transfer funds to yourself.');
+        }
+
+        $cashoutBal = (float) $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        if ($cashoutBal < $amount) {
+            return back()->with('error', 'Insufficient Funds in Cashout Wallet. You have $' . number_format($cashoutBal, 2) . ' available.');
+        }
+
+        DB::transaction(function () use ($user, $recipient, $amount, $cashoutBal) {
+            // Debit Sender's Cashout
+            $user->ChartAccount()->where('acc_type', 'CASHOUT')
+                ->update(['amount' => $cashoutBal - $amount]);
+
+            // Credit Recipient's Cashout
+            $recCashout = (float) $recipient->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+            ChartAccount::updateOrCreate(
+                ['user_id' => $recipient->id, 'acc_type' => 'CASHOUT'],
+                ['amount'  => $recCashout + $amount]
+            );
+
+            $senderTrxNo = Transaction::generateTransactionNo();
+            $recipientTrxNo = Transaction::generateTransactionNo();
+
+            // Sender Transaction
+            Transaction::create([
+                'user_id'             => $user->id,
+                'transaction_no'      => $senderTrxNo,
+                'transaction_type'    => 'CASHOUT_TRANSFER_SENT',
+                'receiver_id'         => $recipient->id,
+                'transaction_details' => json_encode([
+                    'amount'         => $amount,
+                    'to_user'        => $recipient->user,
+                    'to_code'        => $recipient->transfer_code,
+                    'to_name'        => $recipient->name,
+                    'related_trx_no' => $recipientTrxNo,
+                    'date'           => now()->toDateTimeString(),
+                ]),
+            ]);
+
+            // Recipient Transaction
+            Transaction::create([
+                'user_id'             => $recipient->id,
+                'transaction_no'      => $recipientTrxNo,
+                'transaction_type'    => 'CASHOUT_TRANSFER_RECEIVED',
+                'receiver_id'         => $user->id,
+                'transaction_details' => json_encode([
+                    'amount'         => $amount,
+                    'from_user'      => $user->user,
+                    'from_code'      => $user->transfer_code,
+                    'from_name'      => $user->name,
+                    'related_trx_no' => $senderTrxNo,
+                    'date'           => now()->toDateTimeString(),
+                ]),
+            ]);
+        });
+
+        return back()->with('success', "Transferred $" . number_format($amount, 2) . " Cashout USD to @" . ($recipient->user ?: $recipient->name) . " (Transfer Code: {$recipient->transfer_code}) successfully!");
+    }
+
+    public function tradingAction(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'action_type' => 'required|string|in:swap_token,buy_token,transfer_available_token',
+            'amount'      => 'required|numeric|min:0.01',
+        ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error', $message);
+        }
+
+        $actionType = $request->action_type;
+        $amount     = (float) $request->amount;
+
+        $tradingBal  = (float) $user->ChartAccount()->where('acc_type', 'TRADING_WALLET')->sum('amount');
+        $availTokBal = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+
+        $swapPrice    = \App\Models\TokenSetting::swapPrice() ?: 0.0025;
+        $tradingPrice = \App\Models\TokenSetting::tradingPrice() ?: 0.0025;
+
+        if ($actionType === 'swap_token') {
+            if ($tradingBal < $amount) {
+                return back()->with('error', 'Insufficient Funds in Trading Wallet. Available: $' . number_format($tradingBal, 2));
+            }
+
+            $tokensCredited = round($amount / $swapPrice, 4);
+
+            DB::transaction(function () use ($user, $amount, $tradingBal, $tokensCredited, $availTokBal) {
+                // Deduct USD from TRADING_WALLET
+                $user->ChartAccount()->where('acc_type', 'TRADING_WALLET')->update(['amount' => $tradingBal - $amount]);
+
+                // Credit AVAILABLE_TOKEN
+                ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+                    ['amount'  => $availTokBal + $tokensCredited]
+                );
+
+                $trxNo = Transaction::generateTransactionNo();
+                Transaction::create([
+                    'user_id'             => $user->id,
+                    'transaction_no'      => $trxNo,
+                    'transaction_type'    => 'TOKEN_SWAP',
+                    'receiver_id'         => 0,
+                    'transaction_details' => json_encode([
+                        'usd_amount'   => $amount,
+                        'tokens'       => $tokensCredited,
+                        'rate'         => $swapPrice,
+                        'date'         => now()->toDateTimeString(),
+                    ]),
+                ]);
+            });
+
+            return back()->with('success', "Swapped $" . number_format($amount, 2) . " USD from Trading Wallet to " . number_format($tokensCredited, 2) . " Available Tokens at $" . number_format($swapPrice, 4) . "/token!");
+        }
+
+        if ($actionType === 'buy_token') {
+            if ($tradingBal < $amount) {
+                return back()->with('error', 'Insufficient Funds in Trading Wallet. Available: $' . number_format($tradingBal, 2));
+            }
+
+            $tokensCredited = round($amount / $tradingPrice, 4);
+
+            DB::transaction(function () use ($user, $amount, $tradingBal, $tokensCredited, $availTokBal) {
+                // Deduct USD from TRADING_WALLET
+                $user->ChartAccount()->where('acc_type', 'TRADING_WALLET')->update(['amount' => $tradingBal - $amount]);
+
+                // Credit AVAILABLE_TOKEN
+                ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+                    ['amount'  => $availTokBal + $tokensCredited]
+                );
+
+                $trxNo = Transaction::generateTransactionNo();
+                Transaction::create([
+                    'user_id'             => $user->id,
+                    'transaction_no'      => $trxNo,
+                    'transaction_type'    => 'TOKEN_PURCHASE',
+                    'receiver_id'         => 0,
+                    'transaction_details' => json_encode([
+                        'usd_amount'   => $amount,
+                        'tokens'       => $tokensCredited,
+                        'rate'         => $tradingPrice,
+                        'date'         => now()->toDateTimeString(),
+                    ]),
+                ]);
+            });
+
+            return back()->with('success', "Purchased " . number_format($tokensCredited, 2) . " Available Tokens using $" . number_format($amount, 2) . " USD from Trading Wallet at $" . number_format($tradingPrice, 4) . "/token!");
+        }
+
+        if ($actionType === 'transfer_available_token') {
+            if ($availTokBal < $amount) {
+                return back()->with('error', 'Insufficient Available Tokens. You have ' . number_format($availTokBal, 2) . ' Available Tokens.');
+            }
+
+            $trxNo = Transaction::generateTransactionNo();
+            Transaction::create([
+                'user_id'             => $user->id,
+                'transaction_no'      => $trxNo,
+                'transaction_type'    => 'TOKEN_TRANSFER',
+                'receiver_id'         => 0,
+                'transaction_details' => json_encode([
+                    'tokens' => $amount,
+                    'date'   => now()->toDateTimeString(),
+                ]),
+            ]);
+
+            return back()->with('success', "Transferred " . number_format($amount, 2) . " Available Tokens successfully!");
+        }
+
+        return back()->with('error', 'Invalid trading action.');
+    }
+
 }

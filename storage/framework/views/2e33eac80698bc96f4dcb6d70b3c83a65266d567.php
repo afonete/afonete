@@ -761,9 +761,12 @@ img{ max-width:100%;}
                     <div class="dash-card-value">
                         Active
                     </div>
-                    <div class="dash-card-footer">
-                        <a href="/user/user-wallet" class="text-white font-weight-bold" style="text-decoration: underline;">
-                            View Wallet <i class="fas fa-arrow-right ml-1"></i>
+                    <div class="dash-card-footer d-flex align-items-center justify-content-between">
+                        <a href="<?php echo e(route('user.internal-exchange')); ?>" class="text-white font-weight-bold" style="text-decoration: underline;">
+                            Internal Exchange <i class="fas fa-right-left ml-1"></i>
+                        </a>
+                        <a href="<?php echo e(route('user.dashboard.balance')); ?>" class="text-white font-weight-bold" style="text-decoration: underline;">
+                            Balances <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
                 </div>

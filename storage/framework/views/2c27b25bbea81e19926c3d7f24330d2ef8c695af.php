@@ -430,6 +430,27 @@ ul li a{
 
 
 
+       
+       <?php
+           $adminPendingKycCount = \App\Models\KycVerification::where('status', 'pending')
+               ->orWhere('level_1_status', 'pending')
+               ->orWhere('level_2_status', 'pending')
+               ->orWhere('level_3_status', 'pending')
+               ->count();
+       ?>
+       <li>
+        <a href="<?php echo e(route('admin.kyc.index')); ?>" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group <?php echo e(request()->routeIs('admin.kyc.*') ? 'bg-gray-100 dark:bg-gray-700' : ''); ?>">
+          <i class="fa-solid fa-id-card text-indigo-500"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">KYC Verifications</span>
+           <?php if($adminPendingKycCount > 0): ?>
+               <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="<?php echo e($adminPendingKycCount); ?> pending KYC level review(s)">
+                   <?php echo e($adminPendingKycCount); ?>
+
+               </span>
+           <?php endif; ?>
+        </a>
+       </li>
+
        <li>
         <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
           <i class="fa-solid fa-file-signature"></i>

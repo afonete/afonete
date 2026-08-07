@@ -370,19 +370,33 @@ if (showAlertBtn) {
                                 <small class="sidebar-user-username text-muted" title="@ {{ $user->user }}">@ {{ $user->user }}</small>
                             </div>
 
+                            @php
+                                $userKyc = \App\Models\KycVerification::forUser($user);
+                                $kycPct = $userKyc->overall_percentage;
+                                $kycStatus = $userKyc->status;
+                            @endphp
+
                             <div class="d-flex flex-column align-items-center">
-                                <div class="d-flex border border-danger align-items-center  rounded-pill p-1 bg-white ">
+                                <div class="d-flex border border-danger align-items-center rounded-pill p-1 bg-white mb-1">
                                    <span></span>
-                                   <span class="text-xs">Binary status:  </span>
-                                   <span class="px-1 text-danger text-sm" style=" !important; font-weight:700">inactive</span>
+                                   <span class="text-xs">Binary Status:  </span>
+                                   <span class="px-1 text-danger text-sm" style="font-weight:700">Inactive</span>
                                 </div>
 
-                                <div class="d-flex border border-success align-items-center  rounded-pill p-1 bg-white ">
-                                   <span></span>
-                                   <span class="text-sm">KCY status <strong>None</strong> :</span>
-
-                                   <a href="#" class="px-1 text-primary text-sm underlined" style="color:dodgerblue !important; text-style:underlined;
-                                     font-weight:700">Apply Now</a>
+                                <div class="d-flex border border-{{ $kycPct === 100 ? 'success' : ($kycPct > 0 ? 'warning' : 'info') }} align-items-center rounded-pill p-1 bg-white">
+                                   <span class="text-sm">KYC Status: </span>
+                                   @if($kycPct === 100)
+                                       <span class="px-1 text-success text-sm font-weight-bold"><i class="fas fa-check-circle mr-1"></i> 100% Verified</span>
+                                   @elseif($kycStatus === 'pending')
+                                       <span class="px-1 text-warning text-sm font-weight-bold">Under Review ({{ $kycPct }}%)</span>
+                                       <a href="{{ route('user.kyc') }}" class="px-1 text-primary text-sm font-weight-bold" style="color:dodgerblue !important; text-decoration:underline;">View</a>
+                                   @elseif($kycPct > 0)
+                                       <span class="px-1 text-info text-sm font-weight-bold">{{ $kycPct }}% Level {{ $kycPct === 25 ? '1' : '2' }}</span>
+                                       <a href="{{ route('user.kyc') }}" class="px-1 text-primary text-sm font-weight-bold" style="color:dodgerblue !important; text-decoration:underline;">Upgrade →</a>
+                                   @else
+                                       <strong class="px-1 text-danger text-sm font-weight-bold">None (0%)</strong>
+                                       <a href="{{ route('user.kyc') }}" class="px-1 text-primary text-sm font-weight-bold" style="color:dodgerblue !important; text-decoration:underline;">Apply Now →</a>
+                                   @endif
                                 </div>
 
                             </div>
@@ -474,8 +488,8 @@ if (showAlertBtn) {
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('user.dashboard.payments') }}" class="nav-link {{ request()->routeIs('user.dashboard.payments') ? 'active' : '' }}">
-                                    <i class="fas fa-exchange-alt nav-icon"></i><p>Internal Exchange</p>
+                                <a href="{{ route('user.internal-exchange') }}" class="nav-link {{ request()->routeIs('user.internal-exchange') ? 'active' : '' }}">
+                                    <i class="fas fa-right-left nav-icon text-amber-400"></i><p>Internal Exchange</p>
                                 </a>
                             </li>
                         </ul>

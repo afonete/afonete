@@ -17,7 +17,7 @@ class PasswordController extends Controller
 
     public function show()
     {
-        return view("user.profile-component")->with('show','show');
+        return view("user.password");
     }
     public function ad_show()
     {

@@ -89,6 +89,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('user/pay/fc2', [PaymentController::class, 'fc2'])->name('fc2');
     Route::get('user/pay/fc1', [PaymentController::class, 'fc1'])->name('fc1');
     Route::post('user/pay/ventures', [PaymentController::class, 'ventures'])->name('ventures');
+    // ── INTERNAL EXCHANGE & WALLET TRANSFERS ──
+    Route::get('user/internal-exchange', [FinanceController::class, 'internalExchangePage'])->name('user.internal-exchange');
+    Route::post('user/internal-exchange/transfer', [FinanceController::class, 'internalWalletTransfer'])->name('user.internal-exchange.transfer');
+    Route::post('user/internal-exchange/user-transfer', [FinanceController::class, 'userToUserTransfer'])->name('user.internal-exchange.user-transfer');
+    Route::post('user/internal-exchange/trading-action', [FinanceController::class, 'tradingAction'])->name('user.internal-exchange.trading-action');
+
     Route::get('user/overview', [FinanceController::class, 'overview'])->name('overview');
     Route::get('user/transaction', [FinanceController::class, 'transaction'])->name('transaction');
     Route::post('user/tranfer', [FinanceController::class, 'transfer'])->name('transfer');
@@ -236,10 +242,11 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
         ->name('user.contracts.bifonex');
 
 
-    // create function that will return the page called kyc
-    Route::get('user/kyc', function () {
-        return view('user.kyc');
-    });
+    // ── MULTI-LEVEL KYC VERIFICATION (user) ──────────────────────────────
+    Route::get('user/kyc', [\App\Http\Controllers\User\KycController::class, 'index'])->name('user.kyc');
+    Route::post('user/kyc/level1', [\App\Http\Controllers\User\KycController::class, 'submitLevel1'])->name('user.kyc.level1');
+    Route::post('user/kyc/level2', [\App\Http\Controllers\User\KycController::class, 'submitLevel2'])->name('user.kyc.level2');
+    Route::post('user/kyc/level3', [\App\Http\Controllers\User\KycController::class, 'submitLevel3'])->name('user.kyc.level3');
 
 
       // create FAQ
@@ -500,6 +507,12 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/bifonex-contracts', [\App\Http\Controllers\ContractDocumentController::class, 'adminIndex'])->name('admin.contracts.index');
     Route::get('admin/bifonex-contracts/{contract}', [\App\Http\Controllers\ContractDocumentController::class, 'adminShow'])->name('admin.contracts.show');
     Route::get('admin/bifonex-contracts/{contract}/download', [\App\Http\Controllers\ContractDocumentController::class, 'adminDownload'])->name('admin.contracts.download');
+
+    // ── KYC VERIFICATIONS MANAGEMENT (admin) ──────────────────────────────
+    Route::get('admin/kyc-verifications', [\App\Http\Controllers\Admin\KycAdminController::class, 'index'])->name('admin.kyc.index');
+    Route::get('admin/kyc-verifications/{id}', [\App\Http\Controllers\Admin\KycAdminController::class, 'show'])->name('admin.kyc.show');
+    Route::post('admin/kyc-verifications/{id}/level/{level}', [\App\Http\Controllers\Admin\KycAdminController::class, 'reviewLevel'])->name('admin.kyc.review');
+    Route::post('admin/settings/non-kyc-fee', [\App\Http\Controllers\Admin\KycAdminController::class, 'updateNonKycFee'])->name('admin.kyc.non-kyc-fee');
 
     Route::get('admin/dashboard/contacted', [AdminController::class, 'contacted'])->name('admin.contacted');
     Route::post('admin/admin-login', [AdminController::class, 'logout'])->name('admin.logout');

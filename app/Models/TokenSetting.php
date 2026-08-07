@@ -61,13 +61,17 @@ class TokenSetting extends Model
     /** Price used for 30-day renewals (trading_voucher / renewal_price = AVAILABLE tokens) */
     public static function renewalPrice(): float { return (float) self::settings()->renewal_price; }
 
-    /** Price used when swapping LOCKED tokens → CASHOUT */
-    public static function swapPrice(): float  { return (float) self::settings()->swap_price; }
+    /** Price used when swapping tokens in internal exchange (`swap_price` from token_settings) */
+    public static function swapPrice(): float  { return (float) (self::settings()->swap_price ?: 0.0025); }
 
-    /** USD value per 1 token for swap/withdrawal display */
-    public static function coinValue(): float  { return (float) self::settings()->coin_value; }
+    /** Price used for Trading Wallet buy/swap module (`trading_price` / "Trading Price Reserved" from token_settings) */
+    public static function tradingPrice(): float { return (float) (self::settings()->trading_price ?: 0.0025); }
 
-    public static function currentSymbol(): string { return self::settings()->token_symbol ?? 'FONE'; }
+    /** USD value per 1 token for display */
+    public static function coinValue(): float  { return (float) (self::settings()->coin_value ?: 0.0025); }
+
+    /** Token symbol configured by admin (`token_symbol` from token_settings) */
+    public static function currentSymbol(): string { return self::settings()->token_symbol ?? 'FOCOIN'; }
 
     /** Get the configurable initial supply (fallback to 120 Billion) */
     public static function initialSupply(): float

@@ -67,30 +67,28 @@ class ProfileController extends Controller
     }
      public function updates(Request $request)
     {
-       // return view('livewire.profile.profile-component')->layout('layouts.user-dashboard-base');
-
         $user = Auth::user();
-        $userId = $user->id;
-        $user = User::find($userId);
-        $name = $request->input('name');
-        $email = $request->input('email');
-        $phone = $request->input('phone');
-        // $user->profile_photo_url = $request->input('pic');
-        //$user = User::where('email', $email)->first();
-       
-            $user->name = $name;
-            $user->phone = $phone;
+        if (!$user) {
+            return redirect()->route('login');
+        }
 
-            $user->save();
-        // return redirect('profile/account');
-       
-            if ($user->save()) {
-                // return view('user.profile-component');
-                return redirect()->route('profile.edit')->with('success','Profile updated successfull');
-            } 
-            else {
-                return view('profile.edit')->with('fail','Profile not updated ');
-            }
+        $request->validate([
+            'name'    => 'required|string|max:255',
+            'phone'   => 'nullable|string|max:50',
+            'country' => 'nullable|string|max:100',
+        ]);
+
+        $user->name  = $request->input('name');
+        $user->phone = $request->input('phone');
+        if ($request->filled('country')) {
+            $user->country = $request->input('country');
+        }
+
+        if ($user->save()) {
+            return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
+        } else {
+            return redirect()->route('profile.edit')->with('fail', 'Profile update failed.');
+        }
     }
     public function ad_updates(Request $request)
     {
