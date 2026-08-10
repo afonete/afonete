@@ -106,27 +106,61 @@ class FinanceController extends Controller
 
 
     public function getAccountBalance(Request $request){
-
         $user = Auth::User();
-        $param = $request->query("ac");
+        $param = trim($request->query("ac", ""));
 
+        $accMap = [
+            'Cashout Wallet'  => 'CASHOUT',
+            'Payout Wallet'   => 'CASHOUT',
+            'CASHOUT'         => 'CASHOUT',
+            'Deposit Wallet'  => 'DEPOSIT',
+            'Fund Wallet'     => 'DEPOSIT',
+            'DEPOSIT'         => 'DEPOSIT',
+            'Purchase Wallet' => 'PURCHASE',
+            'UPurchase Wallet'=> 'PURCHASE',
+            'PURCHASE'        => 'PURCHASE',
+            'Reward Wallet'   => 'REWARD',
+            'REWARD'          => 'REWARD',
+            'FOMO Wallet'     => 'FOMO',
+            'FOMO'            => 'FOMO',
+            'Trading Wallet'  => 'TRADING_WALLET',
+            'radind Wallet'   => 'TRADING_WALLET',
+            'TRADING_WALLET'  => 'TRADING_WALLET',
+            'TRADING'         => 'TRADING',
+        ];
 
-        $charts = $user->ChartAccount()->where("acc_type",$param)->first();
+        $accType = $accMap[$param] ?? $param;
 
-        if(!$charts){
+        if ($accType === 'DEPOSIT') {
+            $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
+            $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
+            $depositBal      = max(0, $approvedDeposit - $usedDeposit);
+
+            // Keep ChartAccount DEPOSIT synced
+            ChartAccount::updateOrCreate(
+                ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+                ['amount'  => $depositBal]
+            );
+
             return response()->json([
-                "balance"=>0.00,
-                "message"=>"channged account"
+                "balance" => number_format($depositBal, 2, '.', ''),
+                "message" => "changed account"
             ]);
         }
 
+        $charts = $user->ChartAccount()->where("acc_type", $accType)->first();
+
+        // Fallback for Trading Wallet if TRADING_WALLET is empty, check TRADING
+        if (!$charts && $accType === 'TRADING_WALLET') {
+            $charts = $user->ChartAccount()->where("acc_type", 'TRADING')->first();
+        }
+
+        $bal = $charts ? (float) $charts->amount : 0.00;
+
         return response()->json([
-            "balance"=>$charts->amount,
-            "message"=>"channged account"
+            "balance" => number_format($bal, 2, '.', ''),
+            "message" => "changed account"
         ]);
-
-
-
     }
 
     /**
@@ -145,27 +179,37 @@ class FinanceController extends Controller
      */
     public function transferToUser(Request $request){
         $user = Auth::user();
-        $validatedData = $request->validate([
-            'amount'          => 'required|numeric|min:0.01',
-            'recipient_email' => 'required|email|exists:users,email',
-        ], [
-            'recipient_email.exists' => "No user found with that email address.",
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $amount    = (float) $request->amount;
-        $recipient = User::where('email', $request->recipient_email)->first();
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error-touser', $message);
+        }
+
+        $identifier = trim($request->input('recipient', $request->input('recipient_email', '')));
+
+        if (empty($identifier)) {
+            return back()->with('error-touser', 'Please enter a recipient Username or 7-Digit Transfer Code.');
+        }
+
+        $amount = (float) $request->amount;
+        $recipient = User::where('user', $identifier)
+            ->orWhere('transfer_code', $identifier)
+            ->orWhere('email', $identifier)
+            ->first();
 
         if (!$recipient) {
-            return back()->with('error', 'Recipient not found.');
+            return back()->with('error-touser', "No member found with Username, Transfer Code, or Email '{$identifier}'.");
         }
 
         if ($recipient->id === $user->id) {
-            return back()->with('error', 'You cannot transfer funds to yourself.');
+            return back()->with('error-touser', 'You cannot transfer funds to yourself.');
         }
 
-        $cashoutBal = $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+        $cashoutBal = (float) $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
         if ($cashoutBal < $amount) {
-            return back()->with('error', 'Insufficient Funds. You have $' . number_format($cashoutBal, 2) . ' available.');
+            return back()->with('error-touser', 'Insufficient Funds in Cashout Wallet. You have $' . number_format($cashoutBal, 2) . ' available.');
         }
 
         DB::transaction(function () use ($user, $recipient, $amount) {
@@ -173,27 +217,28 @@ class FinanceController extends Controller
             $user->ChartAccount()->where('acc_type', 'CASHOUT')
                  ->update(['amount' => $user->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount') - $amount]);
 
-            // Credit recipient's CASHOUT (FIX — was missing before)
-            $recipientBal = $recipient->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
+            // Credit recipient's CASHOUT
+            $recipientBal = (float) $recipient->ChartAccount()->where('acc_type', 'CASHOUT')->sum('amount');
             ChartAccount::updateOrCreate(
                 ['user_id' => $recipient->id, 'acc_type' => 'CASHOUT'],
                 ['amount'  => $recipientBal + $amount]
             );
 
-            $trxNo = Transaction::generateTransactionNo();
+            $senderTrxNo = Transaction::generateTransactionNo();
+            $recipientTrxNo = Transaction::generateTransactionNo();
 
-            // Sender-side transaction record
+            // Sender Record
             Transaction::create([
                 'user_id'             => $user->id,
-                'transaction_no'      => $trxNo,
+                'transaction_no'      => $senderTrxNo,
                 'transaction_type'    => 'CASHOUT_TRANSFER_SENT',
                 'receiver_id'         => $recipient->id,
                 'transaction_details' => json_encode([
                     'amount'         => $amount,
                     'currency'       => 'USDT',
                     'trx_type'       => 'Member to Member Cashout Transfer',
-                    'from_email'     => $user->email,
-                    'from_name'      => $user->name,
+                    'to_username'    => $recipient->user,
+                    'to_code'        => $recipient->transfer_code,
                     'to_email'       => $recipient->email,
                     'to_name'        => $recipient->name,
                     'date'           => now()->toDateTimeString(),
@@ -201,45 +246,62 @@ class FinanceController extends Controller
                 ]),
             ]);
 
-            // Mirror record on recipient's history
+            // Recipient Record
             Transaction::create([
                 'user_id'             => $recipient->id,
-                'transaction_no'      => $trxNo,
+                'transaction_no'      => $recipientTrxNo,
                 'transaction_type'    => 'CASHOUT_TRANSFER_RECEIVED',
                 'receiver_id'         => $user->id,
                 'transaction_details' => json_encode([
-                    'amount'    => $amount,
-                    'currency'  => 'USDT',
-                    'trx_type'  => 'Member to Member Cashout Transfer',
-                    'from_email'=> $user->email,
-                    'from_name' => $user->name,
-                    'to_email'  => $recipient->email,
-                    'to_name'   => $recipient->name,
-                    'date'      => now()->toDateTimeString(),
-                    'status'    => 'completed',
+                    'amount'         => $amount,
+                    'currency'       => 'USDT',
+                    'trx_type'       => 'Member to Member Cashout Transfer',
+                    'from_username'  => $user->user,
+                    'from_code'      => $user->transfer_code,
+                    'from_email'     => $user->email,
+                    'from_name'      => $user->name,
+                    'date'           => now()->toDateTimeString(),
+                    'status'         => 'completed',
                 ]),
             ]);
         });
 
-        return back()->with('success',
-            '$' . number_format($amount, 2) . ' successfully transferred to ' . $recipient->name . ' (' . $recipient->email . ').'
+        return back()->with('success-touser',
+            '$' . number_format($amount, 2) . ' Cashout USD successfully transferred to @' . ($recipient->user ?: $recipient->name) . ' (Transfer Code: ' . $recipient->transfer_code . ').'
         );
     }
 
     /**
-     * AJAX lookup for CASHOUT transfer: find user by email, return name for preview.
+     * AJAX lookup for CASHOUT transfer: find user by Username, Transfer Code, or Email.
      */
     public function cashoutTransferLookup(Request $request)
     {
-        $recipient = User::where('email', $request->email)
-                        ->where('id', '!=', Auth::id())
-                        ->select('id', 'name', 'email')
-                        ->first();
+        $identifier = trim((string) $request->query('query', $request->query('email', $request->query('q', ''))));
+
+        if (empty($identifier)) {
+            return response()->json(['found' => false, 'message' => 'Please enter Username or 7-Digit Transfer Code.']);
+        }
+
+        $recipient = User::where('id', '!=', Auth::id())
+            ->where(function ($q) use ($identifier) {
+                $q->where('user', $identifier)
+                  ->orWhere('transfer_code', $identifier)
+                  ->orWhere('email', $identifier);
+            })
+            ->select('id', 'name', 'user', 'transfer_code', 'email')
+            ->first();
 
         if (!$recipient) {
-            return response()->json(['found' => false, 'message' => 'No user found with that email.']);
+            return response()->json(['found' => false, 'message' => 'No member found with that Username, Transfer Code, or Email.']);
         }
-        return response()->json(['found' => true, 'name' => $recipient->name, 'email' => $recipient->email]);
+
+        return response()->json([
+            'found'         => true,
+            'name'          => $recipient->name,
+            'username'      => $recipient->user,
+            'transfer_code' => $recipient->getTransferCode(),
+            'email'         => $recipient->email,
+        ]);
     }
 
 
@@ -248,6 +310,10 @@ class FinanceController extends Controller
         $validatedData = $request->validate([
             'amount' => 'required|max:25',
         ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error-tr', $message);
+        }
 
         $amount = $request->amount;
         $remaining = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount") - $amount;
@@ -295,6 +361,10 @@ class FinanceController extends Controller
             'amount' => 'required|max:25',
             'account'=>'required',
         ]);
+
+        if ($message = $this->transactionPasswordError($request, $user)) {
+            return back()->withInput()->with('error-trx', $message);
+        }
         $amount = $request->amount;
         $receiver_account = $request->account;
         $remaining = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount") - $amount;
@@ -1805,15 +1875,11 @@ public function getTeamTree(Request $request,$id){
 
         $transactions = Transaction::where('user_id', $user->id)
             ->whereIn('transaction_type', [
-                'INTERNAL_WALLET_TRANSFER',
-                'CASHOUT_TRANSFER_SENT',
-                'CASHOUT_TRANSFER_RECEIVED',
                 'TOKEN_SWAP',
-                'TOKEN_PURCHASE',
-                'TOKEN_TRANSFER'
+                'TOKEN_PURCHASE'
             ])
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate(5);
 
         return view('user.internal-exchange', compact(
             'cashoutBal', 'rewardBal', 'depositBal', 'fomoBal',
@@ -1833,7 +1899,7 @@ public function getTeamTree(Request $request,$id){
         ]);
 
         if ($message = $this->transactionPasswordError($request, $user)) {
-            return back()->withInput()->with('error', $message);
+            return back()->withInput()->with('error-internal', $message);
         }
 
         $from = strtoupper(trim($request->from_wallet));
@@ -1841,7 +1907,7 @@ public function getTeamTree(Request $request,$id){
         $amount = (float) $request->amount;
 
         if ($from === $to) {
-            return back()->with('error', 'Source and destination wallets cannot be the same.');
+            return back()->with('error-internal', 'Source and destination wallets cannot be the same.');
         }
 
         // Enforce Wallet Transfer Matrix Rules:
@@ -1855,7 +1921,7 @@ public function getTeamTree(Request $request,$id){
 
         $allowedTo = $allowedMatrix[$from] ?? [];
         if (!in_array($to, $allowedTo, true)) {
-            return back()->with('error', "Transfer from {$from} to {$to} is not permitted per internal exchange rules.");
+            return back()->with('error-internal', "Transfer from {$from} to {$to} is not permitted per internal exchange rules.");
         }
 
         // Calculate available source balance
@@ -1868,7 +1934,7 @@ public function getTeamTree(Request $request,$id){
         }
 
         if ($sourceBal < $amount) {
-            return back()->with('error', "Insufficient Funds in {$from} Wallet. You have $" . number_format($sourceBal, 2) . ' available.');
+            return back()->with('error-internal', "Insufficient Funds in {$from} Wallet. You have $" . number_format($sourceBal, 2) . ' available.');
         }
 
         DB::transaction(function () use ($user, $from, $to, $amount, $sourceBal) {
@@ -1940,7 +2006,7 @@ public function getTeamTree(Request $request,$id){
         $fromName = $displayNames[$from] ?? $from;
         $toName   = $displayNames[$to] ?? $to;
 
-        return back()->with('success', "Transferred $" . number_format($amount, 2) . " from {$fromName} to {$toName} successfully!");
+        return back()->with('success-internal', "Transferred $" . number_format($amount, 2) . " from {$fromName} to {$toName} successfully!");
     }
 
     public function userToUserTransfer(Request $request)

@@ -716,7 +716,7 @@ img{ max-width:100%;}
                         @elseif($user->has_free_package == 'no')
                             Portfolio: {{ $portfolio }}
                         @else
-                            <a href="{{ route('user.dashboard.activate') }}" class="text-white" style="text-decoration:underline;">Activate Package →</a>
+                            <a href="{{ route('user.buypackage') }}" class="text-white font-weight-bold" style="text-decoration:underline;">Activate Package →</a>
                         @endif
                     </div>
                 </div>
@@ -777,7 +777,7 @@ img{ max-width:100%;}
                             Inactive
                         </div>
                         <div class="dash-card-footer">
-                            <a href="{{ route('user.dashboard.activate') }}" class="btn btn-sm btn-light btn-block font-weight-bold text-dark mt-2" style="border-radius: 6px;">
+                            <a href="{{ route('user.buypackage') }}" class="btn btn-sm btn-light btn-block font-weight-bold text-dark mt-2" style="border-radius: 6px;">
                                 <i class="fas fa-bolt mr-1"></i> Activate Package
                             </a>
                         </div>
@@ -1358,7 +1358,7 @@ img{ max-width:100%;}
                              <button type="button" class="btn btn-outline-light font-weight-bold px-3 py-2 flex-grow-1" onclick="closeActivationPopup()" style="border-radius: 8px; font-size: 12px;">
                                  Continue to Dashboard
                              </button>
-                             <a href="{{ route('user.venture') }}" class="btn btn-warning font-weight-bold text-dark px-4 py-2 flex-grow-1" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                             <a href="{{ route('user.buypackage') }}" class="btn btn-warning font-weight-bold text-dark px-4 py-2 flex-grow-1" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
                                  Activate Package Now <i class="fas fa-arrow-right ml-1"></i>
                              </a>
                          </div>

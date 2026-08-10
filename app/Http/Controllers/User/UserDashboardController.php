@@ -1274,16 +1274,23 @@ class UserDashboardController extends Controller{
         return view('user.task');
     }
 
-    public function payments()
+    public function payments(Request $request)
     {
+        $user = Auth::user();
+        $amount = (float) $user->ChartAccount()->where("acc_type", "CASHOUT")->sum("amount");
 
-        $user = Auth::User();
+        $history = \App\Models\Transaction::where('user_id', $user->id)
+            ->whereIn('transaction_type', [
+                'CASHOUT_TRANSFER_SENT',
+                'CASHOUT_TRANSFER_RECEIVED',
+                'INTERNAL_WALLET_TRANSFER'
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(5);
 
-        $amount =$user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
-
-
-        return view('user.payments',[
-            "cashout"=>$amount
+        return view('user.payments', [
+            "cashout" => $amount,
+            "history" => $history
         ]);
     }
 

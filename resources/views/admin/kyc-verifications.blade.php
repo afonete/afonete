@@ -25,7 +25,7 @@
                 <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
                     <i class="fas fa-id-card text-amber-400"></i> Multi-Level KYC Verifications
                 </h1>
-                <p class="text-xs text-slate-400 mt-1">Inspect and validate user verification documents across Level 1 (25%), Level 2 (75%), and Level 3 (100%).</p>
+                <p class="text-xs text-slate-400 mt-1">Inspect and validate user verification documents across Identity Verification (50%) and Address Verification (100%).</p>
             </div>
             <div class="flex items-center gap-3">
                 @if($pendingCount > 0)
@@ -66,14 +66,11 @@
             <a href="{{ route('admin.kyc.index', ['filter' => 'pending']) }}" class="px-3.5 py-2 rounded-xl border transition {{ request('filter') === 'pending' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' }}">
                 Pending Reviews
             </a>
-            <a href="{{ route('admin.kyc.index', ['filter' => 'level1']) }}" class="px-3.5 py-2 rounded-xl border transition {{ request('filter') === 'level1' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' }}">
-                Level 1 Pending
-            </a>
             <a href="{{ route('admin.kyc.index', ['filter' => 'level2']) }}" class="px-3.5 py-2 rounded-xl border transition {{ request('filter') === 'level2' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' }}">
-                Level 2 Pending
+                Identity Pending (50%)
             </a>
             <a href="{{ route('admin.kyc.index', ['filter' => 'level3']) }}" class="px-3.5 py-2 rounded-xl border transition {{ request('filter') === 'level3' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' }}">
-                Level 3 Pending
+                Address Pending (100%)
             </a>
             <a href="{{ route('admin.kyc.index', ['filter' => 'approved']) }}" class="px-3.5 py-2 rounded-xl border transition {{ request('filter') === 'approved' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' }}">
                 100% Fully Approved
@@ -87,9 +84,8 @@
                     <tr>
                         <th class="py-3.5 px-4">User</th>
                         <th class="py-3.5 px-4">Progress</th>
-                        <th class="py-3.5 px-4">Level 1 (25%)</th>
-                        <th class="py-3.5 px-4">Level 2 (75%)</th>
-                        <th class="py-3.5 px-4">Level 3 (100%)</th>
+                        <th class="py-3.5 px-4">Identity Verification (50%)</th>
+                        <th class="py-3.5 px-4">Address Verification (100%)</th>
                         <th class="py-3.5 px-4 text-right">Action</th>
                     </tr>
                 </thead>
@@ -112,18 +108,6 @@
                             </td>
 
                             <td class="py-4 px-4">
-                                @if($v->level_1_status === 'approved')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fas fa-check-circle mr-1"></i> Approved</span>
-                                @elseif($v->level_1_status === 'pending')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 animate-pulse"><i class="fas fa-hourglass-half mr-1"></i> Pending</span>
-                                @elseif($v->level_1_status === 'rejected')
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800"><i class="fas fa-times-circle mr-1"></i> Rejected</span>
-                                @else
-                                    <span class="text-slate-400 italic">None</span>
-                                @endif
-                            </td>
-
-                            <td class="py-4 px-4">
                                 @if($v->level_2_status === 'approved')
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800"><i class="fas fa-check-circle mr-1"></i> Approved</span>
                                 @elseif($v->level_2_status === 'pending')
@@ -131,7 +115,7 @@
                                 @elseif($v->level_2_status === 'rejected')
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800"><i class="fas fa-times-circle mr-1"></i> Rejected</span>
                                 @else
-                                    <span class="text-slate-400 italic">None</span>
+                                    <span class="text-slate-400 italic">Unsubmitted</span>
                                 @endif
                             </td>
 
@@ -143,7 +127,7 @@
                                 @elseif($v->level_3_status === 'rejected')
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800"><i class="fas fa-times-circle mr-1"></i> Rejected</span>
                                 @else
-                                    <span class="text-slate-400 italic">None</span>
+                                    <span class="text-slate-400 italic">Unsubmitted</span>
                                 @endif
                             </td>
 
@@ -155,7 +139,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-400">
+                            <td colspan="5" class="py-8 text-center text-slate-400">
                                 <i class="fas fa-id-card text-3xl mb-2 text-slate-300 block"></i>
                                 No KYC verification records found.
                             </td>

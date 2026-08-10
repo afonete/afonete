@@ -130,22 +130,21 @@ class KycVerification extends Model
 
     /**
      * Recalculate overall completion percentage & status based on level approvals.
+     * Identity Verification (Level 2 Approved) = 50%
+     * Address Verification (Level 3 Approved)  = 100%
      */
     public function recalculateProgress(): void
     {
         $pct = 0;
-        if ($this->level_1_status === 'approved') {
-            $pct = 25;
-        }
         if ($this->level_2_status === 'approved') {
-            $pct = 75;
+            $pct = 50;
         }
-        if ($this->level_1_status === 'approved' && $this->level_2_status === 'approved' && $this->level_3_status === 'approved') {
+        if ($this->level_2_status === 'approved' && $this->level_3_status === 'approved') {
             $pct = 100;
         }
 
-        $hasPending  = in_array('pending', [$this->level_1_status, $this->level_2_status, $this->level_3_status], true);
-        $hasRejected = in_array('rejected', [$this->level_1_status, $this->level_2_status, $this->level_3_status], true);
+        $hasPending  = in_array('pending', [$this->level_2_status, $this->level_3_status], true);
+        $hasRejected = in_array('rejected', [$this->level_2_status, $this->level_3_status], true);
 
         if ($pct === 100) {
             $status = 'approved';

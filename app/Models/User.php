@@ -34,10 +34,10 @@ class User extends Authenticatable implements MustVerifyEmail
     use TwoFactorAuthenticatable;
 
     protected $fillable = [
-        'name','phone','gender','country','utype',
+        'name','phone','gender','country','city','address','dob','utype',
         'has_paid_package','has_free_package',
         'referee_id','father','email','user','contract','password','transaction_password','transaction_password_set_at',
-        'profile_photo_path','activation','gender','ref_code','has_request','email_verification_pin','transfer_code',
+        'profile_photo_path','activation','ref_code','has_request','email_verification_pin','transfer_code',
     ];
 
     protected $hidden = [
@@ -62,6 +62,34 @@ class User extends Authenticatable implements MustVerifyEmail
                 $user->transfer_code = $code;
             }
         });
+    }
+
+    /**
+     * Check if user profile is fully updated / complete.
+     */
+    public function isProfileComplete(): bool
+    {
+        return !empty(trim($this->name ?? ''))
+            && !empty(trim($this->phone ?? ''))
+            && !empty(trim($this->country ?? ''))
+            && !empty(trim($this->city ?? ''))
+            && !empty(trim($this->address ?? ''))
+            && !empty($this->dob);
+    }
+
+    /**
+     * Get list of missing profile fields.
+     */
+    public function missingProfileFields(): array
+    {
+        $missing = [];
+        if (empty(trim($this->name ?? ''))) $missing[] = 'Full Name';
+        if (empty(trim($this->phone ?? ''))) $missing[] = 'Phone Number';
+        if (empty(trim($this->dob ?? ''))) $missing[] = 'Date of Birth';
+        if (empty(trim($this->country ?? ''))) $missing[] = 'Country';
+        if (empty(trim($this->city ?? ''))) $missing[] = 'City';
+        if (empty(trim($this->address ?? ''))) $missing[] = 'Residential Address';
+        return $missing;
     }
 
     /**

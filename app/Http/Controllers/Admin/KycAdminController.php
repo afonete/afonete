@@ -21,7 +21,6 @@ class KycAdminController extends Controller
             if ($filter === 'pending') {
                 $query->where(function ($q) {
                     $q->where('status', 'pending')
-                      ->orWhere('level_1_status', 'pending')
                       ->orWhere('level_2_status', 'pending')
                       ->orWhere('level_3_status', 'pending');
                 });
@@ -29,7 +28,7 @@ class KycAdminController extends Controller
                 $query->where('overall_percentage', 100);
             } elseif ($filter === 'rejected') {
                 $query->where('status', 'rejected');
-            } elseif (in_array($filter, ['level1', 'level2', 'level3'])) {
+            } elseif (in_array($filter, ['level2', 'level3'])) {
                 $levelCol = str_replace('level', 'level_', $filter) . '_status';
                 $query->where($levelCol, 'pending');
             }
@@ -41,7 +40,6 @@ class KycAdminController extends Controller
         $nonKycFee = (float) (isset($setting->non_kyc_fee_amount) ? $setting->non_kyc_fee_amount : 10.00);
 
         $pendingCount = KycVerification::where('status', 'pending')
-            ->orWhere('level_1_status', 'pending')
             ->orWhere('level_2_status', 'pending')
             ->orWhere('level_3_status', 'pending')
             ->count();
@@ -69,7 +67,7 @@ class KycAdminController extends Controller
         $action = $request->action;
         $statusVal = $action === 'approve' ? 'approved' : 'rejected';
 
-        if (!in_array($level, ['1', '2', '3'])) {
+        if (!in_array($level, ['2', '3'])) {
             return back()->with('error', 'Invalid KYC Level.');
         }
 
@@ -88,7 +86,6 @@ class KycAdminController extends Controller
         $kyc->recalculateProgress();
 
         $levelNames = [
-            '1' => 'Level 1 – Basic (Phone Number)',
             '2' => 'Level 2 – Identity (ID + Selfie + DOB)',
             '3' => 'Level 3 – Address (Residence Proof)',
         ];

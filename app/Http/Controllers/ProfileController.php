@@ -72,17 +72,33 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
 
+        if (\Illuminate\Support\Facades\Schema::hasTable('users')) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'city')) {
+                try { \Illuminate\Support\Facades\Schema::table('users', function ($table) { $table->string('city', 100)->nullable(); }); } catch (\Throwable $e) {}
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'address')) {
+                try { \Illuminate\Support\Facades\Schema::table('users', function ($table) { $table->text('address')->nullable(); }); } catch (\Throwable $e) {}
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'dob')) {
+                try { \Illuminate\Support\Facades\Schema::table('users', function ($table) { $table->date('dob')->nullable(); }); } catch (\Throwable $e) {}
+            }
+        }
+
         $request->validate([
             'name'    => 'required|string|max:255',
             'phone'   => 'nullable|string|max:50',
             'country' => 'nullable|string|max:100',
+            'city'    => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'dob'     => 'nullable|date',
         ]);
 
-        $user->name  = $request->input('name');
-        $user->phone = $request->input('phone');
-        if ($request->filled('country')) {
-            $user->country = $request->input('country');
-        }
+        $user->name    = $request->input('name');
+        $user->phone   = $request->input('phone');
+        if ($request->has('country')) $user->country = $request->input('country');
+        if ($request->has('city'))    $user->city    = $request->input('city');
+        if ($request->has('address')) $user->address = $request->input('address');
+        if ($request->has('dob'))     $user->dob     = $request->input('dob');
 
         if ($user->save()) {
             return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');

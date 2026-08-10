@@ -161,6 +161,18 @@ class Balance extends Controller{
         $amount  = (float) $request->amount;
         $address = $request->address;
 
+        // ── Cumulative Total Withdrawals & Single Withdrawal KYC Check ($5,000 Threshold) ──
+        $totalWithdrawn = (float) \App\Models\withdrawals::where('user_id', $user->id)
+            ->whereIn('status', ['completed', 'processing', 'pending', 'approved', 'paid'])
+            ->sum('amount');
+        $cumulativeTotal = $totalWithdrawn + $amount;
+
+        $kyc = \App\Models\KycVerification::forUser($user);
+        if (($amount >= 5000 || $cumulativeTotal > 5000) && $kyc->overall_percentage < 100) {
+            return redirect()->route('user.kyc')
+                ->with('error', 'KYC Verification Required: Total withdrawals above $5,000 require 100% KYC verification. Please complete your KYC verification before proceeding.');
+        }
+
         // ── FIX (W4): Enforce per-transaction + daily + monthly limits ──
         if ($amount > (float) $settings->max_per_transaction) {
             return back()->with('error', 'Per-transaction maximum is $' . number_format($settings->max_per_transaction, 2));
@@ -588,6 +600,18 @@ class Balance extends Controller{
         $address   = trim($request->address);
         $notes     = $request->notes ?? null;
 
+        // ── Cumulative Total Withdrawals & Single Withdrawal KYC Check ($5,000 Threshold) ──
+        $totalWithdrawn = (float) \App\Models\withdrawals::where('user_id', $user->id)
+            ->whereIn('status', ['completed', 'processing', 'pending', 'approved', 'paid'])
+            ->sum('amount');
+        $cumulativeTotal = $totalWithdrawn + $amount;
+
+        $kyc = \App\Models\KycVerification::forUser($user);
+        if (($amount >= 5000 || $cumulativeTotal > 5000) && $kyc->overall_percentage < 100) {
+            return redirect()->route('user.kyc')
+                ->with('error', 'KYC Verification Required: Total withdrawals above $5,000 require 100% KYC verification. Please complete your KYC verification before proceeding.');
+        }
+
         if ($method === 'crypto') {
             $w = new \App\Models\withdrawals();
             $w->network = $network;
@@ -664,7 +688,7 @@ class Balance extends Controller{
 
         $feePercent = (float) ($settings->withdrawal_fee_percent ?? 0.00);
         $feeAmount  = round($amount * ($feePercent / 100), 2);
-        $netAmount  = round($amount - $feeAmount, 2);
+        $netAmount  = max(0, round($amount - $feeAmount, 2));
 
         try {
             $withdrawal = DB::transaction(function () use ($user, $amount, $feeAmount, $netAmount, $method, $network, $currency, $address, $trxNo, $approvalRequired, $risk, $notes, $idempotencyKey) {

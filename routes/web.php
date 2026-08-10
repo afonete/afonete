@@ -90,7 +90,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('user/pay/fc1', [PaymentController::class, 'fc1'])->name('fc1');
     Route::post('user/pay/ventures', [PaymentController::class, 'ventures'])->name('ventures');
     // ── INTERNAL EXCHANGE & WALLET TRANSFERS ──
-    Route::get('user/internal-exchange', [FinanceController::class, 'internalExchangePage'])->name('user.internal-exchange');
+    Route::get('user/internal-exchange', [UserDashboardController::class, 'payments'])->name('user.internal-exchange');
     Route::post('user/internal-exchange/transfer', [FinanceController::class, 'internalWalletTransfer'])->name('user.internal-exchange.transfer');
     Route::post('user/internal-exchange/user-transfer', [FinanceController::class, 'userToUserTransfer'])->name('user.internal-exchange.user-transfer');
     Route::post('user/internal-exchange/trading-action', [FinanceController::class, 'tradingAction'])->name('user.internal-exchange.trading-action');
@@ -244,6 +244,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     // ── MULTI-LEVEL KYC VERIFICATION (user) ──────────────────────────────
     Route::get('user/kyc', [\App\Http\Controllers\User\KycController::class, 'index'])->name('user.kyc');
+    Route::post('user/kyc/submit', [\App\Http\Controllers\User\KycController::class, 'submit'])->name('user.kyc.submit');
     Route::post('user/kyc/level1', [\App\Http\Controllers\User\KycController::class, 'submitLevel1'])->name('user.kyc.level1');
     Route::post('user/kyc/level2', [\App\Http\Controllers\User\KycController::class, 'submitLevel2'])->name('user.kyc.level2');
     Route::post('user/kyc/level3', [\App\Http\Controllers\User\KycController::class, 'submitLevel3'])->name('user.kyc.level3');
@@ -346,7 +347,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get('user/dashboard/project/video', [Project::class, 'Showvideo'])->name('user.dashboard.video');
     Route::get('user/dashboard/project/myptc', [Project::class, 'Showmyptc'])->name('user.dashboard.myptc');
     Route::get('user/dashboard/project/myvideo', [Project::class, 'Showmyvideo'])->name('user.dashboard.myvideo');
-    Route::get('/user/dashboard/payments', [UserDashboardController::class, 'payments'])->name('user.dashboard.payments');
+    Route::get('/user/dashboard/payments', [FinanceController::class, 'internalExchangePage'])->name('user.dashboard.payments');
     Route::post('/user/transfer/internal-account', [UserDashboardController::class, 'TransferToInternal'])->name('user.transfers');
     Route::get('/user/dashboard/coinac', [UserDashboardController::class, 'coinacc'])->name('user.dashboard.coinacc');
     Route::get('/user/dashboard/tradingac', [UserDashboardController::class, 'tradingac'])->name('user.dashboard.tradingac');

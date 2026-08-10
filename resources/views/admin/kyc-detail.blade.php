@@ -18,11 +18,28 @@
             </div>
         @endif
 
+        @php
+            $u = $kyc->user;
+            $idTypeMap = [
+                'passport'        => 'Passport',
+                'national_id'     => 'National ID Card',
+                'drivers_license' => 'Driver\'s License',
+            ];
+            $idTypeTitle = $idTypeMap[$kyc->id_type] ?? strtoupper($kyc->id_type ?: 'N/A');
+
+            $addressDocMap = [
+                'utility_bill'        => 'Utility Bill (Electricity, Water, Gas, Internet)',
+                'bank_statement'      => 'Bank Statement / Credit Card Statement',
+                'gov_residence_proof' => 'Government Residence Certificate / Tax Proof',
+            ];
+            $addressDocTitle = $addressDocMap[$kyc->address_doc_type] ?? strtoupper($kyc->address_doc_type ?: 'N/A');
+        @endphp
+
         {{-- Header Banner --}}
         <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md border border-slate-800 flex items-center justify-between flex-wrap gap-4">
             <div>
                 <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
-                    <i class="fas fa-user-check text-amber-400"></i> KYC Inspection: @ {{ $kyc->user->user ?? 'User #' . $kyc->user_id }}
+                    <i class="fas fa-user-check text-amber-400"></i> KYC Inspection: @ {{ $u->user ?? 'User #' . $kyc->user_id }}
                 </h1>
                 <p class="text-xs text-slate-400 mt-1">Review uploaded identity documents, selfie verification, and address proof for each level independently.</p>
             </div>
@@ -32,48 +49,48 @@
             </div>
         </div>
 
-        {{-- LEVEL 1 REVIEW CARD (25% - Phone Number) --}}
+        {{-- USER PROFILE OVERVIEW CARD --}}
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex items-center justify-between border-b pb-3 mb-4">
-                <div>
-                    <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <i class="fas fa-phone text-blue-600"></i> Level 1 – Basic Verification (25%)
-                    </h3>
-                    <small class="text-xs text-slate-500">Phone Number Verification</small>
-                </div>
-                <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase {{ $kyc->level_1_status === 'approved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : ($kyc->level_1_status === 'pending' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600') }}">
-                    {{ strtoupper($kyc->level_1_status) }}
-                </span>
-            </div>
+            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-user-circle text-indigo-600"></i> User Profile Details (Synced from User Profile)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div><strong>Full Name:</strong> <span class="font-bold text-slate-900">{{ $u->name ?? 'N/A' }}</span></div>
+                <div><strong>Username / Handle:</strong> <span class="font-bold text-indigo-600 font-mono">@ {{ $u->user ?? 'N/A' }}</span></div>
+                <div><strong>Email Address:</strong> <span class="font-bold text-slate-900">{{ $u->email ?? 'N/A' }}</span></div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mb-4">
-                <div><strong>Phone Number:</strong> <span class="font-mono font-bold text-slate-900">{{ $kyc->phone_number ?: 'Not Provided' }}</span></div>
-                <div><strong>Submitted Date:</strong> {{ $kyc->level_1_submitted_at ? $kyc->level_1_submitted_at->format('M d, Y H:i') : 'N/A' }}</div>
-            </div>
-
-            <form method="POST" action="{{ route('admin.kyc.review', [$kyc->id, 1]) }}" class="space-y-3 pt-3 border-t">
-                @csrf
+                <div><strong>Phone Number:</strong> <span class="font-bold text-slate-900">{{ $kyc->phone_number ?: ($u->phone ?: 'N/A') }}</span></div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Admin Review Notes</label>
-                    <input type="text" name="admin_notes" value="{{ old('admin_notes', $kyc->level_1_admin_notes) }}" placeholder="Optional notes for user..." class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs">
+                    <strong>Date of Birth:</strong> 
+                    <span class="font-bold text-slate-900">
+                        @if($kyc->date_of_birth)
+                            {{ $kyc->date_of_birth instanceof \DateTimeInterface ? $kyc->date_of_birth->format('M d, Y') : \Carbon\Carbon::parse($kyc->date_of_birth)->format('M d, Y') }}
+                        @elseif($u->dob)
+                            {{ $u->dob instanceof \DateTimeInterface ? $u->dob->format('M d, Y') : \Carbon\Carbon::parse($u->dob)->format('M d, Y') }}
+                        @else
+                            N/A
+                        @endif
+                    </span>
                 </div>
-                <div class="flex gap-2 justify-end">
-                    <button type="submit" name="action" value="reject" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs transition">
-                        <i class="fas fa-times-circle mr-1"></i> Reject Level 1
-                    </button>
-                    <button type="submit" name="action" value="approve" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
-                        <i class="fas fa-check-circle mr-1"></i> Approve Level 1 (25%)
-                    </button>
+                <div><strong>Member ID / Code:</strong> <span class="font-bold text-slate-900 font-mono">{{ $u->transfer_code ?? ($u->getTransferCode() ?? 'N/A') }}</span></div>
+
+                <div class="md:col-span-3 pt-2 border-t mt-1">
+                    <strong>Residential Address:</strong> 
+                    <span class="font-bold text-slate-900">
+                        {{ $kyc->full_address ?: ($u->address ?: 'N/A') }}, 
+                        {{ $kyc->city ?: ($u->city ?: 'N/A') }}, 
+                        {{ $kyc->country ?: ($u->country ?: 'N/A') }}
+                    </span>
                 </div>
-            </form>
+            </div>
         </div>
 
-        {{-- LEVEL 2 REVIEW CARD (75% - Identity: Government ID, Selfie, DOB) --}}
+        {{-- LEVEL 2 REVIEW CARD (50% - Identity: Government ID, Selfie, DOB) --}}
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <div class="flex items-center justify-between border-b pb-3 mb-4">
                 <div>
                     <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                        <i class="fas fa-id-card text-indigo-600"></i> Level 2 – Identity Verification (75%)
+                        <i class="fas fa-id-card text-indigo-600"></i> Level 2 – Identity Verification (50%)
                     </h3>
                     <small class="text-xs text-slate-500">Government ID + Selfie / Live Face Photo + Date of Birth</small>
                 </div>
@@ -83,8 +100,19 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mb-4">
-                <div><strong>ID Type:</strong> <span class="font-bold text-slate-900 uppercase">{{ $kyc->id_type ?: 'N/A' }}</span></div>
-                <div><strong>Date of Birth:</strong> <span class="font-bold text-slate-900">{{ $kyc->date_of_birth ? $kyc->date_of_birth->format('M d, Y') : 'N/A' }}</span></div>
+                <div><strong>ID Type:</strong> <span class="font-bold text-slate-900">{{ $idTypeTitle }}</span></div>
+                <div>
+                    <strong>Date of Birth:</strong> 
+                    <span class="font-bold text-slate-900">
+                        @if($kyc->date_of_birth)
+                            {{ $kyc->date_of_birth instanceof \DateTimeInterface ? $kyc->date_of_birth->format('M d, Y') : \Carbon\Carbon::parse($kyc->date_of_birth)->format('M d, Y') }}
+                        @elseif($u->dob)
+                            {{ $u->dob instanceof \DateTimeInterface ? $u->dob->format('M d, Y') : \Carbon\Carbon::parse($u->dob)->format('M d, Y') }}
+                        @else
+                            N/A
+                        @endif
+                    </span>
+                </div>
                 <div><strong>Submitted Date:</strong> {{ $kyc->level_2_submitted_at ? $kyc->level_2_submitted_at->format('M d, Y H:i') : 'N/A' }}</div>
             </div>
 
@@ -138,7 +166,7 @@
                         <i class="fas fa-times-circle mr-1"></i> Reject Level 2
                     </button>
                     <button type="submit" name="action" value="approve" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
-                        <i class="fas fa-check-circle mr-1"></i> Approve Level 2 (75%)
+                        <i class="fas fa-check-circle mr-1"></i> Approve Level 2 (50%)
                     </button>
                 </div>
             </form>
@@ -159,8 +187,15 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mb-4">
-                <div><strong>Document Type:</strong> <span class="font-bold text-slate-900 uppercase">{{ $kyc->address_doc_type ?: 'N/A' }}</span></div>
-                <div><strong>Address:</strong> <span class="font-bold text-slate-900">{{ $kyc->full_address }}, {{ $kyc->city }}, {{ $kyc->country }}</span></div>
+                <div><strong>Document Type:</strong> <span class="font-bold text-slate-900">{{ $addressDocTitle }}</span></div>
+                <div>
+                    <strong>Address:</strong> 
+                    <span class="font-bold text-slate-900">
+                        {{ $kyc->full_address ?: ($u->address ?: 'N/A') }}, 
+                        {{ $kyc->city ?: ($u->city ?: 'N/A') }}, 
+                        {{ $kyc->country ?: ($u->country ?: 'N/A') }}
+                    </span>
+                </div>
                 <div><strong>Submitted Date:</strong> {{ $kyc->level_3_submitted_at ? $kyc->level_3_submitted_at->format('M d, Y H:i') : 'N/A' }}</div>
             </div>
 
