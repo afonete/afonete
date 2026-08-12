@@ -4,28 +4,22 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
-    use Illuminate\Support\Facades\Auth;
-
-    use App\Models\User;
-    use App\Models\Contract;
-    use App\Models\Payment as Paymodel;
-
-    use App\Models\Adventures;
-    use App\Models\FCpackage;
-    use App\Models\Claim;
-
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\Contract;
+use App\Models\Payment as Paymodel;
+use App\Models\Adventures;
+use App\Models\FCpackage;
+use App\Models\Claim;
+use App\Models\Activations;
 use Illuminate\Support\Facades\Redirect;
+
 class UserpackageController extends Controller
 {
-   
-    
     private function MyDepositBalance(){
         $user=Auth::user();
         $userId = $user->id;
         $user = User::find($userId);
-
-
 
         $deposits = $user->deposits->filter(function ($deposit) {
             return $deposit->status == 'approved';
@@ -33,11 +27,10 @@ class UserpackageController extends Controller
         $deposits_used = $user->deposits->filter(function ($deposit) {
             return $deposit->status == 'used';
         });
-    $differences = $deposits->sum('amount_deposited') - $deposits_used->sum('amount_removed');
+        $differences = $deposits->sum('amount_deposited') - $deposits_used->sum('amount_removed');
 
-     $sum = $differences;   
-
-     return $sum;
+        $sum = $differences;   
+        return $sum;
     }
 
     public function buypackages(){
@@ -46,13 +39,31 @@ class UserpackageController extends Controller
         $MyDepositBalance = $this->MyDepositBalance();
         $fc = FCpackage::all();
         $highestUvpPackageAmount = $user ? $user->highestUvpPackageAmount() : 0.0;
+
+        $myCodes = collect();
+        if ($user) {
+            $myCodes = Activations::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+                if (!empty($user->email)) {
+                    $q->orWhere('email', $user->email)
+                      ->orWhere('email', trim($user->email));
+                }
+            })
+            ->where(function ($q) {
+                $q->whereNull('package')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM']);
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        }
         
         return view("user.buypackages", [
             'Adventures'              => $Adventures,
             'balance'                 => $MyDepositBalance,
             'fc'                      => $fc,
             'highestUvpPackageAmount' => $highestUvpPackageAmount,
-            'highestPackageAmount'    => $highestUvpPackageAmount
+            'highestPackageAmount'    => $highestUvpPackageAmount,
+            'myCodes'                 => $myCodes,
         ]);
     }
 
@@ -67,11 +78,9 @@ class UserpackageController extends Controller
             return back()->with('error', 'This transaction is already approved.');
         }
         $existingClaim = Claim::where('user_id', auth()->id())
-        ->where('transaction_no', $request->transactionId)->where("is_fixed",false)
-        ->first();
+            ->where('transaction_no', $request->transactionId)->where("is_fixed",false)
+            ->first();
         if ($existingClaim) {
-        //  dd($existingClaim);
-
             return back()->with('error', 'You have already submitted the request approval for this transaction.');
         }
 
@@ -82,28 +91,16 @@ class UserpackageController extends Controller
             'reason' => "Requesting to approve my deposit",
         ]);
                   
-   
         return back()->with('success', 'Your deposit approval request has been submitted. Please wait a moment.');
-    
-
     }
 
-
     public function deposits(){
-        // dd($request);
-        // $data = [
-        //     "package"=>$request->get('package'),
-        //     "category"=>$request->get('category'),
-        //     "amount"=>$request->get('amount')
-        // ];
-        // dd("asdas");
         $user = Auth::user();
         $deposits_pending = $user->deposits->where('status', 'pending')->first();
-        // dd($deposits_pending);
-
 
         return view("user.otherpayment",["have_pending_deposits"=>$deposits_pending]);
     }
+
     public function index()
     {
         $user=Auth::user();
@@ -111,100 +108,123 @@ class UserpackageController extends Controller
         $user = User::find($userId);
 
         $package = Paymodel::where("user",$userId)
-        ->where("is_expired",false)
-        ->first();
+            ->where("is_expired",false)
+            ->first();
         $deposits = $user->deposits->filter(function ($deposit) {
-        return $deposit->status == 'approved';
+            return $deposit->status == 'approved';
         });
         $sum = $deposits->sum('amount_deposited');
 
         $Adventures = Adventures::all();
 
         if($user->has_free_package == "yes"){
-
             return redirect()->route("user.buypackage");
         }
 
-        return view('user.venture-package',["deposits"=>$sum,"Adventures"=>$Adventures]);
+        $myCodes = collect();
+        if ($user) {
+            $myCodes = Activations::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+                if (!empty($user->email)) {
+                    $q->orWhere('email', $user->email)
+                      ->orWhere('email', trim($user->email));
+                }
+            })
+            ->where(function ($q) {
+                $q->whereNull('package')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM']);
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        }
+
+        return view('user.venture-package', [
+            "deposits"   => $sum,
+            "Adventures" => $Adventures,
+            "myCodes"    => $myCodes,
+        ]);
     }
+
     public function UserPackage()
     {
+        $user = Auth::user();
         $package = FCpackage::all();
 
+        $myCodes = collect();
+        if ($user) {
+            $myCodes = Activations::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+                if (!empty($user->email)) {
+                    $q->orWhere('email', $user->email)
+                      ->orWhere('email', trim($user->email));
+                }
+            })
+            ->where(function ($q) {
+                $q->whereNull('package')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM']);
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        }
 
-        return view('user.user-package',["packages"=>$package]);
+        return view('user.user-package', [
+            "packages" => $package,
+            "myCodes"  => $myCodes,
+        ]);
     }
 
-public function contract()
+    public function contract()
     {
-return view('user.contract');
-
+        return view('user.contract');
     }
 
-public function Savecontract(Request $request)
+    public function Savecontract(Request $request)
     {
+        $user = Auth::user();
+        $userId = $user->id;
 
-    $user = Auth::user();
-    $userId = $user->id;
+        $name = $user->user ?? $user->name;
+        $contract=new Contract();
 
+        $sig_string=$request->signature;
+        $file=$name.".png";
+        $path=public_path('signature');
+        $nama_file=$path . '/' . $file;
+        if (file_exists($nama_file)) {
+            unlink($nama_file);
+        }
+        file_put_contents($nama_file, file_get_contents($sig_string));
 
-    $name = $user->user ?? $user->name;
-    $contract=new Contract();
+        if (file_exists($nama_file)) {
+            $user->contract='Signed';
 
-   $sig_string=$request->signature;
-   $file=$name.".png";
-   $path=public_path('signature');
-   $nama_file=$path . '/' . $file;
-   if (file_exists($nama_file)) {
-     unlink($nama_file);
-   }
-    file_put_contents($nama_file, file_get_contents($sig_string));
+            $pack=$user->has_paid_package;
+            $contract->name=$name;
+            $contract->contract=$file;
+            $contract->user_id = $userId;
 
-   if(file_exists($nama_file)){
-    // return ('well');
-    // $path_to_file='signature /'.$file;
+            if ($user->save() && $contract->save()) {
+                return Redirect::route('user.dashboard')->with('message','Activation successful! Your Bifonex account is ready. Enjoy unlimited earning opportunities.');
+            }
 
+            return view('user.preview')->with('message',$file);
+        }
 
-                    $user->contract='Signed';
-
-
-                    $pack=$user->has_paid_package;
-                    $contract->name=$name;
-                   $contract->contract=$file;
-                   $contract->user_id = $userId;
-
-
-                    if ($user->save() && $contract->save()) {
-                     return Redirect::route('user.dashboard')->with('message','Activation successful! Your Bifonex account is ready. Enjoy unlimited earning opportunities.');
-                    }
-
-
-    return view('user.preview')->with('message',$file);
-     // echo "<p>File Signature saved well - ".$nama_file."</p>";
-     // echo "<p style='border:solid 1px teal;width:355px;height:110px;'><img src='".asset($nama_file)."'></p>";
-   }
-
-    return view('user.contract')->with('message',$nama_file);
-
+        return view('user.contract')->with('message',$nama_file);
     }
-
 
     public function Confirmcontract()
     {
-                    $user = Auth::user();
+        $user = Auth::user();
+        $name = $user->user;
 
-                    $name = $user->user;
+        $user->contract='Signed';
+        $pack=$user->has_paid_package;
 
-                    // $user = User::find($name);
-
-                    $user->contract='Signed';
-                    $pack=$user->has_paid_package;
-                    // return ($user);
-if ($user->save()) {
-  return Redirect::route('user.dashboard')->with('message','Activation successful! Your '.$pack.' account is ready. Enjoy unlimited earning opportunities.');
-}
-return view('user.previeu');
-
+        if ($user->save()) {
+            return Redirect::route('user.dashboard')->with('message','Activation successful! Your '.$pack.' account is ready. Enjoy unlimited earning opportunities.');
+        }
+        return view('user.previeu');
     }
 
     public function verifyEmailPin(Request $request)
@@ -215,9 +235,8 @@ return view('user.previeu');
 
         $user = Auth::user();
         if ($user->email_verification_pin === $request->pin) {
-            // Activate / verify email
             $user->email_verified_at = now();
-            $user->email_verification_pin = null; // Clear PIN after use
+            $user->email_verification_pin = null;
             $user->save();
 
             return redirect()->route('user.dashboard')->with('message', 'Email verified successfully! Welcome to your dashboard.');
@@ -230,7 +249,6 @@ return view('user.previeu');
     {
         $user = Auth::user();
         
-        // Generate new 6-digit PIN
         $pin = (string) rand(100000, 999999);
         $user->email_verification_pin = $pin;
         $user->save();
@@ -243,8 +261,4 @@ return view('user.previeu');
             return back()->with('error', 'Could not send the email. Please try again later.');
         }
     }
-
 }
-
-
-

@@ -23,6 +23,11 @@ class TokenSetting extends Model
         'updated_by',
         'initial_supply',
         'initial_liquidity',
+        'staking_yield_1_year',
+        'staking_yield_2_year',
+        'staking_yield_3_year',
+        'staking_yield_4_year',
+        'staking_yield_5_year',
     ];
 
     /**

@@ -1699,6 +1699,9 @@ public function getTeamTree(Request $request,$id){
     public function availableTokenPage()
     {
         $user         = Auth::user();
+        if ($user) {
+            \App\Models\FomTokenInstallment::processDueInstallments($user);
+        }
         $availableBal = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
         $freeBal      = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
         $symbol       = \App\Models\TokenSetting::currentSymbol();
@@ -1758,6 +1761,84 @@ public function getTeamTree(Request $request,$id){
             \App\Models\TokenSetting::currentSymbol() . ' moved to your Free Token wallet.');
     }
 
+    public function stakeAvailableToEscrow(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Please log in to stake tokens.');
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'years'  => 'required|integer|between:1,5',
+        ]);
+
+        $amount = (float) $request->amount;
+        $years  = (int) $request->years;
+
+        // Check user's Available Token balance
+        $availableBal = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+        if ($availableBal < $amount) {
+            return back()->with('error', "Insufficient Available Token balance (" . number_format($availableBal) . " tokens). You requested to stake " . number_format($amount) . " tokens.");
+        }
+
+        // Get admin configured yield percentage for selected year
+        $yieldPercent = \App\Models\FomTokenStaking::getYieldPercent($years);
+        $profitAmount = $amount * ($yieldPercent / 100.0);
+        $totalStaked  = $amount + $profitAmount;
+
+        // 1. Deduct principal amount from AVAILABLE_TOKEN
+        ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+            ['amount' => $availableBal - $amount]
+        );
+
+        // 2. Add Total Staked (Principal + Profit) to Escrow Wallet (LOCKED_TOKEN)
+        $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+        ChartAccount::updateOrCreate(
+            ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
+            ['amount' => $lockedBal + $totalStaked]
+        );
+
+        // 3. Create FomTokenStaking record
+        \App\Models\FomTokenStaking::ensureTable();
+        $releaseDate = \Carbon\Carbon::now()->addYears($years);
+
+        \App\Models\FomTokenStaking::create([
+            'user_id'          => $user->id,
+            'principal_amount' => $amount,
+            'yield_percent'    => $yieldPercent,
+            'profit_amount'    => $profitAmount,
+            'total_staked'     => $totalStaked,
+            'lock_years'       => $years,
+            'release_date'     => $releaseDate,
+            'status'           => 'pending',
+        ]);
+
+        // 4. Log transaction
+        $symbol = \App\Models\TokenSetting::currentSymbol();
+        $txnNo  = method_exists(\App\Models\Transaction::class, 'generateTransactionNo')
+            ? \App\Models\Transaction::generateTransactionNo()
+            : 'FOM-STAKE-' . time() . '-' . rand(100, 999);
+
+        \App\Models\Transaction::create([
+            'user_id'             => $user->id,
+            'transaction_no'      => $txnNo,
+            'transaction_type'    => 'FOM_AVAILABLE_TO_ESCROW_STAKING',
+            'transaction_details' => json_encode([
+                'principal'     => $amount,
+                'yield_percent' => $yieldPercent,
+                'profit'        => $profitAmount,
+                'total_staked'  => $totalStaked,
+                'lock_years'    => $years,
+                'release_date'  => $releaseDate->toDateTimeString(),
+                'status'        => 'pending',
+            ]),
+        ]);
+
+        return back()->with('success', "Transferred " . number_format($amount) . " Available Tokens into " . $years . "-Year Escrow Staking! " . number_format($profitAmount) . " {$symbol} (" . $yieldPercent . "% profit) added. Total " . number_format($totalStaked) . " {$symbol} in Escrow, releasing on " . $releaseDate->format('Y-m-d') . ".");
+    }
+
 
     // ═══════════════════════════════════════════════════════════════════════
     //  LOCKED TOKEN INFO PAGE (read-only — no withdrawal from here)
@@ -1766,6 +1847,9 @@ public function getTeamTree(Request $request,$id){
     public function lockedTokenPage()
     {
         $user      = Auth::user();
+        if ($user) {
+            \App\Models\FomTokenInstallment::processDueInstallments($user);
+        }
         $lockedBal = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
         $symbol    = \App\Models\TokenSetting::currentSymbol();
         $uvpPrice  = \App\Models\TokenSetting::uvpPrice();

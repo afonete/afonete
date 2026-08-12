@@ -1,0 +1,190 @@
+@extends('admin.sidebar')
+
+@section('contents')
+<div class="container mx-auto py-6 px-6 bg-slate-50 min-h-screen">
+
+    {{-- Page Header --}}
+    <div class="bg-white border border-slate-200 rounded-xl px-5 py-4 mb-6 shadow-sm flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-100 text-amber-600 p-3 rounded-lg text-xl">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Create FOM Licence Miner Package</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Add a new package option to the <code class="bg-slate-100 text-amber-700 px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[11px]">/investment-package</code> plan grid.</p>
+            </div>
+        </div>
+        <div>
+            <a href="{{ route('admin.fom-licence-miner.index') }}" class="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+                <i class="fas fa-arrow-left"></i> <span>Back to Packages</span>
+            </a>
+        </div>
+    </div>
+
+    {{-- Form Card --}}
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-4xl mx-auto">
+        
+        @if ($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                <ul class="list-disc pl-5 space-y-1 font-semibold">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('admin.fom-licence-miner.store') }}" method="POST">
+            @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                
+                {{-- Package Name --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Package Name <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" value="{{ old('name') }}" required
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. BASIC, STARTER, PRO, SUPER">
+                </div>
+
+                {{-- Price (USDT) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Price (USDT) <span class="text-red-500">*</span></label>
+                    <input type="number" step="0.01" name="price" value="{{ old('price') }}" required
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 25000">
+                </div>
+
+                {{-- Display Price Label --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Display Price Label (Optional text)</label>
+                    <input type="text" name="display_price" value="{{ old('display_price') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 25K - 200K USDT">
+                </div>
+
+                {{-- Tokens Allocated (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Tokens Allocated (Numeric) <span class="text-red-500">*</span></label>
+                    <input type="number" name="tokens" value="{{ old('tokens') }}" required
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 20833333">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: TOKEN | 20,833,333 {{ $tokenSymbol }}</span>
+                </div>
+
+                {{-- Duration in Days --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Duration (Days) <span class="text-red-500">*</span></label>
+                    <input type="number" name="duration_days" value="{{ old('duration_days', 600) }}" required
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="600">
+                </div>
+
+                {{-- Token Bonus % (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Token Bonus (%)</label>
+                    <input type="number" step="0.01" name="token_bonus" value="{{ old('token_bonus') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 100 for 100%">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: Token Bonus: X100%</span>
+                </div>
+
+                {{-- Direct Sponsors % (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Direct Sponsors Bonus (%)</label>
+                    <input type="number" step="0.01" name="direct_sponsors" value="{{ old('direct_sponsors') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 20 for 20%">
+                </div>
+
+                {{-- Affiliate V.bonus % (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Affiliate V.Bonus (%)</label>
+                    <input type="number" step="0.01" name="affiliate_vbonus" value="{{ old('affiliate_vbonus', 10) }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="10">
+                </div>
+
+                {{-- Space Shop Room Limit (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Space Shop Room Limit (Text)</label>
+                    <input type="text" name="space_shop_limit" value="{{ old('space_shop_limit', 'Space Shop Room Limit') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="Space Shop Room Limit">
+                </div>
+
+                {{-- Volume Point / BV (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Volume Bonus / Point (Numeric)</label>
+                    <input type="number" name="volume_point" value="{{ old('volume_point') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 6000 or 4">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Bonus: 6000 or Volume Point: 4 Point</span>
+                </div>
+
+                {{-- Unlocked Per Week (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Unlocked Per Week (Text)</label>
+                    <input type="text" name="unlocked_per_week" value="{{ old('unlocked_per_week', 'YES') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="YES">
+                </div>
+
+                {{-- Allowed Loan (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Loan Access (Text)</label>
+                    <input type="text" name="allowed_loan" value="{{ old('allowed_loan', 'Allowed Loan') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="Allowed Loan or Not Allowed Loan">
+                </div>
+
+                {{-- Investment Option (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Investment Option Feature (Text)</label>
+                    <input type="text" name="investment_option" value="{{ old('investment_option', 'Access Investment feature') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="Access Investment feature">
+                </div>
+
+                {{-- Total Return Tokens (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Total Return Tokens (Numeric)</label>
+                    <input type="number" name="total_return" value="{{ old('total_return') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 41666666">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: TOTAL RETURN: 41,666,666 {{ $tokenSymbol }}</span>
+                </div>
+
+                {{-- Sort Order --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Display Sort Order</label>
+                    <input type="number" name="sort_order" value="{{ old('sort_order', 0) }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="0">
+                </div>
+
+                {{-- Active Checkbox --}}
+                <div class="flex items-center pt-6">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', 1) ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 relative"></div>
+                        <span class="ml-3 text-sm font-bold text-slate-700">Active Package (Visible on /investment-package)</span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
+                <a href="{{ route('admin.fom-licence-miner.index') }}" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 px-5 rounded-lg transition-all text-sm">
+                    Cancel
+                </a>
+                <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm transition-all text-sm flex items-center gap-2">
+                    <i class="fas fa-save"></i> Save Package
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+@endsection

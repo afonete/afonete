@@ -24,6 +24,14 @@ public function index(){
     $user = User::find($userId);
     $package = Paymodel::where("user",$userId)->get();
 
+    $myCodes = Activations::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('email', $user->email);
+        })
+        ->whereNotIn('package', ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])
+        ->orderBy('id', 'desc')
+        ->paginate(10);
+
     // Check if the user exists in the TeamLeader table
     $teamLeader = TeamLeader::where('User_name', $user->user)
         ->orWhere('Email', $user->email)
@@ -65,7 +73,7 @@ public function index(){
         // confirmed && (deactivated or expired) → fall through to show activation form
     }
 
-    return view('user.activation-controller',['user'=>$user,"packages"=>$package]);
+    return view('user.activation-controller',['user'=>$user,"packages"=>$package, 'myCodes'=>$myCodes]);
 }
 
 public function upgrade(Request $request){
@@ -162,6 +170,79 @@ public function upgrade(Request $request){
                     return redirect()->route('user.dashboard.activate')
                         ->with('message', "UVP Activation Error: This UVP activation code ($" . number_format($codePrice, 2) . ") is below your highest previously purchased UVP package amount ($" . number_format($highestUvp, 2) . "). You can only activate UVP packages of $" . number_format($highestUvp, 2) . " or higher.");
                 }
+            }
+
+            // FOM Licence Miner Package Check
+            $isFomPackage = \App\Models\FomLicenceMiner::where('name', $results->package)->exists()
+                || str_starts_with($results->code, 'FOM-');
+
+            if ($isFomPackage) {
+                // Check if user has ALREADY activated an active package with this EXACT package name
+                $alreadyActivatedSamePackage = \App\Models\Payment::where('user', $user->id)
+                    ->where('package', $results->package)
+                    ->where('is_expired', false)
+                    ->exists() || (strtoupper((string)$user->has_paid_package) === strtoupper((string)$results->package));
+
+                if ($alreadyActivatedSamePackage) {
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', "You have already activated a {$results->package} package on your account. You cannot activate a second {$results->package} package. You can copy this activation code ({$results->code}) and give it to another user to activate on their account!");
+                }
+
+                $totalReturn = (float) $results->token;
+                if ($totalReturn <= 0) {
+                    $fomPkg = \App\Models\FomLicenceMiner::where('name', $results->package)->first();
+                    if ($fomPkg) {
+                        $totalReturn = \App\Models\FomLicenceMiner::cleanNum($fomPkg->total_return);
+                    }
+                }
+
+                // Mark activation code as used
+                $results->stutus = "used";
+                $results->email = $user->email;
+                $results->save();
+
+                // Update user package status
+                $user->has_paid_package = $results->package;
+                $user->has_free_package = 'no';
+                $user->save();
+
+                // Record Payment
+                \App\Models\Payment::create([
+                    'user'            => $user->id,
+                    'package'         => $results->package,
+                    'amount'          => $results->price,
+                    'amount_paid'     => $results->price,
+                    'paid'            => $results->price,
+                    'over_paid'       => 0,
+                    'status'          => 1,
+                    'is_expired'      => false,
+                    'duration'        => 600,
+                    'category'        => $results->package ?: 'FOM',
+                    'category_id'     => 1,
+                    'deposit_method'  => 'ACTIVATION_CODE',
+                    'payable_type'    => \App\Models\Activations::class,
+                    'payable_id'      => $results->id,
+                    'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
+                ]);
+
+                // Credit Escrow Wallet (LOCKED_TOKEN)
+                $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+                \App\Models\ChartAccount::updateOrCreate(
+                    ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
+                    ['amount' => $lockedBal + $totalReturn]
+                );
+
+                // Create 12 Monthly Installments Schedule
+                \App\Models\FomTokenInstallment::createSchedule($user->id, $results->id, $results->package, $totalReturn);
+
+                // Process any due installments
+                \App\Models\FomTokenInstallment::processDueInstallments($user);
+
+                $tokenSetting = \App\Models\TokenSetting::first();
+                $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
+
+                return redirect()->route('user.dashboard.activate')
+                    ->with('message', "Package '{$results->package}' activated successfully! " . number_format($totalReturn) . " {$tokenSymbol} credited to your Escrow Wallet (Locked Tokens). Released in 12 monthly installments into your Available Token balance.");
             }
 
            else{
@@ -551,8 +632,15 @@ public function package()
     $user = User::find($userId);
     $package = Paymodel::where("user",$userId)->get();
 
-    return view('user.package-history',['user'=>$user,"packages"=>$package]);
-    // return view('user.package-history');
+    $myCodes = Activations::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('email', $user->email);
+        })
+        ->whereNotIn('package', ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])
+        ->orderBy('id', 'desc')
+        ->paginate(10);
+
+    return view('user.package-history',['user'=>$user,"packages"=>$package, 'myCodes'=>$myCodes]);
 }
 public function saveCode(Request $request)
 {

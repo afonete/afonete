@@ -120,6 +120,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post("user/claim",[UserPackageController::class, 'claim'])->name("user.claim");
 
     Route::get('investment-package/', [HomeController::class, 'investmentPackage'])->name('investment-package');
+    Route::post('investment-package/buy', [HomeController::class, 'buyFomPackage'])->name('user.investment-package.buy')->middleware('auth');
+    Route::post('investment-package/activate-code', [HomeController::class, 'activateFomCode'])->name('user.investment-package.activate-code')->middleware('auth');
     Route::get('staker-package/', [HomeController::class, 'stakerPackage'])->name('staker-package');
 
     Route::post('dashboard', [ActivationController::class, 'g_upgrade'])->name('validate');
@@ -226,6 +228,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get('user/token/locked', [\App\Http\Controllers\User\FinanceController::class, 'lockedTokenPage'])->name('user.token.locked');
     Route::get('user/token/available', [\App\Http\Controllers\User\FinanceController::class, 'availableTokenPage'])->name('user.token.available');
     Route::post('user/token/available-to-free', [\App\Http\Controllers\User\FinanceController::class, 'availableToFree'])->name('user.token.available-to-free');
+    Route::post('user/token/available-to-escrow-staking', [\App\Http\Controllers\User\FinanceController::class, 'stakeAvailableToEscrow'])->name('user.token.available-to-escrow-staking');
 
     // ── REFERRAL (user) ─────────────────────────────────────────────────
     Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
@@ -508,6 +511,15 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/bifonex-contracts', [\App\Http\Controllers\ContractDocumentController::class, 'adminIndex'])->name('admin.contracts.index');
     Route::get('admin/bifonex-contracts/{contract}', [\App\Http\Controllers\ContractDocumentController::class, 'adminShow'])->name('admin.contracts.show');
     Route::get('admin/bifonex-contracts/{contract}/download', [\App\Http\Controllers\ContractDocumentController::class, 'adminDownload'])->name('admin.contracts.download');
+
+    // ── FOM LICENCE MINER PACKAGES (admin) ──────────────────────────────────
+    Route::get('admin/fom-licence-miner', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'index'])->name('admin.fom-licence-miner.index');
+    Route::get('admin/fom-licence-miner/create', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'create'])->name('admin.fom-licence-miner.create');
+    Route::post('admin/fom-licence-miner/store', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'store'])->name('admin.fom-licence-miner.store');
+    Route::get('admin/fom-licence-miner/{id}/edit', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'edit'])->name('admin.fom-licence-miner.edit');
+    Route::put('admin/fom-licence-miner/{id}', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'update'])->name('admin.fom-licence-miner.update');
+    Route::post('admin/fom-licence-miner/{id}/toggle', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'toggle'])->name('admin.fom-licence-miner.toggle');
+    Route::delete('admin/fom-licence-miner/{id}', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'destroy'])->name('admin.fom-licence-miner.destroy');
 
     // ── KYC VERIFICATIONS MANAGEMENT (admin) ──────────────────────────────
     Route::get('admin/kyc-verifications', [\App\Http\Controllers\Admin\KycAdminController::class, 'index'])->name('admin.kyc.index');

@@ -58,6 +58,9 @@ class UserDashboardController extends Controller{
     public function index()
     {
         $user = Auth::user();
+        if ($user) {
+            \App\Models\FomTokenInstallment::processDueInstallments($user);
+        }
         $userId = $user->id;
         // does user have claims
         $userHasClaims = $user->have_claims->where("is_fixed",false)->first();

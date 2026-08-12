@@ -1,4 +1,4 @@
-@php
+<?php
     use Illuminate\Support\Facades\Auth;
     use App\Models\User;
 
@@ -20,10 +20,10 @@
             $smartBackUrl = route('user.dashboard');
         }
     }
-@endphp
+?>
 
 <div class="wrapper">
-    @include('user.user-dashboard-base')
+    <?php echo $__env->make('user.user-dashboard-base', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
@@ -54,7 +54,7 @@
     <div class="content-wrapper" style="background-color: #f8fafc; min-height: 100vh;">
         <div class="container-fluid pkg-container max-w-7xl mx-auto">
 
-            {{-- Top Navigation Header --}}
+            
             <div class="dash-header-bg p-4 mb-4 shadow-sm d-flex align-items-center justify-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <a href="javascript:history.back()" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
@@ -69,27 +69,30 @@
                 </div>
             </div>
 
-            {{-- Session Flash Messages --}}
-            @if(session('message'))
+            
+            <?php if(session('message')): ?>
                 <div class="alert alert-info text-center font-weight-bold p-3 mb-4" style="border-radius: 10px;">
-                    <i class="fas fa-info-circle mr-2"></i>{{ session('message') }}
-                </div>
-            @endif
+                    <i class="fas fa-info-circle mr-2"></i><?php echo e(session('message')); ?>
 
-            @if(session('success'))
+                </div>
+            <?php endif; ?>
+
+            <?php if(session('success')): ?>
                 <div class="alert alert-success text-center font-weight-bold p-3 mb-4" style="border-radius: 10px;">
-                    <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-                </div>
-            @endif
+                    <i class="fas fa-check-circle mr-2"></i><?php echo e(session('success')); ?>
 
-            @if(session('error'))
+                </div>
+            <?php endif; ?>
+
+            <?php if(session('error')): ?>
                 <div class="alert alert-danger text-center font-weight-bold p-3 mb-4" style="border-radius: 10px;">
-                    <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-                </div>
-            @endif
+                    <i class="fas fa-exclamation-circle mr-2"></i><?php echo e(session('error')); ?>
 
-            {{-- Activation Code Form & Free Tier Row --}}
-            @php
+                </div>
+            <?php endif; ?>
+
+            
+            <?php
                 $isLeader = in_array(strtoupper((string) $user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER']);
                 $matchingLeader = \App\Models\TeamLeader::where('User_name', $user->user)->orWhere('Email', $user->email)->first();
                 $leaderCredit = $matchingLeader ? $matchingLeader->superLeaderCredit : null;
@@ -110,11 +113,11 @@
                 }
 
                 $isActiveLeader = $isLeader && $matchingLeader && $matchingLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
-            @endphp
+            ?>
 
-            @if(!$isActiveLeader)
+            <?php if(!$isActiveLeader): ?>
             <div class="row mb-4">
-                {{-- Activation Code Input Form (Accepts BOTH Package Codes & Team Leader Codes) --}}
+                
                 <div class="col-12 col-md-6 mb-3">
                     <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-between border">
                         <div>
@@ -125,10 +128,10 @@
                             <p class="text-muted small mb-3">Redeem your package or Team Leader activation code to activate or upgrade immediately.</p>
                         </div>
                         <div>
-                            <form action="{{ route('user.dashboard.validate') }}" method="POST">
-                                @csrf
+                            <form action="<?php echo e(route('user.dashboard.validate')); ?>" method="POST">
+                                <?php echo csrf_field(); ?>
                                 <div class="form-group mb-2">
-                                    <input type="text" name="code" placeholder="Enter 17-Char Code (e.g. FOM-A8B9C3D2E4F5G or Leader Code)" required class="form-control text-center font-mono font-weight-bold" style="border-radius: 8px; font-size: 13px;">
+                                    <input type="text" name="code" placeholder="Enter Code (e.g. FOM-XXXX-XXXX or Team Leader Code)" required class="form-control text-center font-mono font-weight-bold" style="border-radius: 8px; font-size: 13px;">
                                 </div>
                                 <button type="submit" class="btn btn-dark btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #1e293b, #0f172a); border: none;">
                                     <i class="fas fa-bolt text-warning mr-1"></i> Submit Activation Code
@@ -138,13 +141,13 @@
                     </div>
                 </div>
 
-                {{-- Free Tier --}}
-                @php
+                
+                <?php
                     $isAlreadyFree = ($user->has_free_package === 'yes') || (strtolower(trim((string)$user->has_paid_package)) === 'standard');
                     $userHasActiveUvp = ($highestUvpPackageAmount > 0) || (isset($hasPaidPackage) && $hasPaidPackage);
                     $canSeeFreeTier = !$isAlreadyFree && !$userHasActiveUvp;
-                @endphp
-                @if($canSeeFreeTier)
+                ?>
+                <?php if($canSeeFreeTier): ?>
                 <div class="col-12 col-md-6 mb-3">
                     <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-between border">
                         <div>
@@ -155,9 +158,9 @@
                             <p class="text-muted small mb-3">Activate free dashboard access for regular exploration.</p>
                         </div>
                         <div>
-                            <form action="{{ route('free') }}" method="POST">
-                                @csrf
-                                @method('PUT')
+                            <form action="<?php echo e(route('free')); ?>" method="POST">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
                                 <button type="submit" class="btn btn-outline-primary btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 12px;">
                                     <i class="fas fa-user-check mr-1"></i> Activate Free Account
                                 </button>
@@ -165,11 +168,11 @@
                         </div>
                     </div>
                 </div>
-                @endif
+                <?php endif; ?>
             </div>
-            @endif
+            <?php endif; ?>
 
-            {{-- FC VIP Packages Grid --}}
+            
             <div class="card dash-card p-4 mb-4">
                 <div class="border-bottom pb-3 mb-4">
                     <h5 class="font-weight-bold text-dark mb-0">
@@ -178,7 +181,7 @@
                 </div>
 
                 <div class="row">
-                    @forelse($packages as $package)
+                    <?php $__empty_1 = true; $__currentLoopData = $packages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $package): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <div class="col-12 col-sm-6 col-md-4 mb-4">
                             <div class="dash-card h-100 p-4 d-flex flex-column justify-between text-center border">
                                 <div>
@@ -187,7 +190,8 @@
                                     </div>
 
                                     <h2 class="font-weight-bold text-primary mb-2" style="font-size: 1.8rem;">
-                                        ${{ number_format($package->price, 2) }}
+                                        $<?php echo e(number_format($package->price, 2)); ?>
+
                                     </h2>
 
                                     <p class="text-muted small mb-4">
@@ -196,27 +200,28 @@
                                 </div>
 
                                 <div>
-                                    <form action="{{ route('payment.directPackage') }}" method="POST">
-                                        @csrf
+                                    <form action="<?php echo e(route('payment.directPackage')); ?>" method="POST">
+                                        <?php echo csrf_field(); ?>
                                         <input type="hidden" name="package_type" value="FC">
-                                        <input type="hidden" name="package_id" value="{{ $package->id }}">
+                                        <input type="hidden" name="package_id" value="<?php echo e($package->id); ?>">
                                         <input type="hidden" name="network" value="TRC-20">
                                         <button type="submit" class="btn btn-primary btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 13px;">
-                                            <i class="fas fa-shopping-cart mr-1"></i> BUY NOW (${{ number_format($package->price, 0) }})
+                                            <i class="fas fa-shopping-cart mr-1"></i> BUY NOW ($<?php echo e(number_format($package->price, 0)); ?>)
                                         </button>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="col-12 text-center py-4 text-muted">
                             <i class="fas fa-box-open fa-2x mb-2 text-slate-300"></i>
                             <p class="font-weight-bold mb-0">No FC packages found.</p>
                         </div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
             </div>
 
         </div>
     </div>
 </div>
+<?php /**PATH C:\xampp\htdocs\bifonepo\mcu.focoin.eu\afonete\resources\views/user/user-package.blade.php ENDPATH**/ ?>

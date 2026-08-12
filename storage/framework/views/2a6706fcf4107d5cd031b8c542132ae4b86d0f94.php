@@ -390,8 +390,8 @@ if (showAlertBtn) {
                     </li>
 
                     
-                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'menu-open' : ''); ?>">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages <?php echo e(request()->routeIs('user.buypackage','investment-package','staker-package','user.investments*','packageRenew') ? 'active' : ''); ?>">
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('user.buypackage','staker-package','user.investments*','packageRenew') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages <?php echo e(request()->routeIs('user.buypackage','staker-package','user.investments*','packageRenew') ? 'active' : ''); ?>">
                             <i class="nav-icon fas fa-box-open"></i>
                             <p>Packages <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -400,17 +400,6 @@ if (showAlertBtn) {
                                 <a href="<?php echo e(route('user.buypackage')); ?>" class="nav-link <?php echo e(request()->routeIs('user.buypackage') ? 'active' : ''); ?>">
                                     <i class="fas fa-shopping-cart nav-icon"></i><p>Buy UVP AI License</p>
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
-                                    <a href="<?php echo e(route('user.dashboard.freeaccount-restricted')); ?>" class="nav-link">
-                                        <i class="fas fa-chart-line nav-icon"></i><p>Investment Package</p>
-                                    </a>
-                                <?php else: ?>
-                                    <a href="<?php echo e(route('investment-package')); ?>" class="nav-link <?php echo e(request()->routeIs('investment-package') ? 'active' : ''); ?>">
-                                        <i class="far fa-circle nav-icon"></i><p>Investment Package</p>
-                                    </a>
-                                <?php endif; ?>
                             </li>
                             <li class="nav-item">
                                 <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
@@ -431,6 +420,37 @@ if (showAlertBtn) {
                             <li class="nav-item">
                                 <a href="<?php echo e(route('packageRenew')); ?>" class="nav-link <?php echo e(request()->routeIs('packageRenew') ? 'active' : ''); ?>">
                                     <i class="fas fa-redo-alt nav-icon"></i><p>Package Renewal</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    
+                    <li class="nav-item has-treeview <?php echo e(request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history') ? 'menu-open' : ''); ?>">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages <?php echo e(request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history') ? 'active' : ''); ?>">
+                            <i class="nav-icon fas fa-microchip"></i>
+                            <p>Licence Miner Package <i class="fas fa-angle-left right"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <?php if($user->has_paid_package == 'free' || $user->has_free_package == 'yes'): ?>
+                                    <a href="<?php echo e(route('user.dashboard.freeaccount-restricted')); ?>" class="nav-link">
+                                        <i class="fas fa-microchip nav-icon"></i><p>FOM Licence Miner</p>
+                                    </a>
+                                <?php else: ?>
+                                    <a href="<?php echo e(route('investment-package')); ?>" class="nav-link <?php echo e(request()->routeIs('investment-package') ? 'active' : ''); ?>">
+                                        <i class="fas fa-microchip nav-icon"></i><p>FOM Licence Miner</p>
+                                    </a>
+                                <?php endif; ?>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?php echo e(route('user.dashboard.activate')); ?>" class="nav-link <?php echo e(request()->routeIs('user.dashboard.activate') ? 'active' : ''); ?>">
+                                    <i class="fas fa-key nav-icon"></i><p>Use activation code</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?php echo e(route('user.package.history')); ?>" class="nav-link <?php echo e(request()->routeIs('user.package.history') ? 'active' : ''); ?>">
+                                    <i class="fas fa-list-alt nav-icon"></i><p>My Package Codes</p>
                                 </a>
                             </li>
                         </ul>
@@ -465,7 +485,7 @@ if (showAlertBtn) {
                             </li>
                             <li class="nav-item">
                                 <a href="<?php echo e(route('user.internal-exchange')); ?>" class="nav-link <?php echo e(request()->routeIs('user.internal-exchange') ? 'active' : ''); ?>">
-                                    <i class="fas fa-right-left nav-icon text-amber-400"></i><p>Internal Exchange</p>
+                                    <i class="fas fa-right-left nav-icon"></i><p>Internal Exchange</p>
                                 </a>
                             </li>
                         </ul>

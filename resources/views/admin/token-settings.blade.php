@@ -269,6 +269,53 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                {{-- ── Escrow Staking Yields (1 to 5 Years) ── --}}
+                                <div class="sm:col-span-2 bg-amber-50/50 p-4 rounded-xl border border-amber-200 dark:bg-amber-900/10 dark:border-amber-800/50 mt-4">
+                                    <h5 class="text-base font-bold text-amber-950 dark:text-amber-300 mb-1 flex items-center gap-2">
+                                        <i class="fas fa-lock text-amber-600"></i> Available Token &rarr; Escrow Staking Profit Rates (Years 1–5)
+                                    </h5>
+                                    <p class="text-xs text-amber-800 dark:text-amber-400 mb-3">
+                                        Configure the % bonus profit users earn when transferring Available Tokens into Escrow Staking for 1 to 5 years lockup.
+                                    </p>
+                                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                                        <div>
+                                            <label class="block mb-1 text-xs font-bold text-gray-700 dark:text-gray-300">1 Year Profit %</label>
+                                            <div class="flex rounded-lg shadow-sm">
+                                                <input type="number" step="0.01" min="0" name="staking_yield_1_year" value="{{ old('staking_yield_1_year', $setting->staking_yield_1_year ?? 10.00) }}" class="rounded-l-lg bg-white border border-r-0 border-gray-300 text-gray-900 focus:ring-amber-500 focus:border-amber-500 block w-full text-xs p-2.5 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                <span class="inline-flex items-center px-2.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-300 rounded-r-lg dark:bg-gray-800 dark:text-gray-300">%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-xs font-bold text-gray-700 dark:text-gray-300">2 Years Profit %</label>
+                                            <div class="flex rounded-lg shadow-sm">
+                                                <input type="number" step="0.01" min="0" name="staking_yield_2_year" value="{{ old('staking_yield_2_year', $setting->staking_yield_2_year ?? 25.00) }}" class="rounded-l-lg bg-white border border-r-0 border-gray-300 text-gray-900 focus:ring-amber-500 focus:border-amber-500 block w-full text-xs p-2.5 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                <span class="inline-flex items-center px-2.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-300 rounded-r-lg dark:bg-gray-800 dark:text-gray-300">%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-xs font-bold text-gray-700 dark:text-gray-300">3 Years Profit %</label>
+                                            <div class="flex rounded-lg shadow-sm">
+                                                <input type="number" step="0.01" min="0" name="staking_yield_3_year" value="{{ old('staking_yield_3_year', $setting->staking_yield_3_year ?? 45.00) }}" class="rounded-l-lg bg-white border border-r-0 border-gray-300 text-gray-900 focus:ring-amber-500 focus:border-amber-500 block w-full text-xs p-2.5 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                <span class="inline-flex items-center px-2.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-300 rounded-r-lg dark:bg-gray-800 dark:text-gray-300">%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-xs font-bold text-gray-700 dark:text-gray-300">4 Years Profit %</label>
+                                            <div class="flex rounded-lg shadow-sm">
+                                                <input type="number" step="0.01" min="0" name="staking_yield_4_year" value="{{ old('staking_yield_4_year', $setting->staking_yield_4_year ?? 70.00) }}" class="rounded-l-lg bg-white border border-r-0 border-gray-300 text-gray-900 focus:ring-amber-500 focus:border-amber-500 block w-full text-xs p-2.5 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                <span class="inline-flex items-center px-2.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-300 rounded-r-lg dark:bg-gray-800 dark:text-gray-300">%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-xs font-bold text-gray-700 dark:text-gray-300">5 Years Profit %</label>
+                                            <div class="flex rounded-lg shadow-sm">
+                                                <input type="number" step="0.01" min="0" name="staking_yield_5_year" value="{{ old('staking_yield_5_year', $setting->staking_yield_5_year ?? 100.00) }}" class="rounded-l-lg bg-white border border-r-0 border-gray-300 text-gray-900 focus:ring-amber-500 focus:border-amber-500 block w-full text-xs p-2.5 font-mono font-bold dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                <span class="inline-flex items-center px-2.5 text-xs font-bold text-gray-600 bg-gray-100 border border-gray-300 rounded-r-lg dark:bg-gray-800 dark:text-gray-300">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
