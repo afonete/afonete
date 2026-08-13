@@ -122,9 +122,9 @@
                     <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Bonus: 6000 or Volume Point: 4 Point</span>
                 </div>
 
-                {{-- Unlocked Per Week (Text) --}}
+                {{-- Unlocked Per Month (Text) --}}
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Unlocked Per Week (Text)</label>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Unlocked Per Month (Text)</label>
                     <input type="text" name="unlocked_per_week" value="{{ old('unlocked_per_week', 'YES') }}"
                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
                            placeholder="YES">

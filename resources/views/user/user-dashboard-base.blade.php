@@ -450,8 +450,8 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- Licence Miner Package --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-microchip"></i>
                             <p>Licence Miner Package <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -475,6 +475,11 @@ if (showAlertBtn) {
                             <li class="nav-item">
                                 <a href="{{ route('user.package.history') }}" class="nav-link {{ request()->routeIs('user.package.history') ? 'active' : '' }}">
                                     <i class="fas fa-list-alt nav-icon"></i><p>My Package Codes</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.licence-miner.escrow') }}" class="nav-link {{ request()->routeIs('user.licence-miner.escrow') ? 'active' : '' }}">
+                                    <i class="fas fa-lock nav-icon"></i><p>Escrow Wallet &amp; Staking</p>
                                 </a>
                             </li>
                         </ul>

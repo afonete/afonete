@@ -91,6 +91,7 @@
                                         <th class="py-3">Package</th>
                                         <th class="py-3">Price</th>
                                         <th class="py-3">Total Return</th>
+                                        <th class="py-3">Activated By User</th>
                                         <th class="py-3">Status</th>
                                         <th class="py-3">Action</th>
                                     </tr>
@@ -122,6 +123,17 @@
                                             </td>
                                             <td class="align-middle">
                                                 <?php if($isUsed): ?>
+                                                    <?php if($actCode->redeemer): ?>
+                                                        <span class="text-info font-weight-bold">@ <?php echo e($actCode->redeemer->user); ?></span>
+                                                    <?php else: ?>
+                                                        <span class="text-info font-weight-bold"><?php echo e($actCode->email); ?></span>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted small font-italic">Unused - Ready to Share</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td class="align-middle">
+                                                <?php if($isUsed): ?>
                                                     <span class="badge badge-secondary px-2 py-1">Used / Activated</span>
                                                 <?php else: ?>
                                                     <span class="badge badge-success px-2 py-1">Unused / Ready</span>
@@ -146,6 +158,12 @@
                                 </tbody>
                             </table>
                         </div>
+                        <?php if($myCodes->hasPages()): ?>
+                            <div class="card-footer bg-dark border-top border-secondary d-flex justify-content-center py-3">
+                                <?php echo e($myCodes->links()); ?>
+
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

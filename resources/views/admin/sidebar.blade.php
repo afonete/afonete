@@ -407,6 +407,12 @@ ul li a{
                        <span class="flex-1 ms-3 whitespace-nowrap">Withdrawal &amp; Deposit Settings</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('admin.settings.affiliate-terms') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.settings.affiliate-terms*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                      <i class="fa-solid fa-file-contract"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Affiliate Terms &amp; Conditions</span>
+                    </a>
+                </li>
 
 
                 <li>

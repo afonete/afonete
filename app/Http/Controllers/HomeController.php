@@ -65,6 +65,53 @@ class HomeController extends Controller
         return view('user.investment-package', compact('packages', 'tokenSymbol', 'depositWalletBalance'));
     }
 
+    public function escrowWalletDetails()
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        // Process any due monthly installments & due 1-5 year stakings
+        \App\Models\FomTokenInstallment::processDueInstallments($user);
+        \App\Models\FomTokenStaking::processDueStakings($user);
+
+        // Fetch balances
+        $escrowBal    = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
+        $availableBal = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+        $freeBal      = (float) $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
+        $tokenSymbol  = \App\Models\TokenSetting::currentSymbol();
+
+        // Fetch 12 Monthly Installment Schedules
+        \App\Models\FomTokenInstallment::ensureTable();
+        $installments = \App\Models\FomTokenInstallment::where('user_id', $user->id)
+            ->orderBy('release_date', 'asc')
+            ->get();
+
+        // Fetch 1-5 Year Staking Records
+        \App\Models\FomTokenStaking::ensureTable();
+        $stakings = \App\Models\FomTokenStaking::where('user_id', $user->id)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        // Admin yield percentages for 1 to 5 years
+        $y1 = \App\Models\FomTokenStaking::getYieldPercent(1);
+        $y2 = \App\Models\FomTokenStaking::getYieldPercent(2);
+        $y3 = \App\Models\FomTokenStaking::getYieldPercent(3);
+        $y4 = \App\Models\FomTokenStaking::getYieldPercent(4);
+        $y5 = \App\Models\FomTokenStaking::getYieldPercent(5);
+
+        return view('user.escrow-wallet-details', compact(
+            'escrowBal',
+            'availableBal',
+            'freeBal',
+            'tokenSymbol',
+            'installments',
+            'stakings',
+            'y1', 'y2', 'y3', 'y4', 'y5'
+        ));
+    }
+
     public function buyFomPackage(Request $request)
     {
         $user = \Illuminate\Support\Facades\Auth::user();
@@ -89,6 +136,14 @@ class HomeController extends Controller
         $depositBalance = (float) $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         if ($depositBalance < $totalCost) {
             return back()->with('error', "Insufficient Deposit Wallet balance ($" . number_format($depositBalance, 2) . "). You need $" . number_format($totalCost, 2) . " to purchase {$quantity}x {$package->name} package(s). Please deposit funds into your Deposit Wallet first.");
+        }
+
+        // Verify Second Transaction Password if set
+        if (!empty($user->transaction_password)) {
+            $txPassword = (string) $request->input('transaction_password', '');
+            if (empty($txPassword) || !\Illuminate\Support\Facades\Hash::check($txPassword, $user->transaction_password)) {
+                return back()->with('error', 'Invalid Second Transaction Password. Please enter your correct transaction password.');
+            }
         }
 
         // Debit Deposit Wallet
@@ -223,11 +278,11 @@ class HomeController extends Controller
             'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
         ]);
 
-        // Credit Escrow Wallet (LOCKED_TOKEN)
-        $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+        // Credit Independent Escrow Wallet (ESCROW_TOKEN)
+        $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
         \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
-            ['amount' => $lockedBal + $totalReturn]
+            ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
+            ['amount' => $escrowBal + $totalReturn]
         );
 
         // Create 12 Monthly Installment Schedule

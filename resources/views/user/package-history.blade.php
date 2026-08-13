@@ -57,6 +57,7 @@
                                             <th class="py-3">Package</th>
                                             <th class="py-3">Price</th>
                                             <th class="py-3">Total Return</th>
+                                            <th class="py-3">Activated By User</th>
                                             <th class="py-3">Status</th>
                                             <th class="py-3">Action / Share</th>
                                         </tr>
@@ -87,6 +88,17 @@
                                                 </td>
                                                 <td class="align-middle">
                                                     @if($isUsed)
+                                                        @if($actCode->redeemer)
+                                                            <span class="text-info font-weight-bold">@ {{ $actCode->redeemer->user }}</span>
+                                                        @else
+                                                            <span class="text-info font-weight-bold">{{ $actCode->email }}</span>
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted small font-italic">Unused - Ready to Share</span>
+                                                    @endif
+                                                </td>
+                                                <td class="align-middle">
+                                                    @if($isUsed)
                                                         <span class="badge badge-secondary px-2 py-1">Used / Activated</span>
                                                     @else
                                                         <span class="badge badge-success px-2 py-1">Unused / Ready</span>
@@ -108,15 +120,15 @@
                                                 </td>
                                             </tr>
                                         @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                         @if($myCodes->hasPages())
                             <div class="card-footer bg-dark border-top border-secondary d-flex justify-content-center py-3">
                                 {{ $myCodes->links() }}
                             </div>
                         @endif
-                    @endif
                     </div>
                 </div>
 

@@ -1782,6 +1782,14 @@ public function getTeamTree(Request $request,$id){
             return back()->with('error', "Insufficient Available Token balance (" . number_format($availableBal) . " tokens). You requested to stake " . number_format($amount) . " tokens.");
         }
 
+        // Verify Second Transaction Password if set
+        if (!empty($user->transaction_password)) {
+            $txPassword = (string) $request->input('transaction_password', '');
+            if (empty($txPassword) || !\Illuminate\Support\Facades\Hash::check($txPassword, $user->transaction_password)) {
+                return back()->with('error', 'Invalid Second Transaction Password. Please enter your correct transaction password.');
+            }
+        }
+
         // Get admin configured yield percentage for selected year
         $yieldPercent = \App\Models\FomTokenStaking::getYieldPercent($years);
         $profitAmount = $amount * ($yieldPercent / 100.0);
@@ -1793,11 +1801,11 @@ public function getTeamTree(Request $request,$id){
             ['amount' => $availableBal - $amount]
         );
 
-        // 2. Add Total Staked (Principal + Profit) to Escrow Wallet (LOCKED_TOKEN)
-        $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+        // 2. Add Total Staked (Principal + Profit) to Independent Escrow Wallet (ESCROW_TOKEN)
+        $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
         ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
-            ['amount' => $lockedBal + $totalStaked]
+            ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
+            ['amount' => $escrowBal + $totalStaked]
         );
 
         // 3. Create FomTokenStaking record
@@ -2292,6 +2300,24 @@ public function getTeamTree(Request $request,$id){
         }
 
         return back()->with('error', 'Invalid trading action.');
+    }
+
+    public function acceptAffiliateTerms(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'agree_terms' => 'required|accepted',
+        ]);
+
+        $user->binary_status = 'active';
+        $user->affiliate_terms_accepted_at = now();
+        $user->save();
+
+        return back()->with('success', 'Congratulations! You have accepted the Affiliate Terms & Conditions. Your Binary Status is now ACTIVE!');
     }
 
 }

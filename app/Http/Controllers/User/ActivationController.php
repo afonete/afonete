@@ -39,38 +39,12 @@ public function index(){
         ->first();
 
     if ($teamLeader) {
-        $alreadyActivated = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
-
-        $leaderCredit = $teamLeader->superLeaderCredit;
-        $isCreditDisabled = $leaderCredit ? in_array(strtolower($leaderCredit->status), ['disabled', 'deactivated', 'rejected']) : false;
-
-        $latestLeaderPayment = Paymodel::where('user', $user->id)
-            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        $isLeaderExpired = false;
-        if ($latestLeaderPayment) {
-            if ($latestLeaderPayment->is_expired) {
-                $isLeaderExpired = true;
-            } elseif ($latestLeaderPayment->expiration_date && \Carbon\Carbon::now()->greaterThan(\Carbon\Carbon::parse($latestLeaderPayment->expiration_date))) {
-                $isLeaderExpired = true;
-            }
-        }
-
-        $isActiveLeader = $alreadyActivated && $teamLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
-
-        if ($isActiveLeader) {
-            return redirect()->route('team-leader.all')->with('message', 'Your Team Leader account is currently active.');
-        }
-
         if ($teamLeader->status === 'pending') {
             return redirect()->to(url('/team-leader/pending-approval?username='.$teamLeader->User_name));
         }
         if ($teamLeader->status === 'rejected') {
             return redirect()->to(url('/team-leader/rejected?username='.$teamLeader->User_name));
         }
-        // confirmed && (deactivated or expired) → fall through to show activation form
     }
 
     return view('user.activation-controller',['user'=>$user,"packages"=>$package, 'myCodes'=>$myCodes]);
@@ -225,11 +199,11 @@ public function upgrade(Request $request){
                     'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
                 ]);
 
-                // Credit Escrow Wallet (LOCKED_TOKEN)
-                $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+                // Credit Independent Escrow Wallet (ESCROW_TOKEN)
+                $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
                 \App\Models\ChartAccount::updateOrCreate(
-                    ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
-                    ['amount' => $lockedBal + $totalReturn]
+                    ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
+                    ['amount' => $escrowBal + $totalReturn]
                 );
 
                 // Create 12 Monthly Installments Schedule

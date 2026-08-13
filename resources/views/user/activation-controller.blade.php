@@ -88,6 +88,7 @@
                                         <th class="py-3">Package</th>
                                         <th class="py-3">Price</th>
                                         <th class="py-3">Total Return</th>
+                                        <th class="py-3">Activated By User</th>
                                         <th class="py-3">Status</th>
                                         <th class="py-3">Action</th>
                                     </tr>
@@ -114,6 +115,17 @@
                                                     {{ $numReturn > 0 ? number_format($numReturn) . ' ' . $tokenSymbol : 'N/A' }}
                                                 @else
                                                     <span class="text-muted small font-italic">Hidden until Activated</span>
+                                                @endif
+                                            </td>
+                                            <td class="align-middle">
+                                                @if($isUsed)
+                                                    @if($actCode->redeemer)
+                                                        <span class="text-info font-weight-bold">@ {{ $actCode->redeemer->user }}</span>
+                                                    @else
+                                                        <span class="text-info font-weight-bold">{{ $actCode->email }}</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-muted small font-italic">Unused - Ready to Share</span>
                                                 @endif
                                             </td>
                                             <td class="align-middle">

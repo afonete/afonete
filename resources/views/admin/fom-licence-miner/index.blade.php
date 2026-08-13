@@ -23,11 +23,17 @@
                 </p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
-            <span class="bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5">
-                <i class="fas fa-coins text-amber-500"></i> Active Token: <span class="text-amber-900 font-extrabold uppercase">{{ $tokenSymbol }}</span>
-            </span>
-            <a href="{{ route('admin.fom-licence-miner.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm">
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ route('admin.fom-licence-miner.index') }}" class="bg-amber-500 text-white font-bold py-2 px-3 rounded-lg text-xs shadow-sm transition-all">
+                <i class="fas fa-box"></i> Manage Plans
+            </a>
+            <a href="{{ route('admin.fom-licence-miner.codes') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs transition-all">
+                <i class="fas fa-ticket-alt"></i> Code Usage
+            </a>
+            <a href="{{ route('admin.fom-licence-miner.escrow-audit') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg text-xs transition-all">
+                <i class="fas fa-shield-alt"></i> Escrow &amp; Staking Audit
+            </a>
+            <a href="{{ route('admin.fom-licence-miner.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 text-xs ms-2">
                 <i class="fas fa-plus"></i> <span>New Package</span>
             </a>
         </div>

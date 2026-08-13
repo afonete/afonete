@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FomLicenceMiner;
 use App\Models\TokenSetting;
+use App\Models\Activations;
+use App\Models\FomTokenInstallment;
+use App\Models\FomTokenStaking;
+use App\Models\ChartAccount;
 
 class FomLicenceMinerAdminController extends Controller
 {
@@ -21,6 +25,54 @@ class FomLicenceMinerAdminController extends Controller
         $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
 
         return view('admin.fom-licence-miner.index', compact('packages', 'tokenSetting', 'tokenSymbol'));
+    }
+
+    /**
+     * Admin Report: Package Activation Codes & Redeemer Tracking.
+     */
+    public function codesReport()
+    {
+        $query = Activations::whereNotIn('package', ['TEAM_LEADER', 'SUPER_LEADER', 'TM']);
+
+        if (method_exists(Activations::class, 'purchaser') && method_exists(Activations::class, 'redeemer')) {
+            $query->with(['purchaser', 'redeemer']);
+        } elseif (method_exists(Activations::class, 'myOwner')) {
+            $query->with(['myOwner']);
+        }
+
+        $codes = $query->orderBy('id', 'desc')->paginate(20);
+
+        $tokenSetting = TokenSetting::first();
+        $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
+
+        return view('admin.fom-licence-miner.codes', compact('codes', 'tokenSymbol'));
+    }
+
+    /**
+     * Admin Report: Escrow Wallets & 1-5 Year Staking Audit.
+     */
+    public function escrowAuditReport()
+    {
+        FomTokenInstallment::ensureTable();
+        FomTokenStaking::ensureTable();
+
+        $installments = FomTokenInstallment::orderBy('id', 'desc')
+            ->paginate(20, ['*'], 'installments_page');
+
+        $stakings = FomTokenStaking::orderBy('id', 'desc')
+            ->paginate(20, ['*'], 'stakings_page');
+
+        $tokenSetting = TokenSetting::first();
+        $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
+
+        $totalEscrowInSystem = (float) ChartAccount::where('acc_type', 'ESCROW_TOKEN')->sum('amount');
+
+        return view('admin.fom-licence-miner.escrow-audit', compact(
+            'installments',
+            'stakings',
+            'tokenSymbol',
+            'totalEscrowInSystem'
+        ));
     }
 
     /**

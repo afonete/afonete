@@ -102,4 +102,35 @@ class SettingsController extends Controller
         ]);
         return back()->with('success', 'Withdrawal & deposit settings updated.');
     }
+
+    public function affiliateTerms()
+    {
+        \App\Models\AffiliateTerm::ensureTableAndData();
+        $termsContent = \App\Models\AffiliateTerm::currentTerms();
+        return view('admin.settings.affiliate-terms', compact('termsContent'));
+    }
+
+    public function updateAffiliateTerms(Request $request)
+    {
+        \App\Models\AffiliateTerm::ensureTableAndData();
+        $request->validate([
+            'terms_content' => 'required|string',
+        ]);
+
+        $term = \App\Models\AffiliateTerm::first();
+        if ($term) {
+            $term->update([
+                'terms_content' => $request->terms_content,
+                'updated_by'    => Auth::id(),
+            ]);
+        } else {
+            \App\Models\AffiliateTerm::create([
+                'terms_content' => $request->terms_content,
+                'is_active'     => true,
+                'updated_by'    => Auth::id(),
+            ]);
+        }
+
+        return back()->with('success', 'Affiliate Terms & Conditions updated successfully!');
+    }
 }

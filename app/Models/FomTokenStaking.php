@@ -29,6 +29,11 @@ class FomTokenStaking extends Model
         'processed_at',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', 'id');
+    }
+
     /**
      * Ensures table exists.
      */
@@ -84,7 +89,7 @@ class FomTokenStaking extends Model
     }
 
     /**
-     * Processes any completed stakings (where release_date <= now) and returns Total Staked (Principal + Profit) back to Available Token.
+     * Processes any completed stakings (where release_date <= now) and returns Total Staked (Principal + Profit) from Independent Escrow Wallet (ESCROW_TOKEN) back to Available Token.
      */
     public static function processDueStakings($user)
     {
@@ -99,12 +104,12 @@ class FomTokenStaking extends Model
         foreach ($dueStakings as $staking) {
             $totalStaked = (float) $staking->total_staked;
 
-            // 1. Deduct from Escrow Wallet (LOCKED_TOKEN)
-            $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
-            $newLocked = max(0, $lockedBal - $totalStaked);
+            // 1. Deduct from Independent Escrow Wallet (ESCROW_TOKEN)
+            $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
+            $newEscrow = max(0, $escrowBal - $totalStaked);
             ChartAccount::updateOrCreate(
-                ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
-                ['amount' => $newLocked]
+                ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
+                ['amount' => $newEscrow]
             );
 
             // 2. Add Total Staked (Principal + Profit) to Available Token (AVAILABLE_TOKEN)

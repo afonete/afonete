@@ -112,7 +112,6 @@
                 $isActiveLeader = $isLeader && $matchingLeader && $matchingLeader->status === 'confirmed' && !$isCreditDisabled && !$isLeaderExpired;
             @endphp
 
-            @if(!$isActiveLeader)
             <div class="row mb-4">
                 {{-- Activation Code Input Form (Accepts BOTH Package Codes & Team Leader Codes) --}}
                 <div class="col-12 col-md-6 mb-3">
@@ -142,7 +141,7 @@
                 @php
                     $isAlreadyFree = ($user->has_free_package === 'yes') || (strtolower(trim((string)$user->has_paid_package)) === 'standard');
                     $userHasActiveUvp = ($highestUvpPackageAmount > 0) || (isset($hasPaidPackage) && $hasPaidPackage);
-                    $canSeeFreeTier = !$isAlreadyFree && !$userHasActiveUvp;
+                    $canSeeFreeTier = !$isAlreadyFree && !$userHasActiveUvp && !$isActiveLeader;
                 @endphp
                 @if($canSeeFreeTier)
                 <div class="col-12 col-md-6 mb-3">
@@ -167,7 +166,6 @@
                 </div>
                 @endif
             </div>
-            @endif
 
             {{-- FC VIP Packages Grid --}}
             <div class="card dash-card p-4 mb-4">

@@ -38,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'has_paid_package','has_free_package',
         'referee_id','father','email','user','contract','password','transaction_password','transaction_password_set_at',
         'profile_photo_path','activation','ref_code','has_request','email_verification_pin','transfer_code',
+        'binary_status','affiliate_terms_accepted_at',
     ];
 
     protected $hidden = [

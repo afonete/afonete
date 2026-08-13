@@ -7,7 +7,7 @@
 
 <body>
 
-   <div class="flex-1 p-4 ">
+   <div class="flex-1 p-3">
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -23,24 +23,25 @@
             .card {
                 background-color: #1F2937;
                 border: 1px solid #374151;
-                border-radius: 0.75rem;
+                border-radius: 0.6rem;
             }
             .card-header {
-                font-size: 1.25rem;
+                font-size: 1.1rem;
                 font-weight: bold;
                 color: #ffffff;
                 text-align: center;
                 background-color: #111827;
                 border-bottom: 1px solid #374151;
+                padding: 8px 12px;
             }
             .price {
-                font-size: 1.5rem;
+                font-size: 1.35rem;
                 font-weight: bold;
                 color: #10B981;
                 text-align: center;
             }
             .details {
-                font-size: 0.9rem;
+                font-size: 0.82rem;
                 color: #9CA3AF;
                 text-align: center;
             }
@@ -49,14 +50,14 @@
                 padding-left: 0;
             }
             .card-body {
-                padding: 12px !important;
+                padding: 10px !important;
             }
             .card-body li {
                 color: #10B981;
-                font-size: 13px;
+                font-size: 12.5px;
                 display: flex;
                 align-items: center;
-                margin-bottom: 4px;
+                margin-bottom: 3px;
             }
             .btn-primary {
                 background-color: #3B82F6;
@@ -69,163 +70,192 @@
             }
             .card-body li::before {
                 content: "✔️";
-                margin-right: 6px;
+                margin-right: 5px;
                 color: #ff5733;
             }
-            .deposit-badge {
+            
+            /* Compact Top Banner */
+            .deposit-badge-compact {
                 background-color: #1F2937;
                 border: 1px solid #374151;
                 border-radius: 0.5rem;
                 padding: 10px 16px;
             }
 
-            /* Premium Code Listing Card Styling */
-            .success-code-card {
+            /* Compact Code Listing Card */
+            .success-code-card-compact {
                 background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
                 border: 1px solid #10b981 !important;
-                border-radius: 1rem !important;
-                box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15) !important;
+                border-radius: 0.6rem !important;
             }
-            .code-row-box {
+            .code-row-box-compact {
                 background-color: #0b0f19;
                 border: 1px solid #374151;
-                border-radius: 0.5rem;
+                border-radius: 0.4rem;
+                padding: 8px 12px;
                 transition: all 0.2s ease-in-out;
             }
-            .code-row-box:hover {
+            .code-row-box-compact:hover {
                 border-color: #f59e0b;
-                box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
             }
-            .code-badge-num {
+            .code-badge-num-compact {
                 background-color: #1f2937;
                 color: #9ca3af;
                 font-weight: 700;
                 font-size: 0.75rem;
-                padding: 4px 8px;
-                border-radius: 0.375rem;
+                padding: 2px 6px;
+                border-radius: 0.25rem;
             }
-            .code-text-val {
+            .code-text-val-compact {
                 font-family: 'Courier New', Courier, monospace;
-                letter-spacing: 1.5px;
-                font-size: 1.15rem;
+                letter-spacing: 1px;
+                font-size: 0.95rem;
                 color: #fbbf24;
-                font-weight: 800;
+                font-weight: 700;
             }
-            .btn-copy-individual {
+            .btn-copy-individual-compact {
                 background-color: #d97706;
                 color: #ffffff;
                 font-weight: 700;
                 border: none;
+                font-size: 0.8rem;
+                padding: 5px 12px;
+                border-radius: 0.35rem;
                 transition: all 0.2s ease;
             }
-            .btn-copy-individual:hover {
+            .btn-copy-individual-compact:hover {
                 background-color: #b45309;
                 color: #ffffff;
             }
-            .btn-copy-individual.copied {
+            .btn-copy-individual-compact.copied {
                 background-color: #10b981 !important;
                 color: #ffffff !important;
+            }
+
+            /* High Contrast Clear Notifications */
+            .alert-clear-danger {
+                background-color: #dc2626 !important;
+                color: #ffffff !important;
+                border: 1px solid #ef4444 !important;
+                border-radius: 8px !important;
+                font-size: 0.95rem !important;
+                font-weight: 600 !important;
+            }
+            .alert-clear-success {
+                background-color: #059669 !important;
+                color: #ffffff !important;
+                border: 1px solid #10b981 !important;
+                border-radius: 8px !important;
+                font-size: 0.95rem !important;
+                font-weight: 600 !important;
             }
         </style>
     </head>
     <body>
 
-    <div class="container-fluid my-4">
+    <div class="container-fluid my-2">
         
-        {{-- Balance & Header Notice --}}
-        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between deposit-badge mb-4 gap-3">
-            <div>
-                <h3 class="text-white mb-1 font-weight-bold"><i class="fa fa-microchip text-warning mr-2"></i>FOM LICENCE MINER PACKAGES</h3>
-                <p class="text-muted mb-0 small">Purchase activation codes using your <strong>Deposit Wallet</strong>. Activate 1 code on your account per package name, and share extra codes with other users!</p>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-end">
-                    <span class="text-muted d-block small">Deposit Wallet Balance</span>
-                    <span class="text-success font-weight-bold fs-5">${{ number_format($depositWalletBalance, 2) }}</span>
+        {{-- Compact Top Banner (Small on both Desktop & Mobile) --}}
+        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between deposit-badge-compact mb-3 gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa fa-microchip text-warning fs-5"></i>
+                <div>
+                    <h6 class="text-white mb-0 font-weight-bold" style="font-size: 0.95rem;">FOM LICENCE MINER PACKAGES</h6>
+                    <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">Purchase codes using Deposit Wallet. Activate 1 code per package name.</span>
                 </div>
-                <a href="{{ route('user.dashboard.deposit') }}" class="btn btn-outline-success btn-sm font-weight-bold ms-2">
-                    <i class="fa fa-plus-circle me-1"></i>Deposit Funds
+            </div>
+            <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+                <div class="text-sm-end text-center">
+                    <span class="text-muted d-inline d-sm-block text-xs" style="font-size: 0.72rem;">Deposit Wallet: </span>
+                    <span class="text-success font-weight-bold" style="font-size: 0.95rem;">${{ number_format($depositWalletBalance, 2) }}</span>
+                </div>
+                <a href="{{ route('user.dashboard.deposit') }}" class="btn btn-outline-success btn-sm font-weight-bold py-1 px-2.5 text-xs">
+                    <i class="fa fa-plus-circle me-1"></i>Deposit
                 </a>
             </div>
         </div>
 
-        {{-- Alerts --}}
+        {{-- High Contrast Clear Notification Banners --}}
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fa fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-clear-danger alert-dismissible fade show p-3 mb-3 shadow-sm" role="alert">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="fa fa-exclamation-circle me-2 fs-5"></i>{{ session('error') }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fa fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-clear-success alert-dismissible fade show p-3 mb-3 shadow-sm" role="alert">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="fa fa-check-circle me-2 fs-5"></i>{{ session('success') }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         @endif
 
-        {{-- Purchase Success & Impressive Activation Codes Showcase --}}
+        {{-- Compact Purchase Success & Activation Code Listing --}}
         @if(session('purchase_success'))
             @php $createdCodes = session('created_codes') ?: [['code' => session('activation_code'), 'id' => session('activation_id')]]; @endphp
             
-            <div class="card success-code-card mb-4">
-                <div class="card-header bg-success text-white text-center py-2.5 font-weight-bold border-0">
-                    <i class="fa fa-check-circle me-2 fs-5"></i>Package Purchase Successful!
+            <div class="card success-code-card-compact mb-3">
+                <div class="card-header bg-success text-white text-center py-2 font-weight-bold border-0 text-sm">
+                    <i class="fa fa-check-circle me-1.5"></i>Package Purchase Successful!
                 </div>
-                <div class="card-body p-4 text-center">
+                <div class="card-body p-3 text-center">
                     
-                    <div class="mb-3">
-                        <span class="badge bg-emerald-900 text-emerald-300 border border-emerald-500 px-3 py-1.5 rounded-pill uppercase tracking-wider font-bold mb-2 inline-block">
+                    <div class="mb-2">
+                        <span class="badge bg-emerald-900 text-emerald-300 border border-emerald-500 px-2.5 py-1 rounded-pill text-xs font-bold me-2 inline-block">
                             <i class="fa fa-shopping-bag me-1"></i> {{ session('quantity') }}x {{ session('package_name') }} Package(s)
                         </span>
-                        <h4 class="text-white font-weight-bold mb-1">Total Paid: <span class="text-success">${{ number_format(session('total_cost'), 2) }}</span></h4>
+                        <span class="text-white font-weight-bold text-sm">Total Paid: <span class="text-success">${{ number_format(session('total_cost'), 2) }}</span></span>
                     </div>
 
-                    <div class="alert alert-dark border border-secondary text-light small max-w-2xl mx-auto mb-4 text-start">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="fa fa-info-circle text-warning fs-5 mt-0.5 flex-shrink-0"></i>
-                            <div>
-                                <strong>Activation Rule:</strong> You can activate <strong>1 code</strong> for <strong>{{ session('package_name') }}</strong> on your account. Extra codes can be copied and given to other users to activate on their accounts!
-                            </div>
-                        </div>
-                    </div>
+                    <p class="text-muted text-xs mb-2 max-w-xl mx-auto">
+                        <i class="fa fa-info-circle text-warning me-1"></i>
+                        You can activate <strong>1 code</strong> for {{ session('package_name') }} on your account. Share remaining codes with other users!
+                    </p>
 
-                    {{-- Generated Activation Codes Container --}}
-                    <div class="p-3.5 bg-dark bg-opacity-80 border border-secondary rounded-3 max-w-2xl mx-auto mb-4 text-start">
-                        <div class="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom border-secondary">
-                            <span class="text-light font-weight-bold small uppercase tracking-wider">
-                                <i class="fa fa-ticket-alt text-warning me-1.5"></i> Generated Activation Code(s) ({{ count($createdCodes) }})
+                    {{-- Compact Code Listing Container --}}
+                    <div class="p-2.5 bg-dark bg-opacity-80 border border-secondary rounded max-w-xl mx-auto mb-3 text-start">
+                        <div class="d-flex align-items-center justify-content-between pb-1.5 mb-2 border-bottom border-secondary">
+                            <span class="text-light font-weight-bold text-xs uppercase">
+                                <i class="fa fa-ticket-alt text-warning me-1"></i> Generated Codes ({{ count($createdCodes) }})
                             </span>
                             @if(count($createdCodes) > 1)
-                                <button type="button" class="btn btn-outline-warning btn-sm font-weight-bold px-2.5 py-1" id="btnCopyAll" onclick="copyAllCodes()">
+                                <button type="button" class="btn btn-outline-warning btn-sm font-weight-bold px-2 py-0.5 text-xs" id="btnCopyAll" onclick="copyAllCodes()">
                                     <i class="fa fa-copy me-1"></i>Copy All {{ count($createdCodes) }} Codes
                                 </button>
                             @endif
                         </div>
 
-                        <div class="d-flex flex-column gap-2.5">
+                        <div class="d-flex flex-column gap-1.5">
                             @foreach($createdCodes as $idx => $codeItem)
-                                <div class="code-row-box p-2.5 d-flex align-items-center justify-content-between gap-2">
+                                <div class="code-row-box-compact d-flex align-items-center justify-content-between gap-2">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="code-badge-num">#{{ $idx + 1 }}</span>
-                                        <code class="code-text-val px-2 py-1 rounded bg-black code-item-val" id="code-item-{{ $idx }}">{{ $codeItem['code'] }}</code>
+                                        <span class="code-badge-num-compact">#{{ $idx + 1 }}</span>
+                                        <code class="code-text-val-compact px-2 py-0.5 rounded bg-black code-item-val" id="code-item-{{ $idx }}">{{ $codeItem['code'] }}</code>
                                     </div>
-                                    <button type="button" class="btn btn-copy-individual btn-sm px-3 py-1.5 rounded-2" id="btn-copy-{{ $idx }}" onclick="copyIndividualCode('code-item-{{ $idx }}', 'btn-copy-{{ $idx }}')">
-                                        <i class="fa fa-copy me-1"></i>Copy Code
+                                    <button type="button" class="btn btn-copy-individual-compact" id="btn-copy-{{ $idx }}" onclick="copyIndividualCode('code-item-{{ $idx }}', 'btn-copy-{{ $idx }}')">
+                                        <i class="fa fa-copy me-1"></i>Copy
                                     </button>
                                 </div>
                             @endforeach
                         </div>
                     </div>
 
-                    {{-- Direct Activate First Code Action --}}
-                    <div class="pt-2">
+                    {{-- Direct Activate Button --}}
+                    <div>
                         <form action="{{ route('user.investment-package.activate-code') }}" method="POST" class="d-inline">
                             @csrf
                             <input type="hidden" name="activation_id" value="{{ $createdCodes[0]['id'] ?? session('activation_id') }}">
                             <input type="hidden" name="code" value="{{ $createdCodes[0]['code'] ?? session('activation_code') }}">
-                            <button type="submit" class="btn btn-success btn-lg font-weight-bold px-5 py-2.5 shadow-lg">
-                                <i class="fa fa-bolt me-2"></i>Activate Code #1 Direct
+                            <button type="submit" class="btn btn-success btn-sm font-weight-bold px-4 py-1.5">
+                                <i class="fa fa-bolt me-1"></i>Activate Code #1 Direct
                             </button>
                         </form>
                     </div>
@@ -247,11 +277,11 @@
                     $numTotalReturn = \App\Models\FomLicenceMiner::cleanNum($pkg->total_return);
                 @endphp
                 <div class="col-md-3">
-                    <div class="card mb-4 shadow h-100 d-flex flex-column justify-between">
+                    <div class="card mb-3 shadow h-100 d-flex flex-column justify-between">
                         <div>
                             <div class="card-header">{{ strtoupper($pkg->name) }}</div>
-                            <div class="price mt-2">{{ $pkg->display_price ?: ('$' . number_format($numPrice, 0) . ' USDT') }}</div>
-                            <div class="details mb-2">From Licence Miner. <br> TOKEN | {{ number_format($numTokens) }} {{ $tokenSymbol }}</div>
+                            <div class="price mt-1.5">{{ $pkg->display_price ?: ('$' . number_format($numPrice, 0) . ' USDT') }}</div>
+                            <div class="details mb-1.5">From Licence Miner. <br> TOKEN | {{ number_format($numTokens) }} {{ $tokenSymbol }}</div>
                             <div class="card-body">
                                 <ul>
                                     <li>Duration {{ $pkg->duration_days }} Days</li>
@@ -275,7 +305,7 @@
                                         @endif
                                     @endif
                                     @if(!empty($pkg->unlocked_per_week))
-                                        <li>Unlocked Per Week: {{ $pkg->unlocked_per_week }}</li>
+                                        <li>Unlocked Per Month: {{ $pkg->unlocked_per_week }}</li>
                                     @endif
                                     @if(!empty($pkg->allowed_loan))
                                         <li>{{ $pkg->allowed_loan }}</li>
@@ -290,21 +320,23 @@
                             </div>
                         </div>
 
-                        {{-- Purchase Form with Quantity Selector --}}
-                        <div class="px-3 pb-3 pt-0">
-                            <form action="{{ route('user.investment-package.buy') }}" method="POST" onsubmit="return confirm('Confirm purchasing package activation codes with Deposit Wallet balance?');">
+                        {{-- Purchase Form with Unified Input Group Quantity Selector --}}
+                        <div class="px-2.5 pb-2.5 pt-0">
+                            <form action="{{ route('user.investment-package.buy') }}" method="POST" class="js-transaction-password-form">
                                 @csrf
                                 <input type="hidden" name="package_id" value="{{ $pkg->id }}">
+                                <input type="hidden" name="transaction_password" class="js-transaction-password-value">
                                 
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <label class="text-white-50 small mb-0 font-weight-bold">Qty:</label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text bg-dark text-white-50 border-secondary text-xs font-weight-bold" style="padding: 4px 10px;">Qty:</span>
                                     <input type="number" name="quantity" min="1" value="1" required
-                                           class="form-control form-control-sm text-center bg-dark text-white border-secondary qty-input"
+                                           class="form-control text-center bg-dark text-white border-secondary qty-input font-weight-bold"
+                                           style="font-size: 13px; height: 32px;"
                                            data-unit-price="{{ $numPrice }}"
                                            data-button-id="buy-btn-{{ $pkg->id }}">
                                 </div>
 
-                                <button type="submit" class="btn btn-primary font-weight-bold shadow-sm" id="buy-btn-{{ $pkg->id }}">
+                                <button type="submit" class="btn btn-primary btn-sm font-weight-bold w-100 py-2 shadow-sm" id="buy-btn-{{ $pkg->id }}">
                                     Buy Now (${{ number_format($numPrice, 0) }})
                                 </button>
                             </form>
@@ -319,6 +351,8 @@
         </div>
 
     </div>
+
+    @include('user.components.transaction-password-modal')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

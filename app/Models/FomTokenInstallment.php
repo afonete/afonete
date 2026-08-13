@@ -28,6 +28,11 @@ class FomTokenInstallment extends Model
         'processed_at',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id', 'id');
+    }
+
     /**
      * Ensures table exists.
      */
@@ -78,7 +83,7 @@ class FomTokenInstallment extends Model
     }
 
     /**
-     * Processes any due installments for a user, moving tokens from Escrow (LOCKED_TOKEN) to AVAILABLE_TOKEN.
+     * Processes any due installments for a user, moving tokens from Independent Escrow Wallet (ESCROW_TOKEN) to AVAILABLE_TOKEN.
      */
     public static function processDueInstallments($user)
     {
@@ -93,12 +98,12 @@ class FomTokenInstallment extends Model
         foreach ($dueInstallments as $inst) {
             $amount = (float) $inst->amount;
 
-            // 1. Deduct from Escrow Wallet (LOCKED_TOKEN)
-            $lockedBal = (float) $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
-            $newLocked = max(0, $lockedBal - $amount);
+            // 1. Deduct from Independent Escrow Wallet (ESCROW_TOKEN)
+            $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
+            $newEscrow = max(0, $escrowBal - $amount);
             ChartAccount::updateOrCreate(
-                ['user_id' => $user->id, 'acc_type' => 'LOCKED_TOKEN'],
-                ['amount' => $newLocked]
+                ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
+                ['amount' => $newEscrow]
             );
 
             // 2. Add to Available Token (AVAILABLE_TOKEN)

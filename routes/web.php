@@ -122,6 +122,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('investment-package/', [HomeController::class, 'investmentPackage'])->name('investment-package');
     Route::post('investment-package/buy', [HomeController::class, 'buyFomPackage'])->name('user.investment-package.buy')->middleware('auth');
     Route::post('investment-package/activate-code', [HomeController::class, 'activateFomCode'])->name('user.investment-package.activate-code')->middleware('auth');
+    Route::get('user/licence-miner/escrow', [HomeController::class, 'escrowWalletDetails'])->name('user.licence-miner.escrow')->middleware('auth');
+    Route::post('user/affiliate/accept-terms', [\App\Http\Controllers\User\FinanceController::class, 'acceptAffiliateTerms'])->name('user.affiliate.accept-terms')->middleware('auth');
     Route::get('staker-package/', [HomeController::class, 'stakerPackage'])->name('staker-package');
 
     Route::post('dashboard', [ActivationController::class, 'g_upgrade'])->name('validate');
@@ -514,6 +516,10 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
 
     // ── FOM LICENCE MINER PACKAGES (admin) ──────────────────────────────────
     Route::get('admin/fom-licence-miner', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'index'])->name('admin.fom-licence-miner.index');
+    Route::get('admin/settings/affiliate-terms', [\App\Http\Controllers\Admin\SettingsController::class, 'affiliateTerms'])->name('admin.settings.affiliate-terms');
+    Route::post('admin/settings/affiliate-terms', [\App\Http\Controllers\Admin\SettingsController::class, 'updateAffiliateTerms'])->name('admin.settings.affiliate-terms.update');
+    Route::get('admin/fom-licence-miner/codes', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'codesReport'])->name('admin.fom-licence-miner.codes');
+    Route::get('admin/fom-licence-miner/escrow-audit', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'escrowAuditReport'])->name('admin.fom-licence-miner.escrow-audit');
     Route::get('admin/fom-licence-miner/create', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'create'])->name('admin.fom-licence-miner.create');
     Route::post('admin/fom-licence-miner/store', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'store'])->name('admin.fom-licence-miner.store');
     Route::get('admin/fom-licence-miner/{id}/edit', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'edit'])->name('admin.fom-licence-miner.edit');
