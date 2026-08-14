@@ -2302,6 +2302,20 @@ public function getTeamTree(Request $request,$id){
         return back()->with('error', 'Invalid trading action.');
     }
 
+    public function showAffiliateTerms()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $hasFomPackage = $this->checkUserHasFomPackage($user);
+        $termsContent  = \App\Models\AffiliateTerm::currentTerms();
+        $isAccepted    = !empty($user->affiliate_terms_accepted_at) || strtolower(trim((string)($user->binary_status ?? ''))) === 'active';
+
+        return view('user.affiliate-terms', compact('user', 'hasFomPackage', 'termsContent', 'isAccepted'));
+    }
+
     public function acceptAffiliateTerms(Request $request)
     {
         $user = Auth::user();
@@ -2309,15 +2323,63 @@ public function getTeamTree(Request $request,$id){
             return redirect()->route('login');
         }
 
+        // Access restriction: User must possess a FOM Licence Miner Package
+        if (!$this->checkUserHasFomPackage($user)) {
+            return redirect()->route('user.affiliate.terms')
+                ->with('error', 'Access Restricted: You must have an active FOM Licence Miner Package on your account to accept the Affiliate Terms & Conditions.');
+        }
+
         $request->validate([
             'agree_terms' => 'required|accepted',
         ]);
+
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'binary_status')) {
+                \Illuminate\Support\Facades\Schema::table('users', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->string('binary_status')->default('inactive');
+                });
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'affiliate_terms_accepted_at')) {
+                \Illuminate\Support\Facades\Schema::table('users', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->timestamp('affiliate_terms_accepted_at')->nullable();
+                });
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Schema column creation error in acceptAffiliateTerms: " . $e->getMessage());
+        }
 
         $user->binary_status = 'active';
         $user->affiliate_terms_accepted_at = now();
         $user->save();
 
-        return back()->with('success', 'Congratulations! You have accepted the Affiliate Terms & Conditions. Your Binary Status is now ACTIVE!');
+        return redirect()->route('user.affiliate.terms')
+            ->with('success', 'Congratulations! You have accepted the Affiliate Terms & Conditions. Your Binary Status is now ACTIVE!');
+    }
+
+    public function checkUserHasFomPackage($user)
+    {
+        if (!$user) return false;
+
+        $pkg = strtolower(trim((string)($user->has_paid_package ?? '')));
+        if (!empty($pkg) && !in_array($pkg, ['no', 'free', 'standard', ''])) {
+            return true;
+        }
+
+        $hasActivation = \App\Models\Activations::where(function($q) use ($user) {
+                $q->where('user_id', $user->id)->orWhere('email', $user->email);
+            })
+            ->whereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])
+            ->exists();
+        if ($hasActivation) {
+            return true;
+        }
+
+        $hasPayment = \App\Models\Payment::where('user', $user->id)->where('is_expired', false)->exists();
+        if ($hasPayment) {
+            return true;
+        }
+
+        return false;
     }
 
 }

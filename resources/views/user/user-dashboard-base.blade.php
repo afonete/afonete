@@ -6,8 +6,16 @@ use App\Models\User;
 use App\Models\Position;
 
 $user = Auth::user();
-$name = $user->user;
-$isFree = $user->has_free_package;
+$name = $user->user ?? $user->name ?? '';
+$isFree = $user ? $user->has_free_package : false;
+
+$hasFomPackageCheck = $user ? (
+    (!empty($user->has_paid_package) && !in_array(strtolower(trim($user->has_paid_package)), ['no', 'free', 'standard', '']))
+    || \App\Models\Activations::where(function($q) use ($user) {
+            $q->where('user_id', $user->id)->orWhere('email', $user->email);
+        })->whereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])->exists()
+    || \App\Models\Payment::where('user', $user->id)->where('is_expired', false)->exists()
+) : false;
 
 ?>
 <!DOCTYPE html>
@@ -295,9 +303,15 @@ if (showAlertBtn) {
 
                   </ul>
                   <div>
-                    <button class="btn btn-primary rounded-pill btn-sm mx-2 " >
-                        Become An Affiliate
-                    </button>
+                    @if($hasFomPackageCheck)
+                        <a href="{{ route('user.affiliate.terms') }}" class="btn btn-primary rounded-pill btn-sm mx-2 font-weight-bold shadow-sm">
+                            Become An Affiliate
+                        </a>
+                    @else
+                        <a href="{{ route('user.affiliate.terms') }}" class="btn btn-secondary rounded-pill btn-sm mx-2 font-weight-bold shadow-sm" style="opacity: 0.85;" title="Requires FOM Licence Miner Package to accept affiliate terms">
+                            Become An Affiliate <i class="fas fa-lock text-xs ml-1"></i>
+                        </a>
+                    @endif
                   </div>
                   <div>
                     <button  class="btn btn-warning rounded btn-sm mx-2 " onclick="handleOpen()">
@@ -377,10 +391,16 @@ if (showAlertBtn) {
                             @endphp
 
                             <div class="d-flex flex-column align-items-center">
-                                <div class="d-flex border border-danger align-items-center rounded-pill p-1 bg-white mb-1">
-                                   <span></span>
-                                   <span class="text-xs">Binary Status:  </span>
-                                   <span class="px-1 text-danger text-sm" style="font-weight:700">Inactive</span>
+                                @php
+                                    $isBinaryActive = $user ? (strtolower(trim((string)($user->binary_status ?? 'inactive'))) === 'active' || !empty($user->affiliate_terms_accepted_at)) : false;
+                                @endphp
+                                <div class="d-flex border border-{{ $isBinaryActive ? 'success' : 'danger' }} align-items-center rounded-pill p-1 bg-white mb-1">
+                                   <span class="text-xs ml-1">Binary Status: </span>
+                                   @if($isBinaryActive)
+                                       <span class="px-1 text-success text-sm font-weight-bold"><i class="fas fa-check-circle"></i> Active</span>
+                                   @else
+                                       <span class="px-1 text-danger text-sm font-weight-bold"><i class="fas fa-times-circle"></i> Inactive</span>
+                                   @endif
                                 </div>
 
                                 <div class="d-flex border border-{{ $kycPct === 100 ? 'success' : ($kycPct > 0 ? 'warning' : 'info') }} align-items-center rounded-pill p-1 bg-white">
@@ -564,8 +584,8 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- My Contract --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.contracts.*') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('user.contracts.*') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.contracts.*', 'user.affiliate.terms') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-other {{ request()->routeIs('user.contracts.*', 'user.affiliate.terms') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-file-signature"></i>
                             <p>My contract <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -573,6 +593,11 @@ if (showAlertBtn) {
                             <li class="nav-item">
                                 <a href="{{ route('user.contracts.bifonex') }}" class="nav-link {{ request()->routeIs('user.contracts.bifonex') ? 'active' : '' }}">
                                     <i class="far fa-circle nav-icon"></i><p>Bifonex Contract</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.affiliate.terms') }}" class="nav-link {{ request()->routeIs('user.affiliate.terms') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon"></i><p>Affiliate terms&amp;condition</p>
                                 </a>
                             </li>
                         </ul>

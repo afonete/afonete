@@ -123,6 +123,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('investment-package/buy', [HomeController::class, 'buyFomPackage'])->name('user.investment-package.buy')->middleware('auth');
     Route::post('investment-package/activate-code', [HomeController::class, 'activateFomCode'])->name('user.investment-package.activate-code')->middleware('auth');
     Route::get('user/licence-miner/escrow', [HomeController::class, 'escrowWalletDetails'])->name('user.licence-miner.escrow')->middleware('auth');
+    Route::get('user/affiliate/terms', [\App\Http\Controllers\User\FinanceController::class, 'showAffiliateTerms'])->name('user.affiliate.terms')->middleware('auth');
     Route::post('user/affiliate/accept-terms', [\App\Http\Controllers\User\FinanceController::class, 'acceptAffiliateTerms'])->name('user.affiliate.accept-terms')->middleware('auth');
     Route::get('staker-package/', [HomeController::class, 'stakerPackage'])->name('staker-package');
 
