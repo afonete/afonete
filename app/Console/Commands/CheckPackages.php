@@ -42,27 +42,58 @@ class CheckPackages extends Command
                 $package->is_expired = true;
                 $package->save();
 
+                $isFomPackage = $package->isFom();
+
                 // Update the user's package status
                 $user = User::find($package->user);
                 if ($user) {
-                    $user->has_paid_package = 'no';
-                    $user->save();
+                    // Only downgrade has_paid_package if the user has NO other
+                    // active package left. A user can hold a FOM licence and a
+                    // UVP package at once — expiring one must not clobber the
+                    // other's dashboard access.
+                    $otherActive = Paymodel::where('user', $user->id)
+                        ->where('id', '!=', $package->id)
+                        ->where('is_expired', false)
+                        ->where('status', 1)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    if ($otherActive) {
+                        if (strtoupper((string) $user->has_paid_package) === strtoupper((string) $package->package)) {
+                            $user->has_paid_package = $otherActive->package;
+                            $user->save();
+                        }
+                    } else {
+                        $user->has_paid_package = 'no';
+                        $user->save();
+                    }
 
                     // ── Auto-transfer LOCKED_TOKEN → AVAILABLE_TOKEN on package expiry ──
-                    // When the package duration ends the locked tokens are released into
-                    // Available Token. From there, the user can manually transfer to Free Token
-                    // and then withdraw/swap/transfer to another user.
-                    $lockedBalance = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
-                    if ($lockedBalance > 0) {
-                        $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')
-                             ->update(['amount' => 0]);
+                    // LOCKED_TOKEN belongs to the UVP/FC token cycle. FOM packages
+                    // never credit LOCKED_TOKEN (they use ESCROW_TOKEN with their
+                    // own installment releases), so a FOM expiry must not dump a
+                    // UVP package's still-locked tokens. Also skip while another
+                    // active UVP/FC package remains.
+                    $hasOtherActiveUvpFc = Paymodel::where('user', $user->id)
+                        ->where('id', '!=', $package->id)
+                        ->excludeFom()
+                        ->where('is_expired', false)
+                        ->where('status', 1)
+                        ->exists();
 
-                        $existingAvailable = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
-                        ChartAccount::updateOrCreate(
-                            ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
-                            ['amount'  => $existingAvailable + $lockedBalance]
-                        );
-                        $this->info("User {$user->id}: {$lockedBalance} LOCKED_TOKEN → AVAILABLE_TOKEN (package expired).");
+                    if (!$isFomPackage && !$hasOtherActiveUvpFc) {
+                        $lockedBalance = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
+                        if ($lockedBalance > 0) {
+                            $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')
+                                 ->update(['amount' => 0]);
+
+                            $existingAvailable = $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
+                            ChartAccount::updateOrCreate(
+                                ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
+                                ['amount'  => $existingAvailable + $lockedBalance]
+                            );
+                            $this->info("User {$user->id}: {$lockedBalance} LOCKED_TOKEN → AVAILABLE_TOKEN (package expired).");
+                        }
                     }
                 }
 
@@ -80,6 +111,13 @@ class CheckPackages extends Command
             }
 
             // ── 2. Send renewal reminder emails at day 27, 57, 87 ──
+            // FOM Licence Miner packages do not follow the UVP renewal cycle
+            // (their tokens release via escrow installments), so they must
+            // never receive UVP renewal reminders.
+            if ($package->isFom()) {
+                continue;
+            }
+
             $reminderDays = [27, 57, 87];
 
             if (in_array($daysPassed, $reminderDays)) {

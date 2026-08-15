@@ -18,12 +18,15 @@ class FomLicenceMiner extends Model
         'price',
         'display_price',
         'tokens',
+        'token_symbol',
         'duration_days',
         'token_bonus',
         'direct_sponsors',
         'affiliate_vbonus',
         'space_shop_limit',
         'volume_point',
+        'volume_bonus',
+        'education_access',
         'unlocked_per_week',
         'allowed_loan',
         'investment_option',
@@ -31,6 +34,54 @@ class FomLicenceMiner extends Model
         'is_active',
         'sort_order',
     ];
+
+    /**
+     * Authoritative check: is this activation code a FOM Licence Miner code?
+     *
+     * Rules (UVP always wins on ambiguity so the two systems stay separate):
+     *  - 'FOM-' prefixed codes are FOM (generated only by buyFomPackage).
+     *  - Leader / UVP / FC marker packages are never FOM.
+     *  - A package name that exists in Adventures (UVP) is treated as UVP
+     *    even if a FOM package shares the same name — UVP codes must never
+     *    be swallowed by the FOM activation path.
+     *  - Otherwise, FOM if the package name exists in fom_licence_miners.
+     */
+    public static function isFomActivation($activation): bool
+    {
+        if (!$activation) {
+            return false;
+        }
+
+        $code = strtoupper(trim((string) ($activation->code ?? '')));
+        if (str_starts_with($code, 'FOM-')) {
+            return true;
+        }
+
+        $pkg = strtoupper(trim((string) ($activation->package ?? '')));
+        if ($pkg === '') {
+            return false;
+        }
+
+        // Never FOM: leader codes and explicit UVP/FC markers.
+        if (in_array($pkg, ['TEAM_LEADER', 'SUPER_LEADER', 'TM', 'VENTURE', 'UVP', 'FC'], true)) {
+            return false;
+        }
+
+        // UVP wins on name collision.
+        try {
+            if (\App\Models\Adventures::whereRaw('UPPER(name) = ?', [$pkg])->exists()) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            // If Adventures can't be checked, fall through to the FOM check.
+        }
+
+        try {
+            return self::whereRaw('UPPER(name) = ?', [$pkg])->exists();
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 
     /**
      * Safely extracts a clean float numeric value from any string, number, or null.
@@ -75,21 +126,127 @@ class FomLicenceMiner extends Model
 
     /**
      * Accessor for volume point or volume bonus text.
+     *
+     * Legacy accessor kept for backward compatibility: it previously guessed
+     * "bonus vs point" from the magnitude of volume_point. Now that the two
+     * are separate columns it shows Volume Point, falling back to the old
+     * heuristic only for un-migrated rows.
      */
     public function getFormattedVolumePointAttribute(): string
     {
-        $val = self::cleanNum($this->volume_point);
-        if ($val > 10) {
-            return "Volume Bonus: " . number_format($val);
+        $point = self::cleanNum($this->volume_point);
+        $bonus = self::cleanNum($this->volume_bonus ?? 0);
+
+        if ($bonus > 0) {
+            return "Volume Point: " . (int)$point . " Point";
         }
-        return "Volume Point: " . (int)$val . " Point";
+
+        // Legacy row (volume_bonus not yet set): preserve old display logic.
+        if ($point > 10) {
+            return "Volume Bonus: " . number_format($point);
+        }
+        return "Volume Point: " . (int)$point . " Point";
     }
+
+    /**
+     * The token symbol shown for this package: per-package override if the
+     * admin configured one, otherwise the global TokenSetting symbol.
+     */
+    public function effectiveTokenSymbol(): string
+    {
+        $own = trim((string) ($this->token_symbol ?? ''));
+        if ($own !== '') {
+            return $own;
+        }
+        try {
+            return \App\Models\TokenSetting::currentSymbol();
+        } catch (\Throwable $e) {
+            return 'FOCOIN';
+        }
+    }
+
+    /**
+     * Resolve the effective token symbol for a package NAME (used by views
+     * that only carry the package name, e.g. activation-code tables and the
+     * escrow installment list). Falls back to the global symbol when the
+     * package doesn't exist or has no override. Cached per request.
+     */
+    public static function symbolForPackageName($name): string
+    {
+        static $cache = [];
+
+        $key = strtoupper(trim((string) $name));
+
+        if ($key !== '' && array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        $global = 'FOCOIN';
+        try {
+            $global = \App\Models\TokenSetting::currentSymbol();
+        } catch (\Throwable $e) {
+        }
+
+        if ($key === '') {
+            return $global;
+        }
+
+        try {
+            $pkg = self::whereRaw('UPPER(name) = ?', [$key])->first();
+            $cache[$key] = $pkg ? $pkg->effectiveTokenSymbol() : $global;
+        } catch (\Throwable $e) {
+            $cache[$key] = $global;
+        }
+
+        return $cache[$key];
+    }
+
+    /**
+     * Per-request memo so the schema/seed check runs at most once per request
+     * instead of on every call (it used to run Schema::hasTable + a full table
+     * scan/rewrite on every home-page and admin-index hit).
+     */
+    protected static $ensured = false;
 
     /**
      * Ensures table exists and seeds/sanitizes initial packages if empty or outdated.
      */
     public static function ensureTableAndData()
     {
+        if (static::$ensured) {
+            return;
+        }
+        static::$ensured = true;
+
+        self::ensureSchema();
+
+        try {
+            if (self::count() === 0) {
+                self::seedDefaults();
+            } else {
+                self::sanitizeExistingRecords();
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("FomLicenceMiner ensureTableAndData error: " . $e->getMessage());
+        }
+    }
+
+    /** Per-request memo for the schema check. */
+    protected static $schemaEnsured = false;
+
+    /**
+     * Ensures the table exists AND has all current columns (self-heal for
+     * installs that don't run migrations). Called by every admin write path
+     * (create/store/edit/update) so saving token_symbol / volume_bonus /
+     * education_access can never fail on a pre-upgrade database.
+     */
+    public static function ensureSchema()
+    {
+        if (static::$schemaEnsured) {
+            return;
+        }
+        static::$schemaEnsured = true;
+
         try {
             if (!Schema::hasTable('fom_licence_miners')) {
                 Schema::create('fom_licence_miners', function (Blueprint $table) {
@@ -104,6 +261,9 @@ class FomLicenceMiner extends Model
                     $table->decimal('affiliate_vbonus', 8, 2)->default(10.00);
                     $table->string('space_shop_limit')->nullable()->default('Space Shop Room Limit');
                     $table->decimal('volume_point', 12, 0)->default(0);
+                    $table->decimal('volume_bonus', 20, 0)->default(0);
+                    $table->string('token_symbol', 50)->nullable();
+                    $table->string('education_access')->nullable()->default('Access to Education Courses');
                     $table->string('unlocked_per_week')->default('YES');
                     $table->string('allowed_loan')->nullable();
                     $table->string('investment_option')->nullable();
@@ -114,13 +274,35 @@ class FomLicenceMiner extends Model
                 });
             }
 
-            if (self::count() === 0) {
-                self::seedDefaults();
-            } else {
-                self::sanitizeExistingRecords();
+            // Self-heal existing installs: add the newer columns when missing.
+            if (Schema::hasTable('fom_licence_miners')) {
+                if (!Schema::hasColumn('fom_licence_miners', 'volume_bonus')) {
+                    Schema::table('fom_licence_miners', function (Blueprint $table) {
+                        $table->decimal('volume_bonus', 20, 0)->default(0);
+                    });
+                    // Migrate legacy data: the old convention stored a "bonus"
+                    // in volume_point when its value was > 10. Mirror the
+                    // migration exactly: move the value AND reset the point.
+                    foreach (self::where('volume_point', '>', 10)->get() as $legacy) {
+                        $legacy->volume_bonus = self::cleanNum($legacy->volume_point);
+                        $legacy->volume_point = 0;
+                        $legacy->save();
+                    }
+                }
+                if (!Schema::hasColumn('fom_licence_miners', 'token_symbol')) {
+                    Schema::table('fom_licence_miners', function (Blueprint $table) {
+                        $table->string('token_symbol', 50)->nullable();
+                    });
+                }
+                if (!Schema::hasColumn('fom_licence_miners', 'education_access')) {
+                    Schema::table('fom_licence_miners', function (Blueprint $table) {
+                        $table->string('education_access')->nullable()->default('Access to Education Courses');
+                    });
+                    self::query()->update(['education_access' => 'Access to Education Courses']);
+                }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("FomLicenceMiner ensureTableAndData error: " . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error("FomLicenceMiner ensureSchema error: " . $e->getMessage());
         }
     }
 
@@ -371,6 +553,20 @@ class FomLicenceMiner extends Model
         ];
 
         foreach ($defaults as $data) {
+            // Split legacy volume_point into the two distinct fields:
+            // values > 10 were "Volume Bonus", small values are "Volume Point".
+            $vol = self::cleanNum($data['volume_point'] ?? 0);
+            if ($vol > 10) {
+                $data['volume_bonus'] = $vol;
+                $data['volume_point'] = 0;
+            } else {
+                $data['volume_bonus'] = 0;
+            }
+
+            // Every FOM package includes access to education courses.
+            $data['education_access'] = $data['education_access'] ?? 'Access to Education Courses';
+
+            // token_symbol left null → falls back to global TokenSetting symbol.
             self::create($data);
         }
     }

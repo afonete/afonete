@@ -216,11 +216,14 @@
                                     </thead>
                                     <tbody>
                                         @foreach($installments as $inst)
-                                            @php $isDone = ($inst->status === 'completed'); @endphp
+                                            @php
+                                                $isDone = ($inst->status === 'completed');
+                                                $instSymbol = \App\Models\FomLicenceMiner::symbolForPackageName($inst->package_name);
+                                            @endphp
                                             <tr class="border-bottom border-secondary">
                                                 <td class="align-middle font-weight-bold text-light">Installment #{{ $inst->installment_number }} of 12</td>
                                                 <td class="align-middle font-weight-bold text-warning">{{ strtoupper($inst->package_name) }}</td>
-                                                <td class="align-middle font-weight-bold text-info fs-6">{{ number_format((float)$inst->amount) }} {{ $tokenSymbol }}</td>
+                                                <td class="align-middle font-weight-bold text-info fs-6">{{ number_format((float)$inst->amount) }} {{ $instSymbol }}</td>
                                                 <td class="align-middle text-light">{{ \Carbon\Carbon::parse($inst->release_date)->format('Y-m-d H:i') }}</td>
                                                 <td class="align-middle">
                                                     @if($isDone)

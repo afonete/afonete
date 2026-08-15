@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Schema\Blueprint;
 use App\Models\ChartAccount;
 use App\Models\TokenSetting;
@@ -34,11 +36,19 @@ class FomTokenStaking extends Model
         return $this->belongsTo(\App\Models\User::class, 'user_id', 'id');
     }
 
+    /** Per-request memo — avoids a Schema::hasTable() query on every call. */
+    protected static $ensured = false;
+
     /**
      * Ensures table exists.
      */
     public static function ensureTable()
     {
+        if (static::$ensured) {
+            return;
+        }
+        static::$ensured = true;
+
         try {
             if (!Schema::hasTable('fom_token_stakings')) {
                 Schema::create('fom_token_stakings', function (Blueprint $table) {
@@ -53,6 +63,7 @@ class FomTokenStaking extends Model
                     $table->string('status')->default('pending');
                     $table->dateTime('processed_at')->nullable();
                     $table->timestamps();
+                    $table->index(['user_id', 'status', 'release_date'], 'fts_user_status_release_idx');
                 });
             }
         } catch (\Throwable $e) {
@@ -96,53 +107,66 @@ class FomTokenStaking extends Model
         if (!$user) return;
         self::ensureTable();
 
-        $dueStakings = self::where('user_id', $user->id)
+        $dueIds = self::where('user_id', $user->id)
             ->where('status', 'pending')
             ->where('release_date', '<=', Carbon::now())
-            ->get();
+            ->pluck('id');
 
-        foreach ($dueStakings as $staking) {
-            $totalStaked = (float) $staking->total_staked;
+        foreach ($dueIds as $id) {
+            try {
+                DB::transaction(function () use ($user, $id) {
+                    // Lock the staking row and re-check status to prevent
+                    // double-release under concurrency.
+                    $staking = self::where('id', $id)->lockForUpdate()->first();
+                    if (!$staking || $staking->status !== 'pending' || $staking->release_date > Carbon::now()) {
+                        return; // already processed by a concurrent request
+                    }
 
-            // 1. Deduct from Independent Escrow Wallet (ESCROW_TOKEN)
-            $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
-            $newEscrow = max(0, $escrowBal - $totalStaked);
-            ChartAccount::updateOrCreate(
-                ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
-                ['amount' => $newEscrow]
-            );
+                    $totalStaked = (float) $staking->total_staked;
+                    $context = "FOM staking release id={$staking->id} ({$staking->lock_years}yr)";
 
-            // 2. Add Total Staked (Principal + Profit) to Available Token (AVAILABLE_TOKEN)
-            $availBal = (float) $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')->sum('amount');
-            ChartAccount::updateOrCreate(
-                ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
-                ['amount' => $availBal + $totalStaked]
-            );
+                    // 1. Deduct from Independent Escrow Wallet (ESCROW_TOKEN).
+                    //    Non-strict: honour the release, but log + record any shortfall.
+                    $debit = ChartAccount::debitLocked($user->id, 'ESCROW_TOKEN', $totalStaked, false, $context);
 
-            // 3. Mark staking as completed
-            $staking->update([
-                'status'       => 'completed',
-                'processed_at' => Carbon::now(),
-            ]);
+                    // 2. Add Total Staked (Principal + Profit) to Available Token (AVAILABLE_TOKEN)
+                    ChartAccount::creditLocked($user->id, 'AVAILABLE_TOKEN', $totalStaked, $context);
 
-            // 4. Log transaction
-            $txnNo = class_exists(Transaction::class) && method_exists(Transaction::class, 'generateTransactionNo')
-                ? Transaction::generateTransactionNo()
-                : 'FOM-STAKE-REL-' . time() . '-' . rand(100, 999);
+                    // 3. Mark staking as completed
+                    $staking->update([
+                        'status'       => 'completed',
+                        'processed_at' => Carbon::now(),
+                    ]);
 
-            Transaction::create([
-                'user_id'             => $user->id,
-                'transaction_no'      => $txnNo,
-                'transaction_type'    => 'FOM_ESCROW_STAKING_RELEASE',
-                'transaction_details' => json_encode([
-                    'lock_years'     => $staking->lock_years,
-                    'principal'      => $staking->principal_amount,
-                    'profit'         => $staking->profit_amount,
-                    'total_released' => $totalStaked,
-                    'status'         => 'completed',
-                    'processed_at'   => Carbon::now()->toDateTimeString(),
-                ]),
-            ]);
+                    // 4. Log transaction
+                    $txnNo = class_exists(Transaction::class) && method_exists(Transaction::class, 'generateTransactionNo')
+                        ? Transaction::generateTransactionNo()
+                        : 'FOM-STAKE-REL-' . time() . '-' . rand(100, 999);
+
+                    $details = [
+                        'lock_years'     => $staking->lock_years,
+                        'principal'      => $staking->principal_amount,
+                        'profit'         => $staking->profit_amount,
+                        'total_released' => $totalStaked,
+                        'status'         => 'completed',
+                        'processed_at'   => Carbon::now()->toDateTimeString(),
+                    ];
+                    if ($debit['shortfall'] > 0) {
+                        $details['escrow_shortfall'] = $debit['shortfall'];
+                    }
+
+                    Transaction::create([
+                        'user_id'             => $user->id,
+                        'transaction_no'      => $txnNo,
+                        'transaction_type'    => 'FOM_ESCROW_STAKING_RELEASE',
+                        'transaction_details' => json_encode($details),
+                    ]);
+                });
+            } catch (\Throwable $e) {
+                // One failed release must not block the others; it stays
+                // 'pending' and will be retried on the next page load.
+                Log::error("FomTokenStaking::processDueStakings failed for staking #{$id}: " . $e->getMessage());
+            }
         }
     }
 }

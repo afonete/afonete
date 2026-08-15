@@ -146,9 +146,10 @@ public function upgrade(Request $request){
                 }
             }
 
-            // FOM Licence Miner Package Check
-            $isFomPackage = \App\Models\FomLicenceMiner::where('name', $results->package)->exists()
-                || str_starts_with($results->code, 'FOM-');
+            // FOM Licence Miner Package Check (authoritative: UVP wins on any
+            // name collision, 'FOM-' codes are always FOM, leader/UVP/FC
+            // markers are never FOM — keeps both systems strictly separate)
+            $isFomPackage = \App\Models\FomLicenceMiner::isFomActivation($results);
 
             if ($isFomPackage) {
                 // Check if user has ALREADY activated an active package with this EXACT package name
@@ -170,46 +171,72 @@ public function upgrade(Request $request){
                     }
                 }
 
-                // Mark activation code as used
-                $results->stutus = "used";
-                $results->email = $user->email;
-                $results->save();
+                // Atomic activation: code redemption + payment record + escrow
+                // credit + installment schedule all commit together, or none
+                // of them do. The activation row is locked (FOR UPDATE) and
+                // status re-checked so a code can never be redeemed twice.
+                try {
+                    DB::transaction(function () use ($user, $results, $totalReturn) {
+                        $locked = Activations::where('id', $results->id)
+                            ->lockForUpdate()
+                            ->first();
+                        if (!$locked || $locked->stutus === 'used') {
+                            throw new \RuntimeException('CODE_ALREADY_USED');
+                        }
 
-                // Update user package status
-                $user->has_paid_package = $results->package;
-                $user->has_free_package = 'no';
-                $user->save();
+                        // Mark activation code as used
+                        $locked->stutus = "used";
+                        $locked->email = $user->email;
+                        $locked->save();
 
-                // Record Payment
-                \App\Models\Payment::create([
-                    'user'            => $user->id,
-                    'package'         => $results->package,
-                    'amount'          => $results->price,
-                    'amount_paid'     => $results->price,
-                    'paid'            => $results->price,
-                    'over_paid'       => 0,
-                    'status'          => 1,
-                    'is_expired'      => false,
-                    'duration'        => 600,
-                    'category'        => $results->package ?: 'FOM',
-                    'category_id'     => 1,
-                    'deposit_method'  => 'ACTIVATION_CODE',
-                    'payable_type'    => \App\Models\Activations::class,
-                    'payable_id'      => $results->id,
-                    'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
-                ]);
+                        // Update user package status
+                        $user->has_paid_package = $locked->package;
+                        $user->has_free_package = 'no';
+                        $user->save();
 
-                // Credit Independent Escrow Wallet (ESCROW_TOKEN)
-                $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
-                \App\Models\ChartAccount::updateOrCreate(
-                    ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
-                    ['amount' => $escrowBal + $totalReturn]
-                );
+                        // Record Payment
+                        \App\Models\Payment::create([
+                            'user'            => $user->id,
+                            'package'         => $locked->package,
+                            'amount'          => $locked->price,
+                            'paid'            => $locked->price,
+                            'over_paid'       => 0,
+                            'status'          => 1,
+                            'is_expired'      => false,
+                            'duration'        => 600,
+                            'category'        => $locked->package ?: 'FOM',
+                            'category_id'     => 1,
+                            'payable_type'    => \App\Models\Activations::class,
+                            'payable_id'      => $locked->id,
+                            'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
+                        ]);
 
-                // Create 12 Monthly Installments Schedule
-                \App\Models\FomTokenInstallment::createSchedule($user->id, $results->id, $results->package, $totalReturn);
+                        // Credit Independent Escrow Wallet (ESCROW_TOKEN) with row lock
+                        \App\Models\ChartAccount::creditLocked(
+                            $user->id,
+                            'ESCROW_TOKEN',
+                            $totalReturn,
+                            "FOM activation code {$locked->code} ({$locked->package})"
+                        );
 
-                // Process any due installments
+                        // Create 12 Monthly Installments Schedule
+                        \App\Models\FomTokenInstallment::createSchedule($user->id, $locked->id, $locked->package, $totalReturn);
+                    });
+                } catch (\RuntimeException $e) {
+                    if ($e->getMessage() === 'CODE_ALREADY_USED') {
+                        return redirect()->route('user.dashboard.activate')
+                            ->with('message', 'This activation code has already been used.');
+                    }
+                    \Illuminate\Support\Facades\Log::error('FOM activation failed: ' . $e->getMessage());
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', 'Activation failed and nothing was changed. Please try again.');
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('FOM activation failed: ' . $e->getMessage());
+                    return redirect()->route('user.dashboard.activate')
+                        ->with('message', 'Activation failed and nothing was changed. Please try again.');
+                }
+
+                // Process any due installments (each release is itself atomic)
                 \App\Models\FomTokenInstallment::processDueInstallments($user);
 
                 $tokenSetting = \App\Models\TokenSetting::first();

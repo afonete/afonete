@@ -113,13 +113,40 @@
                            placeholder="Space Shop Room Limit">
                 </div>
 
-                {{-- Volume Point / BV (Numeric) --}}
+                {{-- Volume Point (Numeric) --}}
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Volume Bonus / Point (Numeric)</label>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Volume Point (Numeric)</label>
                     <input type="number" name="volume_point" value="{{ old('volume_point') }}"
                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
-                           placeholder="e.g. 6000 or 4">
-                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Bonus: 6000 or Volume Point: 4 Point</span>
+                           placeholder="e.g. 4">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Point: 4 Point</span>
+                </div>
+
+                {{-- Volume Bonus (Numeric) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Volume Bonus (Numeric)</label>
+                    <input type="number" name="volume_bonus" value="{{ old('volume_bonus') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 6000">
+                    <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Bonus: 6,000 — separate from Volume Point</span>
+                </div>
+
+                {{-- Token Symbol (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Token Symbol (Text)</label>
+                    <input type="text" name="token_symbol" value="{{ old('token_symbol') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. {{ $tokenSymbol }}">
+                    <span class="text-[11px] text-slate-400 block mt-1">Leave empty to use the global token symbol ({{ $tokenSymbol }})</span>
+                </div>
+
+                {{-- Education Access (Text) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Education Access (Text)</label>
+                    <input type="text" name="education_access" value="{{ old('education_access', 'Access to Education Courses') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="Access to Education Courses">
+                    <span class="text-[11px] text-slate-400 block mt-1">Shown as a benefit on every FOM package card</span>
                 </div>
 
                 {{-- Unlocked Per Month (Text) --}}

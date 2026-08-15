@@ -79,7 +79,9 @@
                             $numSponsors    = \App\Models\FomLicenceMiner::cleanNum($pkg->direct_sponsors);
                             $numAffiliate   = \App\Models\FomLicenceMiner::cleanNum($pkg->affiliate_vbonus);
                             $numVolumePoint = \App\Models\FomLicenceMiner::cleanNum($pkg->volume_point);
+                            $numVolumeBonus = \App\Models\FomLicenceMiner::cleanNum($pkg->volume_bonus ?? 0);
                             $numTotalReturn = \App\Models\FomLicenceMiner::cleanNum($pkg->total_return);
+                            $pkgSymbol      = $pkg->effectiveTokenSymbol();
                         @endphp
                         <tr class="hover:bg-slate-50 border-b border-slate-100 transition-all">
                             <td class="p-4 text-sm font-semibold text-slate-500 text-center">
@@ -93,7 +95,7 @@
                                 <span class="font-extrabold text-emerald-600 block">${{ number_format($numPrice, 2) }}</span>
                             </td>
                             <td class="px-5 py-4 text-sm">
-                                <span class="font-bold text-indigo-600 block">{{ number_format($numTokens) }} {{ $tokenSymbol }}</span>
+                                <span class="font-bold text-indigo-600 block">{{ number_format($numTokens) }} {{ $pkgSymbol }}</span>
                                 <span class="text-[11px] text-slate-400 block mt-0.5">Bonus: X{{ $numTokenBonus }}%</span>
                             </td>
                             <td class="px-4 py-4 text-sm">
@@ -105,18 +107,15 @@
                             <td class="px-4 py-4 text-sm">
                                 <div class="text-xs space-y-0.5">
                                     <span class="bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded border border-blue-100 inline-block mb-1">{{ $pkg->duration_days }} Days</span>
-                                    <div class="text-slate-500 text-[11px]">
-                                        @if($numVolumePoint > 10)
-                                            Volume Bonus: {{ number_format($numVolumePoint) }}
-                                        @else
-                                            Volume Point: {{ $numVolumePoint }}
-                                        @endif
-                                    </div>
+                                    {{-- Volume Point & Volume Bonus: always shown, any value including 0 --}}
+                                    <div class="text-slate-500 text-[11px]">Volume Point: {{ (int) $numVolumePoint }} Point</div>
+                                    <div class="text-slate-500 text-[11px]">Volume Bonus: {{ number_format($numVolumeBonus) }}</div>
+                                    <div class="text-emerald-600 text-[11px] font-semibold">{{ trim((string)($pkg->education_access ?? '')) !== '' ? $pkg->education_access : 'Access to Education Courses' }}</div>
                                     <div class="text-slate-400 text-[11px]">{{ $pkg->allowed_loan }}</div>
                                 </div>
                             </td>
                             <td class="px-4 py-4 text-sm font-bold text-slate-700">
-                                {{ number_format($numTotalReturn) }} {{ $tokenSymbol }}
+                                {{ number_format($numTotalReturn) }} {{ $pkgSymbol }}
                             </td>
                             <td class="px-4 py-4 text-sm text-center">
                                 <form action="{{ route('admin.fom-licence-miner.toggle', $pkg->id) }}" method="POST" class="inline">

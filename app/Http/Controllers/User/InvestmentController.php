@@ -31,22 +31,28 @@ class InvestmentController extends Controller
     {
         $user = Auth::user();
 
-        // Pull every Payment row belonging to this user, newest first
+        // Pull every UVP/FC Payment row belonging to this user, newest first.
+        // FOM Licence Miner packages are NOT investments — they are token
+        // mining licences managed on their own page — so they are excluded.
         $investments = Paymodel::where('user', $user->id)
+            ->excludeFom()
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        // Aggregate counts
+        // Aggregate counts (FOM excluded so the totals match the listing)
         $totals = [
-            'total_count'   => (int) Paymodel::where('user', $user->id)->count(),
+            'total_count'   => (int) Paymodel::where('user', $user->id)->excludeFom()->count(),
             'active_count'  => (int) Paymodel::where('user', $user->id)
+                                  ->excludeFom()
                                   ->where('is_expired', false)
                                   ->where('status', 1)
                                   ->count(),
             'total_invested' => (float) Paymodel::where('user', $user->id)
+                                  ->excludeFom()
                                   ->where('status', 1)
                                   ->sum('amount'),
             'active_amount'  => (float) Paymodel::where('user', $user->id)
+                                  ->excludeFom()
                                   ->where('is_expired', false)
                                   ->where('status', 1)
                                   ->sum('amount'),
@@ -62,6 +68,14 @@ class InvestmentController extends Controller
     {
         $user = Auth::user();
         $payment = Paymodel::where('user', $user->id)->where('id', $id)->firstOrFail();
+
+        // FOM Licence Miner packages are not UVP/FC investments — their
+        // details (escrow, installments, staking) live on the Licence Miner
+        // escrow page instead.
+        if ($payment->isFom()) {
+            return redirect()->route('user.licence-miner.escrow')
+                ->with('info', 'FOM Licence Miner packages are managed on the Licence Miner page, not under Investments.');
+        }
 
         // Resolve the package model (Adventures or FCpackage) via the morph
         $package = null;

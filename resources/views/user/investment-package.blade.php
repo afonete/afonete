@@ -274,14 +274,16 @@
                     $numSponsors    = \App\Models\FomLicenceMiner::cleanNum($pkg->direct_sponsors);
                     $numAffiliate   = \App\Models\FomLicenceMiner::cleanNum($pkg->affiliate_vbonus);
                     $numVolumePoint = \App\Models\FomLicenceMiner::cleanNum($pkg->volume_point);
+                    $numVolumeBonus = \App\Models\FomLicenceMiner::cleanNum($pkg->volume_bonus ?? 0);
                     $numTotalReturn = \App\Models\FomLicenceMiner::cleanNum($pkg->total_return);
+                    $pkgSymbol      = $pkg->effectiveTokenSymbol();
                 @endphp
                 <div class="col-md-3">
                     <div class="card mb-3 shadow h-100 d-flex flex-column justify-between">
                         <div>
                             <div class="card-header">{{ strtoupper($pkg->name) }}</div>
                             <div class="price mt-1.5">{{ $pkg->display_price ?: ('$' . number_format($numPrice, 0) . ' USDT') }}</div>
-                            <div class="details mb-1.5">From Licence Miner. <br> TOKEN | {{ number_format($numTokens) }} {{ $tokenSymbol }}</div>
+                            <div class="details mb-1.5">From Licence Miner. <br> TOKEN | {{ number_format($numTokens) }} {{ $pkgSymbol }}</div>
                             <div class="card-body">
                                 <ul>
                                     <li>Duration {{ $pkg->duration_days }} Days</li>
@@ -297,13 +299,10 @@
                                     @if(!empty($pkg->space_shop_limit))
                                         <li>{{ $pkg->space_shop_limit }}</li>
                                     @endif
-                                    @if($numVolumePoint > 0)
-                                        @if($numVolumePoint > 10)
-                                            <li>Volume Bonus: {{ number_format($numVolumePoint) }}</li>
-                                        @else
-                                            <li>Volume Point: {{ $numVolumePoint }} Point</li>
-                                        @endif
-                                    @endif
+                                    {{-- Volume Point & Volume Bonus: always shown, any value including 0 --}}
+                                    <li>Volume Point: {{ (int) $numVolumePoint }} Point</li>
+                                    <li>Volume Bonus: {{ number_format($numVolumeBonus) }}</li>
+                                    <li>{{ trim((string)($pkg->education_access ?? '')) !== '' ? $pkg->education_access : 'Access to Education Courses' }}</li>
                                     @if(!empty($pkg->unlocked_per_week))
                                         <li>Unlocked Per Month: {{ $pkg->unlocked_per_week }}</li>
                                     @endif
@@ -314,7 +313,7 @@
                                         <li>{{ $pkg->investment_option }}</li>
                                     @endif
                                     @if($numTotalReturn > 0)
-                                        <li><strong>TOTAL RETURN: {{ number_format($numTotalReturn) }} {{ $tokenSymbol }}</strong></li>
+                                        <li><strong>TOTAL RETURN: {{ number_format($numTotalReturn) }} {{ $pkgSymbol }}</strong></li>
                                     @endif
                                 </ul>
                             </div>

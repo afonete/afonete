@@ -124,7 +124,11 @@ class HomeController extends Controller
             'quantity'   => 'required|integer|min:1',
         ]);
 
-        $package = \App\Models\FomLicenceMiner::findOrFail($request->package_id);
+        // Only active FOM packages are purchasable (admin can deactivate a
+        // package; a direct POST with its id must not bypass that).
+        $package = \App\Models\FomLicenceMiner::where('id', $request->package_id)
+            ->where('is_active', true)
+            ->firstOrFail();
         $quantity = (int) $request->quantity;
 
         $unitPrice   = \App\Models\FomLicenceMiner::cleanNum($package->price);
@@ -132,7 +136,8 @@ class HomeController extends Controller
         $unitReturn  = \App\Models\FomLicenceMiner::cleanNum($package->total_return);
         $totalReturn = $unitReturn * $quantity;
 
-        // Check Deposit Wallet Balance
+        // Pre-check Deposit Wallet Balance (authoritative check happens inside
+        // the transaction with the row locked).
         $depositBalance = (float) $user->ChartAccount()->where('acc_type', 'DEPOSIT')->sum('amount');
         if ($depositBalance < $totalCost) {
             return back()->with('error', "Insufficient Deposit Wallet balance ($" . number_format($depositBalance, 2) . "). You need $" . number_format($totalCost, 2) . " to purchase {$quantity}x {$package->name} package(s). Please deposit funds into your Deposit Wallet first.");
@@ -146,55 +151,71 @@ class HomeController extends Controller
             }
         }
 
-        // Debit Deposit Wallet
-        \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
-            ['amount' => $depositBalance - $totalCost]
-        );
-
-        // Generate Individual Activation Codes per unit
+        // Atomic purchase: debit + code generation + transaction log all
+        // commit together, or none of them do. The DEPOSIT row is locked
+        // (SELECT ... FOR UPDATE) so concurrent purchases cannot double-spend.
         $createdCodes = [];
         $firstActivation = null;
 
-        for ($i = 0; $i < $quantity; $i++) {
-            $code = 'FOM-' . strtoupper(\Illuminate\Support\Str::random(13));
-            $act = \App\Models\Activations::create([
-                'code'     => $code,
-                'package'  => $package->name,
-                'stutus'   => 'not',
-                'price'    => $unitPrice,
-                'token'    => $unitReturn,
-                'email'    => $user->email,
-                'user_id'  => $user->id,
-                'period'   => ($package->duration_days ?: 600) . ' Days',
-            ]);
-            $createdCodes[] = [
-                'id'   => $act->id,
-                'code' => $code,
-            ];
-            if ($i === 0) {
-                $firstActivation = $act;
-            }
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $package, $quantity, $unitPrice, $unitReturn, $totalCost, $totalReturn, &$createdCodes, &$firstActivation) {
+                // Debit Deposit Wallet (strict: throws on insufficient funds,
+                // rolling back the entire purchase).
+                \App\Models\ChartAccount::debitLocked(
+                    $user->id,
+                    'DEPOSIT',
+                    $totalCost,
+                    true,
+                    "FOM package purchase {$quantity}x {$package->name}"
+                );
+
+                // Generate Individual Activation Codes per unit
+                for ($i = 0; $i < $quantity; $i++) {
+                    $code = 'FOM-' . strtoupper(\Illuminate\Support\Str::random(13));
+                    $act = \App\Models\Activations::create([
+                        'code'     => $code,
+                        'package'  => $package->name,
+                        'stutus'   => 'not',
+                        'price'    => $unitPrice,
+                        'token'    => $unitReturn,
+                        'email'    => $user->email,
+                        'user_id'  => $user->id,
+                        'period'   => ($package->duration_days ?: 600) . ' Days',
+                    ]);
+                    $createdCodes[] = [
+                        'id'   => $act->id,
+                        'code' => $code,
+                    ];
+                    if ($i === 0) {
+                        $firstActivation = $act;
+                    }
+                }
+
+                // Log transaction
+                $txnNo = class_exists(\App\Models\Transaction::class) && method_exists(\App\Models\Transaction::class, 'generateTransactionNo')
+                    ? \App\Models\Transaction::generateTransactionNo()
+                    : 'FOM-BUY-' . time() . '-' . rand(100, 999);
+
+                \App\Models\Transaction::create([
+                    'user_id'             => $user->id,
+                    'transaction_no'      => $txnNo,
+                    'transaction_type'    => 'FOM_PACKAGE_PURCHASE',
+                    'transaction_details' => json_encode([
+                        'package'      => $package->name,
+                        'quantity'     => $quantity,
+                        'total_cost'   => $totalCost,
+                        'total_return' => $totalReturn,
+                        'codes'        => array_column($createdCodes, 'code'),
+                        'paid_via'     => 'DEPOSIT_WALLET',
+                    ]),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', "Insufficient Deposit Wallet balance. You need $" . number_format($totalCost, 2) . " to purchase {$quantity}x {$package->name} package(s). Please deposit funds into your Deposit Wallet first.");
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('buyFomPackage failed: ' . $e->getMessage());
+            return back()->with('error', 'Purchase failed and no funds were deducted. Please try again.');
         }
-
-        // Log transaction
-        $txnNo = class_exists(\App\Models\Transaction::class) && method_exists(\App\Models\Transaction::class, 'generateTransactionNo')
-            ? \App\Models\Transaction::generateTransactionNo()
-            : 'FOM-BUY-' . time() . '-' . rand(100, 999);
-
-        \App\Models\Transaction::create([
-            'user_id'             => $user->id,
-            'transaction_no'      => $txnNo,
-            'transaction_type'    => 'FOM_PACKAGE_PURCHASE',
-            'transaction_details' => json_encode([
-                'package'      => $package->name,
-                'quantity'     => $quantity,
-                'total_cost'   => $totalCost,
-                'total_return' => $totalReturn,
-                'codes'        => array_column($createdCodes, 'code'),
-                'paid_via'     => 'DEPOSIT_WALLET',
-            ]),
-        ]);
 
         return back()->with('purchase_success', true)
             ->with('created_codes', $createdCodes)
@@ -232,6 +253,14 @@ class HomeController extends Controller
             return back()->with('error', 'Invalid or already activated code.');
         }
 
+        // Hard guard: this endpoint activates FOM Licence Miner codes ONLY.
+        // UVP / FC / Leader codes must go through their own activation flow —
+        // otherwise a UVP code would wrongly credit escrow tokens and create
+        // a FOM installment schedule.
+        if (!\App\Models\FomLicenceMiner::isFomActivation($activation)) {
+            return back()->with('error', 'This code is not a FOM Licence Miner code. Please activate it from the Activation page instead.');
+        }
+
         // Check if user has ALREADY activated an active package with this EXACT package name
         $alreadyActivatedSamePackage = \App\Models\Payment::where('user', $user->id)
             ->where('package', $activation->package)
@@ -250,45 +279,71 @@ class HomeController extends Controller
             }
         }
 
-        // Mark code as used
-        $activation->stutus = 'used';
-        $activation->email = $user->email;
-        $activation->save();
+        // Atomic activation: code redemption + payment record + escrow credit
+        // + installment schedule all commit together, or none of them do.
+        // The activation row is locked (SELECT ... FOR UPDATE) and its status
+        // re-checked, so the same code can never be redeemed twice.
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $activation, $totalReturn) {
+                // Re-fetch and lock the code; abort if it was consumed by a
+                // concurrent request in the meantime.
+                $locked = \App\Models\Activations::where('id', $activation->id)
+                    ->lockForUpdate()
+                    ->first();
+                if (!$locked || !in_array($locked->stutus, ['not', 'pending'])) {
+                    throw new \RuntimeException('CODE_ALREADY_USED');
+                }
 
-        // Update user package status & record Payment
-        $user->has_paid_package = $activation->package;
-        $user->has_free_package = 'no';
-        $user->save();
+                // Mark code as used
+                $locked->stutus = 'used';
+                $locked->email = $user->email;
+                $locked->save();
 
-        \App\Models\Payment::create([
-            'user'            => $user->id,
-            'package'         => $activation->package,
-            'amount'          => $activation->price,
-            'amount_paid'     => $activation->price,
-            'paid'            => $activation->price,
-            'over_paid'       => 0,
-            'status'          => 1,
-            'is_expired'      => false,
-            'duration'        => 600,
-            'category'        => $activation->package ?: 'FOM',
-            'category_id'     => 1,
-            'deposit_method'  => 'ACTIVATION_CODE',
-            'payable_type'    => \App\Models\Activations::class,
-            'payable_id'      => $activation->id,
-            'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
-        ]);
+                // Update user package status & record Payment
+                $user->has_paid_package = $locked->package;
+                $user->has_free_package = 'no';
+                $user->save();
 
-        // Credit Independent Escrow Wallet (ESCROW_TOKEN)
-        $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
-        \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
-            ['amount' => $escrowBal + $totalReturn]
-        );
+                \App\Models\Payment::create([
+                    'user'            => $user->id,
+                    'package'         => $locked->package,
+                    'amount'          => $locked->price,
+                    'paid'            => $locked->price,
+                    'over_paid'       => 0,
+                    'status'          => 1,
+                    'is_expired'      => false,
+                    'duration'        => 600,
+                    'category'        => $locked->package ?: 'FOM',
+                    'category_id'     => 1,
+                    'payable_type'    => \App\Models\Activations::class,
+                    'payable_id'      => $locked->id,
+                    'expiration_date' => \Carbon\Carbon::now()->addDays(600)->toDateTimeString(),
+                ]);
 
-        // Create 12 Monthly Installment Schedule
-        \App\Models\FomTokenInstallment::createSchedule($user->id, $activation->id, $activation->package, $totalReturn);
+                // Credit Independent Escrow Wallet (ESCROW_TOKEN) with row lock
+                \App\Models\ChartAccount::creditLocked(
+                    $user->id,
+                    'ESCROW_TOKEN',
+                    $totalReturn,
+                    "FOM activation code {$locked->code} ({$locked->package})"
+                );
 
-        // Process any due installments
+                // Create 12 Monthly Installment Schedule
+                \App\Models\FomTokenInstallment::createSchedule($user->id, $locked->id, $locked->package, $totalReturn);
+            });
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'CODE_ALREADY_USED') {
+                return back()->with('error', 'Invalid or already activated code.');
+            }
+            \Illuminate\Support\Facades\Log::error('activateFomCode failed: ' . $e->getMessage());
+            return back()->with('error', 'Activation failed and nothing was changed. Please try again.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('activateFomCode failed: ' . $e->getMessage());
+            return back()->with('error', 'Activation failed and nothing was changed. Please try again.');
+        }
+
+        // Process any due installments (outside the activation transaction —
+        // each installment release is itself atomic)
         \App\Models\FomTokenInstallment::processDueInstallments($user);
 
         $tokenSetting = \App\Models\TokenSetting::first();

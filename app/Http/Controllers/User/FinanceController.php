@@ -1112,6 +1112,13 @@ public function getTeamTree(Request $request,$id){
                     ->with('error', 'The requested active package was not found or is expired.');
             }
 
+            // FOM Licence Miner packages do not use the UVP renewal cycle —
+            // their tokens release automatically via escrow installments.
+            if ($activePayment->isFom()) {
+                return redirect()->route('packageRenew')
+                    ->with('error', 'FOM Licence Miner packages cannot be renewed here. Their tokens are released automatically in monthly installments from your Escrow Wallet.');
+            }
+
             // How many renewals has this user already done for this payment?
             $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
                 ->where('payment_id', $activePayment->id)
@@ -1184,7 +1191,10 @@ public function getTeamTree(Request $request,$id){
         }
 
         // MULTI-PACKAGE RENEWAL DASHBOARD VIEW (NO $payment_id PROVIDED)
+        // FOM Licence Miner packages are excluded: they never renew via
+        // Trading Vouchers — their tokens release via escrow installments.
         $activePayments = \App\Models\Payment::where('user', $user->id)
+            ->excludeFom()
             ->where('is_expired', false)
             ->where('status', '1')
             ->orderBy('created_at', 'desc')
@@ -1271,8 +1281,10 @@ public function getTeamTree(Request $request,$id){
                 ->where('status', '1')
                 ->first();
         } else {
-            // Active package
+            // Active package (FOM excluded so the fallback can never silently
+            // charge a renewal against a FOM Licence Miner payment)
             $activePayment = \App\Models\Payment::where('user', $user->id)
+                ->excludeFom()
                 ->where('is_expired', false)
                 ->where('status', '1')
                 ->orderBy('created_at', 'desc')
@@ -1282,6 +1294,13 @@ public function getTeamTree(Request $request,$id){
         if (!$activePayment) {
             return redirect()->route('user.dashboard')
                 ->with('error', 'No active package found.');
+        }
+
+        // Hard guard: FOM Licence Miner packages never renew via Trading
+        // Vouchers — their tokens release automatically via escrow installments.
+        if ($activePayment->isFom()) {
+            return redirect()->route('packageRenew')
+                ->with('error', 'FOM Licence Miner packages cannot be renewed. Their tokens are released automatically in monthly installments from your Escrow Wallet.');
         }
 
         // How many renewals done already?
@@ -1731,31 +1750,37 @@ public function getTeamTree(Request $request,$id){
             return back()->with('error', 'Insufficient Available Token balance. You have ' . number_format($availableBal, 0) . ' tokens.');
         }
 
-        // Deduct from AVAILABLE_TOKEN
-        $user->ChartAccount()->where('acc_type', 'AVAILABLE_TOKEN')
-             ->update(['amount' => $availableBal - $tokenAmount]);
+        // Atomic transfer: debit + credit + log commit together, with the
+        // AVAILABLE_TOKEN row locked so concurrent transfers cannot double-spend.
+        try {
+            DB::transaction(function () use ($user, $tokenAmount) {
+                // Deduct from AVAILABLE_TOKEN (strict: throws on insufficient funds)
+                ChartAccount::debitLocked($user->id, 'AVAILABLE_TOKEN', $tokenAmount, true, 'Available to Free token transfer');
 
-        // Credit FREE_TOKEN
-        $freeBal = $user->ChartAccount()->where('acc_type', 'FREE_TOKEN')->sum('amount');
-        \App\Models\ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'FREE_TOKEN'],
-            ['amount'  => $freeBal + $tokenAmount]
-        );
+                // Credit FREE_TOKEN
+                ChartAccount::creditLocked($user->id, 'FREE_TOKEN', $tokenAmount, 'Available to Free token transfer');
 
-        $trxNo = \App\Models\Transaction::generateTransactionNo();
-        \App\Models\Transaction::create([
-            'user_id'             => $user->id,
-            'transaction_no'      => $trxNo,
-            'transaction_type'    => 'AVAILABLE_TO_FREE',
-            'receiver_id'         => 0,
-            'transaction_details' => json_encode([
-                'token_amount' => $tokenAmount,
-                'from'         => 'AVAILABLE_TOKEN',
-                'to'           => 'FREE_TOKEN',
-                'date'         => now()->toDateTimeString(),
-                'status'       => 'completed',
-            ]),
-        ]);
+                $trxNo = \App\Models\Transaction::generateTransactionNo();
+                \App\Models\Transaction::create([
+                    'user_id'             => $user->id,
+                    'transaction_no'      => $trxNo,
+                    'transaction_type'    => 'AVAILABLE_TO_FREE',
+                    'receiver_id'         => 0,
+                    'transaction_details' => json_encode([
+                        'token_amount' => $tokenAmount,
+                        'from'         => 'AVAILABLE_TOKEN',
+                        'to'           => 'FREE_TOKEN',
+                        'date'         => now()->toDateTimeString(),
+                        'status'       => 'completed',
+                    ]),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'Insufficient Available Token balance.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('availableToFree failed: ' . $e->getMessage());
+            return back()->with('error', 'Transfer failed and no tokens were deducted. Please try again.');
+        }
 
         return back()->with('success', number_format($tokenAmount, 0) . ' ' .
             \App\Models\TokenSetting::currentSymbol() . ' moved to your Free Token wallet.');
@@ -1795,54 +1820,72 @@ public function getTeamTree(Request $request,$id){
         $profitAmount = $amount * ($yieldPercent / 100.0);
         $totalStaked  = $amount + $profitAmount;
 
-        // 1. Deduct principal amount from AVAILABLE_TOKEN
-        ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'AVAILABLE_TOKEN'],
-            ['amount' => $availableBal - $amount]
-        );
-
-        // 2. Add Total Staked (Principal + Profit) to Independent Escrow Wallet (ESCROW_TOKEN)
-        $escrowBal = (float) $user->ChartAccount()->where('acc_type', 'ESCROW_TOKEN')->sum('amount');
-        ChartAccount::updateOrCreate(
-            ['user_id' => $user->id, 'acc_type' => 'ESCROW_TOKEN'],
-            ['amount' => $escrowBal + $totalStaked]
-        );
-
-        // 3. Create FomTokenStaking record
         \App\Models\FomTokenStaking::ensureTable();
         $releaseDate = \Carbon\Carbon::now()->addYears($years);
 
-        \App\Models\FomTokenStaking::create([
-            'user_id'          => $user->id,
-            'principal_amount' => $amount,
-            'yield_percent'    => $yieldPercent,
-            'profit_amount'    => $profitAmount,
-            'total_staked'     => $totalStaked,
-            'lock_years'       => $years,
-            'release_date'     => $releaseDate,
-            'status'           => 'pending',
-        ]);
+        // Atomic staking: debit + escrow credit + staking record + log all
+        // commit together, or none of them do. AVAILABLE_TOKEN is locked
+        // (FOR UPDATE) so concurrent stakes cannot double-spend the balance.
+        try {
+            DB::transaction(function () use ($user, $amount, $yieldPercent, $profitAmount, $totalStaked, $years, $releaseDate) {
+                // 1. Deduct principal amount from AVAILABLE_TOKEN (strict:
+                //    throws on insufficient funds, rolling everything back).
+                ChartAccount::debitLocked(
+                    $user->id,
+                    'AVAILABLE_TOKEN',
+                    $amount,
+                    true,
+                    "FOM {$years}-year escrow staking"
+                );
 
-        // 4. Log transaction
+                // 2. Add Total Staked (Principal + Profit) to Independent Escrow Wallet (ESCROW_TOKEN)
+                ChartAccount::creditLocked(
+                    $user->id,
+                    'ESCROW_TOKEN',
+                    $totalStaked,
+                    "FOM {$years}-year escrow staking"
+                );
+
+                // 3. Create FomTokenStaking record
+                \App\Models\FomTokenStaking::create([
+                    'user_id'          => $user->id,
+                    'principal_amount' => $amount,
+                    'yield_percent'    => $yieldPercent,
+                    'profit_amount'    => $profitAmount,
+                    'total_staked'     => $totalStaked,
+                    'lock_years'       => $years,
+                    'release_date'     => $releaseDate,
+                    'status'           => 'pending',
+                ]);
+
+                // 4. Log transaction
+                $txnNo = method_exists(\App\Models\Transaction::class, 'generateTransactionNo')
+                    ? \App\Models\Transaction::generateTransactionNo()
+                    : 'FOM-STAKE-' . time() . '-' . rand(100, 999);
+
+                \App\Models\Transaction::create([
+                    'user_id'             => $user->id,
+                    'transaction_no'      => $txnNo,
+                    'transaction_type'    => 'FOM_AVAILABLE_TO_ESCROW_STAKING',
+                    'transaction_details' => json_encode([
+                        'principal'     => $amount,
+                        'yield_percent' => $yieldPercent,
+                        'profit'        => $profitAmount,
+                        'total_staked'  => $totalStaked,
+                        'lock_years'    => $years,
+                        'release_date'  => $releaseDate->toDateTimeString(),
+                        'status'        => 'pending',
+                    ]),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', "Insufficient Available Token balance. You requested to stake " . number_format($amount) . " tokens.");
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('stakeAvailableToEscrow failed: ' . $e->getMessage());
+            return back()->with('error', 'Staking failed and no tokens were deducted. Please try again.');
+        }
+
         $symbol = \App\Models\TokenSetting::currentSymbol();
-        $txnNo  = method_exists(\App\Models\Transaction::class, 'generateTransactionNo')
-            ? \App\Models\Transaction::generateTransactionNo()
-            : 'FOM-STAKE-' . time() . '-' . rand(100, 999);
-
-        \App\Models\Transaction::create([
-            'user_id'             => $user->id,
-            'transaction_no'      => $txnNo,
-            'transaction_type'    => 'FOM_AVAILABLE_TO_ESCROW_STAKING',
-            'transaction_details' => json_encode([
-                'principal'     => $amount,
-                'yield_percent' => $yieldPercent,
-                'profit'        => $profitAmount,
-                'total_staked'  => $totalStaked,
-                'lock_years'    => $years,
-                'release_date'  => $releaseDate->toDateTimeString(),
-                'status'        => 'pending',
-            ]),
-        ]);
 
         return back()->with('success', "Transferred " . number_format($amount) . " Available Tokens into " . $years . "-Year Escrow Staking! " . number_format($profitAmount) . " {$symbol} (" . $yieldPercent . "% profit) added. Total " . number_format($totalStaked) . " {$symbol} in Escrow, releasing on " . $releaseDate->format('Y-m-d') . ".");
     }
