@@ -123,6 +123,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('investment-package/buy', [HomeController::class, 'buyFomPackage'])->name('user.investment-package.buy')->middleware('auth');
     Route::post('investment-package/activate-code', [HomeController::class, 'activateFomCode'])->name('user.investment-package.activate-code')->middleware('auth');
     Route::get('user/licence-miner/escrow', [HomeController::class, 'escrowWalletDetails'])->name('user.licence-miner.escrow')->middleware('auth');
+    Route::get('user/licence-miner/escrow/package/{key}', [HomeController::class, 'escrowPackageDetails'])->name('user.licence-miner.escrow.package')->middleware('auth');
     Route::get('user/affiliate/terms', [\App\Http\Controllers\User\FinanceController::class, 'showAffiliateTerms'])->name('user.affiliate.terms')->middleware('auth');
     Route::post('user/affiliate/accept-terms', [\App\Http\Controllers\User\FinanceController::class, 'acceptAffiliateTerms'])->name('user.affiliate.accept-terms')->middleware('auth');
     Route::get('staker-package/', [HomeController::class, 'stakerPackage'])->name('staker-package');
@@ -246,6 +247,8 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     // ── MY CONTRACT (user) ─────────────────────────────────────────────
     Route::get('user/contracts/bifonex', [\App\Http\Controllers\ContractDocumentController::class, 'userIndex'])
         ->name('user.contracts.bifonex');
+    Route::get('user/contracts/bifonex/summary.pdf', [\App\Http\Controllers\ContractDocumentController::class, 'userSummaryPdf'])
+        ->name('user.contracts.bifonex.summary-pdf');
 
 
     // ── MULTI-LEVEL KYC VERIFICATION (user) ──────────────────────────────
@@ -519,6 +522,8 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/fom-licence-miner', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'index'])->name('admin.fom-licence-miner.index');
     Route::get('admin/settings/affiliate-terms', [\App\Http\Controllers\Admin\SettingsController::class, 'affiliateTerms'])->name('admin.settings.affiliate-terms');
     Route::post('admin/settings/affiliate-terms', [\App\Http\Controllers\Admin\SettingsController::class, 'updateAffiliateTerms'])->name('admin.settings.affiliate-terms.update');
+    Route::get('admin/settings/contract-template', [\App\Http\Controllers\Admin\SettingsController::class, 'contractTemplate'])->name('admin.settings.contract-template');
+    Route::post('admin/settings/contract-template', [\App\Http\Controllers\Admin\SettingsController::class, 'updateContractTemplate'])->name('admin.settings.contract-template.update');
     Route::get('admin/fom-licence-miner/codes', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'codesReport'])->name('admin.fom-licence-miner.codes');
     Route::get('admin/fom-licence-miner/escrow-audit', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'escrowAuditReport'])->name('admin.fom-licence-miner.escrow-audit');
     Route::get('admin/fom-licence-miner/create', [\App\Http\Controllers\Admin\FomLicenceMinerAdminController::class, 'create'])->name('admin.fom-licence-miner.create');

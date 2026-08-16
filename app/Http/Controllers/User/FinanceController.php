@@ -1193,16 +1193,19 @@ public function getTeamTree(Request $request,$id){
         // MULTI-PACKAGE RENEWAL DASHBOARD VIEW (NO $payment_id PROVIDED)
         // FOM Licence Miner packages are excluded: they never renew via
         // Trading Vouchers — their tokens release via escrow installments.
-        $activePayments = \App\Models\Payment::where('user', $user->id)
+        // Paginated 10 per page; the per-package renewal computation below
+        // only runs for the current page's rows.
+        $packagesPaginator = \App\Models\Payment::where('user', $user->id)
             ->excludeFom()
             ->where('is_expired', false)
             ->where('status', '1')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         $packagesData = [];
 
-        foreach ($activePayments as $payment) {
+        foreach ($packagesPaginator->items() as $payment) {
             $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
                 ->where('payment_id', $payment->id)
                 ->count();
@@ -1254,6 +1257,7 @@ public function getTeamTree(Request $request,$id){
             'isSingleView'         => false,
             'tradingVoucherBalance'=> $tradingVoucherBalance,
             'packagesData'         => $packagesData,
+            'packagesPaginator'    => $packagesPaginator,
         ]);
     }
     

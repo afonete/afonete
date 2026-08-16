@@ -239,6 +239,12 @@ body{
                             <hr class="ct-divider">
                         </div>
                         <div class="main-par ">
+                          @if(!empty($adminContractBody ?? null))
+                                {{-- Admin-managed contract body (Admin → Settings → User Contract Template) --}}
+                                <div class="trix-content">
+                                    {!! $adminContractBody !!}
+                                </div>
+                          @else
                                 <p class="par">The Independent Marketing affiliate ("IMA") Agreement, the Compensation Plan and the
                                         General Terms and Conditions (forming inseparable part of one document and entire
                                         agreement between the Company and its IMA) explains and governs the relationship between
@@ -1748,6 +1754,7 @@ authorized representative as of the date first set forth above.
 
 
                                 </ol>
+                          @endif
 
 
 

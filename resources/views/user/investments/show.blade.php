@@ -148,6 +148,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($renewals->hasPages())
+                <div class="px-3 pt-2 pb-1 d-flex justify-content-center">
+                    {{ $renewals->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
         </div>
     </div>
     @endif
@@ -155,8 +160,10 @@
     {{-- ── Daily income history ── --}}
     @if($dailyIncomes->isNotEmpty())
     @php
-        $runningSum = 0.0;
-        $dailyIncomesAsc = $dailyIncomes->reverse();
+        // Running total seeded with the sum of all rows OLDER than this page,
+        // so the cumulative column stays correct on every page.
+        $runningSum = (float) ($incomesCumulativeBase ?? 0);
+        $dailyIncomesAsc = collect($dailyIncomes->items())->reverse();
         $cumulativeList = [];
         foreach ($dailyIncomesAsc as $d) {
             $runningSum += (float) $d->amount;
@@ -183,6 +190,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($dailyIncomes->hasPages())
+                <div class="px-3 pt-2 pb-1 d-flex justify-content-center">
+                    {{ $dailyIncomes->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
         </div>
     </div>
     @endif
@@ -210,6 +222,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($transactions->hasPages())
+                <div class="px-3 pt-2 pb-1 d-flex justify-content-center">
+                    {{ $transactions->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
         </div>
     </div>
     @endif

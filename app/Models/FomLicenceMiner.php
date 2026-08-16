@@ -36,6 +36,24 @@ class FomLicenceMiner extends Model
     ];
 
     /**
+     * True when the table has all columns the current code writes.
+     * Used by admin write paths to fail loudly (instead of a silent
+     * QueryException → redirect) when ensureSchema() could not alter the
+     * table, e.g. because the DB user lacks ALTER privileges.
+     */
+    public static function hasCurrentSchema(): bool
+    {
+        try {
+            return Schema::hasTable('fom_licence_miners')
+                && Schema::hasColumn('fom_licence_miners', 'token_symbol')
+                && Schema::hasColumn('fom_licence_miners', 'volume_bonus')
+                && Schema::hasColumn('fom_licence_miners', 'education_access');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * Authoritative check: is this activation code a FOM Licence Miner code?
      *
      * Rules (UVP always wins on ambiguity so the two systems stay separate):

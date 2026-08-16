@@ -37,7 +37,7 @@ class InvestmentController extends Controller
         $investments = Paymodel::where('user', $user->id)
             ->excludeFom()
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate(10);
 
         // Aggregate counts (FOM excluded so the totals match the listing)
         $totals = [
@@ -96,11 +96,13 @@ class InvestmentController extends Controller
         // Locked tokens this investment granted
         $lockedTokens = $uvpPrice > 0 ? round($payment->amount / $uvpPrice, 4) : 0;
 
-        // Renewals for this investment
+        // Renewals for this investment (10 per page; own page param so the
+        // three paginated lists on this screen don't clash)
+        $renewalsCount = PackageRenewal::where('payment_id', $payment->id)->count();
         $renewals = PackageRenewal::where('payment_id', $payment->id)
             ->orderBy('renewal_number')
-            ->get();
-        $renewalsCount = $renewals->count();
+            ->paginate(10, ['*'], 'renewals_page')
+            ->withQueryString();
 
         // Daily income history for this investment
         // The daily_incomes table has: user_id, amount, earned_at, is_redeemed
@@ -118,7 +120,36 @@ class InvestmentController extends Controller
                     : Carbon::now()->addDays(365)->toDateString(),
             ]);
         }
-        $dailyIncomes = $dailyIncomesQuery->orderByDesc('earned_at')->limit(30)->get();
+        $dailyIncomes = $dailyIncomesQuery->orderByDesc('earned_at')
+            ->paginate(10, ['*'], 'incomes_page')
+            ->withQueryString();
+
+        // Cumulative base: sum of all income rows OLDER than the oldest row
+        // on the current page, so the running total stays correct across pages.
+        $oldestOnPage = collect($dailyIncomes->items())->last();
+        $incomesCumulativeBase = 0.0;
+        if ($oldestOnPage) {
+            $baseQuery = DailyIncome::where('user_id', $user->id);
+            if (\Illuminate\Support\Facades\Schema::hasColumn('daily_incomes', 'payment_id')) {
+                $baseQuery->where('payment_id', $payment->id);
+            } else {
+                $baseQuery->whereBetween('earned_at', [
+                    Carbon::parse($payment->created_at)->toDateString(),
+                    $payment->expiration_date
+                        ? Carbon::parse($payment->expiration_date)->toDateString()
+                        : Carbon::now()->addDays(365)->toDateString(),
+                ]);
+            }
+            $incomesCumulativeBase = (float) $baseQuery
+                ->where(function ($q) use ($oldestOnPage) {
+                    $q->where('earned_at', '<', $oldestOnPage->earned_at)
+                      ->orWhere(function ($qq) use ($oldestOnPage) {
+                          $qq->where('earned_at', $oldestOnPage->earned_at)
+                             ->where('id', '<', $oldestOnPage->id);
+                      });
+                })
+                ->sum('amount');
+        }
 
         // Transactions tied to this investment (commissions, swap, renewals)
         // The transactions table uses JSON `transaction_details` — try multiple keys.
@@ -130,8 +161,8 @@ class InvestmentController extends Controller
                   ->orWhere('transaction_no', (string) $payment->id);
             })
             ->orderByDesc('created_at')
-            ->limit(30)
-            ->get();
+            ->paginate(10, ['*'], 'transactions_page')
+            ->withQueryString();
 
         // Time-to-expiry + days elapsed
         $now = Carbon::now();
@@ -145,7 +176,7 @@ class InvestmentController extends Controller
 
         return view('user.investments.show', compact(
             'payment','package','uvpPrice','renewalPrice','lockedTokens',
-            'renewals','renewalsCount','dailyIncomes','transactions',
+            'renewals','renewalsCount','dailyIncomes','incomesCumulativeBase','transactions',
             'daysElapsed','daysRemaining','maxRenewals'
         ));
     }

@@ -110,7 +110,7 @@
                     <div class="card p-3 shadow-sm h-100 border-0" style="background: #1e293b; border-left: 4px solid #f59e0b !important; border-radius: 14px;">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="text-muted d-block small font-weight-bold text-uppercase">Escrow Wallet (Locked Tokens)</span>
+                                <span class="text-muted d-block small font-weight-bold text-uppercase">Escrow Wallet</span>
                                 <h3 class="font-weight-bold text-warning mb-0 mt-1">{{ number_format($escrowBal, 0) }}</h3>
                                 <small class="text-muted">{{ $tokenSymbol }}</small>
                             </div>
@@ -190,10 +190,10 @@
                                 </h5>
                                 <p class="text-muted small mb-0">Total Return tokens from activated packages are locked in Escrow and released in 12 equal monthly installments into Available Tokens.</p>
                             </div>
-                            <span class="badge bg-info text-dark font-weight-bold px-3 py-2 fs-6">{{ count($installments ?? []) }} Scheduled Releases</span>
+                            <span class="badge bg-info text-dark font-weight-bold px-3 py-2 fs-6">{{ count($packageGroups ?? []) }} {{ Str::plural('Package', count($packageGroups ?? [])) }} · {{ count($installments ?? []) }} Scheduled Releases</span>
                         </div>
 
-                        @if(empty($installments) || count($installments) === 0)
+                        @if(empty($packageGroups) || count($packageGroups) === 0)
                             <div class="text-center p-5 text-muted">
                                 <i class="fas fa-calendar-times text-secondary mb-3 d-block" style="font-size: 2.5rem;"></i>
                                 <h5 class="text-light font-weight-bold">No 12-Month Installment Schedules Found</h5>
@@ -203,39 +203,63 @@
                                 </a>
                             </div>
                         @else
-                            <div class="table-responsive">
-                                <table class="table table-dark table-hover mb-0 text-center align-middle" style="background:transparent;">
-                                    <thead class="bg-dark text-muted uppercase text-xs">
-                                        <tr>
-                                            <th class="py-3">Installment #</th>
-                                            <th class="py-3">Package Name</th>
-                                            <th class="py-3">Tokens Amount</th>
-                                            <th class="py-3">Scheduled Release Date</th>
-                                            <th class="py-3">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($installments as $inst)
-                                            @php
-                                                $isDone = ($inst->status === 'completed');
-                                                $instSymbol = \App\Models\FomLicenceMiner::symbolForPackageName($inst->package_name);
-                                            @endphp
-                                            <tr class="border-bottom border-secondary">
-                                                <td class="align-middle font-weight-bold text-light">Installment #{{ $inst->installment_number }} of 12</td>
-                                                <td class="align-middle font-weight-bold text-warning">{{ strtoupper($inst->package_name) }}</td>
-                                                <td class="align-middle font-weight-bold text-info fs-6">{{ number_format((float)$inst->amount) }} {{ $instSymbol }}</td>
-                                                <td class="align-middle text-light">{{ \Carbon\Carbon::parse($inst->release_date)->format('Y-m-d H:i') }}</td>
-                                                <td class="align-middle">
-                                                    @if($isDone)
-                                                        <span class="badge bg-success text-white px-3 py-1.5"><i class="fas fa-check-circle me-1"></i>Released to Available Tokens</span>
+                            {{-- PER-PACKAGE ESCROW CARDS: each activated package has its own escrow schedule page --}}
+                            <div class="row">
+                                @foreach($packageGroups as $grp)
+                                    @php
+                                        $grpKey = $grp->activation_id ?: strtoupper((string) $grp->package_name);
+                                        $pct = $grp->total_count > 0 ? (int) round(($grp->released_count / $grp->total_count) * 100) : 0;
+                                    @endphp
+                                    <div class="col-12 col-md-6 col-xl-4 mb-4">
+                                        <div class="card h-100 border-0 shadow-sm" style="background:#0f172a; border-radius:14px; border-left:4px solid {{ $grp->is_complete ? '#10b981' : '#f59e0b' }} !important;">
+                                            <div class="card-body p-4 d-flex flex-column">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div>
+                                                        <h5 class="font-weight-bold text-warning mb-1">{{ strtoupper($grp->package_name) }}</h5>
+                                                        <small class="text-muted">
+                                                            @if($grp->activation_id) Activation #{{ $grp->activation_id }} · @endif
+                                                            Started {{ $grp->started_at ? \Carbon\Carbon::parse($grp->started_at)->format('Y-m-d') : '—' }}
+                                                        </small>
+                                                    </div>
+                                                    @if($grp->is_complete)
+                                                        <span class="badge bg-success text-white px-2 py-1"><i class="fas fa-check-circle me-1"></i>Completed</span>
                                                     @else
-                                                        <span class="badge bg-warning text-dark px-3 py-1.5"><i class="fas fa-lock me-1"></i>Pending in Escrow Wallet</span>
+                                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-lock me-1"></i>Releasing</span>
                                                     @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                                </div>
+
+                                                <div class="mb-2 d-flex justify-content-between text-sm">
+                                                    <span class="text-muted">Total Return</span>
+                                                    <span class="font-weight-bold text-info">{{ number_format($grp->total_return) }} {{ $grp->symbol }}</span>
+                                                </div>
+                                                <div class="mb-2 d-flex justify-content-between text-sm">
+                                                    <span class="text-muted">Released</span>
+                                                    <span class="font-weight-bold text-success">{{ number_format($grp->released_tokens) }} {{ $grp->symbol }}</span>
+                                                </div>
+                                                <div class="mb-3 d-flex justify-content-between text-sm">
+                                                    <span class="text-muted">Still in Escrow</span>
+                                                    <span class="font-weight-bold text-warning">{{ number_format($grp->pending_tokens) }} {{ $grp->symbol }}</span>
+                                                </div>
+
+                                                {{-- Progress bar --}}
+                                                <div class="progress mb-2" style="height: 8px; background:#1e293b; border-radius:6px;">
+                                                    <div class="progress-bar {{ $grp->is_complete ? 'bg-success' : 'bg-warning' }}" role="progressbar" style="width: {{ $pct }}%;" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                </div>
+                                                <small class="text-muted mb-3 d-block">
+                                                    {{ $grp->released_count }} / {{ $grp->total_count }} releases done ({{ $pct }}%)
+                                                    @if(!$grp->is_complete && $grp->next_release)
+                                                        · Next: {{ \Carbon\Carbon::parse($grp->next_release)->format('Y-m-d') }}
+                                                    @endif
+                                                </small>
+
+                                                <a href="{{ route('user.licence-miner.escrow.package', ['key' => $grpKey]) }}"
+                                                   class="btn btn-outline-info font-weight-bold btn-sm mt-auto w-100" style="border-radius:8px;">
+                                                    <i class="fas fa-search-dollar me-1"></i> Check Escrow Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         @endif
                     </div>

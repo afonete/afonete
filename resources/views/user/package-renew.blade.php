@@ -316,7 +316,7 @@
                                             Total Active Packages
                                         </span>
                                         <h2 class="font-weight-bold mb-0 mt-1" style="font-size: 2.2rem;">
-                                            {{ isset($packagesData) && is_array($packagesData) ? count($packagesData) : 0 }}
+                                            {{ isset($packagesPaginator) ? $packagesPaginator->total() : (isset($packagesData) && is_array($packagesData) ? count($packagesData) : 0) }}
                                         </h2>
                                         <small style="opacity: 0.85;">Packages currently generating daily yields and active interest.</small>
                                     </div>
@@ -458,6 +458,11 @@
                                     </tbody>
                                 </table>
                             </div>
+                            @if(isset($packagesPaginator) && $packagesPaginator->hasPages())
+                                <div class="d-flex justify-content-center py-3 border-top">
+                                    {{ $packagesPaginator->links('pagination::bootstrap-4') }}
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>

@@ -6,7 +6,7 @@
             <div class="row mb-2">
                 <div class="col-sm-8">
                     <h1 class="font-weight-bold text-dark mb-0"><i class="fas fa-file-contract text-primary mr-2"></i>My Bifonex Contract</h1>
-                    <p class="text-muted small">View your official signed affiliate agreement and contract summary.</p>
+                    <p class="text-muted small">View your contract status and the official contract summary.</p>
                 </div>
             </div>
         </div>
@@ -15,7 +15,7 @@
     <section class="content">
         <div class="container-fluid">
             @if(!$contract)
-                <div class="card border-0 shadow-sm" style="border-radius:12px;">
+                <div class="card border-0 shadow-sm mb-4" style="border-radius:12px;">
                     <div class="card-body p-4 text-center">
                         <i class="fas fa-file-signature fa-3x text-warning mb-3"></i>
                         <h4 class="font-weight-bold text-dark mb-2">No Signed Contract Found</h4>
@@ -43,7 +43,7 @@
                             <div class="card-body p-3.5">
                                 <span class="text-uppercase small text-muted font-weight-bold d-block mb-1" style="font-size:0.72rem;">Account Details</span>
                                 <div class="font-weight-bold text-slate-800 mb-1" style="font-size:1rem;">@ {{ $contract->user->user ?? '—' }}</div>
-                                <div class="text-muted small">User ID: <strong>#{{ $contract->user_id }}</strong> · Country: <strong>{{ $contract->user->country ?? '—' }}</strong></div>
+                                <div class="text-muted small">User ID: <strong>{{ ($contract->user && method_exists($contract->user, 'getTransferCode')) ? $contract->user->getTransferCode() : ($contract->user->transfer_code ?? '—') }}</strong> · Country: <strong>{{ $contract->user->country ?? '—' }}</strong></div>
                             </div>
                         </div>
                     </div>
@@ -65,51 +65,49 @@
                         </div>
                     </div>
                 </div>
+            @endif
 
-                {{-- ── 2. CONTRACT HIGHLIGHTS & OVERVIEW ── --}}
-                <div class="card border-0 shadow-sm mb-4" style="border-radius:12px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff;">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 border-bottom pb-2" style="border-bottom-color: rgba(255,255,255,0.15) !important;">
-                            <h5 class="font-weight-bold text-white mb-0 flex-grow-1">
-                                <i class="fas fa-file-alt text-warning mr-2"></i> Bifonex Contract Summary &amp; Overview
-                            </h5>
-                            <span class="badge badge-warning text-dark font-weight-bold px-2.5 py-1" style="border-radius:4px; font-size:0.72rem;">
-                                Contract Ref #{{ $contract->id }}
-                            </span>
-                        </div>
-                        <div class="row text-slate-200 small">
-                            <div class="col-12 col-md-4 mb-2 mb-md-0">
-                                <strong>Agreement Type:</strong> Independent Marketing Affiliate (IMA) &amp; Client Agreement
-                            </div>
-                            <div class="col-12 col-md-4 mb-2 mb-md-0">
-                                <strong>Confidentiality:</strong> Protected proprietary information &amp; platform rules
-                            </div>
-                            <div class="col-12 col-md-4">
-                                <strong>Legal Effect:</strong> Digitally signed with legally binding system verification
-                            </div>
-                        </div>
-                    </div>
+            {{-- ── 2. CONTRACT SUMMARY (PDF VIEW) ── --}}
+            {{-- Admin-managed: Admin → Bifonex contract → User Contract Template --}}
+            <div class="card border-0 shadow-sm mb-4" style="border-radius:12px; overflow:hidden;">
+                <div class="card-header bg-light font-weight-bold text-dark py-3 d-flex align-items-center justify-content-between">
+                    <span><i class="fas fa-file-pdf text-danger mr-2"></i> Bifonex Contract Summary</span>
+                    @if(!$contract)
+                        <span class="text-muted small">Preview before signing</span>
+                    @endif
                 </div>
-
-                {{-- ── 3. FULL SIGNED DOCUMENT PREVIEW ── --}}
-                <div class="card border-0 shadow-sm mb-4" style="border-radius:12px; overflow:hidden;">
-                    <div class="card-header bg-light font-weight-bold text-dark py-3 d-flex align-items-center justify-content-between">
-                        <span><i class="fas fa-file-pdf text-danger mr-2"></i> Full Signed Contract Document</span>
-                        <span class="text-muted small">Verified Digital Copy</span>
-                    </div>
-                    <div class="card-body p-0">
+                <div class="card-body p-0">
+                    @if(!empty($summaryPdfAvailable ?? null))
                         <div style="background:#1e293b;">
+                            {{-- Streamed from its own route so the browser's native PDF viewer renders it --}}
                             <iframe
-                                title="Bifonex Contract PDF"
-                                src="data:application/pdf;base64,{{ $pdfBase64 }}#toolbar=0&navpanes=0&scrollbar=1"
-                                style="width:100%; height:82vh; border:0; background:#ffffff;"
-                                sandbox="allow-same-origin"
+                                title="Bifonex Contract Summary PDF"
+                                src="{{ route('user.contracts.bifonex.summary-pdf') }}#toolbar=0&navpanes=0&scrollbar=1"
+                                style="width:100%; height:75vh; border:0; background:#ffffff;"
                                 oncontextmenu="return false;">
                             </iframe>
                         </div>
-                    </div>
+                        <noscript>
+                            <div class="p-3 text-center">
+                                <a href="{{ route('user.contracts.bifonex.summary-pdf') }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm font-weight-bold">
+                                    <i class="fas fa-file-pdf mr-1"></i> Open Contract Summary (PDF)
+                                </a>
+                            </div>
+                        </noscript>
+                    @elseif(!empty($contractSummary ?? null))
+                        {{-- HTML fallback if PDF generation failed --}}
+                        <div class="p-4">
+                            <div class="text-slate-800 small trix-content" style="line-height:1.7;">
+                                {!! $contractSummary !!}
+                            </div>
+                        </div>
+                    @else
+                        <div class="p-4 text-center text-muted small">
+                            The contract summary is not available at the moment. Please try again later.
+                        </div>
+                    @endif
                 </div>
-            @endif
+            </div>
         </div>
     </section>
 </div>

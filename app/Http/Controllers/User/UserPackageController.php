@@ -175,7 +175,19 @@ class UserpackageController extends Controller
 
     public function contract()
     {
-        return view('user.contract');
+        // The contract body lives in the DATABASE (admin-managed via
+        // Admin → Bifonex contract → User Contract Template). The original
+        // agreement is auto-seeded/backfilled there by ensureTableAndData();
+        // defaultFullContract() is only a last-resort safety net so this
+        // page can never render blank. Placeholders like {USER_NAME},
+        // {USER_COUNTRY}, {COMPANY_NAME} are replaced with the viewer's info.
+        $body = \App\Models\ContractTemplate::currentBody()
+            ?? \App\Models\ContractTemplate::defaultFullContract()
+            ?? '<p>The contract is being prepared. Please contact support.</p>';
+
+        $adminContractBody = \App\Models\ContractTemplate::renderForUser($body, Auth::user());
+
+        return view('user.contract', compact('adminContractBody'));
     }
 
     public function Savecontract(Request $request)

@@ -509,6 +509,12 @@ ul li a{
                  <span class="flex-1 ms-3 whitespace-nowrap text-sm">Client Contract</span>
               </a>
            </li>
+           <li>
+              <a href="{{ route('admin.settings.contract-template') }}" class="flex items-center p-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.settings.contract-template*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                 <i class="fa-solid fa-file-signature text-xs mr-2"></i>
+                 <span class="flex-1 ms-3 whitespace-nowrap text-sm">User Contract Template</span>
+              </a>
+           </li>
         </ul>
        </li>
 

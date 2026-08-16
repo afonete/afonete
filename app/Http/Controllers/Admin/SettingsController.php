@@ -110,6 +110,60 @@ class SettingsController extends Controller
         return view('admin.settings.affiliate-terms', compact('termsContent'));
     }
 
+    /**
+     * Admin: edit the contract shown on /user/contract (full body) and the
+     * short summary shown on /user/contracts/bifonex.
+     */
+    public function contractTemplate()
+    {
+        \App\Models\ContractTemplate::ensureTableAndData();
+
+        // The DB is auto-seeded with the original agreement + summary, so
+        // the editors always show the stored content. defaultFullContract()
+        // remains only as a safety net for a failed seed.
+        $bodyContent    = \App\Models\ContractTemplate::currentBody()
+            ?? (string) (\App\Models\ContractTemplate::defaultFullContract() ?? '');
+        $summaryContent = \App\Models\ContractTemplate::currentSummary();
+
+        // Banner: is the stored body still the untouched original?
+        $usingFallback = trim($bodyContent) === trim((string) \App\Models\ContractTemplate::defaultFullContract());
+
+        return view('admin.settings.contract-template', compact('bodyContent', 'summaryContent', 'usingFallback'));
+    }
+
+    public function updateContractTemplate(Request $request)
+    {
+        \App\Models\ContractTemplate::ensureTableAndData();
+
+        $request->validate([
+            'body_content'    => 'nullable|string',
+            'summary_content' => 'nullable|string',
+        ]);
+
+        // The database is the single source of truth for the contract.
+        // Clearing a field restores the project's ORIGINAL text into the DB
+        // (never leaves it empty — /user/contract must always have content).
+        $tpl = \App\Models\ContractTemplate::first();
+        $data = [
+            'body_content'    => !\App\Models\ContractTemplate::isBlankHtml($request->body_content)
+                ? $request->body_content
+                : \App\Models\ContractTemplate::defaultFullContract(),
+            'summary_content' => !\App\Models\ContractTemplate::isBlankHtml($request->summary_content)
+                ? $request->summary_content
+                : \App\Models\ContractTemplate::defaultSummary(),
+            'is_active'       => true,
+            'updated_by'      => Auth::id(),
+        ];
+
+        if ($tpl) {
+            $tpl->update($data);
+        } else {
+            \App\Models\ContractTemplate::create($data);
+        }
+
+        return back()->with('success', 'Contract template updated successfully! The user contract page and contract summary now show your content.');
+    }
+
     public function updateAffiliateTerms(Request $request)
     {
         \App\Models\AffiliateTerm::ensureTableAndData();

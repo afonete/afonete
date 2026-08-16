@@ -80,6 +80,8 @@ class FomLicenceMinerAdminController extends Controller
      */
     public function create()
     {
+        FomLicenceMiner::ensureSchema();
+
         $tokenSetting = TokenSetting::first();
         $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
 
@@ -91,6 +93,8 @@ class FomLicenceMinerAdminController extends Controller
      */
     public function store(Request $request)
     {
+        FomLicenceMiner::ensureSchema();
+
         $request->validate([
             'name'              => 'required|string|max:100',
             'price'             => 'required|numeric|min:0',
@@ -102,6 +106,9 @@ class FomLicenceMinerAdminController extends Controller
             'affiliate_vbonus'  => 'nullable|numeric|min:0',
             'space_shop_limit'  => 'nullable|string|max:100',
             'volume_point'      => 'nullable|numeric|min:0',
+            'volume_bonus'      => 'nullable|numeric|min:0',
+            'token_symbol'      => 'nullable|string|max:50',
+            'education_access'  => 'nullable|string|max:255',
             'unlocked_per_week' => 'nullable|string|max:50',
             'allowed_loan'      => 'nullable|string|max:100',
             'investment_option' => 'nullable|string|max:100',
@@ -121,6 +128,9 @@ class FomLicenceMinerAdminController extends Controller
             'affiliate_vbonus'  => FomLicenceMiner::cleanNum($request->affiliate_vbonus),
             'space_shop_limit'  => $request->space_shop_limit ?: 'Space Shop Room Limit',
             'volume_point'      => FomLicenceMiner::cleanNum($request->volume_point),
+            'volume_bonus'      => FomLicenceMiner::cleanNum($request->volume_bonus),
+            'token_symbol'      => trim((string) $request->token_symbol) ?: null,
+            'education_access'  => trim((string) $request->education_access) ?: 'Access to Education Courses',
             'unlocked_per_week' => $request->unlocked_per_week ?: 'YES',
             'allowed_loan'      => $request->allowed_loan ?: '',
             'investment_option' => $request->investment_option ?: '',
@@ -140,6 +150,8 @@ class FomLicenceMinerAdminController extends Controller
      */
     public function edit($id)
     {
+        FomLicenceMiner::ensureSchema();
+
         $package = FomLicenceMiner::findOrFail($id);
         $tokenSetting = TokenSetting::first();
         $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
@@ -152,6 +164,18 @@ class FomLicenceMinerAdminController extends Controller
      */
     public function update(Request $request, $id)
     {
+        FomLicenceMiner::ensureSchema();
+
+        // Fail loudly if the schema could not be brought up to date
+        // (e.g. DB user lacks ALTER privilege). Without this check the
+        // UPDATE would throw a QueryException that the global handler
+        // swallows into a silent redirect — "saved but nothing changed".
+        if (!FomLicenceMiner::hasCurrentSchema()) {
+            return back()->withInput()->with('error',
+                'Database schema is out of date (missing token_symbol / volume_bonus / education_access columns) '
+                . 'and could not be auto-updated. Please run: php artisan migrate');
+        }
+
         $package = FomLicenceMiner::findOrFail($id);
 
         $request->validate([
@@ -165,6 +189,9 @@ class FomLicenceMinerAdminController extends Controller
             'affiliate_vbonus'  => 'nullable|numeric|min:0',
             'space_shop_limit'  => 'nullable|string|max:100',
             'volume_point'      => 'nullable|numeric|min:0',
+            'volume_bonus'      => 'nullable|numeric|min:0',
+            'token_symbol'      => 'nullable|string|max:50',
+            'education_access'  => 'nullable|string|max:255',
             'unlocked_per_week' => 'nullable|string|max:50',
             'allowed_loan'      => 'nullable|string|max:100',
             'investment_option' => 'nullable|string|max:100',
@@ -184,6 +211,9 @@ class FomLicenceMinerAdminController extends Controller
             'affiliate_vbonus'  => FomLicenceMiner::cleanNum($request->affiliate_vbonus),
             'space_shop_limit'  => $request->space_shop_limit ?: 'Space Shop Room Limit',
             'volume_point'      => FomLicenceMiner::cleanNum($request->volume_point),
+            'volume_bonus'      => FomLicenceMiner::cleanNum($request->volume_bonus),
+            'token_symbol'      => trim((string) $request->token_symbol) ?: null,
+            'education_access'  => trim((string) $request->education_access) ?: 'Access to Education Courses',
             'unlocked_per_week' => $request->unlocked_per_week ?: 'YES',
             'allowed_loan'      => $request->allowed_loan ?: '',
             'investment_option' => $request->investment_option ?: '',
@@ -192,7 +222,37 @@ class FomLicenceMinerAdminController extends Controller
             'is_active'         => $request->has('is_active') ? true : false,
         ];
 
-        $package->update($data);
+        try {
+            $package->update($data);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("FomLicenceMiner update failed for #{$id}: " . $e->getMessage());
+            return back()->withInput()->with('error',
+                'Saving the package failed: ' . $e->getMessage());
+        }
+
+        // Read-back verification: confirm the four editable config fields
+        // physically landed in the database before reporting success.
+        $saved = FomLicenceMiner::find($id);
+        $expectedSymbol = trim((string) $request->token_symbol) ?: null;
+        $persisted = $saved
+            && (string) $saved->token_symbol === (string) $expectedSymbol
+            && FomLicenceMiner::cleanNum($saved->volume_point) == FomLicenceMiner::cleanNum($request->volume_point)
+            && FomLicenceMiner::cleanNum($saved->volume_bonus) == FomLicenceMiner::cleanNum($request->volume_bonus)
+            && (string) $saved->education_access === (string) $data['education_access'];
+
+        if (!$persisted) {
+            \Illuminate\Support\Facades\Log::error("FomLicenceMiner update for #{$id} did not persist as submitted.", [
+                'expected' => [
+                    'token_symbol'     => $expectedSymbol,
+                    'volume_point'     => FomLicenceMiner::cleanNum($request->volume_point),
+                    'volume_bonus'     => FomLicenceMiner::cleanNum($request->volume_bonus),
+                    'education_access' => $data['education_access'],
+                ],
+                'actual' => $saved ? $saved->only(['token_symbol', 'volume_point', 'volume_bonus', 'education_access']) : null,
+            ]);
+            return back()->withInput()->with('error',
+                'The package was saved but one or more fields did not persist correctly. Check the application log.');
+        }
 
         return redirect()->route('admin.fom-licence-miner.index')
             ->with('message', 'FOM Licence Miner package updated successfully!');

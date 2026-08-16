@@ -88,6 +88,36 @@ class HomeController extends Controller
             ->orderBy('release_date', 'asc')
             ->get();
 
+        // ── Group installments per activated package for per-package cards ──
+        // Group key: activation_id when present, otherwise package_name
+        // (legacy rows created before activation_id was recorded).
+        $packageGroups = $installments
+            ->groupBy(function ($inst) {
+                return $inst->activation_id ? 'act-' . $inst->activation_id : 'pkg-' . strtoupper((string) $inst->package_name);
+            })
+            ->map(function ($group) {
+                $first     = $group->first();
+                $completed = $group->where('status', 'completed');
+                $pending   = $group->where('status', 'pending');
+                $next      = $pending->sortBy('release_date')->first();
+
+                return (object) [
+                    'activation_id'   => $first->activation_id,
+                    'package_name'    => $first->package_name,
+                    'symbol'          => \App\Models\FomLicenceMiner::symbolForPackageName($first->package_name),
+                    'total_return'    => (float) $group->sum('amount'),
+                    'released_tokens' => (float) $completed->sum('amount'),
+                    'pending_tokens'  => (float) $pending->sum('amount'),
+                    'released_count'  => $completed->count(),
+                    'total_count'     => $group->count(),
+                    'next_release'    => $next ? $next->release_date : null,
+                    'started_at'      => $group->min('created_at'),
+                    'is_complete'     => $pending->isEmpty(),
+                ];
+            })
+            ->sortByDesc('started_at')
+            ->values();
+
         // Fetch 1-5 Year Staking Records
         \App\Models\FomTokenStaking::ensureTable();
         $stakings = \App\Models\FomTokenStaking::where('user_id', $user->id)
@@ -107,9 +137,72 @@ class HomeController extends Controller
             'freeBal',
             'tokenSymbol',
             'installments',
+            'packageGroups',
             'stakings',
             'y1', 'y2', 'y3', 'y4', 'y5'
         ));
+    }
+
+    /**
+     * Per-package escrow detail page: the 12-month release schedule and
+     * summary for ONE activated FOM Licence Miner package.
+     *
+     * $key is either an activation id (numeric) or a package name slug for
+     * legacy installments that were created without an activation_id.
+     */
+    public function escrowPackageDetails($key)
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        // Release anything due before showing the schedule.
+        \App\Models\FomTokenInstallment::processDueInstallments($user);
+
+        \App\Models\FomTokenInstallment::ensureTable();
+
+        // Scope STRICTLY to this user — a foreign activation id must 404-fallback.
+        $query = \App\Models\FomTokenInstallment::where('user_id', $user->id);
+
+        if (ctype_digit((string) $key)) {
+            $query->where('activation_id', (int) $key);
+        } else {
+            $query->whereNull('activation_id')
+                  ->whereRaw('UPPER(package_name) = ?', [strtoupper(trim((string) $key))]);
+        }
+
+        $installments = $query->orderBy('release_date', 'asc')->get();
+
+        if ($installments->isEmpty()) {
+            return redirect()->route('user.licence-miner.escrow')
+                ->with('error', 'No escrow schedule found for that package on your account.');
+        }
+
+        $first     = $installments->first();
+        $completed = $installments->where('status', 'completed');
+        $pending   = $installments->where('status', 'pending');
+        $next      = $pending->sortBy('release_date')->first();
+
+        $packageName = $first->package_name;
+        $pkg         = \App\Models\FomLicenceMiner::whereRaw('UPPER(name) = ?', [strtoupper((string) $packageName)])->first();
+        $symbol      = $pkg ? $pkg->effectiveTokenSymbol() : \App\Models\TokenSetting::currentSymbol();
+
+        $summary = (object) [
+            'package_name'    => $packageName,
+            'activation_id'   => $first->activation_id,
+            'symbol'          => $symbol,
+            'total_return'    => (float) $installments->sum('amount'),
+            'released_tokens' => (float) $completed->sum('amount'),
+            'pending_tokens'  => (float) $pending->sum('amount'),
+            'released_count'  => $completed->count(),
+            'total_count'     => $installments->count(),
+            'next_release'    => $next ? $next->release_date : null,
+            'started_at'      => $installments->min('created_at'),
+            'is_complete'     => $pending->isEmpty(),
+        ];
+
+        return view('user.escrow-package-details', compact('installments', 'summary', 'pkg', 'symbol'));
     }
 
     public function buyFomPackage(Request $request)
