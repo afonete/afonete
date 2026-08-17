@@ -377,6 +377,24 @@ ul li a{
                    <span class="flex-1 ms-3 whitespace-nowrap">FOM Licence Miner</span>
                 </a>
               </li>
+              <li>
+                <a href="{{ route('admin.fom-referral.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.fom-referral.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                  <i class="fa-solid fa-network-wired"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">FOM Referral Management</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ route('admin.fom-incentive.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.fom-incentive.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                  <i class="fa-solid fa-trophy"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">FOM Incentive Program</span>
+                </a>
+              </li>
+              <li>
+                <a href="{{ route('admin.fom-redeem.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.fom-redeem.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                  <i class="fa-solid fa-exchange-alt"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Volume Point Redemption</span>
+                </a>
+              </li>
                <li>
                 <a href="{{route('admin.token-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                   <i class="fa-solid fa-coins"></i>

@@ -93,7 +93,7 @@ $position=Position::where('user',$name)->first();
                            AVAILABLE TOKEN
                         </div>
                         <div class="bal-num font-weight-bold text-lg ">
-                           0.0
+                           {{ number_format($available_token ?? 0, 1) }}
                         </div>
                     </div>
                     <div class="bal-box ">
@@ -116,7 +116,7 @@ $position=Position::where('user',$name)->first();
                             Escrow TOKEN
                         </div>
                         <div class="bal-num font-weight-bold text-lg ">
-                           $ 0.0
+                           $ {{ number_format($escrow_token ?? 0, 1) }}
                         </div>
                     </div>
                     <div class="bal-box ">
@@ -194,10 +194,10 @@ $position=Position::where('user',$name)->first();
 
                         </div>
                         <div class="bal-content">
-                            <p>REQUIRED RE-ORDER PV</p>
+                            <p>TOTAL ACCUMULATED VOLUME BONUS</p>
                         </div>
                         <div class="bal-num font-weight-bold text-lg">
-                            1
+                            {{ number_format(($fom_vol_left ?? 0) + ($fom_vol_right ?? 0), 2) }}
                         </div>
                     </div>
                     <div class="bal-box ">
@@ -264,10 +264,21 @@ $position=Position::where('user',$name)->first();
 
                         </div>
                         <div class="bal-content">
-                            <p>TOTAL MONTHLY PURCHASE PV</p>
+                            <p>TOTAL VOLUME POINT</p>
                         </div>
                         <div class="bal-num font-weight-bold text-lg">
-                           $ 0.0000
+                           {{ number_format($volume_points ?? 0, 0) }}
+                        </div>
+                    </div>
+                    <div class="bal-box ">
+                        <div class="point">
+
+                        </div>
+                        <div class="bal-content">
+                            <p>INCENTIVE BONUS</p>
+                        </div>
+                        <div class="bal-num font-weight-bold text-lg">
+                           $ {{ number_format($incentive_bonus ?? 0, 2) }}
                         </div>
                     </div>
                     <div class="bal-box ">
@@ -339,10 +350,10 @@ $position=Position::where('user',$name)->first();
                     <div class="bal-box ">
                        <br>
                         <div class="bal-content">
-                            ACCUMULATED TOTAL LEFT PV'S & RIGHT
+                            WEEKLY RIGHT & LEFT VOLUME BONUS
                         </div>
                         <div class="bal-num font-weight-bold text-lg">
-                           0:0
+                           {{ number_format($fom_vol_right ?? 0, 0) }}:{{ number_format($fom_vol_left ?? 0, 0) }}
                         </div>
                     </div>
 

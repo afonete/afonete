@@ -26,14 +26,23 @@ class ReferralController extends Controller
         $user    = Auth::user();
         $totals  = ReferralBonus::totalsForUser($user->id);
 
+        // This page is UVP-referral only — FOM Licence Miner rows
+        // (source = fom_referral) have their own page: /user/fom-referral.
         $rows = ReferralBonus::where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
             ->with('sourceUser')
             ->orderByDesc('created_at')
             ->paginate(30);
 
         $nextMonday    = ReferralService::nextMonday();
         $isMonday      = ReferralService::isMondayNow();
-        $pendingCount  = ReferralBonus::where('user_id', $user->id)->where('status', 'pending')->count();
+        $pendingCount  = ReferralBonus::where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
+            ->where('status', 'pending')->count();
         $alreadyReq    = WeeklyWithdrawal::where('user_id', $user->id)
             ->where('week_start', $nextMonday->toDateString())
             ->whereIn('status', ['pending','approved'])
@@ -65,7 +74,12 @@ class ReferralController extends Controller
 
         ReferralService::promotePendingToWithdrawable();
 
+        // UVP plan only (defensive: FOM rows use accrued/paid statuses and
+        // pay via the weekly binary match, never through this button)
         $withdrawable = (float) ReferralBonus::where('user_id', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
             ->where('status', 'withdrawable')
             ->sum('bonus_amount');
 
@@ -106,8 +120,11 @@ class ReferralController extends Controller
                 'processed_at'   => now(),
             ]);
 
-            // 3. Mark all withdrawable bonus rows as withdrawn
+            // 3. Mark all withdrawable bonus rows as withdrawn (UVP plan only)
             ReferralBonus::where('user_id', $user->id)
+                ->where(function ($q) {
+                    $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+                })
                 ->where('status', 'withdrawable')
                 ->update(['status' => 'withdrawn', 'withdrawn_at' => now()]);
 

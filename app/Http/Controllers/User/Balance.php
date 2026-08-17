@@ -96,7 +96,9 @@ class Balance extends Controller{
             $creditAmount = (float) $user->have_activation_code->myCredit->amount;
         }
 
-        // Deposits
+        // Deposits — self-heal missing FOM purchase ledger rows first so the
+        // (approved − used) formula reflects genuinely AVAILABLE funds.
+        \App\Models\Deposits::ensureFomPurchaseLedgerRows($user->id);
         $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
         $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
         $deposit         = max(0, $approvedDeposit - $usedDeposit);
@@ -107,6 +109,19 @@ class Balance extends Controller{
 
         // Current Rank
         $currentRank = $user->currentRank();
+
+        // ── FOM balances ──
+        $ESCROW_TOKEN = (float) $user->ChartAccount()->where("acc_type", "ESCROW_TOKEN")->sum("amount");
+        $fomVolLeft   = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_LEFT)->sum("amount");
+        $fomVolRight  = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_RIGHT)->sum("amount");
+        $volumePoints = (float) $user->ChartAccount()->where("acc_type", "VOLUME_POINT")->sum("amount");
+        $incentiveBonus = 0.0;
+        try {
+            \App\Models\FomIncentiveTier::ensureTableAndData();
+            $incentiveBonus = (float) \App\Models\FomIncentiveAward::where('user_id', $user->id)->sum('bonus');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Balance page incentive read failed: ' . $e->getMessage());
+        }
 
         return view('user.balance.balance', [
             "trading"        => $TRADING,
@@ -126,6 +141,13 @@ class Balance extends Controller{
             "left_count"     => $leftCount,
             "right_count"    => $rightCount,
             "current_rank"   => $currentRank ? $currentRank->rank_name : 'No Rank',
+
+            // FOM balances
+            "escrow_token"    => $ESCROW_TOKEN,
+            "fom_vol_left"    => $fomVolLeft,
+            "fom_vol_right"   => $fomVolRight,
+            "volume_points"   => $volumePoints,
+            "incentive_bonus" => $incentiveBonus,
         ]);
     }
 

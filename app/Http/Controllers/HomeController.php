@@ -302,6 +302,29 @@ class HomeController extends Controller
                         'paid_via'     => 'DEPOSIT_WALLET',
                     ]),
                 ]);
+
+                // Record the spend in the Deposits ledger too (status 'used'),
+                // exactly like UVP purchases do. Without this row the ledger
+                // formula (approved − used) keeps reporting the TOTAL deposit
+                // as "available" and the wallet-page ChartAccount sync would
+                // silently restore the spent funds.
+                $lastDeposit = \App\Models\Deposits::where('user_id', $user->id)
+                    ->whereNotNull('user_wallet_address')
+                    ->latest()
+                    ->first();
+
+                \App\Models\Deposits::create([
+                    'user_id'             => $user->id,
+                    'amount_deposited'    => 0,
+                    'amount_removed'      => $totalCost,
+                    'currency_type'       => 'DOLLAR',
+                    'deposit_method'      => 'FOM_PACKAGE_PURCHASE',
+                    'user_wallet_address' => ($lastDeposit && !empty($lastDeposit->user_wallet_address)) ? $lastDeposit->user_wallet_address : 'INTERNAL_DEPOSIT_WALLET',
+                    'network'             => ($lastDeposit && !empty($lastDeposit->network)) ? $lastDeposit->network : 'TRC-20',
+                    'status'              => 'used',
+                    'transaction_id'      => $txnNo,
+                    'comment'             => "FOM package purchase {$quantity}x {$package->name}",
+                ]);
             });
         } catch (\RuntimeException $e) {
             return back()->with('error', "Insufficient Deposit Wallet balance. You need $" . number_format($totalCost, 2) . " to purchase {$quantity}x {$package->name} package(s). Please deposit funds into your Deposit Wallet first.");
@@ -377,7 +400,8 @@ class HomeController extends Controller
         // The activation row is locked (SELECT ... FOR UPDATE) and its status
         // re-checked, so the same code can never be redeemed twice.
         try {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $activation, $totalReturn) {
+            $fomPayment = null;
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $activation, $totalReturn, &$fomPayment) {
                 // Re-fetch and lock the code; abort if it was consumed by a
                 // concurrent request in the meantime.
                 $locked = \App\Models\Activations::where('id', $activation->id)
@@ -397,7 +421,7 @@ class HomeController extends Controller
                 $user->has_free_package = 'no';
                 $user->save();
 
-                \App\Models\Payment::create([
+                $fomPayment = \App\Models\Payment::create([
                     'user'            => $user->id,
                     'package'         => $locked->package,
                     'amount'          => $locked->price,
@@ -435,6 +459,13 @@ class HomeController extends Controller
             return back()->with('error', 'Activation failed and nothing was changed. Please try again.');
         }
 
+        // FOM 10-level referral commissions (after the activation commit;
+        // idempotent per referrer+payment+level)
+        if ($fomPayment) {
+            \App\Services\FomReferralService::creditForFomPurchase($fomPayment);
+            \App\Services\FomIncentiveService::onFomActivation($fomPayment);
+        }
+
         // Process any due installments (outside the activation transaction —
         // each installment release is itself atomic)
         \App\Models\FomTokenInstallment::processDueInstallments($user);
@@ -442,7 +473,7 @@ class HomeController extends Controller
         $tokenSetting = \App\Models\TokenSetting::first();
         $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
 
-        return back()->with('success', "Package '{$activation->package}' activated successfully! " . number_format($totalReturn) . " {$tokenSymbol} credited to your Escrow Wallet (Locked Tokens). It will be released in 12 monthly installments into your Available Token balance.");
+        return back()->with('success', "Package '{$activation->package}' activated successfully! " . number_format($totalReturn) . " {$tokenSymbol} credited to your Escrow Wallet. It will be released in 12 monthly installments into your Available Token balance.");
     }
 
     public function stakerPackage(){

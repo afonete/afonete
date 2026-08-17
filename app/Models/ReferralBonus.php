@@ -73,7 +73,14 @@ class ReferralBonus extends Model
     {
         \App\Services\ReferralService::syncMissingBonuses();
 
+        // UVP/generic plan totals ONLY: FOM Licence Miner rows
+        // (source = fom_referral) live on their own pages
+        // (/user/fom-referral, /admin/fom-referral) and pay via the
+        // weekly binary match — they must never inflate these buckets.
         $row = self::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
             ->selectRaw('
                 SUM(CASE WHEN status = "pending"      THEN bonus_amount ELSE 0 END) AS pending_total,
                 SUM(CASE WHEN status = "withdrawable" THEN bonus_amount ELSE 0 END) AS withdrawable_total,

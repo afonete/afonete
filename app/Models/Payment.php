@@ -118,6 +118,29 @@ class Payment extends Model
         });
     }
 
+    /**
+     * Query scope: ONLY FOM Licence Miner payments — exact inverse of
+     * scopeExcludeFom(). Rows with category VENTURE/FC are never FOM
+     * (UVP wins name collisions); everything else is FOM when its category
+     * or package matches 'FOM' / a FOM package name.
+     *
+     * Usage: Payment::where('user', $id)->onlyFom()->...
+     */
+    public function scopeOnlyFom($query)
+    {
+        $names = array_merge(['FOM'], self::fomPackageNames());
+
+        return $query
+            ->where(function ($q) {
+                $q->whereNull('category')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(category)'), ['VENTURE', 'FC']);
+            })
+            ->where(function ($q) use ($names) {
+                $q->whereIn(\Illuminate\Support\Facades\DB::raw('UPPER(category)'), $names)
+                  ->orWhereIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), $names);
+            });
+    }
+
 public function VenturePayable()
 {
     return $this->morphTo();

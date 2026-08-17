@@ -94,6 +94,13 @@ class ReferralService
     public static function creditForPayment(?Payment $payment): array
     {
         if (!$payment) return [];
+
+        // FOM Licence Miner packages have their OWN 10-level referral plan
+        // (FomReferralService: binary weekly volume + direct sponsors, paid
+        // Mondays only). They must never enter this generic instant plan —
+        // especially via syncMissingBonuses(), which rescans ALL payments.
+        if (method_exists($payment, 'isFom') && $payment->isFom()) return [];
+
         $buyer = User::find($payment->user);
         if (!$buyer) return [];
 
@@ -114,10 +121,18 @@ class ReferralService
         $weekStart = self::nextMonday();
 
         $created = [];
+        $seen    = [$buyer->id => true]; // cycle guard: never pay the buyer or revisit a node
         foreach ($upline as $slot) {
             $referrer = $slot['user'];
             $level    = $slot['level'];
             if (!$referrer) continue;
+
+            // Cycle / self-referral guard (corrupted referee chains)
+            if (isset($seen[$referrer->id])) {
+                \Log::warning("ReferralService: referral cycle detected at user #{$referrer->id} for payment #{$payment->id}; chain walk stopped.");
+                break;
+            }
+            $seen[$referrer->id] = true;
 
             // Rule: Free users CANNOT earn referral bonuses (direct or indirect) as long as their account is free
             if (self::isFreeUser($referrer)) continue;
@@ -197,7 +212,11 @@ class ReferralService
     {
         self::syncMissingBonuses();
 
-        $row = ReferralBonus::selectRaw('
+        // UVP plan only — FOM rows (source=fom_referral) have their own totals
+        $row = ReferralBonus::where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
+            ->selectRaw('
             SUM(CASE WHEN status = "pending"      THEN bonus_amount ELSE 0 END) AS pending_total,
             SUM(CASE WHEN status = "withdrawable" THEN bonus_amount ELSE 0 END) AS withdrawable_total,
             SUM(CASE WHEN status = "withdrawn"    THEN bonus_amount ELSE 0 END) AS paid_total,

@@ -488,6 +488,17 @@ if (showAlertBtn) {
                                 @endif
                             </li>
                             <li class="nav-item">
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-network-wired nav-icon"></i><p>FOM Referrals</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('user.fom-referral') }}" class="nav-link {{ request()->routeIs('user.fom-referral') ? 'active' : '' }}">
+                                        <i class="fas fa-network-wired nav-icon"></i><p>FOM Referrals</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
                                 <a href="{{ route('user.dashboard.activate') }}" class="nav-link {{ request()->routeIs('user.dashboard.activate') ? 'active' : '' }}">
                                     <i class="fas fa-key nav-icon"></i><p>Use activation code</p>
                                 </a>

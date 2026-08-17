@@ -20,6 +20,49 @@ class UserDashboardController extends Controller{
     public function restrictedFreeAccount(){
         return view("user.unauthorized-free-account");
     }
+
+    /**
+     * Package Portfolio — ALL packages the user owns, both product lines:
+     * UVP/FC investments AND FOM Licence Miner packages, kept in two
+     * separate lists (UVP works its way, FOM works its way).
+     * Linked from the dashboard "Account Status" card.
+     */
+    public function packagePortfolio()
+    {
+        $user = Auth::user();
+
+        $uvpPackages = Paymodel::where('user', $user->id)
+            ->excludeFom()
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'uvp_page');
+
+        $fomPackages = Paymodel::where('user', $user->id)
+            ->onlyFom()
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'fom_page');
+
+        $isActive = function ($p) {
+            return !$p->is_expired && (string) $p->status === '1';
+        };
+
+        $uvpAll = Paymodel::where('user', $user->id)->excludeFom()->get();
+        $fomAll = Paymodel::where('user', $user->id)->onlyFom()->get();
+
+        $totals = [
+            'uvp_count'         => $uvpAll->count(),
+            'uvp_active_count'  => $uvpAll->filter($isActive)->count(),
+            'uvp_active_amount' => (float) $uvpAll->filter($isActive)->sum(function ($p) { return (float) ($p->paid ?? $p->amount ?? 0); }),
+            'fom_count'         => $fomAll->count(),
+            'fom_active_count'  => $fomAll->filter($isActive)->count(),
+            'fom_active_amount' => (float) $fomAll->filter($isActive)->sum(function ($p) { return (float) ($p->paid ?? $p->amount ?? 0); }),
+        ];
+
+        return view('user.package-portfolio', [
+            'uvpPackages' => $uvpPackages,
+            'fomPackages' => $fomPackages,
+            'totals'      => $totals,
+        ]);
+    }
     public function upgradeVenturePackage(){
         return view("user.account-upgrade-package-venture");
     }
@@ -50,6 +93,60 @@ class UserDashboardController extends Controller{
     
         return $allUsers;
     }
+
+    /**
+     * Count ALL members (direct + indirect) in one binary leg.
+     *
+     * The branch is anchored by the root user's DIRECT placements on the
+     * given side; every downline reached below those placements belongs to
+     * that leg regardless of the side recorded deeper in the tree — the
+     * same semantics used by teamStructure() on /user/teambuilding/team-structure.
+     * A visited-set guards against referral cycles / duplicate placements.
+     */
+    private function countBranchMembers($user, string $side): int
+    {
+        try {
+            $visited = [$user->id => true];
+            $queue = [];
+
+            $directTeams = \App\Models\Teams::where('user_id', $user->id)
+                ->where('side', $side)
+                ->get();
+
+            foreach ($directTeams as $t) {
+                $memberId = (int) $t->team_user_id;
+                if ($memberId && !isset($visited[$memberId])) {
+                    $visited[$memberId] = true;
+                    $queue[] = $memberId;
+                }
+            }
+
+            $count = count($queue);
+
+            while (!empty($queue)) {
+                $currentId = array_shift($queue);
+
+                $nextTeams = \App\Models\Teams::where('user_id', $currentId)->get();
+                foreach ($nextTeams as $nt) {
+                    $memberId = (int) $nt->team_user_id;
+                    if ($memberId && !isset($visited[$memberId])) {
+                        $visited[$memberId] = true;
+                        $queue[] = $memberId;
+                        $count++;
+                    }
+                }
+            }
+
+            return $count;
+        } catch (\Throwable $e) {
+            // Never break the dashboard: fall back to direct-only count.
+            try {
+                return (int) $user->ownedTeams()->where('side', $side)->count();
+            } catch (\Throwable $e2) {
+                return 0;
+            }
+        }
+    }
     
     
     
@@ -68,24 +165,45 @@ class UserDashboardController extends Controller{
         $user = User::where("id",$userId)->first();
         $portfolio = 0;
 
-        $myteam = $user->ownedTeams();
-        $right = $myteam->where("side","RIGHT")->count();
-        $left = $myteam->where("side","LEFT")->count();
+        // TOTAL VOLUME card: Members = TOTAL referrals per leg (direct +
+        // indirect). Branch side = side of the direct placement at the root,
+        // same semantics as /user/teambuilding/team-structure. Cycle-safe.
+        $right = $this->countBranchMembers($user, "RIGHT");
+        $left = $this->countBranchMembers($user, "LEFT");
         $allUsers = $this->getAllDownlineUsers($user);
+
+        // FOM binary side volumes (weekly volume bonus per leg, matched on
+        // Mondays by referrals:process-weekly). Same source as /user/dashboard/balance
+        // ("WEEKLY RIGHT & LEFT VOLUME BONUS") and /user/fom-referral.
+        $fomVolLeft  = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_LEFT)->sum("amount");
+        $fomVolRight = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_RIGHT)->sum("amount");
 
         // --- FIX: Load package BEFORE any calculations that depend on it ---
         // We order by created_at DESC to load the current newly activated package as the primary package
+        // UVP/FC only — FOM Licence Miner payments are a separate product and
+        // must never masquerade as the "VENTURE UVP" package on the card.
         $package = Paymodel::where("user",$userId)
+                            ->excludeFom()
                             ->where("is_expired",false)
                             ->where("status","1")
                             ->orderBy("created_at", "desc")
                             ->first();
 
         $mostRecentPayment = $user->investments()
+                                  ->excludeFom()
                                   ->where("is_expired",0)
                                   ->where("status",1)
                                   ->orderBy('created_at', 'desc')
                                   ->first();
+
+        // Latest active FOM Licence Miner package (shown separately on the
+        // Account Status card — UVP and FOM must both be visible).
+        $latestFomPayment = Paymodel::where("user",$userId)
+                            ->onlyFom()
+                            ->where("is_expired",false)
+                            ->where("status","1")
+                            ->orderBy("created_at", "desc")
+                            ->first();
 
         // fallback to mostRecentPayment if $package is null
         if (!$package && $mostRecentPayment) {
@@ -113,7 +231,9 @@ class UserDashboardController extends Controller{
             $adventureRow = \App\Models\Adventures::find($package->payable_id);
         }
 
+        // UVP/FC only — FOM licences don't generate UVP daily ROI.
         $activePackages = Paymodel::where("user", $userId)
+                                  ->excludeFom()
                                   ->where("is_expired", false)
                                   ->where("status", "1")
                                   ->get();
@@ -159,7 +279,13 @@ class UserDashboardController extends Controller{
             return redirect()->route("user.contract");
         }
 
-        // Deposits summary
+        // Deposits summary — AVAILABLE deposit balance (approved − used).
+        // Self-heal first: historic FOM purchases debited only the DEPOSIT
+        // wallet without a 'used' ledger row, which made this formula report
+        // the TOTAL deposit as available. Backfill is idempotent per purchase.
+        \App\Models\Deposits::ensureFomPurchaseLedgerRows($user->id);
+        $user->load('deposits');
+
         $deposits = $user->deposits->filter(function ($deposit) {
             return $deposit->status == 'approved';
         });
@@ -168,7 +294,7 @@ class UserDashboardController extends Controller{
             return $deposit->status == 'used';
         });
         $deposits_pending = $user->deposits->where('status', 'pending');
-        $differences = $deposits->sum('amount_deposited') - $deposits_used->sum('amount_removed');
+        $differences = max(0, $deposits->sum('amount_deposited') - $deposits_used->sum('amount_removed'));
         $sum = $differences;
 
         $credit = 0;
@@ -427,6 +553,11 @@ class UserDashboardController extends Controller{
         return view('user.dashboard',
         [
             "mypackage"              => $package,
+            // Latest active FOM Licence Miner package (Account Status card)
+            "my_fom_package"         => $latestFomPayment,
+            "fom_package_name"       => $latestFomPayment ? strtoupper(trim((string) ($latestFomPayment->category ?: $latestFomPayment->package ?: 'FOM'))) : null,
+            "fom_package_paid"       => $latestFomPayment ? (float) ($latestFomPayment->paid ?? $latestFomPayment->amount ?? 0) : 0,
+            "fom_package_expired"    => $latestFomPayment ? (bool) $latestFomPayment->is_expired : false,
             "active_packages_list"   => $activePackages,
             "active_packages_count"  => $activePackages->count(),
             "show_timer"             => $show,
@@ -481,6 +612,8 @@ class UserDashboardController extends Controller{
             "credit_status"          => $credit_status,
             "right"                  => $right,
             "left"                   => $left,
+            "fom_vol_left"           => $fomVolLeft,
+            "fom_vol_right"          => $fomVolRight,
             "left_direct_uvp"        => $comm['left_direct_uvp'] ?? 0,
             "left_indirect_uvp"      => $comm['left_indirect_uvp'] ?? 0,
             "right_direct_uvp"       => $comm['right_direct_uvp'] ?? 0,

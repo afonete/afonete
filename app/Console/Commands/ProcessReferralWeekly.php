@@ -19,6 +19,16 @@ class ProcessReferralWeekly extends Command
         $amBonus = ReferralAdminController::processAssociateManagerWeekly();
         $this->info("Credited {$amBonus} Associate Manager weekly bonus rows.");
 
+        // Self-heal any FOM purchases missing their referral accruals
+        // BEFORE the payout run, so legacy purchases are included.
+        $fomSynced = \App\Services\FomReferralService::syncMissingFomBonuses();
+        $this->info("FOM referral self-heal created {$fomSynced} missing bonus row(s).");
+
+        // FOM Licence Miner weekly payout: weaker-side binary volume × 10%
+        // + accrued Direct Sponsors bonuses → CASHOUT (eligible users only).
+        $fomPaid = \App\Services\FomReferralService::processWeekly();
+        $this->info("FOM weekly referral payout completed for {$fomPaid} user(s).");
+
         return 0;
     }
 }

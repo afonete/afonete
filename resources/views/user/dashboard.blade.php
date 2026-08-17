@@ -662,13 +662,39 @@ img{ max-width:100%;}
                         <i class="dash-card-icon fas fa-chart-line"></i>
                     </div>
                     <div class="dash-card-value">
-                        @if(isset($mypackage) && $mypackage)
-                            <div class="font-weight-extrabold" style="font-size: 1.7rem; line-height: 1.1;">
-                                ${{ number_format($package_paid ?? 0, 0) }}
-                            </div>
-                            <div class="text-uppercase font-weight-bold text-light opacity-90 mt-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">
-                                {{ $package_name ?? 'VENTURE' }} UVP
-                            </div>
+                        @if((isset($mypackage) && $mypackage) || (isset($my_fom_package) && $my_fom_package))
+                            {{-- UVP (latest) — shown ONCE, status badge inline --}}
+                            @if(isset($mypackage) && $mypackage)
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="font-weight-extrabold" style="font-size: 1.35rem; line-height: 1.1;">
+                                            ${{ number_format($package_paid ?? 0, 0) }}
+                                        </div>
+                                        <div class="text-uppercase font-weight-bold text-light opacity-90" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                            <span class="badge badge-light text-dark mr-1" style="font-size: 0.6rem;">UVP</span>{{ $package_name ?? 'VENTURE' }}
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-light text-dark font-weight-bold" style="font-size: 10px;">
+                                        {{ !$package_expired ? 'ACTIVE' : 'EXPIRED' }}
+                                    </span>
+                                </div>
+                            @endif
+                            {{-- FOM Licence Miner (latest) — shown ONCE, status badge inline --}}
+                            @if(isset($my_fom_package) && $my_fom_package)
+                                <div class="d-flex align-items-center justify-content-between {{ (isset($mypackage) && $mypackage) ? 'mt-2 pt-2 border-top' : '' }}" style="{{ (isset($mypackage) && $mypackage) ? 'border-top-color: rgba(255,255,255,0.25) !important;' : '' }}">
+                                    <div>
+                                        <div class="font-weight-extrabold" style="font-size: {{ (isset($mypackage) && $mypackage) ? '1.1rem' : '1.35rem' }}; line-height: 1.1;">
+                                            ${{ number_format($fom_package_paid ?? 0, 0) }}
+                                        </div>
+                                        <div class="text-uppercase font-weight-bold text-light opacity-90" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                            <span class="badge badge-warning text-dark mr-1" style="font-size: 0.6rem;">FOM</span>{{ $fom_package_name ?? 'FOM' }} Licence Miner
+                                        </div>
+                                    </div>
+                                    <span class="badge badge-light text-dark font-weight-bold" style="font-size: 10px;">
+                                        {{ !($fom_package_expired ?? false) ? 'ACTIVE' : 'EXPIRED' }}
+                                    </span>
+                                </div>
+                            @endif
                         @elseif(isset($is_team_leader) && $is_team_leader)
                             <div class="font-weight-bold" style="font-size: 1.3rem;">
                                 {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
@@ -694,15 +720,10 @@ img{ max-width:100%;}
                         @endif
                     </div>
                     <div class="dash-card-footer">
+                        {{-- Amounts + statuses live in the card body ONLY (no duplication here) --}}
                         @if(isset($mypackage) && $mypackage)
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <span>UVP Portfolio: <strong>${{ number_format($package_paid ?? 0, 2) }}</strong></span>
-                                <span class="badge badge-light text-dark font-weight-bold" style="font-size: 10px;">
-                                    {{ !$package_expired ? 'ACTIVE' : 'EXPIRED' }}
-                                </span>
-                            </div>
                             @if(isset($is_team_leader) && $is_team_leader)
-                                <div class="mt-1 pt-1 border-top" style="border-top-color: rgba(255,255,255,0.2) !important;">
+                                <div class="mb-1">
                                     <span class="badge badge-warning text-dark font-weight-bold px-2 py-0.5" style="font-size: 0.7rem; border-radius: 4px;">
                                         <i class="fas fa-crown mr-1"></i> {{ in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) ? $user->has_paid_package : 'TEAM LEADER' }}
                                     </span>
@@ -713,8 +734,20 @@ img{ max-width:100%;}
                         @elseif(isset($is_team_leader) && $is_team_leader)
                             <span class="badge badge-light text-dark" style="font-size:10px;">ACTIVE LEADER</span>
                             <br><small style="opacity:.85;">Full Leader Portal Access</small>
+                        @endif
+                        @if((isset($mypackage) && $mypackage) || (isset($my_fom_package) && $my_fom_package) || (isset($is_team_leader) && $is_team_leader))
+                            <div class="mt-1 pt-1 border-top" style="border-top-color: rgba(255,255,255,0.2) !important;">
+                                <a href="{{ route('user.package.portfolio') }}" class="text-white font-weight-bold" style="text-decoration:underline; font-size: 0.78rem;">
+                                    <i class="fas fa-briefcase mr-1"></i> Package Portfolio →
+                                </a>
+                            </div>
                         @elseif($user->has_free_package == 'no')
                             Portfolio: {{ $portfolio }}
+                            <div class="mt-1">
+                                <a href="{{ route('user.package.portfolio') }}" class="text-white font-weight-bold" style="text-decoration:underline; font-size: 0.78rem;">
+                                    <i class="fas fa-briefcase mr-1"></i> Package Portfolio →
+                                </a>
+                            </div>
                         @else
                             <a href="{{ route('user.buypackage') }}" class="text-white font-weight-bold" style="text-decoration:underline;">Activate Package →</a>
                         @endif
@@ -1083,8 +1116,7 @@ img{ max-width:100%;}
                         ${{ $deposits }}
                     </div>
                     <div class="dash-card-subtitle text-muted mb-2" style="font-size:0.78rem;">
-                        Available deposit balance<br>
-                        <span class="text-success">Approved – Used = Available</span>
+                        Available deposit balance
                     </div>
                     <div class="dash-card-footer">
                         <a href="{{ route('mypayments') }}" class="btn btn-sm btn-outline-primary btn-block font-weight-bold" style="border-radius: 6px;">
@@ -2102,7 +2134,7 @@ $user=db::SELECT("SELECT * from users");
                                                          <div class="text-muted small">Members</div>
                                                          <div class="font-weight-bold text-dark" style="font-size: 1.4rem;">{{ $left ?? 0 }}</div>
                                                          <div class="text-muted small mt-2">Volume Points</div>
-                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ ($left_direct_uvp ?? 0) + ($left_indirect_uvp ?? 0) }} <small class="text-muted">Vp</small></div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ number_format((float) ($fom_vol_left ?? 0), ((float) ($fom_vol_left ?? 0) == (int) ($fom_vol_left ?? 0)) ? 0 : 2) }} <small class="text-muted">Vp</small></div>
                                                          <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
                                                      </div>
                                                  </div>
@@ -2113,7 +2145,7 @@ $user=db::SELECT("SELECT * from users");
                                                          <div class="text-muted small">Members</div>
                                                          <div class="font-weight-bold text-dark" style="font-size: 1.4rem;">{{ $right ?? 0 }}</div>
                                                          <div class="text-muted small mt-2">Volume Points</div>
-                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ ($right_direct_uvp ?? 0) + ($right_indirect_uvp ?? 0) }} <small class="text-muted">Vp</small></div>
+                                                         <div class="font-weight-bold text-warning" style="font-size: 1.2rem;">{{ number_format((float) ($fom_vol_right ?? 0), ((float) ($fom_vol_right ?? 0) == (int) ($fom_vol_right ?? 0)) ? 0 : 2) }} <small class="text-muted">Vp</small></div>
                                                          <div class="text-success small font-weight-bold mt-2" style="font-size: 0.8rem;"><i class="fas fa-users mr-1"></i> Earn Bonus</div>
                                                      </div>
                                                  </div>

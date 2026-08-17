@@ -3,15 +3,8 @@
     <div class="content-wrapper">
     <div class="w-full p-4">
 
-        {{-- Nav --}}
-        <div class="mb-3 mx-2">
-            <ul class="flex flex-col md:flex-row md:space-x-5">
-                <li><a href="{{route('overview')}}" class="font-medium text-lg hover:text-orange-600">Overview</a></li>
-                <li><a href="{{route('commission')}}" class="font-medium text-lg text-blue-900 border-b-2 border-blue-900">Referral Bonuses</a></li>
-                <li><a href="{{route('transaction')}}" class="font-medium text-lg hover:text-orange-600">Transactions</a></li>
-                <li><a href="{{route('subscription')}}" class="font-medium text-lg hover:text-orange-600">My Subscriptions</a></li>
-            </ul>
-        </div>
+        {{-- Nav (shared Bootstrap finance navbar — Tailwind is not loaded on these pages) --}}
+        @include('user.finance-nav', ['active' => 'commission'])
 
         {{-- Summary Cards --}}
         <div class="row px-2 mb-3">
@@ -61,7 +54,7 @@
                             <table class="table table-sm table-hover mb-0">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th>Name</th>
+                                        <th>Username</th>
                                         <th>Invested</th>
                                         <th>Bonus (10%)</th>
                                         <th>Status</th>
@@ -72,7 +65,7 @@
                                     @foreach($directReferrals as $ref)
                                     <tr>
                                         <td>
-                                            <strong>{{ $ref->name }}</strong>
+                                            <strong>{{ $ref->user ?? $ref->name }}</strong>
                                             <small class="d-block text-muted">{{ $ref->email }}</small>
                                         </td>
                                         <td>${{ number_format($ref->total_invested, 2) }}</td>
@@ -111,7 +104,7 @@
                             <table class="table table-sm table-hover mb-0">
                                 <thead class="thead-light">
                                     <tr>
-                                        <th>Name</th>
+                                        <th>Username</th>
                                         <th>Via</th>
                                         <th>Invested</th>
                                         <th>Bonus (1%)</th>
@@ -121,7 +114,7 @@
                                 <tbody>
                                     @foreach($indirectReferrals as $ref)
                                     <tr>
-                                        <td><strong>{{ $ref->name }}</strong></td>
+                                        <td><strong>{{ $ref->user ?? $ref->name }}</strong></td>
                                         <td><small class="text-muted">{{ $ref->referred_through }}</small></td>
                                         <td>${{ number_format($ref->total_invested, 2) }}</td>
                                         <td class="font-weight-bold text-info">

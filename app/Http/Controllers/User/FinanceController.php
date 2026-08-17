@@ -132,6 +132,9 @@ class FinanceController extends Controller
         $accType = $accMap[$param] ?? $param;
 
         if ($accType === 'DEPOSIT') {
+            // Self-heal FOM purchase ledger rows before syncing, so the sync
+            // cannot restore funds already spent on FOM packages.
+            \App\Models\Deposits::ensureFomPurchaseLedgerRows($user->id);
             $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
             $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
             $depositBal      = max(0, $approvedDeposit - $usedDeposit);
@@ -529,7 +532,9 @@ class FinanceController extends Controller
                     ->where('status', 1)->where('category', 'VENTURE')->sum('amount');
                 $indirect->total_invested   = $totalInvested;
                 $indirect->bonus_earned     = $totalInvested * 1 / 100;
-                $indirect->referred_through = $direct->name;
+                // Show USERNAME (users.user), falling back to name for
+                // legacy accounts without a username.
+                $indirect->referred_through = $direct->user ?? $direct->name;
                 $indirect->is_active        = $totalInvested > 0;
                 $indirectReferrals->push($indirect);
             }
@@ -1986,6 +1991,9 @@ public function getTeamTree(Request $request,$id){
         $rewardBal = (float) $user->ChartAccount()->where('acc_type', 'REWARD')->sum('amount');
 
         // 3. Deposit Wallet (Available Deposit Balance = Approved Deposits - Used Deposits)
+        // Self-heal FOM purchase ledger rows first — otherwise this sync would
+        // RESTORE funds already spent on FOM packages into the DEPOSIT wallet.
+        \App\Models\Deposits::ensureFomPurchaseLedgerRows($user->id);
         $approvedDeposit = (float) $user->deposits()->where('status', 'approved')->sum('amount_deposited');
         $usedDeposit     = (float) $user->deposits()->where('status', 'used')->sum('amount_removed');
         $depositBal      = max(0, $approvedDeposit - $usedDeposit);
@@ -2407,22 +2415,40 @@ public function getTeamTree(Request $request,$id){
     {
         if (!$user) return false;
 
-        $pkg = strtolower(trim((string)($user->has_paid_package ?? '')));
-        if (!empty($pkg) && !in_array($pkg, ['no', 'free', 'standard', ''])) {
+        try {
+            $fomNames = \App\Models\FomLicenceMiner::pluck('name')
+                ->map(fn ($n) => strtoupper(trim((string) $n)))
+                ->filter()
+                ->all();
+        } catch (\Throwable $e) {
+            $fomNames = [];
+        }
+
+        // 1. Current package flag matches a FOM Licence Miner package name
+        $pkg = strtoupper(trim((string) ($user->has_paid_package ?? '')));
+        if ($pkg !== '' && in_array($pkg, $fomNames, true)) {
             return true;
         }
 
-        $hasActivation = \App\Models\Activations::where(function($q) use ($user) {
+        // 2. A USED activation code that is genuinely FOM ('FOM-' prefix or
+        //    a FOM package name; UVP wins name collisions via isFomActivation)
+        $usedFomActivation = \App\Models\Activations::where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)->orWhere('email', $user->email);
             })
-            ->whereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])
-            ->exists();
-        if ($hasActivation) {
+            ->where('stutus', 'used')
+            ->get()
+            ->contains(fn ($a) => \App\Models\FomLicenceMiner::isFomActivation($a));
+        if ($usedFomActivation) {
             return true;
         }
 
-        $hasPayment = \App\Models\Payment::where('user', $user->id)->where('is_expired', false)->exists();
-        if ($hasPayment) {
+        // 3. An active (non-expired, confirmed) FOM Payment
+        $hasFomPayment = \App\Models\Payment::where('user', $user->id)
+            ->where('is_expired', false)
+            ->where('status', 1)
+            ->get()
+            ->contains(fn ($p) => $p->isFom());
+        if ($hasFomPayment) {
             return true;
         }
 

@@ -12,32 +12,8 @@
 
             <div class="w-full p-4">
 
-            <div class="my-2 mx-2">
-                <ul class="flex flex-col md:flex-row md:space-x-5 md:space-y-0 space-y-4">
-                    <li>
-                        <a href="/user/user-wallet" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Wallet</a>
-                    </li>
-                    <li>
-                        <a href="#" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Overview</a>
-                    </li>
-
-                    <li>
-                        <a href="#" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Focoin</a>
-                    </li>
-                    <li>
-                        <a href="{{route('commission')}}" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Commissions</a>
-                    </li>
-                    <li>
-                        <a href="#" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Purchase code</a>
-                    </li>
-                    <li>
-                        <a href="{{route('transaction')}}" class="font-medium text-lg hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600"><i class="fa-solid fa-right-left"></i> Transaction</a>
-                    </li>
-                    <li>
-                        <a href="{{route('subscription')}}" class="font-medium text-lg text-blue-900 hover:border-b-2 py-1 hover:text-orange-600 hover:border-orange-600">Mysubscriptions</a>
-                    </li>
-                </ul>
-            </div>
+            {{-- Nav (shared Bootstrap finance navbar — Tailwind is not loaded on these pages) --}}
+            @include('user.finance-nav', ['active' => 'overview'])
 
             <div class="w-full bg-blue-100 rounded-xl p-3">
                 <div>

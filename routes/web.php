@@ -199,6 +199,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
     Route::get('/fetch-earnings', [UserDashboardController::class, 'fetchCommissions']);
+    Route::get('user/package-portfolio', [UserDashboardController::class, 'packagePortfolio'])->name('user.package.portfolio');
 
     Route::get('/dashboard/free-account-restricted', [UserDashboardController::class, 'restrictedFreeAccount'])->name('user.dashboard.freeaccount-restricted');
     Route::get('/dashboard/account-upgrade-venture-package', [UserDashboardController::class, 'upgradeVenturePackage'])->name('user.dashboard.upgrade-venture-package');
@@ -236,6 +237,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     // ── REFERRAL (user) ─────────────────────────────────────────────────
     Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
+    Route::get ('user/fom-referral',            [\App\Http\Controllers\User\FomReferralController::class, 'index'])->name('user.fom-referral');
     Route::post('user/referral/withdraw',       [\App\Http\Controllers\User\ReferralController::class, 'withdraw'])->name('user.referral.withdraw');
     Route::get ('user/referral/downline',       [\App\Http\Controllers\User\ReferralController::class, 'downline'])->name('user.referral.downline');
     Route::get ('user/referral/rank',           [\App\Http\Controllers\User\ReferralController::class, 'rank'])->name('user.referral.rank');
@@ -264,10 +266,9 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
         return view('user.faq');
     });
 
-       // create Rewards
-       Route::get('user/rewards', function () {
-        return view('user.rewards');
-    });
+       // create Rewards — Volume Point → USDT redemption
+       Route::get('user/rewards', [\App\Http\Controllers\User\FomRedeemController::class, 'index'])->name('user.rewards');
+       Route::post('user/rewards/redeem', [\App\Http\Controllers\User\FomRedeemController::class, 'redeem'])->name('user.rewards.redeem');
 
 
          // create wallett
@@ -464,6 +465,25 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post('admin/token-withdrawals/reject', [AdminController::class, 'rejectTokenWithdrawal'])->name('admin.token-withdrawals.reject');
 
     // ── REFERRAL BONUSES (admin) ────────────────────────────────────────
+    // ── FOM REFERRAL MANAGEMENT (admin) ────────────────────────────────
+    Route::get ('admin/fom-referral',           [\App\Http\Controllers\Admin\FomReferralAdminController::class, 'index'])->name('admin.fom-referral.index');
+    Route::get ('admin/fom-referral/user/{id}', [\App\Http\Controllers\Admin\FomReferralAdminController::class, 'userDetail'])->name('admin.fom-referral.user');
+    Route::post('admin/fom-referral/run-weekly',[\App\Http\Controllers\Admin\FomReferralAdminController::class, 'runWeekly'])->name('admin.fom-referral.run-weekly');
+
+    // ── FOM VOLUME-POINT REDEMPTION (admin) ────────────────────────────
+    Route::get   ('admin/fom-redeem',              [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'index'])->name('admin.fom-redeem.index');
+    Route::post  ('admin/fom-redeem/options',      [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'store'])->name('admin.fom-redeem.store');
+    Route::put   ('admin/fom-redeem/options/{id}', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'update'])->name('admin.fom-redeem.update');
+    Route::post  ('admin/fom-redeem/options/{id}/toggle', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'toggle'])->name('admin.fom-redeem.toggle');
+    Route::delete('admin/fom-redeem/options/{id}', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'destroy'])->name('admin.fom-redeem.destroy');
+
+    // ── FOM INCENTIVE (admin) ──────────────────────────────────────────
+    Route::get   ('admin/fom-incentive',              [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'index'])->name('admin.fom-incentive.index');
+    Route::post  ('admin/fom-incentive/tiers',        [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'storeTier'])->name('admin.fom-incentive.store');
+    Route::put   ('admin/fom-incentive/tiers/{id}',   [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'updateTier'])->name('admin.fom-incentive.update');
+    Route::post  ('admin/fom-incentive/tiers/{id}/toggle', [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'toggleTier'])->name('admin.fom-incentive.toggle');
+    Route::delete('admin/fom-incentive/tiers/{id}',   [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'destroyTier'])->name('admin.fom-incentive.destroy');
+
     Route::get  ('admin/referral/bonuses',                [\App\Http\Controllers\Admin\ReferralAdminController::class, 'bonuses'])->name('admin.referral.bonuses');
     Route::get  ('admin/referral/bonuses/user/{id}',      [\App\Http\Controllers\Admin\ReferralAdminController::class, 'userDetail'])->name('admin.referral.bonuses.user');
     Route::get  ('admin/referral/withdrawals',            [\App\Http\Controllers\Admin\ReferralAdminController::class, 'withdrawals'])->name('admin.referral.withdrawals');

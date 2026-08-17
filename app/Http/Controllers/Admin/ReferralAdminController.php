@@ -27,8 +27,12 @@ class ReferralAdminController extends Controller
     {
         $totals = ReferralService::platformTotals();
 
-        // Per-user totals, top earners first
+        // Per-user totals, top earners first (UVP plan only — FOM rows are
+        // managed/audited at /admin/fom-referral)
         $perUser = DB::table('referral_bonuses')
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
             ->select('user_id',
                 DB::raw('SUM(bonus_amount) AS total_bonus'),
                 DB::raw('SUM(CASE WHEN status = "pending" THEN bonus_amount ELSE 0 END) AS pending'),
@@ -51,7 +55,11 @@ class ReferralAdminController extends Controller
     {
         $user   = User::findOrFail($userId);
         $totals = ReferralBonus::totalsForUser($userId);
+        // UVP plan rows only — FOM rows are audited at /admin/fom-referral
         $rows   = ReferralBonus::where('user_id', $userId)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+            })
             ->with('sourceUser')
             ->orderByDesc('created_at')
             ->paginate(50);
