@@ -470,8 +470,8 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- Licence Miner Package --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-microchip"></i>
                             <p>Licence Miner Package <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -495,6 +495,17 @@ if (showAlertBtn) {
                                 @else
                                     <a href="{{ route('user.fom-referral') }}" class="nav-link {{ request()->routeIs('user.fom-referral') ? 'active' : '' }}">
                                         <i class="fas fa-network-wired nav-icon"></i><p>FOM Referrals</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-medal nav-icon"></i><p>FOM Ranks</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('user.fom-rank') }}" class="nav-link {{ request()->routeIs('user.fom-rank') ? 'active' : '' }}">
+                                        <i class="fas fa-medal nav-icon"></i><p>FOM Ranks</p>
                                     </a>
                                 @endif
                             </li>

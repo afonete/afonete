@@ -1810,41 +1810,31 @@ $user=db::SELECT("SELECT * from users");
                              <div class="card-body">
                                  <div class="direct-chat-messages">
 
+                                     {{-- Weekly top-10 earners (UVP / FOM) — system-generated Mondays, admin pins honored --}}
                                      <table class="table">
                                          <thead class="bg-gradient-primary">
                                              <tr>
                                                  <th>Username</th>
-                                                 <th></th>
+                                                 <th>Earned From</th>
                                                  <th>Total Earned</th>
                                              </tr>
                                          </thead>
                                          <tbody>
-                                             <tr>
-                                         <!--         <td>1. John</td>
-                                                 <td></td>
-                                                 <td>$0</td>
-                                             </tr>
-                                             <tr>
-                                                 <td>2. Mary</td>
-                                                 <td></td>
-                                                 <td>$0</td>
-                                             </tr>
-                                             <tr>
-                                                 <td>3. July</td>
-                                                 <td></td>
-                                                 <td>$0</td>
-                                             </tr>
-                                             <tr>
-                                                 <td>4. July</td>
-                                                 <td></td>
-                                                 <td>$0</td>
-                                             </tr>
-                                             <tr>
-                                                 <td>5. JackMan
-                                                 </td>
-                                                 <td></td>
-                                                 <td>$0</td>
-                                             </tr> -->
+                                             @forelse(($leaderboard ?? collect()) as $lb)
+                                                 <tr>
+                                                     <td class="font-weight-bold">{{ $lb->position }}. {{ $lb->display_name }}</td>
+                                                     <td>
+                                                         <span class="badge {{ $lb->earned_from === 'UVP' ? 'badge-primary' : 'badge-warning text-dark' }}" style="font-size: 0.68rem;">
+                                                             {{ $lb->earned_from }}
+                                                         </span>
+                                                     </td>
+                                                     <td class="font-weight-bold text-success">${{ number_format((float) $lb->total_earned, 2) }}</td>
+                                                 </tr>
+                                             @empty
+                                                 <tr>
+                                                     <td colspan="3" class="text-center text-muted py-3">No earnings this week yet — the top 10 appears as bonuses are earned.</td>
+                                                 </tr>
+                                             @endforelse
                                          </tbody>
                                      </table>
 
@@ -2154,52 +2144,61 @@ $user=db::SELECT("SELECT * from users");
                                      </div>
                                  </div>
 
-                                 {{-- COLUMN 2: COMMISSIONS (col-md-7) --}}
+                                 {{-- COLUMN 2: COMMISSIONS (col-md-7) · vb-inline v3 (deploy marker) --}}
                                  <div class="col-md-7 d-flex flex-column">
                                      <h3 class="font-weight-bold text-dark mb-3" style="font-size: 1.4rem;"><i class="fas fa-wallet mr-2 text-primary"></i> COMMISSIONS</h3>
                                      <div class="card border-0 shadow-sm h-100 mb-0" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background-color: #ffffff;">
                                          <div class="card-body p-4 d-flex flex-column justify-content-center">
                                              <div class="row">
                                                  
-                                                 {{-- Left side of Commissions: Zone and Volume Bonus Metrics --}}
+                                                 {{-- Left side of Commissions: FOM Volume Bonus per side (weekly + cumulative) --}}
                                                  <div class="col-md-6 mb-4 mb-md-0 border-right" style="border-right-color: #f1f5f9 !important;">
                                                      <div class="d-flex justify-content-between align-items-center mb-3">
                                                          <h6 class="font-weight-bold text-dark mb-0" style="font-size: 0.95rem;"><i class="fas fa-chart-pie mr-1 text-primary"></i> Team Earnings Vp</h6>
-                                                         <span class="badge badge-light border border-secondary text-muted font-weight-bold" style="font-size: 0.72rem; padding: 2px 6px;"><i class="far fa-calendar-alt mr-1"></i> 09 Mar - 15 Mar</span>
+                                                         <select id="vb-week-filter" class="form-control form-control-sm" style="width: 150px; border-radius: 6px; font-size: 0.75rem;">
+                                                             <option value="0" selected>This week ({{ $fom_vb_week_label ?? '' }})</option>
+                                                             <option value="1">Last week</option>
+                                                             <option value="2">2 weeks ago</option>
+                                                             <option value="3">3 weeks ago</option>
+                                                             <option value="4">4 weeks ago</option>
+                                                         </select>
                                                      </div>
-                                                     
-                                                     <div class="row">
-                                                         {{-- Zone A --}}
-                                                         <div class="col-6 mb-3">
-                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
-                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone A</small>
-                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;">{{$zoneAearning ?? 0}} <span style="font-size: 0.8rem;">Vp</span></h4>
-                                                             </div>
-                                                         </div>
-
-                                                         {{-- Zone B --}}
-                                                         <div class="col-6 mb-3">
-                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
-                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Zone B</small>
-                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem;">{{$zoneBearning ?? 0}} <span style="font-size: 0.8rem;">Vp</span></h4>
-                                                             </div>
-                                                         </div>
+                                                     <div class="text-right mb-2">
+                                                         <span class="badge badge-light border border-secondary text-muted font-weight-bold" style="font-size: 0.72rem; padding: 2px 6px;"><i class="far fa-calendar-alt mr-1"></i> <span id="vb-week-label">{{ $fom_vb_week_label ?? '' }}</span></span>
                                                      </div>
 
                                                      <div class="row">
-                                                         {{-- Volume Bonus --}}
+                                                         {{-- LEFT SIDE — weekly Volume Bonus (changes every week) --}}
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Left Side</small>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem; white-space: nowrap;"><span id="vb-week-left">{{ number_format((float) ($fom_vb_week_left ?? 0), ((float) ($fom_vb_week_left ?? 0) == (int) ($fom_vb_week_left ?? 0)) ? 0 : 2) }}VB</span></h4>
+                                                             </div>
+                                                         </div>
+
+                                                         {{-- RIGHT SIDE — weekly Volume Bonus (changes every week) --}}
+                                                         <div class="col-6 mb-3">
+                                                             <div class="p-3 bg-light rounded text-center" style="border-radius: 8px;">
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Right Side</small>
+                                                                 <h4 class="font-weight-bold text-primary mb-0 mt-1" style="font-size: 1.15rem; white-space: nowrap;"><span id="vb-week-right">{{ number_format((float) ($fom_vb_week_right ?? 0), ((float) ($fom_vb_week_right ?? 0) == (int) ($fom_vb_week_right ?? 0)) ? 0 : 2) }}VB</span></h4>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+
+                                                     <div class="row">
+                                                         {{-- Total Volume Bonus (LEFT, cumulative — only ever increases) --}}
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 rounded text-center" style="border-radius: 8px; background-color: #fef3c7; border: 1px solid #fde68a;">
-                                                                 <small class="text-amber-800 text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Volume Bonus</small>
-                                                                 <h4 class="font-weight-bold text-amber-600 mb-0 mt-1" style="font-size: 1.15rem;">0 $</h4>
+                                                                 <small class="text-amber-800 text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Volume Bonus <span class="d-block" style="font-size: 0.58rem; letter-spacing: 0;">(Left)</span></small>
+                                                                 <h4 class="font-weight-bold text-amber-600 mb-0 mt-1" style="font-size: 1.15rem; white-space: nowrap;"><span id="vb-total-left">{{ number_format((float) ($fom_vb_total_left ?? 0), ((float) ($fom_vb_total_left ?? 0) == (int) ($fom_vb_total_left ?? 0)) ? 0 : 2) }}VB</span></h4>
                                                              </div>
                                                          </div>
 
-                                                         {{-- Earn VP --}}
+                                                         {{-- Total Volume Bonus (RIGHT, cumulative — only ever increases) --}}
                                                          <div class="col-6 mb-3">
                                                              <div class="p-3 rounded text-center bg-light" style="border-radius: 8px;">
-                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Earn VP</small>
-                                                                 <h4 class="font-weight-bold text-success mb-0 mt-1" style="font-size: 1.15rem;">0 <span style="font-size: 0.8rem;">Vp</span></h4>
+                                                                 <small class="text-muted text-uppercase font-weight-bold d-block" style="font-size: 0.68rem; letter-spacing: 0.05em;">Total Volume Bonus <span class="d-block" style="font-size: 0.58rem; letter-spacing: 0;">(Right)</span></small>
+                                                                 <h4 class="font-weight-bold text-success mb-0 mt-1" style="font-size: 1.15rem; white-space: nowrap;"><span id="vb-total-right">{{ number_format((float) ($fom_vb_total_right ?? 0), ((float) ($fom_vb_total_right ?? 0) == (int) ($fom_vb_total_right ?? 0)) ? 0 : 2) }}VB</span></h4>
                                                              </div>
                                                          </div>
                                                      </div>
@@ -2256,6 +2255,30 @@ $user=db::SELECT("SELECT * from users");
                                                      })
                                                      .catch(error => console.error('Error:', error));
                                              });
+
+                                             // Team Earnings Vp — FOM Volume Bonus per side, filterable by week
+                                             (function () {
+                                                 const fmtVb = function (n) {
+                                                     const v = parseFloat(n) || 0;
+                                                     return v === Math.trunc(v)
+                                                         ? v.toLocaleString('en-US')
+                                                         : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                                 };
+                                                 const weekFilter = document.getElementById('vb-week-filter');
+                                                 if (!weekFilter) return;
+                                                 weekFilter.addEventListener('change', function () {
+                                                     fetch(`/fetch-team-volume-bonus?week_offset=${this.value}`)
+                                                         .then(r => r.json())
+                                                         .then(data => {
+                                                             document.getElementById('vb-week-label').textContent = data.week_label;
+                                                             document.getElementById('vb-week-left').textContent  = fmtVb(data.week_left) + 'VB';
+                                                             document.getElementById('vb-week-right').textContent = fmtVb(data.week_right) + 'VB';
+                                                             document.getElementById('vb-total-left').textContent  = fmtVb(data.total_left) + 'VB';
+                                                             document.getElementById('vb-total-right').textContent = fmtVb(data.total_right) + 'VB';
+                                                         })
+                                                         .catch(error => console.error('Error:', error));
+                                                 });
+                                             })();
                                              </script>
 
                                          </div>

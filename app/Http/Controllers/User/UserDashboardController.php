@@ -178,6 +178,17 @@ class UserDashboardController extends Controller{
         $fomVolLeft  = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_LEFT)->sum("amount");
         $fomVolRight = (float) $user->ChartAccount()->where("acc_type", \App\Services\FomReferralService::ACC_VOL_RIGHT)->sum("amount");
 
+        // COMMISSIONS card — FOM Volume Bonus per side, derived from accrual
+        // rows: THIS WEEK (changes every week) + CUMULATIVE lifetime totals.
+        $vbWeekStart = Carbon::now()->startOfWeek();
+        $vbWeekEnd   = Carbon::now()->endOfWeek();
+        $fomVbWeek   = \App\Services\FomReferralService::sideVolumeBonusTotals($user->id, $vbWeekStart, $vbWeekEnd);
+        $fomVbTotal  = \App\Services\FomReferralService::sideVolumeBonusTotals($user->id);
+
+        // LEADERBOARD — weekly top-10 earners (UVP / FOM), admin pins kept.
+        // board() self-heals: generates on first view of a new week.
+        $leaderboard = \App\Models\FomLeaderboardEntry::board();
+
         // --- FIX: Load package BEFORE any calculations that depend on it ---
         // We order by created_at DESC to load the current newly activated package as the primary package
         // UVP/FC only — FOM Licence Miner payments are a separate product and
@@ -614,6 +625,13 @@ class UserDashboardController extends Controller{
             "left"                   => $left,
             "fom_vol_left"           => $fomVolLeft,
             "fom_vol_right"          => $fomVolRight,
+            // COMMISSIONS card — FOM Volume Bonus per side
+            "fom_vb_week_left"       => $fomVbWeek['left'],
+            "fom_vb_week_right"      => $fomVbWeek['right'],
+            "fom_vb_total_left"      => $fomVbTotal['left'],
+            "fom_vb_total_right"     => $fomVbTotal['right'],
+            "fom_vb_week_label"      => $vbWeekStart->format('d M') . ' - ' . $vbWeekEnd->format('d M'),
+            "leaderboard"            => $leaderboard,
             "left_direct_uvp"        => $comm['left_direct_uvp'] ?? 0,
             "left_indirect_uvp"      => $comm['left_indirect_uvp'] ?? 0,
             "right_direct_uvp"       => $comm['right_direct_uvp'] ?? 0,
@@ -761,6 +779,33 @@ class UserDashboardController extends Controller{
             default:
                 return [\Carbon\Carbon::parse('2020-01-01')->startOfDay(), now()->endOfCentury()];
         }
+    }
+
+    /**
+     * AJAX: FOM Volume Bonus per side for a selected week.
+     * ?week_offset=0 → this week, 1 → last week, 2 → two weeks ago … (max 52)
+     * Returns weekly left/right VB, cumulative totals and the week label.
+     */
+    public function fetchTeamVolumeBonus(Request $request)
+    {
+        $user = Auth::user();
+
+        $offset = (int) $request->query('week_offset', 0);
+        $offset = max(0, min(52, $offset));
+
+        $start = Carbon::now()->subWeeks($offset)->startOfWeek();
+        $end   = Carbon::now()->subWeeks($offset)->endOfWeek();
+
+        $week  = \App\Services\FomReferralService::sideVolumeBonusTotals($user->id, $start, $end);
+        $total = \App\Services\FomReferralService::sideVolumeBonusTotals($user->id);
+
+        return response()->json([
+            'week_label'  => $start->format('d M') . ' - ' . $end->format('d M'),
+            'week_left'   => $week['left'],
+            'week_right'  => $week['right'],
+            'total_left'  => $total['left'],
+            'total_right' => $total['right'],
+        ]);
     }
 
     public function fetchCommissions(Request $request)

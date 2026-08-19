@@ -29,6 +29,17 @@ class ProcessReferralWeekly extends Command
         $fomPaid = \App\Services\FomReferralService::processWeekly();
         $this->info("FOM weekly referral payout completed for {$fomPaid} user(s).");
 
+        // FOM RANK detection sweep: create pending rank rows for any user
+        // who newly qualifies (admin approves → reward to Cashout).
+        $rankRows = \App\Services\FomRankService::detectAll();
+        $this->info("FOM rank detection found {$rankRows} new pending rank(s).");
+
+        // Weekly LEADERBOARD: regenerate the new week's top-10 board
+        // (runs after the FOM payout so this Monday's payouts are counted
+        // in LAST week's window; admin pins for the new week survive).
+        $lbRows = \App\Models\FomLeaderboardEntry::generateForWeek();
+        $this->info("Weekly leaderboard generated with {$lbRows} system entr" . ($lbRows === 1 ? 'y' : 'ies') . '.');
+
         return 0;
     }
 }

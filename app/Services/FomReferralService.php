@@ -9,6 +9,7 @@ use App\Models\ReferralBonus;
 use App\Models\ChartAccount;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 /**
  * FOM Licence Miner referral plan — binary weekly volume + direct sponsors.
@@ -150,6 +151,92 @@ class FomReferralService
         } catch (\Throwable $e) {
             return 'LEFT';
         }
+    }
+
+    /**
+     * Per-side FOM VOLUME BONUS totals for a user, derived from the
+     * immutable accrual rows (source='fom_referral') — NOT from the
+     * FOM_VOL_LEFT/RIGHT wallets, which Monday matching consumes.
+     *
+     * Each accrual row stores the level share in `percentage` and the leg
+     * in `source_ref` ('FOM-L{level}-{side}'); the accrued volume is
+     * package.volume_bonus × share%. Recomputing from rows makes both
+     * WEEKLY figures (date-window filter) and CUMULATIVE lifetime totals
+     * possible — wallets only hold the current unmatched carry.
+     *
+     * @param  int          $userId
+     * @param  Carbon|null  $from  window start (inclusive) — null = all time
+     * @param  Carbon|null  $to    window end   (inclusive) — null = all time
+     * @return array{left: float, right: float, total: float}
+     */
+    public static function sideVolumeBonusTotals(int $userId, ?Carbon $from = null, ?Carbon $to = null): array
+    {
+        $left = 0.0;
+        $right = 0.0;
+
+        try {
+            self::ensureBonusStatusColumn();
+
+            $q = ReferralBonus::where('user_id', $userId)
+                ->where('source', 'fom_referral');
+            if ($from) {
+                $q->where('created_at', '>=', $from);
+            }
+            if ($to) {
+                $q->where('created_at', '<=', $to);
+            }
+
+            $payMemo = [];
+            $pkgMemo = [];
+
+            foreach ($q->get() as $row) {
+                $share = (float) $row->percentage;
+                if ($share <= 0) {
+                    continue;
+                }
+
+                $pid = (int) $row->source_payment_id;
+                if (!array_key_exists($pid, $payMemo)) {
+                    $payMemo[$pid] = $pid ? Payment::find($pid) : null;
+                }
+                $payment = $payMemo[$pid];
+                if (!$payment) {
+                    continue;
+                }
+
+                $name = strtoupper(trim((string) ($payment->package ?: $payment->category)));
+                if ($name === '') {
+                    continue;
+                }
+                if (!array_key_exists($name, $pkgMemo)) {
+                    $pkgMemo[$name] = FomLicenceMiner::whereRaw('UPPER(name) = ?', [$name])->first();
+                }
+                $pkg = $pkgMemo[$name];
+                if (!$pkg) {
+                    continue;
+                }
+
+                $vb = FomLicenceMiner::cleanNum($pkg->volume_bonus ?? 0) * ($share / 100);
+                if ($vb <= 0) {
+                    continue;
+                }
+
+                $side = str_ends_with(strtoupper((string) $row->source_ref), '-RIGHT') ? 'RIGHT' : 'LEFT';
+                if ($side === 'RIGHT') {
+                    $right += $vb;
+                } else {
+                    $left += $vb;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("FomReferralService::sideVolumeBonusTotals failed for user #{$userId}: " . $e->getMessage());
+        }
+
+        return [
+            'left'  => round($left, 4),
+            'right' => round($right, 4),
+            'total' => round($left + $right, 4),
+        ];
     }
 
     /**

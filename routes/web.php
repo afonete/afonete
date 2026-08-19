@@ -199,6 +199,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
 
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
     Route::get('/fetch-earnings', [UserDashboardController::class, 'fetchCommissions']);
+    Route::get('/fetch-team-volume-bonus', [UserDashboardController::class, 'fetchTeamVolumeBonus'])->name('user.fetch.team-volume-bonus');
     Route::get('user/package-portfolio', [UserDashboardController::class, 'packagePortfolio'])->name('user.package.portfolio');
 
     Route::get('/dashboard/free-account-restricted', [UserDashboardController::class, 'restrictedFreeAccount'])->name('user.dashboard.freeaccount-restricted');
@@ -238,6 +239,7 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     // ── REFERRAL (user) ─────────────────────────────────────────────────
     Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
     Route::get ('user/fom-referral',            [\App\Http\Controllers\User\FomReferralController::class, 'index'])->name('user.fom-referral');
+    Route::get ('user/fom-rank',                [\App\Http\Controllers\User\FomRankController::class, 'index'])->name('user.fom-rank');
     Route::post('user/referral/withdraw',       [\App\Http\Controllers\User\ReferralController::class, 'withdraw'])->name('user.referral.withdraw');
     Route::get ('user/referral/downline',       [\App\Http\Controllers\User\ReferralController::class, 'downline'])->name('user.referral.downline');
     Route::get ('user/referral/rank',           [\App\Http\Controllers\User\ReferralController::class, 'rank'])->name('user.referral.rank');
@@ -476,6 +478,18 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::put   ('admin/fom-redeem/options/{id}', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'update'])->name('admin.fom-redeem.update');
     Route::post  ('admin/fom-redeem/options/{id}/toggle', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'toggle'])->name('admin.fom-redeem.toggle');
     Route::delete('admin/fom-redeem/options/{id}', [\App\Http\Controllers\Admin\FomRedeemAdminController::class, 'destroy'])->name('admin.fom-redeem.destroy');
+
+    // ── FOM RANKS (admin) ──────────────────────────────────────────────
+    Route::get   ('admin/fom-rank',              [\App\Http\Controllers\Admin\FomRankAdminController::class, 'index'])->name('admin.fom-rank.index');
+    Route::post  ('admin/fom-rank/{id}/approve', [\App\Http\Controllers\Admin\FomRankAdminController::class, 'approve'])->name('admin.fom-rank.approve');
+    Route::post  ('admin/fom-rank/{id}/reject',  [\App\Http\Controllers\Admin\FomRankAdminController::class, 'reject'])->name('admin.fom-rank.reject');
+    Route::post  ('admin/fom-rank/detect',       [\App\Http\Controllers\Admin\FomRankAdminController::class, 'detect'])->name('admin.fom-rank.detect');
+
+    // ── WEEKLY LEADERBOARD (admin) ─────────────────────────────────────
+    Route::get   ('admin/fom-leaderboard',            [\App\Http\Controllers\Admin\FomLeaderboardAdminController::class, 'index'])->name('admin.fom-leaderboard.index');
+    Route::post  ('admin/fom-leaderboard/pin',        [\App\Http\Controllers\Admin\FomLeaderboardAdminController::class, 'pin'])->name('admin.fom-leaderboard.pin');
+    Route::delete('admin/fom-leaderboard/pin/{id}',   [\App\Http\Controllers\Admin\FomLeaderboardAdminController::class, 'unpin'])->name('admin.fom-leaderboard.unpin');
+    Route::post  ('admin/fom-leaderboard/regenerate', [\App\Http\Controllers\Admin\FomLeaderboardAdminController::class, 'regenerate'])->name('admin.fom-leaderboard.regenerate');
 
     // ── FOM INCENTIVE (admin) ──────────────────────────────────────────
     Route::get   ('admin/fom-incentive',              [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'index'])->name('admin.fom-incentive.index');
