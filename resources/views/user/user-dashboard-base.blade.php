@@ -470,8 +470,8 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- Licence Miner Package --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank', 'user.fom-royal', 'user.fom-residual') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('investment-package', 'user.dashboard.activate', 'user.package.history', 'user.licence-miner.escrow', 'user.fom-rank', 'user.fom-royal', 'user.fom-residual') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-microchip"></i>
                             <p>Licence Miner Package <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -506,6 +506,28 @@ if (showAlertBtn) {
                                 @else
                                     <a href="{{ route('user.fom-rank') }}" class="nav-link {{ request()->routeIs('user.fom-rank') ? 'active' : '' }}">
                                         <i class="fas fa-medal nav-icon"></i><p>FOM Ranks</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-crown nav-icon"></i><p>Royal Leader Bonus</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('user.fom-royal') }}" class="nav-link {{ request()->routeIs('user.fom-royal') ? 'active' : '' }}">
+                                        <i class="fas fa-crown nav-icon"></i><p>Royal Leader Bonus</p>
+                                    </a>
+                                @endif
+                            </li>
+                            <li class="nav-item">
+                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
+                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
+                                        <i class="fas fa-sitemap nav-icon"></i><p>Residual Matching Bonus</p>
+                                    </a>
+                                @else
+                                    <a href="{{ route('user.fom-residual') }}" class="nav-link {{ request()->routeIs('user.fom-residual') ? 'active' : '' }}">
+                                        <i class="fas fa-sitemap nav-icon"></i><p>Residual Matching Bonus</p>
                                     </a>
                                 @endif
                             </li>

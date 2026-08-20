@@ -53,13 +53,19 @@
                             @php
                                 $active = $d->investments->first();
                                 $highest = $d->userRanks->first();
+                                // §79: label via packageLabel() — covers UVP,
+                                // TEAM_LEADER/SUPER_LEADER (has_paid_package)
+                                // and FOM licences; VENTURE-only eager load
+                                // missed the last two ("No active package").
+                                $pkgLabel = $d->packageLabel();
+                                $hasPkg   = $d->hasAnyPackage();
                             @endphp
                             <tr>
                                 <td>{{ $d->user ?? $d->name }}</td>
                                 <td><small>{{ $d->email }}</small></td>
                                 <td>
-                                    @if($active)
-                                        <span class="badge badge-success">{{ $active->package }}</span>
+                                    @if($hasPkg)
+                                        <span class="badge {{ str_contains($pkgLabel, '(FOM)') ? 'badge-warning text-dark' : 'badge-success' }}">{{ $pkgLabel }}</span>
                                     @else
                                         <span class="badge badge-secondary">No active package</span>
                                     @endif

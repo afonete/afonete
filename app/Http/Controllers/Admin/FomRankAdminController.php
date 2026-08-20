@@ -69,4 +69,61 @@ class FomRankAdminController extends Controller
 
         return back()->with('success', "Detection sweep complete — {$created} new pending rank(s) found.");
     }
+
+    /**
+     * ADMIN: edit/modify a rank's qualification + reward values.
+     * criteria_json accepted as raw JSON (validated); blank keeps current.
+     */
+    public function updateRank(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'vb_required'       => 'required|numeric|min:0',
+            'team_turnover'     => 'required|numeric|min:0',
+            'personal_turnover' => 'required|numeric|min:0',
+            'licence_min'       => 'required|string|max:30',
+            'reward'            => 'required|numeric|min:0',
+            'extra_bonuses'     => 'nullable|string|max:255',
+            'criteria_label'    => 'nullable|string|max:255',
+            'criteria_json'     => 'nullable|string|max:2000',
+        ]);
+
+        $rank = FomRank::findOrFail($id);
+
+        $licence = strtoupper(trim($data['licence_min']));
+        if (!array_key_exists($licence, FomRank::LICENCE_ORDER)) {
+            return back()->with('error', "Unknown FOM licence '{$licence}' — use one of: " . implode(', ', array_keys(FomRank::LICENCE_ORDER)) . '.');
+        }
+
+        $update = [
+            'vb_required'       => (float) $data['vb_required'],
+            'team_turnover'     => (float) $data['team_turnover'],
+            'personal_turnover' => (float) $data['personal_turnover'],
+            'licence_min'       => $licence,
+            'reward'            => (float) $data['reward'],
+            'extra_bonuses'     => $data['extra_bonuses'] ?? $rank->extra_bonuses,
+            'criteria_label'    => $data['criteria_label'] ?? $rank->criteria_label,
+        ];
+
+        if (trim((string) ($data['criteria_json'] ?? '')) !== '') {
+            $decoded = json_decode($data['criteria_json'], true);
+            if (!is_array($decoded) || !isset($decoded['type'])
+                || !in_array($decoded['type'], ['bonus', 'active_directs', 'ranks'], true)) {
+                return back()->with('error', 'criteria_json must be valid JSON with "type": bonus | active_directs | ranks.');
+            }
+            $update['criteria_json'] = $decoded;
+        }
+
+        $rank->update($update);
+
+        return back()->with('success', "{$rank->name} updated.");
+    }
+
+    /** ADMIN: activate/deactivate a rank in the ladder. */
+    public function toggleRank(int $id)
+    {
+        $rank = FomRank::findOrFail($id);
+        $rank->update(['is_active' => !$rank->is_active]);
+
+        return back()->with('success', "{$rank->name} " . ($rank->is_active ? 'activated' : 'deactivated') . '.');
+    }
 }

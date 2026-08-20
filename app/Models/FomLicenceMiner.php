@@ -13,6 +13,61 @@ class FomLicenceMiner extends Model
 
     protected $table = 'fom_licence_miners';
 
+    /**
+     * Weekly Volume Bonus Cap per package (spec §69) — the maximum VB a
+     * user can earn as affiliate bonus per week. Seeded once into the
+     * weekly_vb_cap column; admin-editable afterwards. Direct referral
+     * bonus (L1 Direct Sponsors) is NOT capped — only the volume bonus.
+     */
+    public const WEEKLY_VB_CAPS = [
+        'BASIC'      => 200,
+        'STARTER'    => 1000,
+        'LIGHT'      => 2000,
+        'PRO'        => 3000,
+        'ADVANCED'   => 5000,
+        'PREMIUM'    => 12000,
+        'TYCOON'     => 15000,
+        'MASTER'     => 30000,
+        'PRO MASTER' => 40000,
+        'SUPER'      => 50000,
+    ];
+
+    /**
+     * The weekly VB cap for a USER = the cap of their CURRENT FOM package
+     * (the most recently activated, still-active one — user decision §70).
+     * 0 = no active FOM package (no volume payout possible anyway).
+     */
+    public static function weeklyVbCapForUser(int $userId): float
+    {
+        try {
+            self::ensureSchema();
+
+            $current = \App\Models\Payment::where('user', (string) $userId)
+                ->onlyFom()
+                ->where('status', '1')
+                ->where('is_expired', false)
+                ->orderByDesc('created_at')
+                ->first();
+
+            if (!$current) {
+                return 0.0;
+            }
+
+            $name = strtoupper(trim((string) ($current->category ?: $current->package)));
+            $pkg = self::whereRaw('UPPER(name) = ?', [$name])->first();
+
+            $cap = $pkg ? (float) ($pkg->weekly_vb_cap ?? 0) : 0.0;
+            if ($cap <= 0) {
+                $cap = (float) (self::WEEKLY_VB_CAPS[$name] ?? 0);
+            }
+
+            return $cap;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("weeklyVbCapForUser failed for #{$userId}: " . $e->getMessage());
+            return 0.0;
+        }
+    }
+
     protected $fillable = [
         'name',
         'price',
@@ -26,6 +81,7 @@ class FomLicenceMiner extends Model
         'space_shop_limit',
         'volume_point',
         'volume_bonus',
+        'weekly_vb_cap',
         'education_access',
         'unlocked_per_week',
         'allowed_loan',
@@ -312,6 +368,15 @@ class FomLicenceMiner extends Model
                         $table->string('token_symbol', 50)->nullable();
                     });
                 }
+                if (!Schema::hasColumn('fom_licence_miners', 'weekly_vb_cap')) {
+                    Schema::table('fom_licence_miners', function (Blueprint $table) {
+                        $table->decimal('weekly_vb_cap', 20, 2)->default(0);
+                    });
+                    // Seed the spec caps onto existing packages (0 = uncapped).
+                    foreach (self::WEEKLY_VB_CAPS as $pkgName => $cap) {
+                        self::whereRaw('UPPER(name) = ?', [$pkgName])->update(['weekly_vb_cap' => $cap]);
+                    }
+                }
                 if (!Schema::hasColumn('fom_licence_miners', 'education_access')) {
                     Schema::table('fom_licence_miners', function (Blueprint $table) {
                         $table->string('education_access')->nullable()->default('Access to Education Courses');
@@ -571,6 +636,8 @@ class FomLicenceMiner extends Model
         ];
 
         foreach ($defaults as $data) {
+            // Weekly Volume Bonus Cap (spec §69) from the canonical table.
+            $data['weekly_vb_cap'] = self::WEEKLY_VB_CAPS[strtoupper(trim($data['name']))] ?? 0;
             // Split legacy volume_point into the two distinct fields:
             // values > 10 were "Volume Bonus", small values are "Volume Point".
             $vol = self::cleanNum($data['volume_point'] ?? 0);

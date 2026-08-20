@@ -30,6 +30,45 @@ class FomReferralAdminController extends Controller
             'volume_points'  => (float) ChartAccount::where('acc_type', 'VOLUME_POINT')->sum('amount'),
         ];
 
+        // VOLUME CAP EXCESS (spec §70): weekly payouts clipped at each
+        // user's package cap — the forfeited excess is reported here so
+        // the admin can see the total of them (all-time + this week),
+        // plus the most recent capped payouts.
+        $capExcessTotal = 0.0;
+        $capExcessWeek  = 0.0;
+        $cappedRows     = collect();
+        try {
+            $weekStart = \Carbon\Carbon::now()->startOfWeek();
+            $payoutTrx = \App\Models\Transaction::where('transaction_type', 'FOM_WEEKLY_REFERRAL_PAYOUT')
+                ->orderByDesc('created_at')
+                ->get();
+            foreach ($payoutTrx as $t) {
+                $d = json_decode((string) $t->transaction_details, true) ?: [];
+                $forfeit = (float) ($d['cap_forfeited'] ?? 0);
+                if ($forfeit <= 0) {
+                    continue;
+                }
+                $capExcessTotal += $forfeit;
+                if (\Carbon\Carbon::parse($t->created_at)->gte($weekStart)) {
+                    $capExcessWeek += $forfeit;
+                }
+                if ($cappedRows->count() < 10) {
+                    $cappedRows->push((object) [
+                        'user'      => User::find($t->user_id),
+                        'date'      => $t->created_at,
+                        'uncapped'  => (float) ($d['binary_payout'] ?? 0),
+                        'cap'       => (float) ($d['vb_cap'] ?? 0),
+                        'paid'      => (float) ($d['capped_payout'] ?? 0),
+                        'forfeited' => $forfeit,
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Cap-excess totals failed: ' . $e->getMessage());
+        }
+        $totals['cap_excess_total'] = round($capExcessTotal, 4);
+        $totals['cap_excess_week']  = round($capExcessWeek, 4);
+
         // Per-user volume board: everyone holding leg volume or accrued rows
         $userIds = ChartAccount::whereIn('acc_type', [FomReferralService::ACC_VOL_LEFT, FomReferralService::ACC_VOL_RIGHT])
             ->where('amount', '>', 0)->pluck('user_id')
@@ -80,7 +119,7 @@ class FomReferralAdminController extends Controller
             ->take(10)
             ->values();
 
-        return view('admin.fom-referral.index', compact('totals', 'users', 'board', 'search', 'pendingActivations'));
+        return view('admin.fom-referral.index', compact('totals', 'users', 'board', 'search', 'pendingActivations', 'cappedRows'));
     }
 
     /** Per-user audit: all FOM bonus rows for one user. */

@@ -77,6 +77,23 @@ class UserDashboardController extends Controller{
         ]);
     }
 
+    /**
+     * The user's first NON-FOM activation code (§74). The Activations table
+     * also stores FOM purchase codes (user_id = buyer, stutus 'not' until
+     * activated) — the raw hasOne relation can grab one of those and leak
+     * its price/token into leader/TM metrics. Never returns FOM codes.
+     */
+    private function nonFomActivationFor($user)
+    {
+        try {
+            return \App\Models\Activations::where('user_id', $user->id)
+                ->get()
+                ->first(fn ($a) => !\App\Models\FomLicenceMiner::isFomActivation($a));
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     private function getAllDownlineUsers($user) {
         $allUsers = collect();
         $queue = collect([$user]); // Initialize with the starting user
@@ -325,7 +342,7 @@ class UserDashboardController extends Controller{
                 break;
             case 'TM':
             case 'tm':
-                $p = $user->have_activation_code ?? null;
+                $p = $this->nonFomActivationFor($user);
                 if ($p) {
                     $portfolio = (float) ($p->price ?? 0);
                 }
@@ -333,7 +350,8 @@ class UserDashboardController extends Controller{
             case 'TEAM_LEADER':
             case 'SUPER_LEADER':
                 // ── Team Leader / Super Leader dashboard metrics ──
-                $activation = $user->have_activation_code ?? null;
+                // (FOM purchase codes excluded — §74)
+                $activation = $this->nonFomActivationFor($user);
                 if ($activation) {
                     $portfolio = (float) ($activation->price ?? 0);
                 }
@@ -374,8 +392,13 @@ class UserDashboardController extends Controller{
             }
         } else {
             // Fallback to legacy activation credit / myCredit / credit_conditions
-            $activation = $user->have_activation_code 
-                ?? \App\Models\Activations::where('user_id', $user->id)->orWhere('email', $user->email)->first();
+            // (FOM purchase codes excluded — §74)
+            $activation = $this->nonFomActivationFor($user)
+                ?? \App\Models\Activations::where(function ($q) use ($user) {
+                        $q->where('user_id', $user->id)->orWhere('email', $user->email);
+                    })
+                    ->get()
+                    ->first(fn ($a) => !\App\Models\FomLicenceMiner::isFomActivation($a));
             if ($activation) {
                 if (isset($activation->myCredit) && $activation->myCredit) {
                     $credit = (float) ($activation->myCredit->amount ?? 0);
@@ -431,8 +454,30 @@ class UserDashboardController extends Controller{
         $uvpTotalTokens             = (float) ($uvpLockedToken + $netUvpAvailableToken + $uvpFreeToken);
 
         // ── 2. Team Leader Tokens (Top dark box) ──
+        // GUARD (§74): the Activations table also holds FOM purchase codes
+        // (user_id = buyer, stutus 'not' until activated). The old hasOne
+        // read grabbed ANY row and added its token — so buying a FOM code
+        // inflated Total Tokens BEFORE activation. Only NON-FOM codes that
+        // are genuinely ACTIVATED (stutus 'used') count as leader tokens;
+        // FOM tokens appear via ESCROW_TOKEN only upon activation.
         $leaderLockedToken = 0.0;
-        $activation = $user->have_activation_code ?? null;
+        $activation = null;
+        try {
+            foreach (\App\Models\Activations::where('user_id', $user->id)->get() as $act) {
+                if (\App\Models\FomLicenceMiner::isFomActivation($act)) {
+                    continue; // FOM code — silent until activation (escrow handles it)
+                }
+                if (strtolower(trim((string) ($act->stutus ?? ''))) !== 'used') {
+                    continue; // not yet activated — remain silent
+                }
+                if ((float) ($act->token ?? 0) > 0) {
+                    $activation = $act;
+                    break;
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Leader token activation scan failed: ' . $e->getMessage());
+        }
 
         if ($activation && (float)($activation->token ?? 0) > 0) {
             $leaderLockedToken = (float) $activation->token;
@@ -446,9 +491,15 @@ class UserDashboardController extends Controller{
         $leaderRemainingLocked = max(0, $leaderLockedToken - $alreadyReleasedLeaderTokens);
         $leaderTotalTokens     = (float) $leaderLockedToken;
 
+        // ── FOM Licence Miner tokens (credited to ESCROW_TOKEN at ACTIVATION
+        // only — unactivated codes contribute nothing). Installment releases
+        // move ESCROW → AVAILABLE (already inside uvpTotalTokens), so summing
+        // the escrow balance never double-counts.
+        $fomEscrowTokens = (float) $user->ChartAccount()->where("acc_type", "ESCROW_TOKEN")->sum("amount");
+
         // ── 3. Combined Grand Total Tokens ──
-        // Total UVP tokens of all user packages + Total of team leaders token
-        $grandTotalTokens = (float) ($uvpTotalTokens + $leaderTotalTokens);
+        // UVP tokens + Team Leaders token + FOM Licence Miner (escrow) tokens
+        $grandTotalTokens = (float) ($uvpTotalTokens + $leaderTotalTokens + $fomEscrowTokens);
 
         $teamLeaderRecord = \App\Models\TeamLeader::where('User_name', $user->user)->first();
         $isTeamLeader     = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']) || ($teamLeaderRecord && $teamLeaderRecord->status === 'confirmed');
@@ -588,6 +639,7 @@ class UserDashboardController extends Controller{
             "leader_released"        => $alreadyReleasedLeaderTokens,
             "leader_total"           => $leaderTotalTokens,
             "grand_total_tokens"     => $grandTotalTokens,
+            "fom_escrow_tokens"      => $fomEscrowTokens,
 
             // Legacy & Card mapping
             "locked"                 => $uvpLockedToken,

@@ -470,6 +470,18 @@ class FomReferralService
 
                     $binaryPayout = round($weaker * (self::AFFILIATE_VBONUS_RATE / 100), 4);
 
+                    // WEEKLY VOLUME BONUS CAP (spec §69): the volume-bonus
+                    // payout is clipped at the cap of the user's HIGHEST
+                    // active FOM package; the full weaker-side match is
+                    // still consumed (excess forfeited, per user decision).
+                    // Direct Sponsors bonuses are NOT capped. Cap 0 = user
+                    // has no active FOM package cap on record → no clip.
+                    $vbCap = \App\Models\FomLicenceMiner::weeklyVbCapForUser($user->id);
+                    $cappedPayout = $binaryPayout;
+                    if ($vbCap > 0 && $binaryPayout > $vbCap) {
+                        $cappedPayout = round($vbCap, 4);
+                    }
+
                     // Accrued Direct Sponsors rows → paid together with the match
                     $accrued = ReferralBonus::where('user_id', $user->id)
                         ->where('source', 'fom_referral')
@@ -478,7 +490,7 @@ class FomReferralService
                         ->get();
                     $directTotal = round((float) $accrued->sum('bonus_amount'), 4);
 
-                    $total = round($binaryPayout + $directTotal, 4);
+                    $total = round($cappedPayout + $directTotal, 4);
 
                     // Deduct the matched volume from BOTH sides
                     if ($weaker > 0) {
@@ -509,6 +521,9 @@ class FomReferralService
                                 'weaker_side'    => $left <= $right ? 'LEFT' : 'RIGHT',
                                 'matched'        => $weaker,
                                 'binary_payout'  => $binaryPayout,
+                                'vb_cap'         => $vbCap,
+                                'capped_payout'  => $cappedPayout,
+                                'cap_forfeited'  => round($binaryPayout - $cappedPayout, 4),
                                 'direct_bonuses' => $directTotal,
                                 'total_to_cashout' => $total,
                                 'rate'           => self::AFFILIATE_VBONUS_RATE,

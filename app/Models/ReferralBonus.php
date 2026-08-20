@@ -42,13 +42,20 @@ class ReferralBonus extends Model
         return $this->belongsTo(Payment::class, 'source_payment_id');
     }
 
-    /** Human label for the level */
+    /**
+     * Human label for the level.
+     * §82: no percentage here — the Level column on
+     * /user/referral/bonus and admin/referral/user-detail already
+     * shows the row's REAL stored percentage (L{n} · {pct}%), so a
+     * hardcoded % in the Source label was redundant and could
+     * contradict the actual rate on historical rows.
+     */
     public function levelLabel(): string
     {
         return [
-            1 => 'Direct Referral (10%)',
-            2 => 'Indirect Referral (1%)',
-            3 => '3rd-Level Referral (0.5%)',
+            1 => 'Direct Referral',
+            2 => 'Indirect Referral',
+            3 => '3rd-Level Referral',
         ][$this->level] ?? "Level {$this->level}";
     }
 

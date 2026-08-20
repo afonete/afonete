@@ -326,6 +326,75 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->approvedRanks()->first();
     }
 
+    /**
+     * Display label for the user's package (§76, corrected §78).
+     *
+     * has_paid_package alone mislabels users: it stays 'no'/'standard'
+     * (or a legacy 'yes' flag) for Royal auto-promotions, legacy FOM
+     * activations, admin edits AND legacy UVP purchases even while an
+     * active Payment exists. Resolution order:
+     *   1. real has_paid_package (not no/standard/free/yes),
+     *   2. latest ACTIVE UVP/FC payment  → "<NAME>" (e.g. VENTURE),
+     *   3. latest ACTIVE FOM payment     → "<PKG> (FOM)",
+     *   4. 'FREE / STANDARD'.
+     */
+    public function packageLabel(): string
+    {
+        $paid = strtoupper(trim((string) $this->has_paid_package));
+        if ($paid !== '' && !in_array(strtolower($paid), ['no', 'standard', 'free', 'yes'], true)) {
+            return $paid;
+        }
+
+        try {
+            // 2. Active UVP/FC investment (§78 — was missing entirely:
+            //    legacy UVP holders fell through to FREE / STANDARD).
+            $uvp = Payment::where('user', (string) $this->id)
+                ->excludeFom()
+                ->whereIn('status', ['1', 1])
+                ->where('is_expired', false)
+                ->orderByDesc('created_at')
+                ->first();
+            if ($uvp) {
+                $name = '';
+                // Prefer the real Adventures package name when resolvable.
+                if (!empty($uvp->payable_id)) {
+                    try {
+                        $adv = \App\Models\Adventures::find($uvp->payable_id);
+                        $name = strtoupper(trim((string) ($adv->name ?? '')));
+                    } catch (\Throwable $e) {
+                        $name = '';
+                    }
+                }
+                if ($name === '') {
+                    $name = strtoupper(trim((string) ($uvp->category ?: 'VENTURE')));
+                }
+                return $name !== '' ? $name : 'VENTURE';
+            }
+
+            // 3. Active FOM Licence Miner package.
+            $fom = Payment::where('user', (string) $this->id)
+                ->onlyFom()
+                ->whereIn('status', ['1', 1])
+                ->where('is_expired', false)
+                ->orderByDesc('created_at')
+                ->first();
+            if ($fom) {
+                $name = strtoupper(trim((string) ($fom->category ?: $fom->package ?: 'FOM')));
+                return $name . ' (FOM)';
+            }
+        } catch (\Throwable $e) {
+            // fall through to the free label
+        }
+
+        return 'FREE / STANDARD';
+    }
+
+    /** True when packageLabel() resolves to a real package (UVP, leader or FOM). */
+    public function hasAnyPackage(): bool
+    {
+        return $this->packageLabel() !== 'FREE / STANDARD';
+    }
+
     /** Decoded referral id (REF-XXXX-YYYY format) */
     public static function decodeReferralId($referralId)
     {

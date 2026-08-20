@@ -240,6 +240,8 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
     Route::get ('user/fom-referral',            [\App\Http\Controllers\User\FomReferralController::class, 'index'])->name('user.fom-referral');
     Route::get ('user/fom-rank',                [\App\Http\Controllers\User\FomRankController::class, 'index'])->name('user.fom-rank');
+    Route::get ('user/fom-royal',               [\App\Http\Controllers\User\FomRoyalController::class, 'index'])->name('user.fom-royal');
+    Route::get ('user/fom-residual',            [\App\Http\Controllers\User\FomResidualController::class, 'index'])->name('user.fom-residual');
     Route::post('user/referral/withdraw',       [\App\Http\Controllers\User\ReferralController::class, 'withdraw'])->name('user.referral.withdraw');
     Route::get ('user/referral/downline',       [\App\Http\Controllers\User\ReferralController::class, 'downline'])->name('user.referral.downline');
     Route::get ('user/referral/rank',           [\App\Http\Controllers\User\ReferralController::class, 'rank'])->name('user.referral.rank');
@@ -484,6 +486,25 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post  ('admin/fom-rank/{id}/approve', [\App\Http\Controllers\Admin\FomRankAdminController::class, 'approve'])->name('admin.fom-rank.approve');
     Route::post  ('admin/fom-rank/{id}/reject',  [\App\Http\Controllers\Admin\FomRankAdminController::class, 'reject'])->name('admin.fom-rank.reject');
     Route::post  ('admin/fom-rank/detect',       [\App\Http\Controllers\Admin\FomRankAdminController::class, 'detect'])->name('admin.fom-rank.detect');
+    Route::put   ('admin/fom-rank/ranks/{id}',   [\App\Http\Controllers\Admin\FomRankAdminController::class, 'updateRank'])->name('admin.fom-rank.update');
+    Route::post  ('admin/fom-rank/ranks/{id}/toggle', [\App\Http\Controllers\Admin\FomRankAdminController::class, 'toggleRank'])->name('admin.fom-rank.toggle');
+
+    // ── ROYAL LEADER BONUS (admin) ─────────────────────────────────────
+    Route::get   ('admin/fom-royal',                 [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'index'])->name('admin.fom-royal.index');
+    Route::put   ('admin/fom-royal/tiers/{id}',      [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'updateTier'])->name('admin.fom-royal.tier.update');
+    Route::post  ('admin/fom-royal/tiers/{id}/toggle', [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'toggleTier'])->name('admin.fom-royal.tier.toggle');
+    Route::post  ('admin/fom-royal/{id}/approve',    [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'approve'])->name('admin.fom-royal.approve');
+    Route::post  ('admin/fom-royal/{id}/reject',     [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'reject'])->name('admin.fom-royal.reject');
+    Route::post  ('admin/fom-royal/detect',          [\App\Http\Controllers\Admin\FomRoyalAdminController::class, 'detect'])->name('admin.fom-royal.detect');
+
+    // ── RESIDUAL INCOME MATCHING BONUS (admin) ─────────────────────────
+    Route::get   ('admin/fom-residual',                  [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'index'])->name('admin.fom-residual.index');
+    Route::put   ('admin/fom-residual/levels/{id}',      [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'updateLevel'])->name('admin.fom-residual.level.update');
+    Route::post  ('admin/fom-residual/levels/{id}/toggle', [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'toggleLevel'])->name('admin.fom-residual.level.toggle');
+    Route::post  ('admin/fom-residual/run',              [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'runWeekly'])->name('admin.fom-residual.run');
+    Route::post  ('admin/fom-residual/{id}/approve',     [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'approveLevel'])->name('admin.fom-residual.approve');
+    Route::post  ('admin/fom-residual/{id}/reject',      [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'rejectLevel'])->name('admin.fom-residual.reject');
+    Route::post  ('admin/fom-residual/detect',           [\App\Http\Controllers\Admin\FomResidualAdminController::class, 'detect'])->name('admin.fom-residual.detect');
 
     // ── WEEKLY LEADERBOARD (admin) ─────────────────────────────────────
     Route::get   ('admin/fom-leaderboard',            [\App\Http\Controllers\Admin\FomLeaderboardAdminController::class, 'index'])->name('admin.fom-leaderboard.index');

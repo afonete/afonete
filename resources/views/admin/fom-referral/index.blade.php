@@ -36,6 +36,55 @@
         <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm"><span class="text-[11px] font-bold uppercase text-slate-400 block">Forfeited Rows</span><span class="text-lg font-extrabold text-red-500">{{ $totals['ineligible_cnt'] }}</span></div>
     </div>
 
+    {{-- VOLUME CAP EXCESS (spec §70): totals of the VB clipped above each user's package cap --}}
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-6">
+        <h3 class="font-bold text-slate-900 mb-1"><i class="fas fa-compress-arrows-alt text-red-500 mr-1"></i> Volume Cap Excess</h3>
+        <p class="text-xs text-slate-500 mb-3">
+            Weekly volume-bonus payouts are clipped at each user's CURRENT FOM package cap — the excess above
+            the cap is not paid and is reported here.
+        </p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                <span class="text-[11px] font-bold uppercase text-red-400 block">Total Cap Excess (all time)</span>
+                <span class="text-xl font-extrabold text-red-600">${{ number_format($totals['cap_excess_total'] ?? 0, 2) }}</span>
+            </div>
+            <div class="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                <span class="text-[11px] font-bold uppercase text-red-400 block">Cap Excess (this week)</span>
+                <span class="text-xl font-extrabold text-red-600">${{ number_format($totals['cap_excess_week'] ?? 0, 2) }}</span>
+            </div>
+        </div>
+        @if(isset($cappedRows) && $cappedRows->isNotEmpty())
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-600">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                        <tr>
+                            <th class="px-4 py-2">User</th>
+                            <th class="px-4 py-2">Date</th>
+                            <th class="px-4 py-2">Uncapped VB</th>
+                            <th class="px-4 py-2">Cap</th>
+                            <th class="px-4 py-2">Paid</th>
+                            <th class="px-4 py-2">Excess (not paid)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($cappedRows as $c)
+                            <tr class="bg-white border-b">
+                                <td class="px-4 py-2 font-semibold text-slate-900">{{ optional($c->user)->user ?? optional($c->user)->name ?? '—' }}</td>
+                                <td class="px-4 py-2"><small>{{ \Carbon\Carbon::parse($c->date)->format('Y-m-d') }}</small></td>
+                                <td class="px-4 py-2">${{ number_format($c->uncapped, 2) }}</td>
+                                <td class="px-4 py-2">${{ number_format($c->cap, 2) }}</td>
+                                <td class="px-4 py-2 text-emerald-600 font-bold">${{ number_format($c->paid, 2) }}</td>
+                                <td class="px-4 py-2 text-red-600 font-bold">${{ number_format($c->forfeited, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <p class="text-xs text-slate-400">No capped payouts yet.</p>
+        @endif
+    </div>
+
     {{-- FOM codes awaiting activation (no Payment → no referral accrual yet) --}}
     @if(isset($pendingActivations) && $pendingActivations->isNotEmpty())
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">

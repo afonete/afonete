@@ -1091,7 +1091,7 @@ img{ max-width:100%;}
                         {{ number_format($combinedGrandTotal, 0) }}
                     </div>
                     <div class="dash-card-subtitle mb-2">
-                        Sum of UVP tokens + Team Leaders token.
+                        Sum of UVP tokens + Team Leaders token + FOM Licence Miner tokens.
                     </div>
                     <div class="dash-card-footer pt-2 text-muted" style="font-size: 0.75rem;">
                         <span class="font-weight-bold text-dark">Combined Portfolio Total</span>
@@ -1342,13 +1342,19 @@ img{ max-width:100%;}
              <div class="container-fluid ">
 
              @php
+                 // Real AVAILABLE deposit balance (approved − used, §52 self-heal)
+                 // — the controller passes it as $deposit_raw. The old code read
+                 // $sum, which is never passed → the badge always showed $0.00.
+                 $availableDepositBalance = (float) ($deposit_raw ?? 0);
+                 // Controller passes have_pending_deposit (singular).
+                 $hasPendingDeposit = !empty($have_pending_deposit) && (is_countable($have_pending_deposit) ? count($have_pending_deposit) > 0 : (bool) $have_pending_deposit);
                  $isDepositedFreeUser = ($user->has_free_package === 'yes' || $user->has_free_package === 'no')
                      && ($active_packages_count == 0)
                      && !in_array(strtoupper((string)$user->has_paid_package), ['TEAM_LEADER', 'SUPER_LEADER'])
-                     && ($sum > 0 || $user->deposits->whereIn('status', ['approved', 'used'])->count() > 0);
+                     && $availableDepositBalance > 0;
              @endphp
 
-             @if($isDepositedFreeUser && !$have_pending_deposits)
+             @if($isDepositedFreeUser && !$hasPendingDeposit)
              <div id="encourageActivationModal" class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 1050;">
                  <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 520px;">
                      <div class="modal-content p-4 shadow-2xl border-0 rounded-2xl text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(245, 158, 11, 0.4) !important; border-radius: 18px !important;">
@@ -1358,7 +1364,7 @@ img{ max-width:100%;}
                                      <i class="fas fa-bolt"></i>
                                  </div>
                                  <div>
-                                     <h4 class="font-weight-bold text-white mb-0" style="font-size: 1.2rem;">Activate Package to Start Earning!</h4>
+                                     <h4 class="font-weight-bold text-white mb-0" style="font-size: 1.2rem;">Activate AI UVP Licence Packages</h4>
                                      <small class="text-light opacity-80">You have active deposit balance ready to invest</small>
                                  </div>
                              </div>
@@ -1370,7 +1376,7 @@ img{ max-width:100%;}
                          <div class="text-center py-2">
                              <div class="mb-3">
                                  <span class="badge badge-warning text-dark font-weight-bold px-3 py-1.5 text-uppercase" style="font-size: 0.85rem; border-radius: 6px;">
-                                     Available Deposit Balance: ${{ number_format($sum ?? 0, 2) }}
+                                     Available Deposit Balance: ${{ number_format($availableDepositBalance, 2) }}
                                  </span>
                              </div>
                              <p class="text-light leading-relaxed mb-3" style="font-size: 0.95rem;">
@@ -1409,7 +1415,15 @@ img{ max-width:100%;}
              </script>
              @endif
 
-             @if($have_pending_deposits)
+             @php
+                 // Controller passes have_pending_deposit (a collection of the
+                 // user's pending deposits). The old code read the undefined
+                 // plural $have_pending_deposits → modal never rendered.
+                 $pendingDeposit = $hasPendingDeposit
+                     ? (is_iterable($have_pending_deposit) ? collect($have_pending_deposit)->first() : $have_pending_deposit)
+                     : null;
+             @endphp
+             @if($pendingDeposit)
 <div id="myModal" class="modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-dialog-top warning " role="document">
         <div class="modal-content p-4 shadow border rounded " style="background:#27445D; color: #fff;">
@@ -1431,10 +1445,10 @@ img{ max-width:100%;}
             
             <p class="text-light small mb-2">You still have a pending order.</p>
 
-            @if(!empty($have_pending_deposits->comment))
+            @if(!empty($pendingDeposit->comment))
                 <div class="alert alert-info text-left small mb-3 p-3" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 8px;">
                     <strong class="text-white d-block mb-1"><i class="fas fa-comment-dots mr-1 text-warning"></i> Admin Note / Response:</strong>
-                    <p class="mb-0 text-light" style="font-size: 0.85rem;">{{ $have_pending_deposits->comment }}</p>
+                    <p class="mb-0 text-light" style="font-size: 0.85rem;">{{ $pendingDeposit->comment }}</p>
                 </div>
             @endif
 
@@ -1445,7 +1459,7 @@ img{ max-width:100%;}
                 <input type="text" 
                   class="form-control me-2" 
                   placeholder="Transaction ID" name="transactionId" 
-                  value="{{ $have_pending_deposits->transaction_id ?? '' }}" readonly>
+                  value="{{ $pendingDeposit->transaction_id ?? '' }}" readonly>
                 <button type="submit" class="btn btn-success text-white mx-2">Send</button>
             </form>
             <p class="text-sm mb-3">Please wait for the admin to approve your deposit.</p>

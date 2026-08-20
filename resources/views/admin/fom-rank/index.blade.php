@@ -90,43 +90,73 @@
         <div class="mt-3">{{ $pending->appends(request()->except('pending_page'))->links() }}</div>
     </div>
 
-    {{-- Rank ladder --}}
+    {{-- Rank ladder — EDITABLE (spec §71) --}}
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-6">
-        <h2 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-layer-group text-blue-500 mr-1"></i> Rank ladder (17 ranks · 5 groups)</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-slate-600">
-                <thead class="text-xs text-slate-700 uppercase bg-slate-100">
-                    <tr>
-                        <th class="px-3 py-2">#</th>
-                        <th class="px-3 py-2">Group</th>
-                        <th class="px-3 py-2">Rank</th>
-                        <th class="px-3 py-2">Volume Bonus</th>
-                        <th class="px-3 py-2">Team Turnover</th>
-                        <th class="px-3 py-2">Qualification Criteria</th>
-                        <th class="px-3 py-2">Personal Turnover</th>
-                        <th class="px-3 py-2">Licence At Least</th>
-                        <th class="px-3 py-2">Reward</th>
-                        <th class="px-3 py-2">Extra Bonuses</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($ranks as $r)
-                        <tr class="bg-white border-b">
-                            <td class="px-3 py-2 font-bold text-slate-900">{{ $r->level }}</td>
-                            <td class="px-3 py-2 text-xs">{{ $r->group_name }}</td>
-                            <td class="px-3 py-2 font-bold text-slate-900">{{ $r->name }}</td>
-                            <td class="px-3 py-2">VB {{ number_format((float) $r->vb_required, 0) }}</td>
-                            <td class="px-3 py-2">${{ number_format((float) $r->team_turnover, 0) }}</td>
-                            <td class="px-3 py-2 text-xs">{{ $r->criteria_label }}</td>
-                            <td class="px-3 py-2">${{ number_format((float) $r->personal_turnover, 0) }}</td>
-                            <td class="px-3 py-2 text-xs font-semibold">{{ $r->licence_min }}</td>
-                            <td class="px-3 py-2 font-bold text-emerald-600">${{ number_format((float) $r->reward, 0) }}</td>
-                            <td class="px-3 py-2 text-xs">{{ $r->extra_bonuses }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
+        <h2 class="text-lg font-bold text-slate-900 mb-1"><i class="fas fa-layer-group text-blue-500 mr-1"></i> Rank ladder (17 ranks · 5 groups) — editable</h2>
+        <p class="text-xs text-slate-500 mb-4">
+            All qualification and reward values are modifiable per rank. Advanced: the structured criteria can be
+            edited as JSON (types: <code class="bg-slate-100 px-1 rounded">bonus</code>,
+            <code class="bg-slate-100 px-1 rounded">active_directs</code>,
+            <code class="bg-slate-100 px-1 rounded">ranks</code>); leave blank to keep the current rule.
+        </p>
+        @foreach($ranks as $r)
+            <form method="POST" action="{{ route('admin.fom-rank.update', $r->id) }}" class="border border-slate-200 rounded-lg p-3 mb-3 {{ $r->is_active ? '' : 'opacity-60' }}">
+                @csrf
+                @method('PUT')
+                <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+                    <span class="font-extrabold text-slate-900">#{{ $r->level }} {{ $r->name }} <span class="text-xs font-normal text-slate-400">· {{ $r->group_name }}</span></span>
+                    <span class="text-xs text-slate-400">VB {{ number_format((float) $r->vb_required, 0) }} · TT ${{ number_format((float) $r->team_turnover, 0) }} · PT ${{ number_format((float) $r->personal_turnover, 0) }} · {{ $r->licence_min }} · ${{ number_format((float) $r->reward, 0) }}</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Volume Bonus (VB)</label>
+                        <input type="number" step="0.01" min="0" name="vb_required" value="{{ (float) $r->vb_required }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Team Turnover ($)</label>
+                        <input type="number" step="0.01" min="0" name="team_turnover" value="{{ (float) $r->team_turnover }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Personal Turnover ($)</label>
+                        <input type="number" step="0.01" min="0" name="personal_turnover" value="{{ (float) $r->personal_turnover }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Licence At Least</label>
+                        <select name="licence_min" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                            @foreach(array_keys(\App\Models\FomRank::LICENCE_ORDER) as $lic)
+                                <option value="{{ $lic }}" {{ strtoupper($r->licence_min) === $lic ? 'selected' : '' }}>{{ $lic }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Reward ($)</label>
+                        <input type="number" step="0.01" min="0" name="reward" value="{{ (float) $r->reward }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Extra Bonuses</label>
+                        <input type="text" name="extra_bonuses" value="{{ $r->extra_bonuses }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div class="col-span-2 md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Qualification Criteria (label)</label>
+                        <input type="text" name="criteria_label" value="{{ $r->criteria_label }}" class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full">
+                    </div>
+                    <div class="col-span-2 md:col-span-3">
+                        <label class="block text-xs font-semibold text-slate-600 mb-0.5">Criteria rule (JSON — blank keeps current)</label>
+                        <input type="text" name="criteria_json" value="" placeholder='{{ json_encode($r->criteria_json) }}'
+                               class="bg-slate-50 border border-slate-300 text-xs rounded-lg p-2 w-full font-mono">
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <button type="submit" class="text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg text-xs px-4 py-2">Save {{ $r->name }}</button>
+                </div>
+            </form>
+            <form method="POST" action="{{ route('admin.fom-rank.toggle', $r->id) }}" class="mb-4 -mt-2 text-right">
+                @csrf
+                <button type="submit" class="text-xs font-semibold {{ $r->is_active ? 'text-red-600' : 'text-emerald-600' }} hover:underline">
+                    {{ $r->is_active ? 'Deactivate' : 'Activate' }} {{ $r->name }}
+                </button>
+            </form>
+        @endforeach
         <p class="text-xs text-slate-400 mt-2">
             90-DAY RULE: each completed 90-day window (from first FOM activation) without a new rank doubles that user's
             VB requirement for the next rank (×2 per missed window).

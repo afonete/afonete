@@ -121,7 +121,9 @@
 
                     {{-- Left & Right Teams Branches --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- LEFT TEAM BRANCH --}}
+                        {{-- LEFT TEAM BRANCH · ts-v2 marker (§75): plain div — NOT an
+                             AdminLTE .card, so no CardWidget/collapse handler can bind
+                             to this header. Only the Show More button toggles rows. --}}
                         <div class="bg-sky-50/60 rounded-2xl p-5 border border-sky-200">
                             <div class="flex items-center justify-between border-b border-sky-200 pb-3 mb-3">
                                 <h5 class="text-sky-900 font-extrabold text-sm flex items-center gap-2">
@@ -176,7 +178,7 @@
                             </div>
 
                             @if(count($leftMembers) > 5)
-                                <button type="button" onclick="toggleBranchLimit('left')" id="btnLeftToggle" class="w-full mt-2.5 py-2 bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold rounded-xl border border-sky-200 transition flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="toggleBranchLimit('left', event)" id="btnLeftToggle" class="w-full mt-2.5 py-2 bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold rounded-xl border border-sky-200 transition flex items-center justify-center gap-1.5">
                                     <i class="fas fa-chevron-down text-[10px]" id="iconLeftToggle"></i>
                                     <span id="textLeftToggle">Show More (+{{ count($leftMembers) - 5 }} Remaining)</span>
                                 </button>
@@ -242,7 +244,7 @@
                             </div>
 
                             @if(count($rightMembers) > 5)
-                                <button type="button" onclick="toggleBranchLimit('right')" id="btnRightToggle" class="w-full mt-2.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-bold rounded-xl border border-indigo-200 transition flex items-center justify-center gap-1.5">
+                                <button type="button" onclick="toggleBranchLimit('right', event)" id="btnRightToggle" class="w-full mt-2.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs font-bold rounded-xl border border-indigo-200 transition flex items-center justify-center gap-1.5">
                                     <i class="fas fa-chevron-down text-[10px]" id="iconRightToggle"></i>
                                     <span id="textRightToggle">Show More (+{{ count($rightMembers) - 5 }} Remaining)</span>
                                 </button>
@@ -416,7 +418,11 @@ function copyToClipboard(id) {
     });
 }
 
-function toggleBranchLimit(side) {
+function toggleBranchLimit(side, ev) {
+    // §75 hardening: stop the click from bubbling into any global handler
+    // (AdminLTE CardWidget / treeview listeners on the live host were
+    // collapsing the whole branch container instead of toggling rows).
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
     const extras = document.querySelectorAll('.' + side + '-extra-item');
     const textEl = document.getElementById('text' + (side === 'left' ? 'Left' : 'Right') + 'Toggle');
     const iconEl = document.getElementById('icon' + (side === 'left' ? 'Left' : 'Right') + 'Toggle');
@@ -440,6 +446,27 @@ function toggleBranchLimit(side) {
         if (iconEl) iconEl.className = 'fas fa-chevron-down text-[10px]';
     }
 }
+
+// §75 hardening: the dashboard base ships AdminLTE, whose CardWidget binds
+// collapse handlers to [data-card-widget] / .card-header elements. If a stale
+// compiled copy of this view (or a plugin) marks the branch headers that way
+// on the LIVE host, clicking near "LEFT TEAM BRANCH" collapses the whole box.
+// Strip any such attributes inside the branch containers at load time.
+document.addEventListener('DOMContentLoaded', function () {
+    ['leftBranchContainer', 'rightBranchContainer'].forEach(function (id) {
+        var container = document.getElementById(id);
+        if (!container) return;
+        var box = container.closest('div.rounded-2xl') || container.parentElement;
+        if (!box) return;
+        box.querySelectorAll('[data-card-widget], [data-widget], [data-toggle="collapse"], [data-bs-toggle="collapse"]').forEach(function (el) {
+            el.removeAttribute('data-card-widget');
+            el.removeAttribute('data-widget');
+            el.removeAttribute('data-toggle');
+            el.removeAttribute('data-bs-toggle');
+        });
+        box.classList.remove('card', 'collapsed-card');
+    });
+});
 
 function filterBranch(side) {
     const input = document.getElementById(side + 'Search');

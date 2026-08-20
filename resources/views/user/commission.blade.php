@@ -1,3 +1,4 @@
+{{-- pkl-v1 (§76 FOM-aware package labels) --}}
 <div class="wrapper">
     @include('user.user-dashboard-base')
     <div class="content-wrapper">
@@ -55,6 +56,7 @@
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Username</th>
+                                        <th>Package</th>
                                         <th>Invested</th>
                                         <th>Bonus (10%)</th>
                                         <th>Status</th>
@@ -68,6 +70,7 @@
                                             <strong>{{ $ref->user ?? $ref->name }}</strong>
                                             <small class="d-block text-muted">{{ $ref->email }}</small>
                                         </td>
+                                        <td><small class="font-weight-bold text-slate-800">{{ $ref->packageLabel() }}</small></td>
                                         <td>${{ number_format($ref->total_invested, 2) }}</td>
                                         <td class="font-weight-bold text-success">
                                             ${{ number_format($ref->bonus_earned, 2) }}
@@ -75,6 +78,8 @@
                                         <td>
                                             @if($ref->is_active)
                                                 <span class="badge badge-success">Active</span>
+                                            @elseif($ref->hasAnyPackage())
+                                                <span class="badge badge-warning text-dark">FOM Holder</span>
                                             @else
                                                 <span class="badge badge-secondary">No Investment</span>
                                             @endif
@@ -105,6 +110,7 @@
                                 <thead class="thead-light">
                                     <tr>
                                         <th>Username</th>
+                                        <th>Package</th>
                                         <th>Via</th>
                                         <th>Invested</th>
                                         <th>Bonus (1%)</th>
@@ -115,6 +121,7 @@
                                     @foreach($indirectReferrals as $ref)
                                     <tr>
                                         <td><strong>{{ $ref->user ?? $ref->name }}</strong></td>
+                                        <td><small class="font-weight-bold text-slate-800">{{ $ref->packageLabel() }}</small></td>
                                         <td><small class="text-muted">{{ $ref->referred_through }}</small></td>
                                         <td>${{ number_format($ref->total_invested, 2) }}</td>
                                         <td class="font-weight-bold text-info">
@@ -123,6 +130,8 @@
                                         <td>
                                             @if($ref->is_active)
                                                 <span class="badge badge-success">Active</span>
+                                            @elseif($ref->hasAnyPackage())
+                                                <span class="badge badge-warning text-dark">FOM Holder</span>
                                             @else
                                                 <span class="badge badge-secondary">No Investment</span>
                                             @endif

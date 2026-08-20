@@ -24,6 +24,12 @@
     {{-- Form Card --}}
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 max-w-4xl mx-auto">
         
+        @if (session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg font-semibold">
+                <i class="fas fa-exclamation-triangle mr-1"></i> {{ session('error') }}
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
                 <ul class="list-disc pl-5 space-y-1 font-semibold">
@@ -129,6 +135,15 @@
                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
                            placeholder="e.g. 6000">
                     <span class="text-[11px] text-slate-400 block mt-1">Displays as: Volume Bonus: 6,000 — separate from Volume Point</span>
+                </div>
+
+                {{-- Weekly Volume Bonus Cap (Numeric $) --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1.5">Weekly Volume Bonus Cap ($)</label>
+                    <input type="number" step="0.01" name="weekly_vb_cap" value="{{ old('weekly_vb_cap') }}"
+                           class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all"
+                           placeholder="e.g. 12000">
+                    <span class="text-[11px] text-slate-400 block mt-1">Max VB payable per week for holders of this package (0 = no cap). Direct Sponsors bonus is never capped.</span>
                 </div>
 
                 {{-- Token Symbol (Text) --}}

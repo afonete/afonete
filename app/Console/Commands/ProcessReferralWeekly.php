@@ -34,6 +34,17 @@ class ProcessReferralWeekly extends Command
         $rankRows = \App\Services\FomRankService::detectAll();
         $this->info("FOM rank detection found {$rankRows} new pending rank(s).");
 
+        // ROYAL LEADER BONUS detection sweep (VIP1–VIP5; admin approves
+        // with focoin price → tokens + auto promotion).
+        $royalRows = \App\Services\FomRoyalService::detectAll();
+        $this->info("Royal Leader Bonus detection found {$royalRows} new pending award(s).");
+
+        // RESIDUAL INCOME MATCHING BONUS: leaders earn a % of their ranked
+        // downlines' FOM Affiliate Bonus. MUST run after processWeekly()
+        // above so this week's payout transactions exist to match against.
+        $residualPaid = \App\Services\FomResidualService::processWeekly();
+        $this->info("Residual matching bonus paid to {$residualPaid} leader(s).");
+
         // Weekly LEADERBOARD: regenerate the new week's top-10 board
         // (runs after the FOM payout so this Monday's payouts are counted
         // in LAST week's window; admin pins for the new week survive).

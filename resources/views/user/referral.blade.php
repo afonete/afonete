@@ -1,3 +1,4 @@
+{{-- pkl-v1 (§76 FOM-aware package labels) --}}
 <div class="wrapper">
     @include('user.user-dashboard-base')
     
@@ -184,7 +185,7 @@
                                         @foreach($directReferrals as $refer)
                                             @php
                                                 $side = $refer->teamSide ? $refer->teamSide->side : 'N/A';
-                                                $hasPkg = !empty($refer->has_paid_package) && !in_array(strtolower(trim($refer->has_paid_package)), ['no', 'standard', '']);
+                                                $hasPkg = $refer->hasAnyPackage(); // §76: FOM-aware (Royal promos / legacy FOM won't show FREE)
                                             @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration + ($directReferrals->currentPage() - 1) * $directReferrals->perPage() }}</td>
@@ -197,7 +198,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="font-weight-bold text-slate-800">
-                                                        {{ $hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD' }}
+                                                        {{ $refer->packageLabel() }}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -245,7 +246,7 @@
                                         @foreach($indirectReferrals as $refer)
                                             @php
                                                 $side = $refer->teamSide ? $refer->teamSide->side : 'N/A';
-                                                $hasPkg = !empty($refer->has_paid_package) && !in_array(strtolower(trim($refer->has_paid_package)), ['no', 'standard', '']);
+                                                $hasPkg = $refer->hasAnyPackage(); // §76: FOM-aware (Royal promos / legacy FOM won't show FREE)
                                                 $directRef = $refer->referrer;
                                             @endphp
                                             <tr>
@@ -260,7 +261,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="font-weight-bold text-slate-800">
-                                                        {{ $hasPkg ? strtoupper($refer->has_paid_package) : 'FREE / STANDARD' }}
+                                                        {{ $refer->packageLabel() }}
                                                     </span>
                                                 </td>
                                                 <td><small class="text-muted">{{ $refer->created_at ? $refer->created_at->format('d M Y') : 'N/A' }}</small></td>

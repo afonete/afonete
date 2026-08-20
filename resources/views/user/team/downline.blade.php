@@ -1,3 +1,4 @@
+{{-- pkl-v1 (§76 FOM-aware package labels + navbar) --}}
 <div class="wrapper">
     @include('user.user-dashboard-base')
     <title>Overview</title>
@@ -6,6 +7,9 @@
 
     <div class="content-wrapper bg-slate-50 min-h-screen py-4 px-4">
         <div class="container-fluid max-w-7xl mx-auto flex flex-col gap-6">
+
+            {{-- Navigation Bar Component (§76 — same navbar as team-structure) --}}
+            <x-navbar/>
 
             <!-- Stats Overview Section -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -159,7 +163,7 @@
                                 if (!$side) {
                                     $side = $member->referee_id == Auth::id() ? 'DIRECT' : 'INDIRECT';
                                 }
-                                $hasPkg = !empty($member->has_paid_package) && !in_array(strtolower(trim($member->has_paid_package)), ['no', 'standard', '']);
+                                $hasPkg = $member->hasAnyPackage(); // §76: FOM-aware (Royal promos / legacy FOM won't show FREE)
                                 $rank = $member->currentRank();
                                 $sponsor = $member->referrer;
                                 $activationObj = $member->have_activation_code;
@@ -180,7 +184,7 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-xs">
                                     <span class="px-2.5 py-1 font-extrabold rounded text-[11px] {{ $hasPkg ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600' }}">
-                                        {{ $hasPkg ? strtoupper($member->has_paid_package) : 'STANDARD / FREE' }}
+                                        {{ $member->packageLabel() }}
                                     </span>
                                 </td>
                                 <td class="py-3.5 px-4 text-xs font-medium text-slate-700">{{ $member->country ?: 'N/A' }}</td>
