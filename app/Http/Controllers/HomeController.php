@@ -477,6 +477,12 @@ class HomeController extends Controller
     }
 
     public function stakerPackage(){
+        // §96: Staker Package is parked under Legacy / Coming Soon — the
+        // page must not be accessible (direct URL included) until it is
+        // re-launched. To re-enable: remove this redirect.
+        return redirect()->route('user.dashboard')
+            ->with('message', 'Staker Package is coming soon. Stay tuned!');
+
         return view('user.staker-package');
     }
 

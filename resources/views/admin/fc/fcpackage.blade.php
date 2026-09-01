@@ -7,6 +7,18 @@
                 {{ session('status') }}
             </div>
         @endif
+        {{-- §95: destroy/store/update flash with "message"; guarded destroy flashes "error" —
+             neither was displayed before, so deletes gave NO feedback on this page. --}}
+        @if(session('message'))
+            <div class="flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200" role="alert">
+                <i class="fas fa-check-circle mr-2"></i> {{ session('message') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200" role="alert">
+                <i class="fas fa-exclamation-triangle mr-2"></i> {{ session('error') }}
+            </div>
+        @endif
 
        <header class="bg-blue-50 py-[2rem] rounded ">
         <h1 class="text-2xl uppercase text-slate-700 font-bold">FC - PACKAGES</h1>
@@ -117,7 +129,11 @@
 
 
 
-                               <form id="deleteForm" action="{{ route('admin.Adventures.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
+                               {{-- §95: was wired to the admin.Adventures destroy endpoint — the
+                                    WRONG controller: it deleted the Adventures (UVP) row whose id
+                                    happened to match this FC package's id. Now targets the
+                                    FC resource's own destroy. Unique form id per row. --}}
+                               <form id="deleteFcForm-{{ $deposit->id }}" action="{{ route('fcpackages.destroy', $deposit->id) }}" method="POST" onsubmit="return confirmDeletion();">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">
@@ -127,7 +143,7 @@
 
                             <script>
                                 function confirmDeletion() {
-                                    return confirm('Are you sure you want to delete this fc?');
+                                    return confirm('Are you sure you want to delete this FC package?');
                                 }
                             </script>
 

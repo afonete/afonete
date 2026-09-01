@@ -434,8 +434,9 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- Packages --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','staker-package','user.investments*','packageRenew') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','staker-package','user.investments*','packageRenew') ? 'active' : '' }}">
+                    {{-- §96: Staker entry moved to Legacy / Coming Soon (not accessible for now) --}}
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','user.investments*','packageRenew') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','user.investments*','packageRenew') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-box-open"></i>
                             <p>Packages <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -444,17 +445,6 @@ if (showAlertBtn) {
                                 <a href="{{ route('user.buypackage') }}" class="nav-link {{ request()->routeIs('user.buypackage') ? 'active' : '' }}">
                                     <i class="fas fa-shopping-cart nav-icon"></i><p>Buy UVP AI License</p>
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                @if($user->has_paid_package == 'free' || $user->has_free_package == 'yes')
-                                    <a href="{{ route('user.dashboard.freeaccount-restricted') }}" class="nav-link">
-                                        <i class="fas fa-layer-group nav-icon"></i><p>Staker Package</p>
-                                    </a>
-                                @else
-                                    <a href="{{ route('staker-package') }}" class="nav-link {{ request()->routeIs('staker-package') ? 'active' : '' }}">
-                                        <i class="far fa-circle nav-icon"></i><p>Staker Package</p>
-                                    </a>
-                                @endif
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('user.investments') }}" class="nav-link {{ request()->routeIs('user.investments*') ? 'active' : '' }}">
@@ -700,6 +690,8 @@ if (showAlertBtn) {
                             <li class="nav-item"><a href="/user/deposit" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Deposit Old Route</p></a></li>
                             <li class="nav-item"><a href="/user/dashboard/withdraw/user" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Withdraw Old Route</p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Featured <span class="right badge badge-danger">soon</span></p></a></li>
+                            {{-- §96: Staker Package parked here — page gated until re-launch --}}
+                            <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="fas fa-layer-group nav-icon"></i><p>Staker Package <span class="right badge badge-danger">soon</span></p></a></li>
                             <li class="nav-item"><a href="#" onclick="soon()" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Upgrade Package</p></a></li>
                             <li class="nav-item"><a href="{{ route('user.dashboard.create') }}" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Club Building</p></a></li>
                             <li class="nav-item"><a href="https://exchange.focoin.eu/" target="_blank" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Exchange</p></a></li>

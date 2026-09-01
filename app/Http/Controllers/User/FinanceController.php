@@ -1200,8 +1200,11 @@ public function getTeamTree(Request $request,$id){
         // Trading Vouchers — their tokens release via escrow installments.
         // Paginated 10 per page; the per-package renewal computation below
         // only runs for the current page's rows.
+        // §84: leader-code activation rows are excluded as well — a Team
+        // Leader's record is not a renewable UVP investment.
         $packagesPaginator = \App\Models\Payment::where('user', $user->id)
             ->excludeFom()
+            ->excludeLeader()
             ->where('is_expired', false)
             ->where('status', '1')
             ->orderBy('created_at', 'desc')
@@ -1290,10 +1293,12 @@ public function getTeamTree(Request $request,$id){
                 ->where('status', '1')
                 ->first();
         } else {
-            // Active package (FOM excluded so the fallback can never silently
-            // charge a renewal against a FOM Licence Miner payment)
+            // Active package (FOM + leader rows excluded so the fallback can
+            // never silently charge a renewal against a FOM Licence Miner
+            // payment or a Team Leader activation record — §84)
             $activePayment = \App\Models\Payment::where('user', $user->id)
                 ->excludeFom()
+                ->excludeLeader()
                 ->where('is_expired', false)
                 ->where('status', '1')
                 ->orderBy('created_at', 'desc')

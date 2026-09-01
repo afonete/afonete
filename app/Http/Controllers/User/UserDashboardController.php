@@ -210,8 +210,13 @@ class UserDashboardController extends Controller{
         // We order by created_at DESC to load the current newly activated package as the primary package
         // UVP/FC only — FOM Licence Miner payments are a separate product and
         // must never masquerade as the "VENTURE UVP" package on the card.
+        // §84: leader-code activation rows (category TEAM_LEADER/SUPER_LEADER,
+        // created by ActivationController when a leader code is redeemed) are
+        // excluded too — a Team Leader's tokens come ONLY from the
+        // admin-assigned activations.token, never from a UVP price division.
         $package = Paymodel::where("user",$userId)
                             ->excludeFom()
+                            ->excludeLeader()
                             ->where("is_expired",false)
                             ->where("status","1")
                             ->orderBy("created_at", "desc")
@@ -219,6 +224,7 @@ class UserDashboardController extends Controller{
 
         $mostRecentPayment = $user->investments()
                                   ->excludeFom()
+                                  ->excludeLeader()
                                   ->where("is_expired",0)
                                   ->where("status",1)
                                   ->orderBy('created_at', 'desc')
@@ -259,9 +265,12 @@ class UserDashboardController extends Controller{
             $adventureRow = \App\Models\Adventures::find($package->payable_id);
         }
 
-        // UVP/FC only — FOM licences don't generate UVP daily ROI.
+        // UVP/FC only — FOM licences don't generate UVP daily ROI, and §84:
+        // neither do leader-code activation rows (their price is an admin
+        // application fee, not an investment).
         $activePackages = Paymodel::where("user", $userId)
                                   ->excludeFom()
+                                  ->excludeLeader()
                                   ->where("is_expired", false)
                                   ->where("status", "1")
                                   ->get();

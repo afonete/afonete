@@ -240,7 +240,9 @@ if ($status === 'confirmed') {
                                 </div>
 
                                 <div class="mt-4">
-                                    <a href="/user/venture-package" class="btn btn-success-custom shadow-lg">
+                                    {{-- §94: goes to the dedicated activation page (code field only) —
+                                         no more scrolling past packages on /user/venture-package --}}
+                                    <a href="{{ url('/user/activate-code') }}" class="btn btn-success-custom shadow-lg">
                                         <i class="fas fa-check-circle me-2"></i>Activate My Account Now
                                     </a>
                                 </div>

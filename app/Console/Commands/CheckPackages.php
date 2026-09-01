@@ -33,6 +33,15 @@ class CheckPackages extends Command
                 continue;
             }
 
+            // ── §84 Guard: Team Leader / Super Leader activation rows never
+            // expire — leader access is tied to the activation code, not a
+            // timed package (mirrors the dashboard's own rule). Without this,
+            // the 200-day expiration_date on the leader Payment row would
+            // downgrade has_paid_package to 'no' and destroy leader status.
+            if ($package->isLeaderPayment()) {
+                continue;
+            }
+
             $expiry    = Carbon::parse($package->expiration_date);
             $createdAt = Carbon::parse($package->created_at);
             $daysPassed = (int) $createdAt->diffInDays($today);
@@ -74,9 +83,12 @@ class CheckPackages extends Command
                     // own installment releases), so a FOM expiry must not dump a
                     // UVP package's still-locked tokens. Also skip while another
                     // active UVP/FC package remains.
+                    // §84: leader activation rows are not UVP/FC packages —
+                    // they must not block the LOCKED_TOKEN release either.
                     $hasOtherActiveUvpFc = Paymodel::where('user', $user->id)
                         ->where('id', '!=', $package->id)
                         ->excludeFom()
+                        ->excludeLeader()
                         ->where('is_expired', false)
                         ->where('status', 1)
                         ->exists();

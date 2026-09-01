@@ -175,6 +175,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
     Route::get('user/venture-package', [UserPackageController::class, 'index'])->name('user.venture');
+    // §94: dedicated minimal activation-code page (no scrolling past packages)
+    Route::get('user/activate-code', function () {
+        return view('user.activate-code');
+    })->name('user.activate-code');
     Route::get('user/package', [UserPackageController::class, 'UserPackage'])->name('user.package');
     // Route::get('user/package/pay', [PaymentController::class, 'pay'])->name('user.pay')->withoutMiddleware('user-package');
     Route::Post('user/package/payment', [PaymentController::class, 'blockpay'])->name('payment');
@@ -426,6 +430,7 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::post('admin/team-leaders/credit/{creditId}/update', [AdminController::class, 'updateCredit'])->name('admin.team-leaders.credit.update');
     Route::post('admin/team-leaders/{leaderId}/credit/create', [AdminController::class, 'createCredit'])->name('admin.team-leaders.credit.create');
     Route::post('admin/team-leaders/{id}/reject', [AdminController::class, 'rejectTeamLeader'])->name('admin.team-leaders.reject');
+    Route::post('admin/team-leaders/{id}/period', [AdminController::class, 'updateTeamLeaderPeriod'])->name('admin.team-leaders.period.update');
     Route::post('admin/team-leaders/{id}/revoke-credit', [AdminController::class, 'revokeCredit'])->name('admin.team-leaders.revoke-credit');
     Route::post('admin/team-leaders/{id}/convert-to-free', [AdminController::class, 'convertToFreeUser'])->name('admin.team-leaders.convert-to-free');
 

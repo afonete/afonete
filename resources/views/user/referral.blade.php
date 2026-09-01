@@ -141,7 +141,7 @@
                                     {{ $referrerUser->name }} <span class="text-warning small font-weight-normal">(@ {{ $referrerUser->user }})</span>
                                 </h4>
                                 <div class="text-light small opacity-90">
-                                    Email: <strong>{{ $referrerUser->email }}</strong> · Transfer Code: <strong>{{ $referrerUser->getTransferCode() }}</strong> · Joined: <strong>{{ $referrerUser->created_at ? $referrerUser->created_at->format('d M Y') : 'N/A' }}</strong>
+                                    Email: <strong>{{ $referrerUser->email }}</strong> · User ID: <strong>{{ $referrerUser->getTransferCode() }}</strong> · Joined: <strong>{{ $referrerUser->created_at ? $referrerUser->created_at->format('d M Y') : 'N/A' }}</strong>
                                 </div>
                             @else
                                 <h4 class="font-weight-bold text-white mb-1" style="font-size: 1.2rem;">
@@ -173,7 +173,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>Transfer Code</th>
+                                            <th>User ID</th>
                                             <th>Username</th>
                                             <th>Position / Side</th>
                                             <th>Package</th>
@@ -234,7 +234,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th>#</th>
-                                            <th>Transfer Code</th>
+                                            <th>User ID</th>
                                             <th>Username</th>
                                             <th>Referred By</th>
                                             <th>Position / Side</th>

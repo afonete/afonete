@@ -69,7 +69,7 @@
 
         <!-- Alert Message -->
         <div class="alert-message text-center">
-            <span>You do not have any qualified package subscription to access NE Education.</span>
+            <span>You do not have any qualified package subscription to access Education.</span>
             <span>Please purchase Education package to proceed.</span>  <button class="custom-btn">Click Here</button>
         </div>
 
@@ -80,7 +80,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e0.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title"> - Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">
@@ -97,7 +97,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e1.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title"> - Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">
@@ -114,7 +114,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e2.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title">- Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">
@@ -131,7 +131,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e3.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title"> - Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">
@@ -148,7 +148,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e4.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title"> - Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">
@@ -166,7 +166,7 @@
                     <div class="card shadow-sm">
                         <div class="card-body text-center">
                             <img src="{{ asset('image/e5.png') }}" class="img-fluid rounded mb-3" alt="NE50 Image">
-                            <h5 class="card-title">NE50 - Basic Level</h5>
+                            <h5 class="card-title"> - Basic Level</h5>
                             <p class="card-text">Activation Fee: $10</p>
                             <p class="card-text">Course Duration: 75 weeks</p>
                             <ul class="list-unstyled mb-3">

@@ -56,6 +56,12 @@ class Activations extends Model
         return $this->hasOne(Credit::class, "activation_id", "id");
     }
 
+    /** §86: SUPER LEADER credit record tied to this activation code. */
+    public function superLeaderCredit(): HasOne
+    {
+        return $this->hasOne(SuperLeaderCredit::class, "activation_id", "id");
+    }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'payable');

@@ -91,6 +91,41 @@ class Payment extends Model
     }
 
     /**
+     * Leader "package" names stored in payments.category / payments.package
+     * when a Team Leader / Super Leader activation code is redeemed
+     * (ActivationController creates a Payment row for the leader code).
+     * §84: those rows are NOT UVP investments — they must never feed the
+     * UVP token fallback, daily-ROI loops or investment listings. Leader
+     * tokens come EXCLUSIVELY from the admin-assigned activations.token.
+     */
+    public const LEADER_CATEGORIES = ['TEAM_LEADER', 'SUPER_LEADER', 'TM'];
+
+    /** True when this payment row is a leader-code activation record. */
+    public function isLeaderPayment(): bool
+    {
+        return in_array(strtoupper(trim((string) $this->category)), self::LEADER_CATEGORIES, true)
+            || in_array(strtoupper(trim((string) $this->package)),  self::LEADER_CATEGORIES, true);
+    }
+
+    /**
+     * Query scope: exclude Team Leader / Super Leader activation rows.
+     * Chain with excludeFom() wherever "UVP/FC investments" are meant:
+     *   Payment::where('user', $id)->excludeFom()->excludeLeader()->...
+     */
+    public function scopeExcludeLeader($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($c) {
+                $c->whereNull('category')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(category)'), self::LEADER_CATEGORIES);
+            })->where(function ($p) {
+                $p->whereNull('package')
+                  ->orWhereNotIn(\Illuminate\Support\Facades\DB::raw('UPPER(package)'), self::LEADER_CATEGORIES);
+            });
+        });
+    }
+
+    /**
      * Query scope: exclude FOM Licence Miner payments (UVP/FC listings only).
      *
      * Rows with category VENTURE/FC are always kept. Everything else is

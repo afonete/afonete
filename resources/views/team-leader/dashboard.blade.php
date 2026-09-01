@@ -219,7 +219,7 @@
                                         @csrf
                                         <div class="form-group">
                                             <label class="text-sm font-weight-semibold text-slate-300">Event Title <span class="text-danger">*</span></label>
-                                            <input type="text" name="title" required class="form-control form-control-dark" placeholder="e.g. Fonepo Kigali Seminar">
+                                            <input type="text" name="title" required class="form-control form-control-dark" placeholder="e.g. Bifonex Kigali Seminar">
                                         </div>
 
                                         <div class="form-group">

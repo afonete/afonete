@@ -175,8 +175,9 @@ public function upgrade(Request $request){
                 // credit + installment schedule all commit together, or none
                 // of them do. The activation row is locked (FOR UPDATE) and
                 // status re-checked so a code can never be redeemed twice.
+                $fomPayment = null;
                 try {
-                    DB::transaction(function () use ($user, $results, $totalReturn) {
+                    DB::transaction(function () use ($user, $results, $totalReturn, &$fomPayment) {
                         $locked = Activations::where('id', $results->id)
                             ->lockForUpdate()
                             ->first();
@@ -195,7 +196,7 @@ public function upgrade(Request $request){
                         $user->save();
 
                         // Record Payment
-                        \App\Models\Payment::create([
+                        $fomPayment = \App\Models\Payment::create([
                             'user'            => $user->id,
                             'package'         => $locked->package,
                             'amount'          => $locked->price,
@@ -236,6 +237,12 @@ public function upgrade(Request $request){
                         ->with('message', 'Activation failed and nothing was changed. Please try again.');
                 }
 
+                // FOM 10-level referral commissions (idempotent)
+                if ($fomPayment) {
+                    \App\Services\FomReferralService::creditForFomPurchase($fomPayment);
+                    \App\Services\FomIncentiveService::onFomActivation($fomPayment);
+                }
+
                 // Process any due installments (each release is itself atomic)
                 \App\Models\FomTokenInstallment::processDueInstallments($user);
 
@@ -243,7 +250,7 @@ public function upgrade(Request $request){
                 $tokenSymbol = $tokenSetting->token_symbol ?? 'FOCOIN';
 
                 return redirect()->route('user.dashboard.activate')
-                    ->with('message', "Package '{$results->package}' activated successfully! " . number_format($totalReturn) . " {$tokenSymbol} credited to your Escrow Wallet (Locked Tokens). Released in 12 monthly installments into your Available Token balance.");
+                    ->with('message', "Package '{$results->package}' activated successfully! " . number_format($totalReturn) . " {$tokenSymbol} credited to your Escrow Wallet. Released in 12 monthly installments into your Available Token balance.");
             }
 
            else{
@@ -336,7 +343,7 @@ public function upgrade(Request $request){
                     $user->refresh();
                     $target = $this->dashboardRouteForUser($user);
                     $message = $target === 'user.dashboard'
-                        ? 'You have been activated Fonepo account. Enjoy unlimited earning on Fonepo!'
+                        ? 'You have been activated Bifonex account. Enjoy unlimited earning on Bifonex!'
                         : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                     return redirect()->route($target)->with('message', $message);
@@ -590,7 +597,7 @@ public function g_upgrade(Request $request){
                             $user = User::find($userA->id);
                             $target = $this->dashboardRouteForUser($user);
                             $message = $target === 'user.dashboard'
-                                ? 'You have been activated Fonepo account, Enjoy unlimited earning on Fonepo'
+                                ? 'You have been activated Bifonex account, Enjoy unlimited earning on Bifonex'
                                 : 'Your account has been activated. Please sign the contract before accessing your dashboard.';
 
                             return redirect()->route($target)->with('message', $message);

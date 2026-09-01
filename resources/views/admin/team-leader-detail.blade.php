@@ -244,10 +244,42 @@
                 <div class="p-6 space-y-5">
 
                     {{-- Duration Tracker --}}
-                    <div>
-                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                            <i class="fas fa-hourglass-half text-indigo-500 mr-1"></i> Activation Duration
+                    <div x-data="{ editPeriod: false }">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span><i class="fas fa-hourglass-half text-indigo-500 mr-1"></i> Activation Duration</span>
+                            {{-- §92: admin can adjust the activation period --}}
+                            <button type="button" @click="editPeriod = !editPeriod" class="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1 rounded-lg text-[11px] border border-indigo-200 transition duration-150 normal-case tracking-normal">
+                                <i class="fas fa-edit"></i> Edit Period
+                            </button>
                         </h4>
+                        {{-- §92: inline period/duration editor --}}
+                        <div x-show="editPeriod" x-cloak class="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                            <form action="{{ route('admin.team-leaders.period.update', $leader->id) }}" method="POST" class="flex flex-wrap items-end gap-3">
+                                @csrf
+                                <div class="flex-1 min-w-[160px]">
+                                    <label class="block text-[10px] font-bold text-indigo-800 uppercase mb-1">Activation Period (Days)</label>
+                                    <input type="number" name="period" min="1" max="3650" required
+                                           value="{{ $performance['duration_days'] }}"
+                                           class="w-full bg-white border border-indigo-300 text-slate-900 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500 font-bold">
+                                </div>
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150 shadow-sm"
+                                        onclick="return confirm('Update the activation period? Expiry and days remaining recalculate from the activation date.')">
+                                    <i class="fas fa-save mr-1"></i> Save Period
+                                </button>
+                                <button type="button" @click="editPeriod = false" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs transition duration-150">
+                                    Cancel
+                                </button>
+                            </form>
+                            <p class="text-[10px] text-indigo-700 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Current: <strong>{{ $performance['duration_days'] }} days</strong>
+                                @if($performance['activation_date'])
+                                    · activated {{ $performance['activation_date']->format('d M Y') }} — new expiry = activation date + new period.
+                                @else
+                                    · code not activated yet — the period applies once the leader activates.
+                                @endif
+                            </p>
+                        </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div class="bg-gray-50 rounded-xl p-3 text-center border">
                                 <p class="text-[10px] text-gray-400 font-bold uppercase">Activated</p>

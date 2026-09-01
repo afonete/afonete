@@ -176,19 +176,10 @@
                                                 &minus; ${{ number_format($renewalFee ?? 0, 2) }}
                                             </td>
                                         </tr>
+                                        {{-- §83: token price intentionally NOT displayed on this page --}}
                                         <tr class="border-top">
                                             <td class="text-muted pl-0">
-                                                <i class="fas fa-coins mr-1 text-warning"></i> New Token Price
-                                                <small class="d-block text-muted">(set by admin)</small>
-                                            </td>
-                                            <td class="text-right font-weight-bold" style="vertical-align: middle;">
-                                                ${{ number_format($tokenPrice ?? 0, 4) }} / token
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-muted pl-0">
                                                 <i class="fas fa-plus-circle mr-1 text-success"></i> Tokens You Will Receive
-                                                <small class="d-block text-muted">= Fee &divide; Token Price</small>
                                             </td>
                                             <td class="text-right" style="vertical-align: middle;">
                                                 <span class="badge badge-success px-3 py-2" style="font-size: 0.95rem;">
@@ -513,10 +504,7 @@
                                 <td class="text-muted pl-0">Amount to deduct:</td>
                                 <td class="font-weight-bold text-danger text-right pr-0" style="font-size: 1.15rem;">${{ number_format($renewalFee ?? 0, 2) }}</td>
                             </tr>
-                            <tr style="height: 30px; vertical-align: middle;">
-                                <td class="text-muted pl-0">Token price:</td>
-                                <td class="font-weight-bold text-dark text-right pr-0">${{ number_format($tokenPrice ?? 0, 4) }}</td>
-                            </tr>
+                            {{-- §83: token price intentionally NOT displayed in the modal --}}
                             <tr style="height: 30px; vertical-align: middle;">
                                 <td class="text-muted pl-0">Tokens you receive:</td>
                                 <td class="font-weight-bold text-success text-right pr-0" style="font-size: 1.15rem;">{{ number_format($tokensToReceive ?? 0, 4) }}</td>

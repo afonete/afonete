@@ -109,6 +109,15 @@ class FCpackageController extends Controller
     public function destroy($id)
     {
         $fcpackage = FCpackage::findOrFail($id);
+
+        // §95: never orphan investor records — a package with payments
+        // (morphMany payable) or legacy investments must not be deleted.
+        $investorCount = $fcpackage->payments()->count() + $fcpackage->investments()->count();
+        if ($investorCount > 0) {
+            return back()->with("error",
+                "Cannot delete '{$fcpackage->name}': {$investorCount} investor record(s) reference this package. Review its investors first.");
+        }
+
         $fcpackage->delete();
 
         return back()->with("message", "Package Deleted Successfully");

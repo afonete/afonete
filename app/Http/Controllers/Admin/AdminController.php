@@ -1287,7 +1287,7 @@ public function check(Request $request) {
         }
     }
 
-    public function teamLeadersList()
+    public function teamLeadersList(Request $request)
     {
         self::syncAutoLeaderRecords();
 
@@ -1302,7 +1302,70 @@ public function check(Request $request) {
         $pendingSocials = \App\Models\TeamLeaderSocial::where('status', 'pending')->latest()->get();
         $approvedSocials = \App\Models\TeamLeaderSocial::where('status', 'approved')->latest()->get();
 
-        return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials', 'approvedSocials'));
+        // §86 "All Team Leaders Info" tab — every TEAM_LEADER / SUPER_LEADER
+        // activation code with credit + owner + referrer, newest first.
+        // Eager-loaded to avoid N+1 (myCredit, myOwner + its referrer).
+        // §87: optional server-side search (?info_q=) across code, package,
+        // activation email and the owner's username / name / email —
+        // paginated 10/page with the search term carried through page links.
+        $infoSearch = trim((string) $request->query('info_q', ''));
+
+        // LIKE-escape with '!' + explicit ESCAPE clause: identical semantics
+        // on MySQL and SQLite (backslash escaping differs between engines).
+        $like = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $infoSearch) . '%';
+
+        $leaderActivations = \App\Models\Activations::with(['myCredit', 'superLeaderCredit', 'myOwner.referrer'])
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])
+            ->when($infoSearch !== '', function ($q) use ($like) {
+                $q->where(function ($qq) use ($like) {
+                    $qq->whereRaw("code LIKE ? ESCAPE '!'", [$like])
+                       ->orWhereRaw("package LIKE ? ESCAPE '!'", [$like])
+                       ->orWhereRaw("email LIKE ? ESCAPE '!'", [$like])
+                       ->orWhereHas('myOwner', function ($u) use ($like) {
+                           $u->whereRaw("user LIKE ? ESCAPE '!'", [$like])
+                             ->orWhereRaw("name LIKE ? ESCAPE '!'", [$like])
+                             ->orWhereRaw("email LIKE ? ESCAPE '!'", [$like]);
+                       });
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'info_page')
+            ->appends($infoSearch !== '' ? ['info_q' => $infoSearch] : []);
+
+        // Preload TeamLeader records for the page's rows (avoid N+1 in the
+        // Action column): keyed by lowercase User_name AND Email.
+        $usernames = [];
+        $emails    = [];
+        foreach ($leaderActivations as $act) {
+            if ($act->myOwner && $act->myOwner->user) $usernames[] = $act->myOwner->user;
+            if ($act->email) $emails[] = $act->email;
+        }
+        $leaderRecords = \App\Models\TeamLeader::whereIn('User_name', $usernames ?: ['__none__'])
+            ->orWhereIn('Email', $emails ?: ['__none__'])
+            ->get();
+        $leadersByUsername = $leaderRecords->keyBy(fn ($l) => strtolower((string) $l->User_name));
+        $leadersByEmail    = $leaderRecords->keyBy(fn ($l) => strtolower((string) $l->Email));
+
+        // §88: SuperLeaderCredit rows are NOT always keyed by activation_id —
+        // createCredit() stores NULL when no activation matched, and the
+        // legacy sync paths key by team_leader_id / user_id only. Resolving
+        // through the activation relation alone hid "Total Credit" for those
+        // users. Build fallback maps (user_id + team_leader_id) for the
+        // page's rows so the view can always find the credit record.
+        $ownerIds  = [];
+        $leaderIds = [];
+        foreach ($leaderActivations as $act) {
+            if ($act->myOwner) $ownerIds[] = $act->myOwner->id;
+        }
+        foreach ($leaderRecords as $l) $leaderIds[] = $l->id;
+        $slFallback = \App\Models\SuperLeaderCredit::where(function ($q) use ($ownerIds, $leaderIds) {
+                $q->whereIn('user_id', $ownerIds ?: [0])
+                  ->orWhereIn('team_leader_id', $leaderIds ?: [0]);
+            })->get();
+        $slCreditsByUserId   = $slFallback->filter(fn ($c) => $c->user_id)->keyBy('user_id');
+        $slCreditsByLeaderId = $slFallback->filter(fn ($c) => $c->team_leader_id)->keyBy('team_leader_id');
+
+        return view('admin.team-leaders', compact('pending', 'confirmed', 'rejected', 'suspended', 'pendingEvents', 'pendingProofs', 'pendingSocials', 'approvedSocials', 'leaderActivations', 'leadersByUsername', 'leadersByEmail', 'infoSearch', 'slCreditsByUserId', 'slCreditsByLeaderId'));
     }
 
     /**
@@ -1612,10 +1675,15 @@ public function check(Request $request) {
             'activated_at'              => $request->credit_status === 'active' && !$credit->activated_at ? now() : $credit->activated_at,
         ]);
 
-        // Sync status to legacy credits table for dashboard compatibility
+        // Sync status to legacy credits table for dashboard compatibility.
+        // §85: the legacy credits.status column is an ENUM('pending',
+        // 'approved','rejected') on the live DB — writing 'active' raw threw
+        // "Data truncated for column 'status'". Map to the legacy vocabulary
+        // exactly like toggleCredit() and ActivationController's sync do:
+        // active → approved, pending → pending.
         if ($credit->activation_id) {
             \App\Models\Credit::where('activation_id', $credit->activation_id)
-                ->update(['status' => $request->credit_status]);
+                ->update(['status' => $request->credit_status === 'active' ? 'approved' : 'pending']);
         }
 
         return redirect()->back()->with('message', 'SUPER LEADER credit details updated. Status: ' . strtoupper($request->credit_status));
@@ -1802,6 +1870,49 @@ public function check(Request $request) {
         $leader->update(['status' => 'rejected']);
 
         return redirect()->back()->with('message', "Team Leader {$leader->Names} application has been rejected.");
+    }
+
+    /**
+     * §92: adjust the activation period/duration (days) for a team leader.
+     * Updates activations.period — the single source the detail page's
+     * Duration Tracker (expiry, days remaining, is_expired) and the
+     * token-release performance view both derive from.
+     */
+    public function updateTeamLeaderPeriod(Request $request, $id)
+    {
+        $request->validate([
+            'period' => 'required|integer|min:1|max:3650',
+        ]);
+
+        $leader = \App\Models\TeamLeader::findOrFail($id);
+
+        // Same resolution the detail page uses — the leader's own
+        // TEAM_LEADER / SUPER_LEADER activation code.
+        $activation = \App\Models\Activations::where('email', $leader->Email)
+            ->whereIn('package', ['TEAM_LEADER', 'SUPER_LEADER'])
+            ->first();
+
+        if (!$activation) {
+            return redirect()->back()->with('error',
+                'No TEAM_LEADER / SUPER_LEADER activation code found for this leader — approve the application first.');
+        }
+
+        $oldPeriod = (int) ($activation->period ?? 60);
+        $newPeriod = (int) $request->period;
+
+        // Direct assignment + save (NOT mass update) so the misspelled
+        // legacy columns and string types on activations stay untouched.
+        // CRITICAL: timestamps disabled — the detail page derives the
+        // ACTIVATION DATE from activations.updated_at, so a normal save()
+        // would silently reset the activation date to today and corrupt
+        // the expiry/days-elapsed tracker.
+        $activation->period = $newPeriod;
+        $activation->timestamps = false;
+        $activation->save();
+        $activation->timestamps = true;
+
+        return redirect()->back()->with('message',
+            "Activation period for {$leader->Names} updated: {$oldPeriod} → {$newPeriod} days. Expiry recalculates from the activation date.");
     }
 
     public function suspendTeamLeader($id)

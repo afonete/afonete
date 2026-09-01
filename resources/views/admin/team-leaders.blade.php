@@ -1,6 +1,7 @@
 @extends('admin.sidebar')
 @section('contents')
-<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl" x-data="{ tab: 'pending', openModal: null, openEvent: null, openProof: null }">
+{{-- §86/§87: tab survives pagination AND search — ?info_page=N / ?info_q=... reloads land back on All Team Leaders Info --}}
+<div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 max-w-7xl" x-data="{ tab: (new URLSearchParams(window.location.search).has('info_page') || new URLSearchParams(window.location.search).has('info_q')) ? 'allinfo' : 'pending', openModal: null, openEvent: null, openProof: null }">
 
     {{-- Flash Messages --}}
     @if(session('message'))
@@ -42,6 +43,11 @@
                 <button @click="tab = 'confirmed'" :class="tab === 'confirmed' ? 'border-blue-500 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center gap-2 transition duration-150">
                     <i class="fas fa-check-circle"></i> Confirmed
                     <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full">{{ count($confirmed) }}</span>
+                </button>
+                {{-- §86: All Team Leaders Info tab --}}
+                <button @click="tab = 'allinfo'" :class="tab === 'allinfo' ? 'border-blue-500 text-blue-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700'" class="whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm flex items-center gap-2 transition duration-150">
+                    <i class="fas fa-table"></i> All Team Leaders Info
+                    <span class="bg-sky-100 text-sky-800 text-xs font-bold px-2 py-0.5 rounded-full">{{ $leaderActivations->total() }}</span>
                 </button>
                 
                 {{-- Dynamic Auditing TABS --}}
@@ -318,6 +324,233 @@
             @endif
         </div>
 
+        {{-- ───────────────── ALL TEAM LEADERS INFO TAB (§86/§87) ───────────────── --}}
+        <div x-show="tab === 'allinfo'" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">
+            {{-- §87: quick search — server-side across code / package / email / owner username / name --}}
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/60">
+                <form method="GET" action="{{ route('admin.team-leaders.index') }}" class="flex flex-wrap items-center gap-3">
+                    <div class="relative flex-1 min-w-[240px]">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fas fa-search text-xs"></i>
+                        </span>
+                        <input type="text" name="info_q" value="{{ $infoSearch ?? '' }}"
+                               placeholder="Search team leader… (username, name, email, code, package)"
+                               class="w-full bg-white border border-gray-300 text-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition duration-150 shadow-sm">
+                        <i class="fas fa-search mr-1"></i> Search
+                    </button>
+                    @if(($infoSearch ?? '') !== '')
+                        <a href="{{ route('admin.team-leaders.index') }}?info_page=1" class="bg-gray-100 hover:bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition duration-150">
+                            <i class="fas fa-times mr-1"></i> Clear
+                        </a>
+                        <span class="text-xs text-gray-500 font-medium">
+                            {{ $leaderActivations->total() }} {{ \Illuminate\Support\Str::plural('result', $leaderActivations->total()) }} for “{{ $infoSearch }}”
+                        </span>
+                    @endif
+                </form>
+            </div>
+            @if($leaderActivations->total() === 0)
+                <p class="text-gray-500 text-sm py-8 text-center">
+                    @if(($infoSearch ?? '') !== '')
+                        No team leaders match “{{ $infoSearch }}”. Try a username, email, or activation code.
+                    @else
+                        No Team Leader activation codes found.
+                    @endif
+                </p>
+            @else
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[11px] tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Activations</th>
+                                <th class="px-4 py-3 text-left">Code</th>
+                                <th class="px-4 py-3 text-left">Status</th>
+                                <th class="px-4 py-3 text-left">Price</th>
+                                <th class="px-4 py-3 text-left">Token</th>
+                                <th class="px-4 py-3 text-left">Task</th>
+                                {{-- §89: plain header, no sub-label --}}
+                                <th class="px-4 py-3 text-left">Automatic Credit Withdrawal (%)</th>
+                                <th class="px-4 py-3 text-left">Period</th>
+                                {{-- §90: withdrawmax column removed — it only ever held the
+                                     999999.00 "unlimited" sentinel the approval flows write;
+                                     the real withdraw figure is the SL Credit Cashout Amount. --}}
+                                <th class="px-4 py-3 text-left">Date_created</th>
+                                <th class="px-4 py-3 text-left">SUPER LEADER Total Credit</th>
+                                <th class="px-4 py-3 text-left">SUPER LEADER Credit Cashout Amount</th>
+                                <th class="px-4 py-3 text-left">UserDetails</th>
+                                <th class="px-4 py-3 text-left">Reffered By</th>
+                                <th class="px-4 py-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @foreach($leaderActivations as $act)
+                                @php
+                                    $owner    = $act->myOwner;
+                                    $credit   = $act->myCredit;
+                                    // §88: resolve the leader record FIRST (needed for the credit fallback)
+                                    $leaderRecord = null;
+                                    if ($owner && $owner->user) {
+                                        $leaderRecord = $leadersByUsername[strtolower((string) $owner->user)] ?? null;
+                                    }
+                                    if (!$leaderRecord && $act->email) {
+                                        $leaderRecord = $leadersByEmail[strtolower((string) $act->email)] ?? null;
+                                    }
+                                    // §88: SuperLeaderCredit is not always keyed by activation_id
+                                    // (createCredit stores NULL when no activation matched; legacy
+                                    // sync paths key by team_leader_id/user_id). Fall back so the
+                                    // Total Credit is visible for EVERY super leader.
+                                    $slCredit = $act->superLeaderCredit;
+                                    if (!$slCredit && $owner) {
+                                        $slCredit = $slCreditsByUserId[$owner->id] ?? null;
+                                    }
+                                    if (!$slCredit && $leaderRecord) {
+                                        $slCredit = $slCreditsByLeaderId[$leaderRecord->id] ?? null;
+                                    }
+                                    $creditStatus = $slCredit->status ?? ($credit->status ?? null);
+                                    $creditBadge = match ($creditStatus) {
+                                        'approved', 'active' => 'bg-green-100 text-green-800',
+                                        'rejected', 'disabled' => 'bg-red-100 text-red-800',
+                                        default    => 'bg-amber-100 text-amber-800',
+                                    };
+                                @endphp
+                                <tr class="hover:bg-gray-50 align-top">
+                                    {{-- Activations (package) --}}
+                                    <td class="px-4 py-4">
+                                        <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full {{ strtoupper((string) $act->package) === 'SUPER_LEADER' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $act->package }}
+                                        </span>
+                                    </td>
+                                    {{-- Code --}}
+                                    <td class="px-4 py-4">
+                                        <span class="font-mono text-xs font-bold text-gray-800" id="tl-code-{{ $act->id }}">{{ $act->code }}</span>
+                                        <button type="button" onclick="tlCopyCode('tl-code-{{ $act->id }}', this)" class="ml-1 text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-1.5 py-0.5 rounded border border-gray-200 transition duration-150">Copy</button>
+                                    </td>
+                                    {{-- Status (activation stutus) --}}
+                                    <td class="px-4 py-4">
+                                        <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full {{ strtolower((string) $act->stutus) === 'used' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
+                                            {{ strtolower((string) $act->stutus) === 'used' ? 'USED' : 'NOT USED' }}
+                                        </span>
+                                    </td>
+                                    {{-- Price --}}
+                                    <td class="px-4 py-4 font-semibold text-gray-700 whitespace-nowrap">${{ number_format((float) ($act->price ?? 0), 2) }}</td>
+                                    {{-- Token --}}
+                                    <td class="px-4 py-4 font-semibold text-gray-700 whitespace-nowrap">{{ number_format((float) ($act->token ?? 0)) }}</td>
+                                    {{-- Task --}}
+                                    <td class="px-4 py-4 text-xs text-gray-600 max-w-[180px]">
+                                        @if(trim((string) $act->task) !== '')
+                                            <span class="line-clamp-3" title="{{ $act->task }}">{{ \Illuminate\Support\Str::limit($act->task, 90) }}</span>
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    {{-- Automatic Credit Withdrawal (%) — §91: the REAL value lives in
+                                         SuperLeaderCredit.auto_withdrawal_percent (used by the 1-hour
+                                         auto-withdraw cron), NOT activations.percentage which the
+                                         approval flows hardcode to 0.0. Super Leaders with a credit
+                                         record show the true %; everyone else shows "—". --}}
+                                    <td class="px-4 py-4 text-gray-700 whitespace-nowrap">
+                                        @if($slCredit && strtoupper((string) $act->package) === 'SUPER_LEADER')
+                                            {{ rtrim(rtrim(number_format((float) ($slCredit->auto_withdrawal_percent ?? 0), 2), '0'), '.') }}%
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    {{-- Period --}}
+                                    <td class="px-4 py-4 text-gray-700 whitespace-nowrap">{{ $act->period !== null && $act->period !== '' ? $act->period : '—' }}</td>
+                                    {{-- §90: withdrawmax cell removed (999999.00 sentinel, not real data) --}}
+                                    {{-- Date_created --}}
+                                    <td class="px-4 py-4 text-xs text-gray-500 whitespace-nowrap">{{ $act->created_at ? $act->created_at->format('d M Y, H:i') : '—' }}</td>
+                                    {{-- SUPER LEADER Total Credit (§88: slCredit first — with
+                                         user/leader fallback — then legacy credit amount) --}}
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        @if($slCredit)
+                                            <div class="font-bold text-gray-800">${{ number_format((float) ($slCredit->credit_amount ?? 0), 2) }}</div>
+                                            <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ $creditBadge }}">{{ strtoupper((string) $creditStatus) }}</span>
+                                        @elseif($credit)
+                                            <div class="font-bold text-gray-800">${{ number_format((float) ($credit->amount ?? 0), 2) }}</div>
+                                            <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full {{ $creditBadge }}">{{ strtoupper((string) $creditStatus) }}</span>
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    {{-- SUPER LEADER Credit Cashout Amount --}}
+                                    <td class="px-4 py-4 whitespace-nowrap">
+                                        @if($slCredit)
+                                            <div class="font-semibold text-gray-700">${{ number_format((float) ($slCredit->cashout_amount ?? 0), 2) }}</div>
+                                            <div class="text-[10px] text-gray-400">of ${{ number_format((float) ($slCredit->credit_amount ?? 0), 2) }}</div>
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    {{-- UserDetails --}}
+                                    <td class="px-4 py-4 text-xs">
+                                        @if($owner)
+                                            <div class="font-bold text-gray-900">&#64;{{ $owner->user }}</div>
+                                            <div class="text-gray-500 mt-0.5">{{ $owner->email }}</div>
+                                            @if($owner->phone)
+                                                <div class="text-gray-500">{{ $owner->phone }}</div>
+                                            @endif
+                                        @elseif($act->email)
+                                            <div class="text-gray-500">{{ $act->email }}</div>
+                                        @else
+                                            <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Not Used</span>
+                                        @endif
+                                    </td>
+                                    {{-- Reffered By --}}
+                                    <td class="px-4 py-4 text-xs">
+                                        @if($owner && $owner->referrer)
+                                            <div class="font-bold text-gray-900">&#64;{{ $owner->referrer->user }}</div>
+                                            <div class="text-gray-500 mt-0.5">{{ $owner->referrer->email }}</div>
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
+                                    </td>
+                                    {{-- Action (§88: $leaderRecord already resolved at the top of the row) --}}
+                                    <td class="px-4 py-4 text-right whitespace-nowrap">
+                                        @if($leaderRecord)
+                                            <a href="{{ route('admin.team-leaders.show', $leaderRecord->id) }}" class="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        @else
+                                            <span class="text-gray-400 text-xs">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                {{-- Pagination (10 per page) — links keep ?info_page so the tab re-opens --}}
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-center">
+                    {{ $leaderActivations->links() }}
+                </div>
+                <script>
+                function tlCopyCode(id, btn) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    var text = el.textContent.trim();
+                    function done() {
+                        var old = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        setTimeout(function () { btn.textContent = old; }, 1200);
+                    }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(done);
+                    } else {
+                        var tmp = document.createElement('textarea');
+                        tmp.value = text;
+                        document.body.appendChild(tmp);
+                        tmp.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tmp);
+                        done();
+                    }
+                }
+                </script>
+            @endif
+        </div>
+
         {{-- ───────────────── EVENTS AUDIT TAB (Page 1) ───────────────── --}}
         <div x-show="tab === 'events'" class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">
             @if($pendingEvents->isEmpty())
@@ -353,6 +586,8 @@
                                     </td>
                                     <td class="px-6 py-4 font-semibold text-gray-600 text-xs">{{ $event->event_time->format('d M Y, h:i A') }}</td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        {{-- §89: NULL id (legacy table without id column) must not 500 the page --}}
+                                        @if($event->id)
                                         <button type="button" @click="openEvent = '{{ $event->id }}'" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
                                             <i class="fas fa-info-circle mr-1"></i> Details
                                         </button>
@@ -368,10 +603,17 @@
                                                 <i class="fas fa-times mr-1"></i> Reject
                                             </button>
                                         </form>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-lg border border-amber-200" title="team_leader_events table has no id column — run: php artisan migrate">
+                                                <i class="fas fa-exclamation-triangle"></i> Run php artisan migrate
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
 
                                 {{-- ─── Event Full Details Modal ─── --}}
+                                {{-- §89: route() inside evaluates at RENDER time — must be skipped when id is NULL --}}
+                                @if($event->id)
                                 <div x-cloak x-show="openEvent === '{{ $event->id }}'" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display:none;">
                                     <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto" @click.away="openEvent = null">
                                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
@@ -507,6 +749,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif {{-- §89 end NULL-id guard (event modal) --}}
                             @endforeach
                         </tbody>
                     </table>
@@ -549,6 +792,8 @@
                                     </td>
                                     <td class="px-6 py-4 font-medium text-gray-600 text-xs max-w-[200px] truncate" title="{{ $event->proof_notes }}">{{ $event->proof_notes }}</td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        {{-- §89: NULL id (legacy table without id column) must not 500 the page --}}
+                                        @if($event->id)
                                         <button type="button" @click="openProof = '{{ $event->id }}'" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
                                             <i class="fas fa-info-circle mr-1"></i> Details
                                         </button>
@@ -564,10 +809,17 @@
                                                 <i class="fas fa-times mr-1"></i> Reject
                                             </button>
                                         </form>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-lg border border-amber-200" title="team_leader_events table has no id column — run: php artisan migrate">
+                                                <i class="fas fa-exclamation-triangle"></i> Run php artisan migrate
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
 
                                 {{-- ─── Proof Full Details Modal ─── --}}
+                                {{-- §89: route() inside evaluates at RENDER time — must be skipped when id is NULL --}}
+                                @if($event->id)
                                 <div x-cloak x-show="openProof === '{{ $event->id }}'" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display:none;">
                                     <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto" @click.away="openProof = null">
                                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between sticky top-0 z-10">
@@ -714,6 +966,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif {{-- §89 end NULL-id guard (proof modal) --}}
                             @endforeach
                         </tbody>
                     </table>
@@ -752,6 +1005,8 @@
                                     <td class="px-6 py-4 font-bold text-info text-xs font-mono"><a href="{{ $social->profile_link }}" target="_blank">{{ $social->profile_link }}</a></td>
                                     <td class="px-6 py-4 text-right font-extrabold text-slate-700">{{ number_format($social->views_count, 0) }}</td>
                                     <td class="px-6 py-4 text-right space-x-2">
+                                        {{-- §89: NULL id (legacy table without id column) must not 500 the page --}}
+                                        @if($social->id)
                                         <form action="{{ route('admin.team-leaders.socials.approve', $social->id) }}" method="POST" class="inline">
                                             @csrf
                                             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg shadow-sm text-xs transition duration-150">
@@ -764,6 +1019,11 @@
                                                 <i class="fas fa-times mr-1"></i> Reject
                                             </button>
                                         </form>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 font-bold px-2.5 py-1 rounded-lg border border-amber-200" title="team_leader_socials table has no id column — run: php artisan migrate">
+                                                <i class="fas fa-exclamation-triangle"></i> Run php artisan migrate
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
