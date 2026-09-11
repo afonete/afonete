@@ -3,7 +3,13 @@
 <div class="content-wrapper">
 <div class="container-fluid py-4">
 
-    <h3 class="font-weight-bold mb-3"><i class="fas fa-box-open text-primary mr-2"></i> My Investments</h3>
+    <h3 class="font-weight-bold mb-3"><i class="fas fa-box-open text-primary mr-2"></i> My UVP Investments</h3>
+
+    <p class="text-muted small mb-3">
+        <i class="fas fa-info-circle mr-1"></i>
+        This page lists your <strong>UVP AI License</strong> packages only. FC VIP lifetime memberships (DMaster Coin Card)
+        are managed on <a href="{{ route('user.fc-packages') }}" class="font-weight-bold text-warning">Packages → FC Packages</a>.
+    </p>
 
     {{-- ── Summary cards ── --}}
     <div class="row">
@@ -46,7 +52,7 @@
     {{-- ── Investments table ── --}}
     <div class="card shadow-sm border-0 mt-3">
         <div class="card-header bg-light font-weight-bold">
-            <i class="fas fa-list mr-1"></i> All My Packages
+            <i class="fas fa-list mr-1"></i> My UVP Packages
         </div>
         <div class="card-body p-0">
             @if($investments->isEmpty())
@@ -80,9 +86,7 @@
                                 <td>{{ $inv->id }}</td>
                                 <td><strong>{{ $inv->package }}</strong></td>
                                 <td>
-                                    <span class="badge badge-{{ $cat === 'VENTURE' ? 'primary' : ($cat === 'FC' ? 'info' : 'secondary') }}">
-                                        {{ $cat }}
-                                    </span>
+                                    <span class="badge badge-primary">UVP</span>
                                 </td>
                                 <td>${{ number_format($inv->amount, 2) }}</td>
                                 <td>${{ number_format($inv->paid ?? 0, 2) }}</td>

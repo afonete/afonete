@@ -110,7 +110,7 @@
                         </div>
                         <div>
                             <strong>Then move to Free Token to use them</strong>
-                            <p class="text-muted mb-0">From Available Token, transfer to Free Token wallet. From Free Token you can: (a) transfer to another user, (b) swap for cashout, or (c) withdraw to your FONE wallet.</p>
+                            <p class="text-muted mb-0">From Available Token, transfer to Free Token wallet. From Free Token you can: (a) transfer to another user, (b) swap for cashout, or (c) withdraw to your  wallet.</p>
                         </div>
                     </div>
 

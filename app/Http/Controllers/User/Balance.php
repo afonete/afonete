@@ -75,6 +75,7 @@ class Balance extends Controller{
         $AVAILABLE      = (float) $user->ChartAccount()->where("acc_type", "AVAILABLE_TOKEN")->sum("amount");
         $FREE_TOKEN     = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
         $LOCKED_TOKEN   = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
+        $SAVING_TOKEN   = (float) $user->ChartAccount()->where("acc_type", "SAVING_TOKEN")->sum("amount");
         $COMMISSION     = (float) $user->ChartAccount()->where("acc_type", "COMMISSION")->sum("amount");
         $FOMO           = (float) $user->ChartAccount()->where("acc_type", "FOMO")->sum("amount");
 
@@ -123,6 +124,8 @@ class Balance extends Controller{
             \Illuminate\Support\Facades\Log::error('Balance page incentive read failed: ' . $e->getMessage());
         }
 
+        $symbol = \App\Models\TokenSetting::currentSymbol() ?: 'FOCOIN';
+
         return view('user.balance.balance', [
             "trading"        => $TRADING,
             "cashout"        => $CASHOUT,
@@ -130,6 +133,8 @@ class Balance extends Controller{
             "available_token"=> $AVAILABLE,
             "freecoin"       => $FREE_TOKEN,
             "locked_token"   => $LOCKED_TOKEN,
+            "saving_token"   => $SAVING_TOKEN,
+            "token_symbol"   => $symbol,
             "commission"     => $COMMISSION,
             "fomo"           => $FOMO,
             "incomeventure"  => $incomeventure,

@@ -44,6 +44,37 @@
         </div>
     </div>
 
+    {{-- ── FC VIP Leadership snapshot (non-cash VB + lifetime tier rewards earned) ── --}}
+    <div class="card shadow-sm border-0 mt-3" style="border:1px solid rgba(212,175,55,.3) !important;">
+        <div class="card-body py-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h6 class="font-weight-bold mb-1"><i class="fas fa-crown text-warning mr-2"></i>FC VIP Leadership Bonus</h6>
+                    <small class="text-muted">+100 VB per direct FC referral · milestone rewards paid to cashout every Monday.</small>
+                </div>
+                <a href="{{ route('user.fc-leadership') }}" class="btn btn-sm btn-outline-dark font-weight-bold">
+                    View Full Progress <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            <div class="row mt-3">
+                <div class="col-4 text-center">
+                    <div class="small text-muted text-uppercase">FC Volume Bonus Pool</div>
+                    <div class="font-weight-bold" style="font-size:1.3rem; color:#b8860b;">
+                        {{ number_format($totals['fc_vb'], 0) }} <span style="font-size:0.9rem; color:#64748b;">VB</span>
+                    </div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="small text-muted text-uppercase">Leadership Rewards Paid (lifetime)</div>
+                    <div class="font-weight-bold text-success" style="font-size:1.3rem;">${{ number_format($totals['fc_leadership'], 2) }}</div>
+                </div>
+                <div class="col-4 text-center">
+                    <div class="small text-muted text-uppercase">Appears on</div>
+                    <div class="font-weight-bold text-primary" style="font-size:1rem;">Monday cashout</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- ── Withdraw action ── --}}
     <div class="card shadow-sm border-0 mt-3">
         <div class="card-body">
@@ -128,9 +159,30 @@
                                     <span class="badge badge-warning">—</span>
                                 @endif
                             </td>
-                            <td>${{ number_format($r->source_amount, 2) }}</td>
-                            <td class="font-weight-bold text-success">${{ number_format($r->bonus_amount, 4) }}</td>
-                            <td><small>{{ $r->week_start->format('d M Y') }}</small></td>
+                            <td>
+                                @if($r->source === 'fc_direct_vb')
+                                    <span class="text-muted">—</span>
+                                @else
+                                    ${{ number_format($r->source_amount, 2) }}
+                                @endif
+                            </td>
+                            <td class="font-weight-bold">
+                                @if($r->status === 'vb_only')
+                                    {{-- Non-cash informational credit (e.g. +100 VB per direct FC referral) --}}
+                                    <span class="badge" style="background:rgba(212,175,55,0.15); color:#b8860b; padding:5px 10px;">
+                                        <i class="fas fa-gem mr-1"></i>{!! $r->source_ref ?: '+100 VB' !!}
+                                    </span>
+                                @else
+                                    <span class="text-success">${{ number_format($r->bonus_amount, 2) }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($r->status === 'vb_only')
+                                    <small class="text-muted">informational</small>
+                                @else
+                                    <small>{{ $r->week_start->format('d M Y') }}</small>
+                                @endif
+                            </td>
                             <td><span class="badge badge-{{ $statusClass }}">{{ ucfirst($r->status) }}</span></td>
                         </tr>
                         @endforeach

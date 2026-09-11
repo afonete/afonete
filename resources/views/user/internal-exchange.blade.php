@@ -4,6 +4,11 @@
 <div class="content-wrapper text-gray-800" style="background-color: #f8fafc; min-height: 100vh;">
     <div class="container-fluid py-4 max-w-7xl mx-auto">
 
+        {{-- Top sub-navigation: Cash / Coin / Trading / Invoices --}}
+        <div class="mb-4">
+            <x-PaymentNav/>
+        </div>
+
         {{-- 1. HEADER BANNER --}}
         <div class="alert alert-dark d-flex align-items-center justify-content-between flex-wrap gap-3 p-4 mb-4 text-white shadow-sm" style="border-radius: 14px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(168, 85, 247, 0.4);">
             <div>

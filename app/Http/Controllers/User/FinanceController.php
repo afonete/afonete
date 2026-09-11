@@ -1124,6 +1124,12 @@ public function getTeamTree(Request $request,$id){
                     ->with('error', 'FOM Licence Miner packages cannot be renewed here. Their tokens are released automatically in monthly installments from your Escrow Wallet.');
             }
 
+            // FC VIP packages are LIFETIME — no renewal cycle.
+            if ($activePayment->isFc()) {
+                return redirect()->route('packageRenew')
+                    ->with('error', 'FC VIP packages are lifetime memberships and do not require renewal.');
+            }
+
             // How many renewals has this user already done for this payment?
             $renewalsDone = \App\Models\PackageRenewal::where('user_id', $user->id)
                 ->where('payment_id', $activePayment->id)
@@ -1202,11 +1208,14 @@ public function getTeamTree(Request $request,$id){
         // only runs for the current page's rows.
         // §84: leader-code activation rows are excluded as well — a Team
         // Leader's record is not a renewable UVP investment.
+        // FC VIP packages are LIFETIME — never show in renewal dashboard.
         $packagesPaginator = \App\Models\Payment::where('user', $user->id)
             ->excludeFom()
             ->excludeLeader()
+            ->excludeFc()
             ->where('is_expired', false)
             ->where('status', '1')
+            ->where('category', 'VENTURE')
             ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -1293,14 +1302,16 @@ public function getTeamTree(Request $request,$id){
                 ->where('status', '1')
                 ->first();
         } else {
-            // Active package (FOM + leader rows excluded so the fallback can
-            // never silently charge a renewal against a FOM Licence Miner
-            // payment or a Team Leader activation record — §84)
+            // Active UVP package (FOM + FC + leader rows excluded so the fallback
+            // can never silently charge a renewal against FOM, FC VIP, or a Team
+            // Leader activation record).
             $activePayment = \App\Models\Payment::where('user', $user->id)
                 ->excludeFom()
                 ->excludeLeader()
+                ->excludeFc()
                 ->where('is_expired', false)
                 ->where('status', '1')
+                ->where('category', 'VENTURE')
                 ->orderBy('created_at', 'desc')
                 ->first();
         }
@@ -1655,7 +1666,7 @@ public function getTeamTree(Request $request,$id){
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  TOKEN WITHDRAWAL — user requests withdrawal to FONE wallet
+    //  TOKEN WITHDRAWAL — user requests withdrawal to  wallet
     //  Admin must approve. Tokens are held (deducted on request).
     // ═══════════════════════════════════════════════════════════════════════
 
@@ -1919,16 +1930,16 @@ public function getTeamTree(Request $request,$id){
         $symbol    = \App\Models\TokenSetting::currentSymbol();
         $uvpPrice  = \App\Models\TokenSetting::uvpPrice();
 
-        // Active package for this user (any category that credits LOCKED_TOKEN)
-        // Per spec: locked tokens are released to Available after package duration ends.
+        // Active UVP package for this user — FC VIP packages are LIFETIME
+        // memberships that never credit LOCKED_TOKEN, so they are excluded here.
         $package = \App\Models\Payment::where('user', $user->id)
                     ->where('is_expired', false)
                     ->where('status', 1)
-                    ->whereIn('category', ['VENTURE', 'FC'])
+                    ->where('category', 'VENTURE')
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-        // Total package amount for the lock-amount example
+        // Total UVP package amount for the lock-amount example (UVP only).
         $packageAmount = $package ? (float) $package->amount : 0;
         $exampleTokens = $uvpPrice > 0 ? round($packageAmount / $uvpPrice, 0) : 0;
 

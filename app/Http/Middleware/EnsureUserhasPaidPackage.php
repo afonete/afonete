@@ -43,6 +43,7 @@ class EnsureUserhasPaidPackage
         // ── Check if user has active UVP / VENTURE package ──
         $hasActiveUvp = \App\Models\Payment::where('user', $user->id)
             ->where('status', 1)
+            ->where('is_expired', false)
             ->where(function ($q) {
                 $q->where('category', 'VENTURE')
                   ->orWhere('category', 'UVP')
@@ -51,6 +52,26 @@ class EnsureUserhasPaidPackage
             ->exists();
 
         if ($hasActiveUvp) {
+            if ($user->has_free_package === 'yes') {
+                $user->has_free_package = 'no';
+                $user->save();
+            }
+            return $next($request);
+        }
+
+        // ── Check if user has active FC VIP package ──
+        // FC VIP is an INDEPENDENT product line from UVP. Valid FC holders
+        // must pass the middleware and access the dashboard just like UVP holders.
+        $hasActiveFc = \App\Models\Payment::where('user', $user->id)
+            ->where('status', 1)
+            ->where('is_expired', false)
+            ->where(function ($q) {
+                $q->where('category', 'FC')
+                  ->orWhere('payable_type', \App\Models\FCpackage::class);
+            })
+            ->exists();
+
+        if ($hasActiveFc) {
             if ($user->has_free_package === 'yes') {
                 $user->has_free_package = 'no';
                 $user->save();

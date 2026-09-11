@@ -214,9 +214,22 @@ class UserDashboardController extends Controller{
         // created by ActivationController when a leader code is redeemed) are
         // excluded too — a Team Leader's tokens come ONLY from the
         // admin-assigned activations.token, never from a UVP price division.
+        // §FC-INDEPENDENCE: For the primary "UVP package" card on the
+        // dashboard (daily ROI, expiry, renewal, portfolio when there's
+        // a UVP), prefer the latest UVP package. FC is tracked separately
+        // via $fcPackages below. We still load FC in $activePackages so
+        // we can surface FC metadata, but $package here must never resolve
+        // to an FC row — that would cause the expiry/timer/renewal card to
+        // render bogus UVP fields against a lifetime FC purchase.
         $package = Paymodel::where("user",$userId)
                             ->excludeFom()
                             ->excludeLeader()
+                            ->excludeFc()
+                            ->where(function ($q) {
+                                $q->where('category', 'VENTURE')
+                                  ->orWhere('category', 'UVP')
+                                  ->orWhere('payable_type', \App\Models\Adventures::class);
+                            })
                             ->where("is_expired",false)
                             ->where("status","1")
                             ->orderBy("created_at", "desc")
@@ -225,6 +238,12 @@ class UserDashboardController extends Controller{
         $mostRecentPayment = $user->investments()
                                   ->excludeFom()
                                   ->excludeLeader()
+                                  ->excludeFc()
+                                  ->where(function ($q) {
+                                      $q->where('category', 'VENTURE')
+                                        ->orWhere('category', 'UVP')
+                                        ->orWhere('payable_type', \App\Models\Adventures::class);
+                                  })
                                   ->where("is_expired",0)
                                   ->where("status",1)
                                   ->orderBy('created_at', 'desc')
@@ -259,11 +278,8 @@ class UserDashboardController extends Controller{
         $dailyIncomePerDay = 0.0;
         $dailyCashout      = 0.0;
         $dailyTrading      = 0.0;
-        $adventureRow = null;
-
-        if ($package) {
-            $adventureRow = \App\Models\Adventures::find($package->payable_id);
-        }
+        $adventureRow      = null;
+        $fcPackageRow      = null;
 
         // UVP/FC only — FOM licences don't generate UVP daily ROI, and §84:
         // neither do leader-code activation rows (their price is an admin
@@ -279,7 +295,46 @@ class UserDashboardController extends Controller{
             $activePackages = collect([$package]);
         }
 
+        // §FC-INDEPENDENCE: FC VIP packages are a SEPARATE product — they
+        // never grant LOCKED_TOKEN, GAS_FEE, daily ROI, or renewals. Only
+        // VENTURE/UVP rows feed those calculations.
+        $uvpPackages = $activePackages->filter(fn ($p) => !$p->isFc());
+        $fcPackages  = $activePackages->filter(fn ($p) => $p->isFc());
+        $hasFcVip    = $fcPackages->isNotEmpty();
+
+        // If the most-recently-selected $package is FC (shouldn't happen
+        // now that the query excludes FC, but kept defensively), prefer
+        // the latest UVP for UVP card semantics.
+        if ($package && $package->isFc() && $uvpPackages->isNotEmpty()) {
+            $uvpLatest = $uvpPackages->sortByDesc('created_at')->first();
+            if ($uvpLatest) {
+                $package = $uvpLatest;
+            }
+        }
+
+        // Resolve the UVP adventure model for the selected (UVP) package,
+        // and the FCpackage model if we happen to have an FC active package.
+        if ($package && !$package->isFc()) {
+            if ($package->payable_type === \App\Models\Adventures::class) {
+                $adventureRow = \App\Models\Adventures::find($package->payable_id);
+            } else {
+                $adventureRow = \App\Models\Adventures::find($package->payable_id);
+            }
+            if (!$adventureRow && $package->package) {
+                $adventureRow = \App\Models\Adventures::where('name', $package->package)->first();
+            }
+        }
+        if ($fcPackages->isNotEmpty()) {
+            $latestFc = $fcPackages->sortByDesc('created_at')->first();
+            if ($latestFc) {
+                $fcPackageRow = \App\Models\FCpackage::find($latestFc->payable_id);
+            }
+        }
+
         foreach ($activePackages as $p) {
+            if ($p->isFc()) {
+                continue; // FC VIP — lifetime membership, no daily ROI, no tokens
+            }
             $pAdv = null;
             if ($p->payable_type && $p->payable_id) {
                 $pAdv = $p->payable_type::find($p->payable_id);
@@ -341,32 +396,32 @@ class UserDashboardController extends Controller{
         $tmcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","TM");
         $venturcurrentPortfolio = $user->currentPortfolio()->where("usage","CURRENT")->where("packagename","FT");
 
-        // Portfolio value - safe null handling
-        switch($user->has_paid_package){
-            case 'ft':
+        // Portfolio value - safe null handling.  For users whose most recent
+        // purchase is FC VIP, $package may have been swapped to the latest UVP
+        // package above; if they have NO UVP, fall back to the highest FC
+        // amount so portfolio card shows FC VIP value.
+        $portfolioSourcePackage = $package;
+        if ((!$portfolioSourcePackage || $portfolioSourcePackage->isFc()) && $hasFcVip) {
+            $portfolioSourcePackage = $fcPackages->sortByDesc('paid')->first() ?: $portfolioSourcePackage;
+        }
+
+        $portfolio = 0;
+        switch(strtoupper(trim((string) $user->has_paid_package))){
             case 'FT':
             case 'VENTURE':
-            case 'yes':
-                $portfolio = $package ? (float)$package->paid : 0;
+                $portfolio = $package && !$package->isFc() ? (float)$package->paid : 0;
                 break;
-            case 'TM':
-            case 'tm':
-                $p = $this->nonFomActivationFor($user);
-                if ($p) {
-                    $portfolio = (float) ($p->price ?? 0);
-                }
-                break;
-            case 'TEAM_LEADER':
-            case 'SUPER_LEADER':
-                // ── Team Leader / Super Leader dashboard metrics ──
-                // (FOM purchase codes excluded — §74)
-                $activation = $this->nonFomActivationFor($user);
-                if ($activation) {
-                    $portfolio = (float) ($activation->price ?? 0);
-                }
-                break;
+            case 'FC':
             default:
-                $portfolio = $package ? (float)$package->paid : 0;
+                if (in_array(strtoupper(trim((string) $user->has_paid_package)), ['TEAM_LEADER', 'SUPER_LEADER', 'TM'])) {
+                    $p = $this->nonFomActivationFor($user);
+                    if ($p) {
+                        $portfolio = (float) ($p->price ?? 0);
+                    }
+                } else {
+                    $portfolio = $portfolioSourcePackage ? (float)($portfolioSourcePackage->paid ?? $portfolioSourcePackage->amount ?? 0) : 0;
+                }
+                break;
         }
 
         // ── Universal Super Leader & Activation Credit Resolution ──
@@ -442,17 +497,108 @@ class UserDashboardController extends Controller{
         // ── 1. UVP Package Tokens (Bottom 4 light cards) ──
         $uvpLockedToken = (float) $user->ChartAccount()->where("acc_type", "LOCKED_TOKEN")->sum("amount");
 
-        // Fallback for active UVP packages if ChartAccount LOCKED_TOKEN is 0
-        if ($uvpLockedToken <= 0 && isset($activePackages) && $activePackages->isNotEmpty()) {
+        // Fallback for active UVP packages if ChartAccount LOCKED_TOKEN is 0.
+        // LOCKED_TOKEN now holds BOTH remaining UVP-locked tokens AND FC VIP
+        // 12-month vesting tokens (FcpTokenRelease). The UVP fallback only
+        // estimates UVP packages; FC locked tokens come from ChartAccount rows
+        // written by FcpTokenService.
+        if ($uvpLockedToken <= 0 && $uvpPackages->isNotEmpty()) {
             $uvpPrice = \App\Models\TokenSetting::uvpPrice();
             if ($uvpPrice > 0) {
-                foreach ($activePackages as $actPkg) {
+                foreach ($uvpPackages as $actPkg) {
                     $paidAmt = (float) ($actPkg->paid ?? 0);
                     if ($paidAmt > 0) {
                         $uvpLockedToken += round($paidAmt / $uvpPrice, 4);
                     }
                 }
             }
+        }
+
+        // ── Separate FC VIP balance (lifetime membership; 12-month token vesting via FcpTokenRelease) ──
+        $fcActiveCount    = $fcPackages->count();
+        $fcHighestPaid    = $fcPackages->max(fn ($p) => (float) ($p->paid ?? $p->amount ?? 0)) ?: 0.0;
+        $hasFcVip         = $fcActiveCount > 0;
+        $fcPackageName    = $fcPackageRow ? ($fcPackageRow->name ?? 'FC VIP') : 'FC VIP';
+
+        // ── FC Streamline Ranks (current + next progress for blade) ──
+        $fcCurrentRank  = null;
+        $fcNextRank     = null;
+        $fcRankProgress = [
+            'direct_fc'     => 0,
+            'team_fc'       => 0,
+            'pin_counts'    => ['silver' => 0, 'gold' => 0, 'diamond' => 0, 'ambassador' => 0],
+        ];
+        try {
+            if ($hasFcVip) {
+                // Opportunistically evaluate (cron hourly is backstop).
+                \App\Services\FcStreamlineRankService::evaluate($user);
+            }
+
+            $highestCompleted = \App\Models\FcStreamlineRank::highestCompletedPin($user->id);
+            $activeChallenge  = \App\Models\FcStreamlineRank::currentActiveForUser($user->id);
+            $pendingReview    = \App\Models\FcStreamlineRank::where('user_id', $user->id)
+                ->where('status', \App\Models\FcStreamlineRank::STATUS_PENDING_ADMIN)
+                ->first();
+
+            $currentLevel = $highestCompleted;
+            $currentDef   = $currentLevel > 0 ? \App\Models\FcStreamlineRank::RANKS[$currentLevel] ?? null : null;
+            if ($currentDef) {
+                $fcCurrentRank = [
+                    'level'   => $currentLevel,
+                    'pin'     => $currentDef['pin'],
+                    'title'   => $currentDef['title'],
+                ];
+            }
+
+            // Next rank to display progress for is the active challenge if one exists,
+            // otherwise the first unearned rank (sequential).
+            $nextLevel = $activeChallenge ? $activeChallenge->rank_level : ($highestCompleted + 1);
+            if ($nextLevel >= 1 && $nextLevel <= 4) {
+                $nextDef = \App\Models\FcStreamlineRank::RANKS[$nextLevel];
+                $directFc = \App\Services\FcStreamlineRankService::countDirectFcReferrals($user->id);
+                $teamFc   = \App\Services\FcStreamlineRankService::countTeamClubFc($user->id);
+                $pinCounts= \App\Services\FcStreamlineRankService::countDownlinePins($user->id);
+
+                $fcRankProgress = [
+                    'direct_fc'  => $directFc,
+                    'team_fc'    => $teamFc,
+                    'pin_counts' => $pinCounts,
+                ];
+
+                $fcNextRank = [
+                    'level'            => $nextLevel,
+                    'pin'              => $nextDef['pin'],
+                    'title'            => $nextDef['title'],
+                    'definition'       => $nextDef,
+                    'is_active'        => (bool) $activeChallenge && $activeChallenge->rank_level === $nextLevel,
+                    'is_pending'       => (bool) $pendingReview && $pendingReview->rank_level === $nextLevel,
+                    'is_expired'       => false,
+                    'days_remaining'   => $activeChallenge && $activeChallenge->rank_level === $nextLevel ? $activeChallenge->daysRemaining() : null,
+                    'deadline'         => $activeChallenge && $activeChallenge->rank_level === $nextLevel ? $activeChallenge->deadline_at : null,
+                    'activation_direct'=> $nextDef['activation_direct_fc'],
+                    'activation_pins'  => $nextDef['activation_pins'],
+                    'activation_pin_type' => $nextDef['activation_pin_type'],
+                    'own_fc_target'    => $nextDef['own_fc_direct'],
+                    'team_club_target' => $nextDef['team_club'],
+                    'reward_usd'       => $nextDef['reward_usd'],
+                    'reward_tokens'    => $nextDef['reward_tokens'],
+                    'direct_progress'  => min(100, $nextDef['own_fc_direct'] > 0 ? round(100 * $directFc / $nextDef['own_fc_direct'], 1) : 0),
+                    'team_progress'    => min(100, $nextDef['team_club'] > 0 ? round(100 * $teamFc / $nextDef['team_club'], 1) : 0),
+                    'activation_direct_progress' => min(100, $nextDef['activation_direct_fc'] > 0 ? round(100 * $directFc / $nextDef['activation_direct_fc'], 1) : 100),
+                    'activation_pin_progress'    => ($nextDef['activation_pins'] > 0 && $nextDef['activation_pin_type'])
+                        ? min(100, round(100 * ((int)($pinCounts[$nextDef['activation_pin_type']] ?? 0)) / $nextDef['activation_pins'], 1))
+                        : 100,
+                ];
+
+                // Check if any prior rank is expired → locked out.
+                $priorExpired = \App\Models\FcStreamlineRank::where('user_id', $user->id)
+                    ->where('status', \App\Models\FcStreamlineRank::STATUS_EXPIRED)
+                    ->where('rank_level', '<', $nextLevel)
+                    ->exists();
+                $fcNextRank['locked_out'] = $priorExpired;
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('FC Streamline rank data load failed for user ' . $user->id . ': ' . $e->getMessage());
         }
 
         $uvpFreeToken      = (float) $user->ChartAccount()->where("acc_type", "FREE_TOKEN")->sum("amount");
@@ -543,7 +689,7 @@ class UserDashboardController extends Controller{
         $expirationDate = null;
         $show = false;
 
-        if ($mostRecentPayment && $mostRecentPayment->category == "VENTURE") {
+        if ($package && !$package->isFc() && $mostRecentPayment && $mostRecentPayment->category == "VENTURE") {
             // Use the package's actual expiration_date
             $expirationDate = $package && $package->expiration_date
                 ? Carbon::parse($package->expiration_date)
@@ -553,23 +699,27 @@ class UserDashboardController extends Controller{
 
         // ── Package expiry state ──
         // Team leaders don't expire — their access is tied to activation, not a timed package.
+        // FC VIP packages are LIFETIME — they never expire.
         $isLeaderPackage = in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER']);
-        $packageExpired = $isLeaderPackage ? false : (!$package || ($package->is_expired ?? true));
+        $isFcPackage     = $package && $package->isFc();
+        $packageExpired  = ($isLeaderPackage || $isFcPackage || $hasFcVip)
+            ? false
+            : (!$package || ($package->is_expired ?? true));
 
         // If the package just expired, make sure has_paid_package is reset
-        // (but NEVER reset TEAM_LEADER / SUPER_LEADER packages)
-        if ($packageExpired && $user->has_paid_package !== 'no' && !$isLeaderPackage) {
+        // (but NEVER reset TEAM_LEADER / SUPER_LEADER / FC VIP packages)
+        if ($packageExpired && $user->has_paid_package !== 'no' && !$isLeaderPackage && !$isFcPackage) {
             $user->has_paid_package = 'no';
             $user->save();
         }
 
-        // ── Renewal due state ──
+        // ── Renewal due state (UVP only — FC VIP is lifetime, no renewals) ──
         $renewalDue    = false;
         $renewalNumber = 0;
         $maxRenewals   = 0;
-        $pkgDuration   = $package && isset($adventureRow) && $adventureRow ? (int)$adventureRow->duration : 100;
+        $pkgDuration   = $package && !$package->isFc() && $adventureRow ? (int)$adventureRow->duration : 0;
 
-        if ($package && !$packageExpired) {
+        if ($package && !$package->isFc() && !$packageExpired) {
             $pkgStart    = Carbon::parse($package->created_at);
             $daysSince   = (int) $pkgStart->diffInDays(Carbon::now());
             $renewalsDone = \App\Models\PackageRenewal::where('user_id', $userId)
@@ -589,9 +739,9 @@ class UserDashboardController extends Controller{
                 $renewalNumber = $nextRenewalNum;
             }
         } else {
-            // defaults to avoid undefined variable in view
-            $maxRenewals = 3;
-            $pkgDuration = 100;
+            // defaults to avoid undefined variable in view (UVP defaults)
+            $maxRenewals = $isFcPackage ? 0 : 3;
+            $pkgDuration = $isFcPackage ? 0 : 100;
         }
 
         $comm = $this->commissions();
@@ -710,9 +860,19 @@ class UserDashboardController extends Controller{
             // Extra helpers for blade
             "package_name"           => in_array($user->has_paid_package, ['TEAM_LEADER', 'SUPER_LEADER'])
                                         ? $user->has_paid_package
-                                        : ($adventureRow ? $adventureRow->name : ($package ? 'VENTURE' : 'FREE')),
-            "package_paid"           => $package ? (float)$package->paid : 0,
+                                        : ($isFcPackage || $hasFcVip
+                                            ? $fcPackageName
+                                            : ($adventureRow ? $adventureRow->name : ($package ? 'VENTURE' : 'FREE'))),
+            "package_paid"           => $package ? (float)$package->paid : ($fcHighestPaid ?: 0),
             "package_currency"       => $adventureRow->currency ?? 'USD',
+            "is_fc_package"          => $isFcPackage || $hasFcVip,
+            "fc_package_paid"        => $fcHighestPaid,
+            "fc_package_name"        => $fcPackageName,
+            "fc_active_count"        => $fcActiveCount,
+            // FC Streamline Ranks
+            "fc_current_rank"        => $fcCurrentRank,
+            "fc_next_rank"           => $fcNextRank,
+            "fc_rank_progress"       => $fcRankProgress,
         ]);
     }
 

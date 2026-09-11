@@ -28,14 +28,17 @@
         @if ($status == 'i')
 
         <div class="p-6">
-            <h2 class="text-2xl font-bold text-center mb-4 uppercase">Payment Confirmation</h2>
+            <h2 class="text-2xl font-bold text-center mb-4 uppercase">Insufficient Deposit Balance</h2>
 
             <p class="text-center font-bold text-red-500">
                 You have an insufficient balance. Your current balance is
                 <span class="text-black">${{ number_format($currentBalance, 2) }}</span>,
                  but you need
-                 <span class="text-black">${{ number_format($requiredAmount, 2) }}</span>
+                 <span class="text-black">${{ number_format($amount, 2) }}</span>
                   to complete this transaction.
+            </p>
+            <p class="text-center text-sm text-gray-600 mt-2">
+                You can still pay using the automatic USDT TRC-20 payment option below (same payment method already configured).
             </p>
 
             <div class="flex justify-between items-center py-2">
@@ -47,13 +50,15 @@
             <form action="{{route('payment.directPackage')}}" method="post">
                 @csrf
                 @method('POST')
-                <input type="hidden" name="package_type" value="VENTURE">
-                <input type="hidden" name="package_id" value="{{$venture->id}}"/>
+                @if (($package ?? null) === 'FC')
+                    <input type="hidden" name="package_type" value="FC">
+                    <input type="hidden" name="package_id" value="{{$id}}"/>
+                @else
+                    <input type="hidden" name="package_type" value="VENTURE">
+                    <input type="hidden" name="package_id" value="{{$venture->id}}"/>
+                    <input type="hidden" name="amount" value="{{$amount}}"/>
+                @endif
                 <input type="hidden" name="network" value="TRC-20">
-                <input type="hidden" name="amount"
-                class="form-control-smaller  my-1 border p-1  w-100 mx-auto rounded"
-                value="{{$amount}}"
-                />
                 <button class="text-blue-500 underline text-lg capitalize hover:text-blue-600 font-semibold" type="submit">
                     use Automatic USDT TRC20 payment
                 </button>
@@ -78,7 +83,7 @@
               @endif
             <p class="mb-6 text-center">Please confirm your payment.</p>
             <div class="flex flex-col justify-center gap-2">
-                          <!-- {{$package}} -->
+                    {{-- When balance IS sufficient, show the Confirm (use deposit) button. --}}
                     @if ($package == 'FC')
                         <form action="{{route('paymentfc')}}" method="POST" >
                     @else
@@ -88,14 +93,20 @@
                     @csrf
 
                         <input type="hidden" name="amount" id="amount_to_invest" value="{{$amount}}">
-                        <input type='hidden' name='package'  value='{{$venture->id}}'>
-                        <input type='hidden' name='pack'  value='{{$name}}'>
-                        <input type="hidden" name="package_type" value="VENTURE">
+                        @if ($package == 'FC')
+                            <input type='hidden' name='package_id' value='{{$id}}'>
+                            <input type='hidden' name='pack' value='{{$name}}'>
+                            <input type="hidden" name="package_type" value="FC">
+                        @else
+                            <input type='hidden' name='package'  value='{{$venture->id}}'>
+                            <input type='hidden' name='pack'  value='{{$name}}'>
+                            <input type="hidden" name="package_type" value="VENTURE">
+                            <input type="hidden" name="uvp_id" value="{{$venture->id}}"/>
+                        @endif
                         <input type='hidden' name='payment_method'  value='FROM_DEPOSITS'>
-                        <input type="hidden" name="uvp_id" value="{{$venture->id}}"/>
 
                         <button type="submit" class="bg-blue-500 w-full text-white text-center px-4 py-2 rounded-lg hover:bg-blue-600 transition">
-                            Confirm
+                            Confirm (pay from deposit balance)
                         </button>
                 </form>
                 <a href="/dashboard" class="bg-red-500 text-white text-center px-4 py-2 rounded-lg hover:bg-red-600 transition">Cancel</a>
@@ -109,7 +120,7 @@
                     <input type="hidden" name="package_id" value="{{$id}}">
                     <input type="hidden" name="network" value="TRC-20">
                     <button class="text-blue-500 underline text-xs capitalize hover:text-blue-600 font-semibold" type="submit">
-                        use Automatic USDT TRC20 payment
+                        use Automatic USDT TRC20 payment instead
                     </button>
                 </form>
                 @else
@@ -125,7 +136,7 @@
                     value="{{$amount}}"
                     />
                     <button class="text-blue-500 underline text-xs capitalize hover:text-blue-600 font-semibold" type="submit">
-                        use Automatic USDT TRC20 payment
+                        use Automatic USDT TRC20 payment instead
                     </button>
                 </form>
                 @endif

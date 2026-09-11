@@ -30,15 +30,17 @@
             <h2 class="text-2xl font-bold text-center mb-4 uppercase text-red-400">Payment Confirmation Failed</h2>
 
             <p class="text-center font-bold text-red-500">
-                Your new investment of
-
-
-                <span class="text-black">${{ number_format($amount, 2) }}</span>,
-                is less than your previous investment of
-                 <span class="text-black">${{ number_format($recent->paid, 2) }}</span>.
-                 <br/>
-                 Please invest an amount greater than <span class="text-black">${{ number_format($recent->paid, 2) }}</span>
-                  to continue.
+                @if(!empty($error_message))
+                    {!! $error_message !!}
+                @else
+                    Your new investment of
+                    <span class="text-black">${{ number_format($amount, 2) }}</span>,
+                    is less than your previous investment of
+                     <span class="text-black">${{ number_format($recent->paid, 2) }}</span>.
+                     <br/>
+                     Please invest an amount greater than <span class="text-black">${{ number_format($recent->paid, 2) }}</span>
+                      to continue.
+                @endif
             </p>
 
             <div class="flex justify-center items-center py-2">

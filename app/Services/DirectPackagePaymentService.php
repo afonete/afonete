@@ -14,6 +14,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Creates and fulfils direct USDT TRC20 package-payment invoices.
@@ -247,9 +248,17 @@ class DirectPackagePaymentService
             }
 
             if ($user) {
-                $highestAmount = $user->highestPackageAmount();
-                if ($highestAmount > 0 && $price < $highestAmount) {
-                    throw new \InvalidArgumentException('Package Purchase Error: You cannot purchase a package ($' . number_format($price, 2) . ') below your highest previously purchased package amount ($' . number_format($highestAmount, 2) . ').');
+                // FC VIP packages are INDEPENDENT from UVP tier history.
+                // Only look at previous FC purchases (never UVP/VENTURE).
+                $highestFc = round((float) $user->highestFcPackageAmount(), 2);
+                if ($highestFc > 0 && $price < $highestFc) {
+                    throw new \InvalidArgumentException('FC VIP Package Purchase Error: You cannot purchase an FC VIP package ($' . number_format($price, 2) . ') below your highest previously purchased FC VIP package amount ($' . number_format($highestFc, 2) . '). Each FC VIP package is independent, but downgrading within the FC VIP line is not permitted.');
+                }
+                if ($highestFc > 0 && abs($price - $highestFc) < 0.01) {
+                    throw new \InvalidArgumentException('FC VIP Package Purchase Error: You already hold the "' . $package->name . '" FC VIP package ($' . number_format($price, 2) . '). Duplicate purchases of the same FC tier are not allowed. Please choose a higher FC VIP tier to upgrade.');
+                }
+                if ($user->hasFcPackageAtPrice($price)) {
+                    throw new \InvalidArgumentException('FC VIP Package Purchase Error: You already own an FC VIP package at $' . number_format($price, 2) . '. Duplicate purchases of the same FC tier are not allowed.');
                 }
             }
 
@@ -258,7 +267,7 @@ class DirectPackagePaymentService
                 'id'       => (int) $package->id,
                 'name'     => $package->name ?: ('FC VIP $' . number_format($price, 2)),
                 'amount'   => $price,
-                'duration' => 100,
+                'duration' => null,  // FC VIP packages NEVER expire — no duration
                 'model'    => $package,
             ];
         }
@@ -295,43 +304,45 @@ class DirectPackagePaymentService
     private function activateFc(User $user, Deposits $deposit, float $amount): Paymodel
     {
         $package = FCpackage::findOrFail((int) $deposit->package_id);
-        $expireAt = Carbon::now()->addDays(100);
+        $price   = round((float) $package->price, 2);
 
-        $payment = $user->investments()
-            ->where('is_expired', 0)
-            ->where('status', 1)
-            ->where('category', 'FC')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Final idempotency guard against same-tier double-purchases (race condition
+        // protection: two concurrent invoices approving at once cannot both create a
+        // payment row for the same FC tier).
+        $highestFc = round((float) $user->highestFcPackageAmount(), 2);
+        if ($highestFc > 0 && abs($price - $highestFc) < 0.01) {
+            throw new \RuntimeException('FC VIP activation aborted: you already own this FC tier ($' . number_format($price, 2) . ').');
+        }
+        if ($user->hasFcPackageAtPrice($price)) {
+            throw new \RuntimeException('FC VIP activation aborted: you already own an FC VIP package at $' . number_format($price, 2) . '.');
+        }
 
-        if (!$payment) {
-            $createPayable = new Paymodel([
-                'user'            => $user->id,
-                'package'         => $package->name,
-                'amount'          => $package->price,
-                'paid'            => $amount,
-                'over_paid'       => 0,
-                'status'          => 1,
-                'expiration_date' => $expireAt,
-                'duration'        => 100,
-                'category'        => 'FC',
-                'category_id'     => 0,
-                'is_expired'      => false,
-            ]);
+        // FC VIP packages are PERMANENT — no expiration, no duration.
+        // Each purchase is still an INDEPENDENT record (its own ID, own amount
+        // paid, own referral credits), but none of them ever expire.
+        $createPayable = new Paymodel([
+            'user'            => $user->id,
+            'package'         => $package->name,
+            'amount'          => (float) $package->price,
+            'paid'            => $amount,
+            'over_paid'       => 0,
+            'status'          => 1,
+            'expiration_date' => null,
+            'duration'        => null,
+            'category'        => 'FC',
+            'category_id'     => 0,
+            'is_expired'      => false,
+            'payable_id'      => $package->id,
+            'payable_type'    => FCpackage::class,
+        ]);
 
-            $payment = $package->payments()->save($createPayable);
-        } else {
-            $newAmount = (float) $payment->amount + (float) $package->price;
-            $payment->update([
-                'package'         => $package->name,
-                'amount'          => $newAmount,
-                'paid'            => $newAmount,
-                'expiration_date' => $expireAt,
-                'duration'        => 100,
-                'category'        => 'FC',
-                'status'          => 1,
-            ]);
-            $payment->refresh();
+        $payment = $package->payments()->save($createPayable);
+
+        // §FC-TOKENS-12M: credit locked tokens on FC purchase (12 equal monthly releases).
+        try {
+            \App\Services\FcpTokenService::onFcPurchased($user, $package, $payment);
+        } catch (\Throwable $e) {
+            Log::warning('FCP token credit (auto-payment) failed for payment #' . $payment->id . ': ' . $e->getMessage());
         }
 
         $user->update([
@@ -340,6 +351,29 @@ class DirectPackagePaymentService
         ]);
 
         $this->createFcSubscriptionTransaction($user, $package, $payment, $deposit, $amount);
+        $this->creditReferralEarnings($payment);
+
+        // FC Leadership bonus engine: +100 VB per direct FC referral plus
+        // any newly-crossed milestone tier rewards (Monday cashout).
+        try {
+            \App\Services\FcLeadershipService::onFcPaymentConfirmed($payment);
+        } catch (\Throwable $e) {
+            Log::warning('FC leadership credit failed for payment #' . $payment->id . ': ' . $e->getMessage());
+        }
+
+        // FC Streamline Ranks: opportunistically evaluate after every FC payment.
+        try {
+            \App\Services\FcStreamlineRankService::evaluate($user);
+            $referrerId = (int) ($user->referee_id ?? 0);
+            if ($referrerId > 0) {
+                $ref = User::find($referrerId);
+                if ($ref) {
+                    \App\Services\FcStreamlineRankService::evaluate($ref);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('FC streamline rank evaluation (auto-payment) failed after payment #' . $payment->id . ': ' . $e->getMessage());
+        }
 
         return $payment;
     }
@@ -453,6 +487,7 @@ class DirectPackagePaymentService
 
     private function createFcSubscriptionTransaction(User $user, FCpackage $package, Paymodel $payment, Deposits $deposit, float $amount): void
     {
+        // FC VIP is a PERMANENT membership — no end date, no period.
         Transaction::create([
             'user_id'             => $user->id,
             'transaction_no'      => Transaction::generateTransactionNo(),
@@ -461,9 +496,9 @@ class DirectPackagePaymentService
             'transaction_details' => json_encode([
                 'product'            => $package->name,
                 'user'               => $user->email,
-                'plan'               => 'soon',
+                'plan'               => 'FC VIP (Lifetime)',
                 'start_date'         => Carbon::now(),
-                'end_date'           => Carbon::now()->addDays(100),
+                'end_date'           => null,
                 'package'            => $package->name,
                 'price'              => $package->price,
                 'token'              => $package->default_token,
@@ -472,9 +507,9 @@ class DirectPackagePaymentService
                 'current_poolcapital'=> 0,
                 'LP'                 => 0,
                 'current_LP'         => 0,
-                'period'             => '100 days',
+                'period'             => 'Lifetime',
                 'revenue_earned'     => 0,
-                'revenue_type'       => 'soon',
+                'revenue_type'       => 'permanent',
                 'status'             => 'success',
                 'purchase_date'      => Carbon::now(),
                 'username'           => $user->name,

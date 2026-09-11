@@ -163,11 +163,47 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Alias for general package checks.
+     * Get the highest previously purchased FC VIP package price for this user.
+     * FC VIP packages are an INDEPENDENT product line from UVP: tier upgrades
+     * for FC must be enforced against FC history only, never against UVP.
+     */
+    public function highestFcPackageAmount(): float
+    {
+        $maxPayment = \App\Models\Payment::where('user', $this->id)
+            ->where('status', 1)
+            ->where(function ($q) {
+                $q->where('category', 'FC')
+                  ->orWhere('payable_type', \App\Models\FCpackage::class);
+            })
+            ->max(\Illuminate\Support\Facades\DB::raw('CAST(COALESCE(paid, amount, 0) AS DECIMAL(10,2))'));
+
+        return (float) ($maxPayment ?: 0.0);
+    }
+
+    /**
+     * Does this user already own an FC VIP package at the given price?
+     * Used to block re-purchasing the SAME FC tier (same price) more than once.
+     * Tiers are compared by price rounded to 2 decimals (USD cents).
+     */
+    public function hasFcPackageAtPrice(float $price): bool
+    {
+        return \App\Models\Payment::where('user', $this->id)
+            ->where('status', 1)
+            ->where(function ($q) {
+                $q->where('category', 'FC')
+                  ->orWhere('payable_type', \App\Models\FCpackage::class);
+            })
+            ->whereRaw('ABS(CAST(COALESCE(paid, amount, 0) AS DECIMAL(10,2)) - ?) < 0.01', [round($price, 2)])
+            ->exists();
+    }
+
+    /**
+     * Highest package amount across ALL independent product lines
+     * (UVP + FC). Used only for cross-product guards (e.g. Free Tier).
      */
     public function highestPackageAmount(): float
     {
-        return $this->highestUvpPackageAmount();
+        return max($this->highestUvpPackageAmount(), $this->highestFcPackageAmount());
     }
 
     /** Bonuses this user generated for their upline (because of their own purchases) */

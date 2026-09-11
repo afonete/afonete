@@ -25,9 +25,9 @@
                     <form method="POST" action="{{ route('user.token.withdraw.post') }}" class="js-transaction-password-form">
                         @csrf
                         <div class="form-group">
-                            <label class="font-weight-bold">FONE Wallet Address <span class="text-danger">*</span></label>
+                            <label class="font-weight-bold"> Wallet Address <span class="text-danger">*</span></label>
                             <input type="text" name="wallet_address" class="form-control"
-                                   placeholder="Your FOCOIN/FONE wallet address" required>
+                                   placeholder="Your FOCOIN/ wallet address" required>
                             <small class="text-muted">Admin will send tokens to this address externally after approval.</small>
                         </div>
                         <div class="form-group">

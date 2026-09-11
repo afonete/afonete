@@ -194,6 +194,24 @@ $name = $user->name??'';
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{{ route('admin.fc-ranks.index') }}" class="nav-link">
+                            <i class="nav-icon fas fa-crown text-warning"></i>
+                            <p>
+                                FC Streamline Ranks
+                                <sup><span class="right badge badge-warning" style="font-size:0.65rem;">FC VIP</span></sup>
+                            </p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('fcpackages') }}" class="nav-link">
+                            <i class="nav-icon fas fa-gem" style="color:#f59e0b;"></i>
+                            <p>
+                                FC VIP Packages
+                                <sup><span class="right badge badge-warning" style="font-size:0.65rem;">FC VIP</span></sup>
+                            </p>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{route('admin.subscribe')}}" class="nav-link">
                             <i class="nav-icon fas fa-user"></i>
                             <p>

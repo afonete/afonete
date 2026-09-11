@@ -173,6 +173,54 @@ class UserpackageController extends Controller
         ]);
     }
 
+    /**
+     * Standalone FC VIP Packages page reached from the sidebar
+     * "Packages → FC Packages" sub-menu. Same data as the activation page
+     * but without the activation-code / free-tier cards — pure FC package
+     * browsing and purchase.
+     */
+    public function fcPackages()
+    {
+        $packages = FCpackage::orderBy('price', 'asc')->get();
+
+        $user = Auth::user();
+        $highestFcAmount = $user ? (float) $user->highestFcPackageAmount() : 0.0;
+        $ownedFcPayments = collect();
+        $fcTokenSchedules = collect(); // keyed by payment_id
+        if ($user) {
+            $ownedFcPayments = Paymodel::where('user', $user->id)
+                ->where(function ($q) {
+                    $q->where('category', 'FC')
+                      ->orWhere('payable_type', FCpackage::class);
+                })
+                ->where('status', 1)
+                ->with('payable')
+                ->orderBy('paid', 'desc')
+                ->get();
+
+            // Load FC token vesting schedules for every FC payment the user owns
+            // so the "My Memberships" panel can show 12-month release progress.
+            if ($ownedFcPayments->isNotEmpty()) {
+                $schedules = \App\Models\FcpTokenRelease::where('user_id', $user->id)
+                    ->whereIn('payment_id', $ownedFcPayments->pluck('id')->filter()->all())
+                    ->where('status', '!=', 'cancelled')
+                    ->get()
+                    ->keyBy('payment_id');
+                $fcTokenSchedules = $schedules;
+            }
+        }
+
+        // Totals across all FC memberships the user holds
+        $fcTotals = [
+            'paid'          => $ownedFcPayments->sum(fn ($p) => (float) ($p->paid ?? $p->amount ?? 0)),
+            'total_tokens'  => $fcTokenSchedules->sum(fn ($s) => (float) $s->total_tokens),
+            'released'      => $fcTokenSchedules->sum(fn ($s) => (float) $s->released_tokens),
+            'locked'        => $fcTokenSchedules->sum(fn ($s) => max(0, (float) $s->total_tokens - (float) $s->released_tokens)),
+        ];
+
+        return view('user.fc-packages', compact('packages', 'highestFcAmount', 'ownedFcPayments', 'fcTokenSchedules', 'fcTotals'));
+    }
+
     public function contract()
     {
         // The contract body lives in the DATABASE (admin-managed via

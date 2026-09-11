@@ -45,8 +45,14 @@ class FCpackageController extends Controller
     {
 
           $result = FCpackage::create($request->validate([
-            "name"=>'required|string|unique:fcspackages,name',
-            "price"=>'required|numeric|unique:fcspackages,price,except,id',
+            "name"           => 'required|string|unique:fcspackages,name',
+            "price"          => 'required|numeric|unique:fcspackages,price,except,id',
+            "default_token"  => 'nullable|numeric|min:0',
+            "token_price"    => 'nullable|numeric|min:0',
+            "loan_min"       => 'nullable|numeric|min:0',
+            "loan_max"       => 'nullable|numeric|min:0',
+            "ads_credits"    => 'nullable|integer|min:0',
+            "free_shop_room" => 'nullable|boolean',
           ]));
 
         return back()->with("message","Package Created Successfully");
@@ -92,8 +98,14 @@ class FCpackageController extends Controller
     $fcpackage = FCpackage::findOrFail($id);
 
     $fcpackage->update($request->validate([
-        "name" => 'required|string|unique:fcspackages,name,' . $id,
-        "price" => 'required|numeric|unique:fcspackages,price,' . $id,
+        "name"           => 'required|string|unique:fcspackages,name,' . $id,
+        "price"          => 'required|numeric|unique:fcspackages,price,' . $id,
+        "default_token"  => 'nullable|numeric|min:0',
+        "token_price"    => 'nullable|numeric|min:0',
+        "loan_min"       => 'nullable|numeric|min:0',
+        "loan_max"       => 'nullable|numeric|min:0',
+        "ads_credits"    => 'nullable|integer|min:0',
+        "free_shop_room" => 'nullable|boolean',
     ]));
 
     return back()->with("message", "Package Updated Successfully");

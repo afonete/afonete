@@ -37,8 +37,8 @@ $totalUser=$totalUser+125;
                 <div class="col hero-text hello">
                 <h2>Join {{ env('APP_NAME') }}<br> today</h2>
 
-                    <p> All in one, innovator web3 and blockchain technology and
-                    </br> The platform for success-minded people
+                    <p> ALL IN ONE INNOVATION, AI, WEB3 & BLOCKCHAIN TECHNOLOGY
+                    </br> The Platform for Success-Minded People
                     </p>
             </div>
                 <div class="hero-btns">
@@ -99,11 +99,11 @@ $totalUser=$totalUser+125;
 </style>
          <div class="hello-content">
             
-                   <h3> {{ env('APP_NAME') }} have created unique innovative 
-                    affiliate platform solutions for global community of 
-                    people who love innovative technologies, web3, blockchain
-                    technologies  and opened access for all people  to benefit
-                    from a system can implement future innovations today.</h3>
+                   <h3> {{ env('APP_NAME') }} Bifonex has created a unique 
+                    and innovative affiliate platform for a global community passionate 
+                    about emerging technologies, AI, Web3, and blockchain. 
+                    Our ecosystem gives everyone access to innovative solutions and
+                     opportunities designed to bring the future of digital technology closer today.</h3>
                    
             </div>
   
@@ -125,11 +125,11 @@ $totalUser=$totalUser+125;
             <div class="main_container" style="width=100%">
                 <div class="sections-tittle">
                     <div class="sect2-title head">
-                        <h3 class="common-header font-weight-bold">LET'S PUT OUR FAITH  INTO ACTION, TAKE RISKS AND START SOMETHING</h3>
-                        <p class="par mt-3">Many people lose more money for internet with out generate even
-                            $0.1 still We all  spend lot of time online *?  Change your mind this is your way You
-                            can earn money  $10 perday (dollar, coin,  or usdt) by doing the things you
-                            love online.Turn Your Time Into Money.
+                        <h3 class="common-header font-weight-bold">LET'S PUT OUR FAITH INTO ACTION, TAKE RISKS, AND START SOMETHING.</h3>
+                        <p class="par mt-3">We all spend a lot of time online, but many people spend it without creating value or earning even $0.10. 
+                            It’s time to change the way you think about your time online.
+                            Turn your everyday activities into opportunities to earn—whether in dollars, digital coins, or USDT.Turn Your Time Into Money.
+                            
                         </p>
                     </div>
                   
@@ -144,33 +144,34 @@ $totalUser=$totalUser+125;
                             <div>
                                 <ul >
                                     <li>
-                                        <p class="par">Get rewards/money for watching videos, shopping online,
-                                            or signing up for exciting services</p>
+                                        <p class="par">Earn rewards by watching videos, 
+                                            shopping online,
+                                             or signing up for exciting services.</p>
                                     </li>
 
                                     <li>
-                                        <p class="par">Earn anywhere you are even your home get money</p>
+                                        <p class="par">Earn from anywhere, even from the comfort of your home.</p>
                                     </li>
                                      <li>
-                                        <p class="par">Customer support is available 24/7 to help you with any questions or issues.
+                                        <p class="par">24/7 Customer Support to help with your questions and issues.
 </p>
                                     </li>
                                     <li>
-                                        <p class="par">Get money just for using social media!</p>
+                                        <p class="par">Earn money or coins by playing fun online games.</p>
                                     </li>
                                     <li>
-                                        <p class="par">Earn money for simple just click viewing ads </p>
+                                        <p class="par">Get rewarded for using social media! </p>
                                     </li>
                                     <li>
-                                        <p class="par">Earn money/coins by playing fun games online.</p>
-                                    </li>
-                                    <li>
-
-                                        <p class="par">Get rewards for referral people</p>
+                                        <p class="par">Earn by simply viewing and engaging with ads.</p>
                                     </li>
                                     <li>
 
-                                        <p class="par">Chat room	like- Success minded users.</p>
+                                        <p class="par">Earn rewards by referring friends and building your network</p>
+                                    </li>
+                                    <li>
+
+                                        <p class="par">Connect with success-minded users in our community chat.</p>
                                     </li>
                                     <a href="{{route('register')}}" class="info-btn  signup">Sign up & start earning</a>
                                 </ul>
@@ -203,8 +204,8 @@ $totalUser=$totalUser+125;
             <div class="head">
                 <h3  class="common-header font-weight-bold">DO YOU WANT TO LIVE YOUR DREAMS?</h3>
                 <p class="par">
-                    Our story began with an inner desire to change the world while creating a
-                    fair opportunity for all individuals involved right now 
+                    Our story began with an inner desire to change the world while 
+                    creating fair opportunities for all individuals involved in the right way 
                 </p>
                
             </div>
@@ -212,33 +213,33 @@ $totalUser=$totalUser+125;
                 <div class="col-lg-5" id="">    <br>
                     <ul class="">
                         <li>
-                            <p class="par">Earn from your mbs/internet used to $5 for every task you participate in.</p>
+                            <p class="par">Earn from your internet usage — earn up to $5 for eligible tasks you complete.</p>
                            
                         </li>
                         <li>
-                            <p class="par">Get reward 100 000  AI ads of Client uploaded.</p>
+                            <p class="par">Earn rewards from AI-powered advertisements uploaded by clients.</p>
                         </li>
                         <li>
-                            <p class="par">Get lifetime passive income AIBots with ads </p>
+                            <p class="par">Build passive income opportunities through AI Bots and advertising. </p>
                         </li>
                         <li>
-                            <p class="par">Get free space room shop </p>
+                            <p class="par">Get free space for your online shop and showcase your products or services.</p>
                         </li>
                         <li>
-                            <p class="par">Get 15% directs projects Uploaded</p>
+                            <p class="par">Earn up to 15% from direct projects you refer or participate in.</p>
                         </li>
                         <li>
-                            <p class="par">The buying and selling of products and services online.</p>
+                            <p class="par">Buy and sell products and services online through the platform.</p>
                         </li>
                         <li>
-                            <p class="par">Get Retail sale bonus.</p>
+                            <p class="par">Earn retail sales bonuses from eligible transactions.</p>
                         </li>
                         <li>
-                            <p class="par">Get	traveling point & hotel
+                            <p class="par">Earn travel points and access hotel benefits.
 .</p>
                         </li>
                         <li>
-                            <p class="par">Get passive income staking
+                            <p class="par">Earn potential passive income through staking.
 .</p>
                         </li>
                         <br>
@@ -258,14 +259,14 @@ $totalUser=$totalUser+125;
      <div class="regAds">
         <div class="timeCountDown">   
            <div class="remainTime">
-                <div id="days"> </div>
+                <div id="days"></div>
                 <div id="hours"></div>
                 <div id="minutes"></div>
                 <div id="seconds"></div>
            </div>
         </div>
         <div class="regBtn">
-            <button class="getMore shadow"><a href="{{route('register')}}"><h2>Register <br> FC now</h2></a></button>
+            <button class="getMore shadow"><a href="{{route('register')}}"><h2>Register <br> now</h2></a></button>
             <a href="{{ route('info')}}" class="more">More Info</a>
         </div>
     </div>
@@ -318,10 +319,10 @@ $totalUser=$totalUser+125;
             document.getElementById('countdown').textContent = 'Countdown expired!';
             return;
         }
-        days.innerHTML = `00 : `;
-        hours.innerHTML = `00 :`;
-        minutes.innerHTML = `00 : `;
-        seconds.innerHTML = `00 `;   
+        days.innerHTML = `0 : `;
+        hours.innerHTML = `0 :`;
+        minutes.innerHTML = `0 : `;
+        seconds.innerHTML = `0 `;   
      }
     updateRemaningTime();
     setInterval(updateRemaningTime, 1000)
@@ -341,7 +342,8 @@ $totalUser=$totalUser+125;
                                 <img src="{{asset('assets/front/img/add-user.png')}}" alt="">
                             </span>
                             <h3 class="text-uppercase h4 font-weight-bold">Sign Up</h3>
-                            <p  class="par">Feel free to join us, members from all countries are allowed. Registration is absolutely free After full launch
+                            <p  class="par">Feel free to join us. Members from all countries are welcome.
+                                 Registration will be absolutely free after the full launch.
 .</p>
                         </div>
                     </div>
@@ -352,7 +354,8 @@ $totalUser=$totalUser+125;
                                 <img src="{{asset('assets/front/img/salary.png')}}" alt="">
                             </span>
                             <h3 class="text-uppercase h4 mb-3 font-weight-bold">Earn</h3>
-                            <p class="par">At {{ env('APP_NAME') }} is unique platform you can earn option you want simple task ,click views, watch video, game play referring new members completing offer.</p>
+                            <p class="par">At {{ env('APP_NAME') }} At Bifonex, you can explore multiple ways to earn by completing simple tasks,
+                                 clicking and viewing ads, watching videos, playing games, referring new members, and completing offers..</p>
                         </div>
                     </div>
 
@@ -362,7 +365,9 @@ $totalUser=$totalUser+125;
                                 <img src="{{asset('assets/front/img/money.png')}}" alt="">
                             </span>
                             <h3 class="text-uppercase h4 mb-3 font-weight-bold">Cashout</h3>
-                            <p class="par">Cash out your earnings (crypto usdt,  mobile money, Perfect Money, Chipper cash, etc )
+                            <p class="par">Cash out your earnings through multiple payment options, 
+                                including USDT and other cryptocurrencies, Perfect Money,, and more.
+                                Deposits are currently accepted in cryptocurrency only.
 Deposit crypto only</p>
                         </div>
                     </div>
@@ -373,7 +378,9 @@ Deposit crypto only</p>
                                 <img src="{{asset('assets/front/img/online-shop.png')}}" alt="">
                             </span>
                             <h3 class="text-uppercase h4 mb-3 font-weight-bold">Service</h3>
-                            <p class="par">Our main services is involved in projects Areas ; Blockchain innovation, Ai ads marketplace, exchange,E-commerce, digital marketing, service companies Business service( softwareBooking hotel/ air ticket</p>
+                            <p class="par">Our Main Services & Project Areas: Blockchain Innovation, AI Ads Marketplace,
+                                 Crypto Exchange, E-Commerce,
+                                 Digital Marketing, Business Services, Software Solutions, Hotel & Flight Booking</p>
                         </div>
                     </div>
                 </div>
@@ -464,10 +471,12 @@ Deposit crypto only</p>
 
 </h3>
                             <h4 style="color: white;">
-                               We are an innovator technology company that building massive infrastructure project, which combining the innovation of the web3 development and blockchain technology, altricial intelligent where everybody deserves a fair chance for success  and Showing people that there is more than one path to success in life with and become successful.
+                               We are an innovative technology company building a large-scale infrastructure
+                                project that combines Web3 development, blockchain technology, and artificial intelligence.
+                                We believe everyone deserves a fair opportunity to succeed and that there is more than one path to success in life.
 <br>
-Take a look for yourself, and find out which products best fit your personal goals and start
-growing your own income , own business today!
+Explore Bifonex for yourself, discover the products that best fit your personal goals, 
+and start building your income and business today!
 </h4>
                         </div>
                     </div>
@@ -667,7 +676,7 @@ growing your own income , own business today!
         <div class="row main-club">
           <div class="text-center py-4 club" data-aos="fade">
               
-            <h2 class=" text-center font-secondary text-white" id="text1">You want to become a founder club</h2><br>
+            <h2 class=" text-center font-secondary text-white" id="text1">Do You Want to Become a Founder Club Member?</h2><br>
             <h2 class=" text-uppercase text-center font-secondary">
                <a href="{{route('register')}}" class="club-btn" id="text">Yes, I'd like to sign up</a>
             </h2>
@@ -796,7 +805,7 @@ growing your own income , own business today!
                            <i class="las la-funnel-dollar"></i>
                         </div>
                         <div class="other-text">
-                            <p class="text-white">Online loans</p>
+                            <p class="text-white"> P2P system</p>
                         </div>
                     </div>
                     

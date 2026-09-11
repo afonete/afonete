@@ -63,6 +63,16 @@ class Kernel extends ConsoleKernel
         $schedule->command('blockchain:sweep-hot-wallet')
                  ->hourly()
                  ->withoutOverlapping();
+
+        // FC VIP Streamline Ranks: evaluate activations/completions/expiries hourly.
+        $schedule->command('fc-ranks:evaluate')
+                 ->hourly()
+                 ->withoutOverlapping();
+
+        // FC VIP 12-month locked-token monthly release.
+        $schedule->command('tokens:release-fcp')
+                 ->dailyAt('00:20')
+                 ->withoutOverlapping();
     }
 
 

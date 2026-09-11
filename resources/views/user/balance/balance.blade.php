@@ -402,10 +402,10 @@ $position=Position::where('user',$name)->first();
 
                         </div>
                         <div class="bal-content ">
-                          SAVING
+                          SAVING TOKEN
                         </div>
                         <div class="bal-num font-weight-bold text-lg ">
-                          <p>0:0</p>
+                          {{ number_format($saving_token ?? 0, 2) }} <small style="font-size:0.7rem;font-weight:400;">{{ $token_symbol ?? 'FOCOIN' }}</small>
                         </div>
                     </div>
 

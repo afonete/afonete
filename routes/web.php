@@ -34,6 +34,7 @@ use App\Http\Controllers\FCpackageController;
 // Your routes here
 
 use App\Http\Controllers\User\FinanceController;
+use App\Http\Controllers\User\TokenSavingController;
 use App\Http\Controllers\Admin\ClaimController;
 
 
@@ -94,6 +95,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::post('user/internal-exchange/transfer', [FinanceController::class, 'internalWalletTransfer'])->name('user.internal-exchange.transfer');
     Route::post('user/internal-exchange/user-transfer', [FinanceController::class, 'userToUserTransfer'])->name('user.internal-exchange.user-transfer');
     Route::post('user/internal-exchange/trading-action', [FinanceController::class, 'tradingAction'])->name('user.internal-exchange.trading-action');
+
+    // ── TOKEN SAVING (6-month lock, loan-eligible at maturity) ──
+    Route::get('user/token-saving', [TokenSavingController::class, 'index'])->name('user.token-saving');
+    Route::post('user/token-saving/deposit', [TokenSavingController::class, 'deposit'])->name('user.token-saving.deposit');
+    Route::post('user/token-saving/withdraw', [TokenSavingController::class, 'withdraw'])->name('user.token-saving.withdraw');
 
     Route::get('user/overview', [FinanceController::class, 'overview'])->name('overview');
     Route::get('user/transaction', [FinanceController::class, 'transaction'])->name('transaction');
@@ -180,6 +186,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         return view('user.activate-code');
     })->name('user.activate-code');
     Route::get('user/package', [UserPackageController::class, 'UserPackage'])->name('user.package');
+    Route::get('user/fc-packages', [UserPackageController::class, 'fcPackages'])->name('user.fc-packages');
     // Route::get('user/package/pay', [PaymentController::class, 'pay'])->name('user.pay')->withoutMiddleware('user-package');
     Route::Post('user/package/payment', [PaymentController::class, 'blockpay'])->name('payment');
     Route::Post('user/venture/payment', [PaymentController::class, 'blockpayventure'])->name('paymentventure');
@@ -244,6 +251,8 @@ Route::middleware(['auth:sanctum', 'verified', 'user-package', 'contract','claim
     Route::get ('user/referral/bonus',          [\App\Http\Controllers\User\ReferralController::class, 'bonus'])->name('user.referral.bonus');
     Route::get ('user/fom-referral',            [\App\Http\Controllers\User\FomReferralController::class, 'index'])->name('user.fom-referral');
     Route::get ('user/fom-rank',                [\App\Http\Controllers\User\FomRankController::class, 'index'])->name('user.fom-rank');
+    Route::get ('user/fc-streamline-ranks',     [\App\Http\Controllers\User\FcStreamlineRankController::class, 'index'])->name('user.fc-streamline-ranks');
+    Route::get ('user/fc-leadership',          [\App\Http\Controllers\User\FcLeadershipController::class, 'index'])->name('user.fc-leadership');
     Route::get ('user/fom-royal',               [\App\Http\Controllers\User\FomRoyalController::class, 'index'])->name('user.fom-royal');
     Route::get ('user/fom-residual',            [\App\Http\Controllers\User\FomResidualController::class, 'index'])->name('user.fom-residual');
     Route::post('user/referral/withdraw',       [\App\Http\Controllers\User\ReferralController::class, 'withdraw'])->name('user.referral.withdraw');
@@ -523,6 +532,11 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::put   ('admin/fom-incentive/tiers/{id}',   [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'updateTier'])->name('admin.fom-incentive.update');
     Route::post  ('admin/fom-incentive/tiers/{id}/toggle', [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'toggleTier'])->name('admin.fom-incentive.toggle');
     Route::delete('admin/fom-incentive/tiers/{id}',   [\App\Http\Controllers\Admin\FomIncentiveAdminController::class, 'destroyTier'])->name('admin.fom-incentive.destroy');
+
+    // ── FC VIP STREAMLINE RANKS (admin verification) ────────────────────
+    Route::get ('admin/fc-streamline-ranks',           [\App\Http\Controllers\Admin\FcStreamlineRankAdminController::class, 'index'])->name('admin.fc-ranks.index');
+    Route::post('admin/fc-streamline-ranks/{rank}/approve', [\App\Http\Controllers\Admin\FcStreamlineRankAdminController::class, 'approve'])->name('admin.fc-ranks.approve');
+    Route::post('admin/fc-streamline-ranks/{rank}/reject',  [\App\Http\Controllers\Admin\FcStreamlineRankAdminController::class, 'reject'])->name('admin.fc-ranks.reject');
 
     Route::get  ('admin/referral/bonuses',                [\App\Http\Controllers\Admin\ReferralAdminController::class, 'bonuses'])->name('admin.referral.bonuses');
     Route::get  ('admin/referral/bonuses/user/{id}',      [\App\Http\Controllers\Admin\ReferralAdminController::class, 'userDetail'])->name('admin.referral.bonuses.user');

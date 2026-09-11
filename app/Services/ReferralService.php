@@ -194,6 +194,8 @@ class ReferralService
     /**
      * Promote all `pending` rows whose week_start has arrived to `withdrawable`.
      * Returns the number of rows promoted.
+     * Skips 'vb_only' informational rows (e.g. +100VB FC credits) — those are
+     * non-cash and must never become withdrawable cash.
      */
     public static function promotePendingToWithdrawable(?Carbon $now = null): int
     {
@@ -212,15 +214,15 @@ class ReferralService
     {
         self::syncMissingBonuses();
 
-        // UVP plan only — FOM rows (source=fom_referral) have their own totals
         $row = ReferralBonus::where(function ($q) {
-                $q->whereNull('source')->orWhere('source', '!=', 'fom_referral');
+                $q->whereNull('source')->orWhereNotIn('source', ['fom_referral']);
             })
+            ->where('status', '!=', 'vb_only')
             ->selectRaw('
             SUM(CASE WHEN status = "pending"      THEN bonus_amount ELSE 0 END) AS pending_total,
             SUM(CASE WHEN status = "withdrawable" THEN bonus_amount ELSE 0 END) AS withdrawable_total,
             SUM(CASE WHEN status = "withdrawn"    THEN bonus_amount ELSE 0 END) AS paid_total,
-            SUM(CASE WHEN status NOT IN ("reversed","expired") THEN bonus_amount ELSE 0 END) AS all_time
+            SUM(CASE WHEN status NOT IN ("reversed","expired","vb_only") THEN bonus_amount ELSE 0 END) AS all_time
         ')->first();
 
         return [

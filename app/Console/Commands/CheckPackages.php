@@ -42,6 +42,21 @@ class CheckPackages extends Command
                 continue;
             }
 
+            // ── FC VIP packages NEVER expire (lifetime membership). They
+            // carry expiration_date = null and must not be marked expired
+            // by the cron even if some legacy row incorrectly has a date.
+            if (strtoupper(trim((string) $package->category)) === 'FC'
+                || (isset($package->payable_type) && $package->payable_type === \App\Models\FCpackage::class)) {
+                $package->is_expired = false;
+                if (!empty($package->expiration_date)) {
+                    // Self-heal legacy rows that were given an expiration.
+                    $package->expiration_date = null;
+                    $package->duration = null;
+                    $package->save();
+                }
+                continue;
+            }
+
             $expiry    = Carbon::parse($package->expiration_date);
             $createdAt = Carbon::parse($package->created_at);
             $daysPassed = (int) $createdAt->diffInDays($today);
@@ -77,23 +92,32 @@ class CheckPackages extends Command
                         $user->save();
                     }
 
-                    // ── Auto-transfer LOCKED_TOKEN → AVAILABLE_TOKEN on package expiry ──
-                    // LOCKED_TOKEN belongs to the UVP/FC token cycle. FOM packages
-                    // never credit LOCKED_TOKEN (they use ESCROW_TOKEN with their
-                    // own installment releases), so a FOM expiry must not dump a
-                    // UVP package's still-locked tokens. Also skip while another
-                    // active UVP/FC package remains.
-                    // §84: leader activation rows are not UVP/FC packages —
-                    // they must not block the LOCKED_TOKEN release either.
-                    $hasOtherActiveUvpFc = Paymodel::where('user', $user->id)
+                    // ── Auto-transfer remaining UVP LOCKED_TOKEN → AVAILABLE_TOKEN on UVP expiry ──
+                    // UVP locks tokens for the package duration (100 days) and releases them
+                    // in a single shot at expiry. FC VIP credits LOCKED_TOKEN too, but releases
+                    // them in 12 equal monthly installments via `tokens:release-fcp`
+                    // (FcpTokenService), so FC-owned balances must NOT be swept here. FOM
+                    // packages use ESCROW_TOKEN with their own installments; leader activation
+                    // rows are not packages at all.
+                    $hasOtherActiveUvp = Paymodel::where('user', $user->id)
                         ->where('id', '!=', $package->id)
                         ->excludeFom()
                         ->excludeLeader()
+                        ->excludeFc()
+                        ->where(function ($q) {
+                            $q->where('category', 'VENTURE')
+                              ->orWhere('category', 'UVP')
+                              ->orWhere('payable_type', \App\Models\Adventures::class);
+                        })
                         ->where('is_expired', false)
                         ->where('status', 1)
                         ->exists();
 
-                    if (!$isFomPackage && !$hasOtherActiveUvpFc) {
+                    $isUvpPackage = !$isFomPackage
+                        && !$package->isFc()
+                        && !$package->isLeaderPayment();
+
+                    if ($isUvpPackage && !$hasOtherActiveUvp) {
                         $lockedBalance = $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')->sum('amount');
                         if ($lockedBalance > 0) {
                             $user->ChartAccount()->where('acc_type', 'LOCKED_TOKEN')

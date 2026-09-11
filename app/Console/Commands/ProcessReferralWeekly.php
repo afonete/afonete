@@ -45,6 +45,12 @@ class ProcessReferralWeekly extends Command
         $residualPaid = \App\Services\FomResidualService::processWeekly();
         $this->info("Residual matching bonus paid to {$residualPaid} leader(s).");
 
+        // FC VIP LEADERSHIP: credit +100VB per direct FC referral (reconciled)
+        // and pay any newly-crossed milestone tier rewards (3/15/40/150/750/2000 VB
+        // → USD) into the same referral_bonuses → withdrawable Monday pipeline.
+        $fcLeadershipPaid = \App\Services\FcLeadershipService::processWeekly();
+        $this->info("FC Leadership awarded {$fcLeadershipPaid} milestone tier bonus row(s).");
+
         // Weekly LEADERBOARD: regenerate the new week's top-10 board
         // (runs after the FOM payout so this Monday's payouts are counted
         // in LAST week's window; admin pins for the new week survive).

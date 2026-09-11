@@ -3,6 +3,8 @@
         ['route' => 'user.referral.bonus',    'label' => 'Bonus & Withdraw'],
         ['route' => 'user.referral.downline',  'label' => 'Downline'],
         ['route' => 'user.referral.rank',      'label' => 'Ranks & Rewards'],
+        ['route' => 'user.fc-leadership',      'label' => 'FC Leadership'],
+        ['route' => 'user.fc-streamline-ranks','label' => 'FC Streamline Ranks'],
     ];
 @endphp
 <ul class="nav nav-pills mb-3">

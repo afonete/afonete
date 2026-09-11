@@ -435,8 +435,8 @@ if (showAlertBtn) {
 
                     {{-- Packages --}}
                     {{-- §96: Staker entry moved to Legacy / Coming Soon (not accessible for now) --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','user.investments*','packageRenew') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','user.investments*','packageRenew') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.buypackage','user.investments*','packageRenew','user.fc-packages','user.package') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-packages {{ request()->routeIs('user.buypackage','user.investments*','packageRenew','user.fc-packages','user.package') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-box-open"></i>
                             <p>Packages <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -454,6 +454,11 @@ if (showAlertBtn) {
                             <li class="nav-item">
                                 <a href="{{ route('packageRenew') }}" class="nav-link {{ request()->routeIs('packageRenew') ? 'active' : '' }}">
                                     <i class="fas fa-redo-alt nav-icon"></i><p>Package Renewal</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.fc-packages') }}" class="nav-link {{ request()->routeIs('user.fc-packages') ? 'active' : '' }}">
+                                    <i class="fas fa-coins nav-icon text-warning"></i><p>FC Packages</p>
                                 </a>
                             </li>
                         </ul>
@@ -540,8 +545,8 @@ if (showAlertBtn) {
                     </li>
 
                     {{-- Wallets --}}
-                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'menu-open' : '' }}">
-                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments') ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments','user.internal-exchange','user.token-saving*') ? 'menu-open' : '' }}">
+                        <a href="javascript:void(0)" class="nav-link sidebar-group-toggle group-wallets {{ request()->routeIs('user.dashboard.balance','user.dashboard.deposit','user.dashboard.userwithdraw','user.dashboard.payments','user.internal-exchange','user.token-saving*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-wallet"></i>
                             <p>Wallets <i class="fas fa-angle-left right"></i></p>
                         </a>
@@ -564,6 +569,11 @@ if (showAlertBtn) {
                             <li class="nav-item">
                                 <a href="{{ route('user.withdrawal-history') }}" class="nav-link {{ request()->routeIs('user.withdrawal-history') ? 'active' : '' }}">
                                     <i class="fas fa-history nav-icon"></i><p>Withdrawal History</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('user.token-saving') }}" class="nav-link {{ request()->routeIs('user.token-saving*') ? 'active' : '' }}">
+                                    <i class="fas fa-piggy-bank nav-icon text-emerald"></i><p>Saving Token</p>
                                 </a>
                             </li>
                             <li class="nav-item">

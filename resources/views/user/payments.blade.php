@@ -7,7 +7,6 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
    <div class="content-wrapper">
 <head>
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/gojs/release/go.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
@@ -86,9 +85,12 @@
 </head>
 <body>
 
-   <div class="flex-1 p-4 ">
+   <div class="container-fluid py-4 max-w-7xl mx-auto">
 
-       <x-PaymentNav/>
+       {{-- Top sub-navigation: Cash / Coin / Trading / Invoices (identical bar across Cash & Coin pages) --}}
+       <div class="mb-4">
+           <x-PaymentNav/>
+       </div>
 
         <h4 class="px-2 flex gap-2"><span id="acc">CASHOUT</span> <span>ACCOUNT</span></h4>
         <div class="border px-4 py-4 rounded-lg my-4 bg-white shadow-sm">

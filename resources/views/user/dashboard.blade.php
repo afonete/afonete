@@ -2326,14 +2326,14 @@ $user=db::SELECT("SELECT * from users");
                                                  </div>
                                              </div>
                                              
-                                             <div class="d-flex justify-content-center gap-3 w-100 mt-2">
-                                                 <a href="{{ route('user.referral.bonus') }}" class="btn btn-warning font-weight-bold px-3 py-2 text-dark" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
-                                                     <i class="fas fa-coins mr-1"></i> Bonus &amp; Withdraw
-                                                 </a>
-                                                 <a href="{{ route('user.referral.downline') }}" class="btn btn-outline-info font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
-                                                     <i class="fas fa-sitemap mr-1"></i> Downline
-                                                 </a>
-                                             </div>
+                                            <div class="d-flex justify-content-center gap-3 w-100 mt-2">
+                                                <a href="{{ route('user.referral.bonus') }}" class="btn btn-warning font-weight-bold px-3 py-2 text-dark" style="border-radius: 8px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                                                    <i class="fas fa-coins mr-1"></i> Bonus &amp; Withdraw
+                                                </a>
+                                                <a href="{{ route('user.referral.downline') }}" class="btn btn-outline-info font-weight-bold px-3 py-2" style="border-radius: 8px; font-size: 12px;">
+                                                    <i class="fas fa-sitemap mr-1"></i> Downline
+                                                </a>
+                                            </div>
                                          </div>
                                      </div>
                                  </div>

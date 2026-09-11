@@ -76,6 +76,15 @@
 							Price
 						</th>
                         <th scope="col" class="px-6 py-3">
+                            Type
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Tokens (12-mo lock)
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Loan range
+                        </th>
+                        <th scope="col" class="px-6 py-3">
 							Investments
 						</th>
 
@@ -107,10 +116,29 @@
 						</th>
 
 						<td class="px-6 py-4">
-                            {{ $deposit->price }}
+                            ${{ number_format($deposit->price, 2) }}
 						</td>
 
+                        <td class="px-6 py-4">
+                            <span class="badge badge-info px-2 py-1 rounded text-xs font-weight-bold">LIFETIME</span>
+                        </td>
 
+                        <td class="px-6 py-4">
+                            @if($deposit->default_token && $deposit->default_token > 0)
+                                <span class="font-weight-bold text-amber-600">{{ number_format((int)$deposit->default_token) }}</span>
+                                <span class="text-xs text-slate-500 ml-1">(12-mo)</span>
+                            @else
+                                <span class="text-slate-400 text-xs">—</span>
+                            @endif
+                        </td>
+
+                        <td class="px-6 py-4 text-xs text-slate-600">
+                            {{ $deposit->loanRangeLabel() }}<br>
+                            <span class="text-slate-500">{{ $deposit->adsCreditsLabel() }}</span>
+                            @if($deposit->free_shop_room)
+                                <br><span class="text-emerald-600"><i class="fa fa-store mr-1"></i>Free Shop Room</span>
+                            @endif
+                        </td>
 
                         <td class="px-2 py-4 text-center">
                             {{$deposit->investments()->count()}}

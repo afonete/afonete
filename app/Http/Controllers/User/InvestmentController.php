@@ -31,31 +31,32 @@ class InvestmentController extends Controller
     {
         $user = Auth::user();
 
-        // Pull every UVP/FC Payment row belonging to this user, newest first.
-        // FOM Licence Miner packages are NOT investments — they are token
-        // mining licences managed on their own page — so they are excluded.
-        $investments = Paymodel::where('user', $user->id)
+        // UVP / VENTURE packages ONLY. FC VIP packages have their own dedicated
+        // "FC Packages" page under Packages → FC Packages, and are intentionally
+        // excluded from this listing (FC is lifetime, never renews, uses a
+        // separate 12-month token-vesting schedule — not daily ROI / renewals).
+        // FOM Licence Miner packages are also excluded (managed on their own page).
+        $baseQuery = Paymodel::where('user', $user->id)
             ->excludeFom()
+            ->excludeFc();
+
+        $investments = (clone $baseQuery)
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        // Aggregate counts (FOM excluded so the totals match the listing)
         $totals = [
-            'total_count'   => (int) Paymodel::where('user', $user->id)->excludeFom()->count(),
-            'active_count'  => (int) Paymodel::where('user', $user->id)
-                                  ->excludeFom()
-                                  ->where('is_expired', false)
-                                  ->where('status', 1)
-                                  ->count(),
-            'total_invested' => (float) Paymodel::where('user', $user->id)
-                                  ->excludeFom()
-                                  ->where('status', 1)
-                                  ->sum('amount'),
-            'active_amount'  => (float) Paymodel::where('user', $user->id)
-                                  ->excludeFom()
-                                  ->where('is_expired', false)
-                                  ->where('status', 1)
-                                  ->sum('amount'),
+            'total_count'    => (int) (clone $baseQuery)->count(),
+            'active_count'   => (int) (clone $baseQuery)
+                                     ->where('is_expired', false)
+                                     ->where('status', 1)
+                                     ->count(),
+            'total_invested' => (float) (clone $baseQuery)
+                                     ->where('status', 1)
+                                     ->sum('amount'),
+            'active_amount'  => (float) (clone $baseQuery)
+                                     ->where('is_expired', false)
+                                     ->where('status', 1)
+                                     ->sum('amount'),
         ];
 
         return view('user.investments.index', compact('investments','totals'));
@@ -75,6 +76,14 @@ class InvestmentController extends Controller
         if ($payment->isFom()) {
             return redirect()->route('user.licence-miner.escrow')
                 ->with('info', 'FOM Licence Miner packages are managed on the Licence Miner page, not under Investments.');
+        }
+
+        // FC VIP packages are not shown in the investments index, but the
+        // user could still land on a direct /investments/{id} URL via
+        // bookmarks/history. Send them to the FC Packages page instead.
+        if ($payment->isFc()) {
+            return redirect()->route('user.fc-packages')
+                ->with('info', 'FC VIP memberships are managed on the FC Packages page.');
         }
 
         // Resolve the package model (Adventures or FCpackage) via the morph

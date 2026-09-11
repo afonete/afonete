@@ -49,24 +49,44 @@
             color: #ffffff;
             border-radius: 16px;
         }
+        .pkg-card-title {
+            background: linear-gradient(135deg, #f8fafc, #eef2ff);
+            padding: 14px 18px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .pkg-price {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+        .pkg-desc {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 0;
+        }
     </style>
 
     <div class="content-wrapper" style="background-color: #f8fafc; min-height: 100vh;">
         <div class="container-fluid pkg-container max-w-7xl mx-auto">
 
             {{-- Top Navigation Header --}}
-            <div class="dash-header-bg p-4 mb-4 shadow-sm d-flex align-items-center justify-between flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <a href="javascript:history.back()" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
-                        <i class="fas fa-arrow-left mr-1"></i> Back
-                    </a>
-                    <div>
-                        <h4 class="font-weight-bold text-white mb-0" style="font-size: 1.25rem;">
-                            <i class="fas fa-gem text-warning mr-2"></i> FC Packages &amp; Account Activation
-                        </h4>
-                        <small class="text-light opacity-90">Manage membership activations, redeem codes, and view package tiers.</small>
-                    </div>
-                </div>
+            <div class="dash-header-bg p-4 mb-4 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <a href="javascript:history.back()" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 8px;">
+                    <i class="fas fa-arrow-left mr-1"></i> Back
+                </a>
+
+                <h4 class="font-weight-bold text-white mb-0 text-center flex-grow-1" style="font-size: 1.25rem;">
+                    <i class="fas fa-gem text-warning mr-2"></i> FC VIP Packages &amp; Account Activation
+                </h4>
+
+                <span class="badge badge-warning text-dark font-weight-bold px-3 py-2" style="font-size: 0.85rem; border-radius: 8px;">
+                    <i class="fas fa-wallet mr-1"></i> Deposit: ${{ number_format(auth()->user() ? auth()->user()->deposits->where('status','approved')->sum('amount_deposited') - auth()->user()->deposits->where('status','used')->sum('amount_removed') : 0, 2) }}
+                </span>
             </div>
 
             {{-- Session Flash Messages --}}
@@ -113,7 +133,7 @@
             @endphp
 
             <div class="row mb-4">
-                {{-- Activation Code Input Form (Accepts BOTH Package Codes & Team Leader Codes) --}}
+                {{-- Activation Code Input Form --}}
                 <div class="col-12 col-md-6 mb-3">
                     <div class="dash-card p-4 h-100 text-center d-flex flex-column justify-between border">
                         <div>
@@ -167,49 +187,54 @@
                 @endif
             </div>
 
-            {{-- FC VIP Packages Grid --}}
-            <div class="card dash-card p-4 mb-4">
-                <div class="border-bottom pb-3 mb-4">
-                    <h5 class="font-weight-bold text-dark mb-0">
-                        <i class="fas fa-box-open text-primary mr-2"></i> FC VIP Packages
-                    </h5>
-                </div>
+            {{-- FC VIP Packages Grid — restored to the simple white dash-card style used elsewhere on the page --}}
+            <div class="mb-4">
+                <h5 class="font-weight-bold text-dark mb-3">
+                    <i class="fas fa-gem text-warning mr-2"></i> FC VIP Packages
+                </h5>
 
                 <div class="row">
                     @forelse($packages as $package)
                         <div class="col-12 col-sm-6 col-md-4 mb-4">
-                            <div class="dash-card h-100 p-4 d-flex flex-column justify-between text-center border">
-                                <div>
-                                    <div class="p-2 mb-3 rounded bg-gradient-dark text-white font-weight-bold" style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 8px;">
-                                        <span class="text-warning font-weight-bold text-uppercase" style="font-size: 0.95rem;">FC VIP Tier</span>
-                                    </div>
-
-                                    <h2 class="font-weight-bold text-primary mb-2" style="font-size: 1.8rem;">
-                                        ${{ number_format($package->price, 2) }}
-                                    </h2>
-
-                                    <p class="text-muted small mb-4">
-                                        Full FC VIP membership access with dedicated token rewards and ecosystem privileges.
-                                    </p>
+                            <div class="dash-card h-100 d-flex flex-column">
+                                <div class="pkg-card-title text-center">
+                                    <i class="fas fa-coins text-warning mr-1"></i>
+                                    {{ $package->name }}
+                                    <span class="ml-1 badge badge-pill badge-warning text-dark" style="font-size: 0.7rem;">DMaster Coin Card</span>
                                 </div>
-
-                                <div>
-                                    <form action="{{ route('payment.directPackage') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="package_type" value="FC">
-                                        <input type="hidden" name="package_id" value="{{ $package->id }}">
-                                        <input type="hidden" name="network" value="TRC-20">
-                                        <button type="submit" class="btn btn-primary btn-block font-weight-bold py-2" style="border-radius: 8px; font-size: 13px;">
-                                            <i class="fas fa-shopping-cart mr-1"></i> BUY NOW (${{ number_format($package->price, 0) }})
-                                        </button>
-                                    </form>
+                                <div class="p-4 d-flex flex-column text-center flex-grow-1">
+                                    <div class="pkg-price my-2">${{ number_format($package->price, 0) }}</div>
+                                    <ul class="list-unstyled text-left text-sm text-slate-600 mx-auto mb-3" style="max-width: 260px; font-size: 0.86rem;">
+                                        <li class="mb-1"><i class="fas fa-hand-holding-usd text-success mr-2"></i>Allowed cryptofoneloan from <strong>{{ $package->loanRangeLabel() }}</strong></li>
+                                        <li class="mb-1"><i class="fas fa-coins text-warning mr-2"></i>Get coin/token <strong>{{ $package->tokensLabel() }}</strong> <span class="text-xs text-slate-500">(locked 12 months, 1/12 released monthly)</span></li>
+                                        <li class="mb-1"><i class="fas fa-bullhorn text-info mr-2"></i>Get for <strong>{{ $package->adsCreditsLabel() }}</strong></li>
+                                        @if($package->free_shop_room)
+                                            <li class="mb-1"><i class="fas fa-store text-purple-500 mr-2"></i>Free Shop Room online</li>
+                                        @endif
+                                    </ul>
+                                    <p class="pkg-desc mb-3" style="font-size:0.78rem;">
+                                        Permanent FC VIP lifetime membership — unlocks FC Leadership &amp; FC Streamline Ranks eligibility. No renewals.
+                                    </p>
+                                    <div class="mt-auto">
+                                        <form action="{{ route('ventures') }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="package_type" value="FC">
+                                            <input type="hidden" name="package_id" value="{{ $package->id }}">
+                                            <input type="hidden" name="payment_method" value="FROM_DEPOSITS">
+                                            <input type="hidden" name="amount_invest" value="{{ $package->price }}">
+                                            <input type="hidden" name="network" value="TRC-20">
+                                            <button type="submit" class="btn btn-warning btn-block font-weight-bold py-2 text-dark" style="border-radius: 8px; font-size: 13px;">
+                                                <i class="fas fa-coins mr-1"></i> Activate FC VIP ${{ number_format($package->price, 0) }}
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <div class="col-12 text-center py-4 text-muted">
-                            <i class="fas fa-box-open fa-2x mb-2 text-slate-300"></i>
-                            <p class="font-weight-bold mb-0">No FC packages found.</p>
+                        <div class="col-12 text-center py-5 text-muted">
+                            <i class="fas fa-gem fa-2x mb-2 text-warning"></i>
+                            <p class="font-weight-bold mb-0">No FC VIP packages available at the moment.</p>
                         </div>
                     @endforelse
                 </div>

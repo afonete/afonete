@@ -296,20 +296,50 @@ class PaymentController extends Controller
     }
 
 
+    /**
+     * §FC-INDEPENDENCE tier + duplicate guards:
+     *   • User cannot buy an FC package at a price LOWER than their highest FC tier.
+     *   • User cannot buy an FC package at the SAME price as a tier they already hold.
+     *   • FC tier rules never compare against UVP history (kept separate).
+     *
+     * Returns null on success or an error message string on violation.
+     */
+    private function validateFcTierPurchase(User $user, FCpackage $package): ?string
+    {
+        $price   = round((float) $package->price, 2);
+        $highest = round((float) $user->highestFcPackageAmount(), 2);
+
+        if ($highest > 0 && $price < $highest) {
+            return 'FC VIP Package Purchase Error: You cannot purchase an FC VIP package ($'
+                . number_format($price, 2) . ') below your highest previously purchased FC VIP package ($'
+                . number_format($highest, 2) . ').';
+        }
+
+        if ($highest > 0 && abs($price - $highest) < 0.01) {
+            return 'FC VIP Package Purchase Error: You already hold the "'
+                . $package->name . '" FC VIP package ($' . number_format($price, 2)
+                . '). Duplicate purchases of the same FC tier are not allowed. Please choose a higher FC VIP tier to upgrade.';
+        }
+
+        return null;
+    }
+
+
   public function blockpay(Request $request)
   {
 
-
-
     if($request->option == 'DEPOSIT'){
-
 
         return redirect()->route('user.payment.deposits');
     }
     if($request->option=='crypto'){
+        $user    = Auth::user();
         $package = FCpackage::where("name", $request->package)->first();
         if (!$package) {
             return back()->with('error', 'Invalid FC package selected.');
+        }
+        if ($msg = $this->validateFcTierPurchase($user, $package)) {
+            return back()->with('error', $msg);
         }
 
         // Plisio removed: create a direct USDT TRC20 package-payment invoice.
@@ -1350,7 +1380,7 @@ public function free(Request $request){
           return redirect()->back()->with('error', 'You have already activated your Free Standard account.');
       }
 
-      // Requirement 2: User who activated UVP can't be free user
+      // Requirement 2: User who activated UVP or FC VIP can't be free user
       $hasActiveUvp = ($user->highestUvpPackageAmount() > 0)
           || \App\Models\Payment::where('user', $user->id)
               ->where('status', 1)
@@ -1362,8 +1392,18 @@ public function free(Request $request){
               })
               ->exists();
 
-      if ($hasActiveUvp || in_array(strtoupper(trim((string)$user->has_paid_package)), ['TEAM_LEADER', 'SUPER_LEADER'])) {
-          return redirect()->back()->with('error', 'Users who have activated UVP packages or Team Leader accounts cannot activate a Free Standard account.');
+      $hasActiveFc = ($user->highestFcPackageAmount() > 0)
+          || \App\Models\Payment::where('user', $user->id)
+              ->where('status', 1)
+              ->where('is_expired', false)
+              ->where(function ($q) {
+                  $q->where('category', 'FC')
+                    ->orWhere('payable_type', \App\Models\FCpackage::class);
+              })
+              ->exists();
+
+      if ($hasActiveUvp || $hasActiveFc || in_array(strtoupper(trim((string)$user->has_paid_package)), ['TEAM_LEADER', 'SUPER_LEADER'])) {
+          return redirect()->back()->with('error', 'Users who have activated UVP packages, FC VIP packages, or Team Leader accounts cannot activate a Free Standard account.');
       }
 
       $activation = $this->generateActivationCode(20);
@@ -1427,6 +1467,7 @@ $email=$emaili;
 
     $user = Auth::user();
     $highestUvpAmount = $user->highestUvpPackageAmount();
+    $highestFcAmount  = $user->highestFcPackageAmount();
     $newAmount = (float) $venture->amount_invest;
 
     $recent = $user->investments()
@@ -1435,18 +1476,63 @@ $email=$emaili;
                         ->orderBy("created_at", 'desc')
                         ->first();
     $currentBalance = $this->MyDepositBalance();
-    $adventure = ($venture->venture && $venture->venture !== 'FC' && is_numeric($venture->venture))
+
+    // Detect FC VIP flow: `package_type == FC` (new form) OR legacy `venture == FC`.
+    $isFcFlow = ($venture->package_type === 'FC') || ($venture->venture === 'FC');
+
+    $fcPackage = null;
+    if ($isFcFlow) {
+        $fcId = $venture->package_id ?? $venture->package ?? null;
+        $fcPackage = FCpackage::find($fcId);
+        if (!$fcPackage) {
+            return back()->with('error', 'Invalid FC VIP package selected.');
+        }
+        // Override amount_invest with the fixed package price for FC.
+        $newAmount = (float) $fcPackage->price;
+        $venture->merge(['amount_invest' => $newAmount]);
+
+        // Independent FC tier checks (do NOT compare with UVP history):
+        //   • cannot downgrade (new < highest)
+        //   • cannot re-buy the same tier (new == highest already owned)
+        if ($highestFcAmount > 0) {
+            if ($newAmount < $highestFcAmount) {
+                return view("user.confirm-package-payments-error",[
+                    "amount"=>$newAmount,
+                    "venture"=>null,
+                    "currentBalance"=>$currentBalance,
+                    "requiredAmount"=>max(0, $newAmount - $currentBalance),
+                    "status"=>'i',
+                    "recent"=>(object)['paid' => $highestFcAmount],
+                    "error_message" => "FC VIP Package Purchase Error: You cannot purchase an FC VIP package ($" . number_format($newAmount, 2) . ") below your highest previously purchased FC VIP package amount ($" . number_format($highestFcAmount, 2) . "). FC VIP packages are independent from UVP packages; however, downgrading within the FC VIP product line is not permitted."
+                ]);
+            }
+            if (abs($newAmount - $highestFcAmount) < 0.01) {
+                return view("user.confirm-package-payments-error",[
+                    "amount"=>$newAmount,
+                    "venture"=>null,
+                    "currentBalance"=>$currentBalance,
+                    "requiredAmount"=>0,
+                    "status"=>'i',
+                    "recent"=>(object)['paid' => $highestFcAmount],
+                    "error_message" => "FC VIP Package Purchase Error: You already own an FC VIP package at $" . number_format($highestFcAmount, 2) . " (\"" . $fcPackage->name . "\"). Duplicate purchases of the same FC tier are not allowed. Please choose a higher FC VIP tier to upgrade."
+                ]);
+            }
+        }
+    }
+
+    $adventure = (!$isFcFlow && $venture->venture && $venture->venture !== 'FC' && is_numeric($venture->venture))
         ? Adventures::where("id", $venture->venture)->first()
         : null;
-    $requiredAmount = $currentBalance - $venture->amount_invest;
+    $requiredAmount = $currentBalance - $newAmount;
     $status = ($requiredAmount < 0) ? 'i':'s';
     if($requiredAmount < 0){
         $requiredAmount = -($requiredAmount);
     }
-    
-    if ($highestUvpAmount > 0 && $newAmount < $highestUvpAmount) {
+
+    // Only enforce UVP tier restrictions for UVP (not for FC).
+    if (!$isFcFlow && $highestUvpAmount > 0 && $newAmount < $highestUvpAmount) {
         return view("user.confirm-package-payments-error",[
-            "amount"=>$venture->amount_invest,
+            "amount"=>$newAmount,
             "venture"=>$adventure,
             "currentBalance"=>$currentBalance,
             "requiredAmount"=>$requiredAmount,
@@ -1456,7 +1542,7 @@ $email=$emaili;
         ]);
     }
 
-    if($recent && $recent->paid >= $venture->amount_invest  && $recent->category == 'VENTURE' ){
+    if(!$isFcFlow && $recent && $recent->paid >= $venture->amount_invest  && $recent->category == 'VENTURE' ){
         return view("user.confirm-package-payments-error",[
             "amount"=>$venture->amount_invest,
             "venture"=>$adventure,
@@ -1471,19 +1557,16 @@ $email=$emaili;
     $payment_method = $venture->payment_method;
     if($payment_method == "FROM_DEPOSITS"){
 
-        if($venture->venture == "FC"){
-            
-            
+        if($isFcFlow){
             return view("user.confirm-package-payments",[
-                "amount"=>$venture->amount_invest,
-                "package"=>$venture->venture,
+                "amount"=>$newAmount,
+                "package"=>"FC",
                 "routes"=>'fc',
-                "name"=>$venture->routes,
-                'id'=>$venture->package,
+                "name"=>$fcPackage->name,
+                'id'=>$fcPackage->id,
                 "currentBalance"=>$currentBalance,
-                "requiredAmount"=>number_format($requiredAmount),
+                "requiredAmount"=>number_format($requiredAmount, 2),
                 "status"=>$status
-
             ]);
         }
 
@@ -1514,6 +1597,13 @@ $email=$emaili;
                                                 ]);
     }
     else{
+        // Auto-payment fallback (used when DEPOSIT balance is insufficient).
+        if ($isFcFlow && $fcPackage) {
+            if ($msg = $this->validateFcTierPurchase($user, $fcPackage)) {
+                return back()->with('error', $msg);
+            }
+            return $this->redirectToDirectPackagePayment('FC', (int) $fcPackage->id, (float) $fcPackage->price, $request->input('network', 'TRC-20'));
+        }
         if ($adventure) {
             return $this->redirectToDirectPackagePayment('VENTURE', (int) $adventure->id, (float) $venture->amount_invest, $request->input('network', 'TRC-20'));
         }
@@ -1555,87 +1645,174 @@ $email=$emaili;
 public function PaymentFcFromDeposit(Request $request){
 
     $user = Auth::User();
-    $amount = $request->amount;
-    $expireAt = Carbon::now()->addDays(100);
 
-    $mostRecentPayment = $user->investments()
-                              ->where("is_expired",0)
-                              ->where("status",1)
-                              ->where("category",'FC')
-                              ->orderBy('created_at', 'desc')
-                              ->first();
-    $p = FCpackage::where("name",$request->pack)->first();
-    if(!$mostRecentPayment){
-        $create_payable =  new Paymodel([
-            'user' => $user->id,
-            'package' => $p->name,
-            'amount' => $p->price,
-            'paid' => $amount,
-            'over_paid' => 0,
-            'status' => 1,
-            'expiration_date' => $expireAt,
-            'duration' => 100,
-            'category' => 'FC',
-            'category_id' => 0
-        ]);
-
-        $pay =  $p->payments()->save($create_payable);
-        $this->updateHasPaidPackage($p->name);
-
+    // Resolve the FC VIP package by id (preferred) or name (legacy fallback).
+    $p = null;
+    if ($request->filled('package_id')) {
+        $p = FCpackage::find($request->package_id);
     }
-    else{
-            $newAmount = $mostRecentPayment->amount + $p->price;
-            $mostRecentPayment->update([
-                'package' => $p->name,
-                'amount' => $newAmount,
-                'paid' => $newAmount,
-            ]);
-            $this->updateHasPaidPackage($p->name);
+    if (!$p && $request->filled('pack')) {
+        $p = FCpackage::where("name", $request->pack)->first();
+    }
+    if (!$p) {
+        return back()->with('error', 'Invalid FC VIP package selected.');
     }
 
-    $deposits = Deposits::create([
-        'user_id'=>Auth::User()->id,
-         'amount_deposited'=>0,
-         'amount_removed'=>$amount,
-         'currency_type'=>'DOLLAR',
-         'deposit_method'=>"FROM_DEPOSITS",
-         'status'=>"used"
+    $amount = (float) ($request->amount ?? $p->price);
+    if ($amount <= 0) {
+        $amount = (float) $p->price;
+    }
+
+    // Check sufficient deposit balance first.
+    $currentBalance = (float) $this->MyDepositBalance();
+    if ($currentBalance < $amount) {
+        return back()->with('error', 'Insufficient deposit balance. Please use the automatic USDT TRC-20 payment option instead.');
+    }
+
+    // Independent FC tier check (never compare with UVP history):
+    //   • cannot downgrade
+    //   • cannot repurchase the same tier
+    if ($msg = $this->validateFcTierPurchase($user, $p)) {
+        return back()->with('error', $msg);
+    }
+
+    // Wrap in a transaction so concurrent clicks can't double-create the same FC tier.
+    try {
+        return DB::transaction(function () use ($user, $p, $amount) {
+            // Re-read inside the transaction (lock the user row) to close the race window.
+            $userLocked = User::whereKey($user->id)->lockForUpdate()->first();
+            if ($userLocked->hasFcPackageAtPrice((float) $p->price)) {
+                throw new \RuntimeException('You already own this FC VIP tier ("' . $p->name . '"). Duplicate purchases are not allowed.');
+            }
+            $highestFc = round((float) $userLocked->highestFcPackageAmount(), 2);
+            if ($highestFc > 0 && (float) $p->price < $highestFc) {
+                throw new \RuntimeException('FC VIP Package Purchase Error: You cannot purchase an FC VIP package below your highest FC tier.');
+            }
+
+            return $this->completeFcDepositActivation($userLocked, $p, $amount);
+        });
+    } catch (\Throwable $e) {
+        return back()->with('error', $e->getMessage());
+    }
+}
+
+/**
+ * Inside a transaction, finalize an FC VIP deposit-funded activation
+ * (create payment, debit deposit, write transaction, fire referrals/leadership).
+ */
+private function completeFcDepositActivation(User $user, FCpackage $p, float $amount)
+{
+    $startDate = Carbon::now();
+
+    // §FC-INDEPENDENT: Each FC VIP purchase is an INDEPENDENT record
+    // with its own referral credits/leadership bonuses. FC VIP is a
+    // PERMANENT membership — no expiration_date, no duration, never expires.
+    $create_payable = new Paymodel([
+        'user'            => $user->id,
+        'package'         => $p->name,
+        'amount'          => (float) $p->price,
+        'paid'            => $amount,
+        'over_paid'       => 0,
+        'status'          => 1,
+        'expiration_date' => null,
+        'duration'        => null,
+        'category'        => 'FC',
+        'category_id'     => 0,
+        'is_expired'      => false,
+        'payable_id'      => $p->id,
+        'payable_type'    => FCpackage::class,
     ]);
 
+    $pay = $p->payments()->save($create_payable);
+    $this->calculateEarnings($pay);
 
-    $transactionNo= Transaction::generateTransactionNo();
-    $transaction =  Transaction::create([
-        'user_id'=>$user->id,
-        'transaction_no' => $transactionNo,
-        'transaction_type' => 'SUBSCRIPTION', // or any other type you define
-        'receiver_id'=>0,
+    // §FC-TOKENS-12M: credit locked tokens on FC purchase (12 equal monthly releases).
+    try {
+        \App\Services\FcpTokenService::onFcPurchased($user, $p, $pay);
+    } catch (\Throwable $e) {
+        \Log::warning('FCP token credit (deposit-funded) failed for payment #' . $pay->id . ': ' . $e->getMessage());
+    }
+
+    // FC Leadership bonus engine: +100 VB per direct FC referral plus any
+    // newly-crossed milestone tier rewards (Monday cashout pipeline).
+    try {
+        \App\Services\FcLeadershipService::onFcPaymentConfirmed($pay);
+    } catch (\Throwable $e) {
+        \Log::warning('FC leadership credit (deposit-funded) failed for payment #' . $pay->id . ': ' . $e->getMessage());
+    }
+
+    // FC Streamline Ranks: opportunistically evaluate rank progress for
+    // buyer + direct referrer after every FC payment (cron hourly is backstop).
+    try {
+        \App\Services\FcStreamlineRankService::evaluate($user);
+        $referrerId = (int) ($user->referee_id ?? 0);
+        if ($referrerId > 0) {
+            $ref = User::find($referrerId);
+            if ($ref) {
+                \App\Services\FcStreamlineRankService::evaluate($ref);
+            }
+        }
+    } catch (\Throwable $e) {
+        \Log::warning('FC streamline rank evaluation (deposit-funded) failed after payment #' . $pay->id . ': ' . $e->getMessage());
+    }
+
+    $lastDeposit = Deposits::where('user_id', $user->id)->latest()->first();
+    Deposits::create([
+        'user_id'             => $user->id,
+        'amount_deposited'    => 0,
+        'amount_removed'      => $amount,
+        'currency_type'       => 'DOLLAR',
+        'deposit_method'      => 'FROM_DEPOSITS_FC',
+        'status'              => 'used',
+        'transaction_id'      => Deposits::generateTransactionNo(),
+        'user_wallet_address' => $lastDeposit->user_wallet_address ?? null,
+        'network'             => $lastDeposit->network ?? 'TRC-20',
+    ]);
+
+    // Deduct DEPOSIT bucket from ChartAccount (matches how direct crypto
+    // auto-payment consumes deposit balance in DirectPackagePaymentService).
+    $existingDeposit = (float) ChartAccount::where('user_id', $user->id)->where('acc_type', 'DEPOSIT')->sum('amount');
+    ChartAccount::updateOrCreate(
+        ['user_id' => $user->id, 'acc_type' => 'DEPOSIT'],
+        ['amount'  => max(0, $existingDeposit - $amount)]
+    );
+
+    $transactionNo = Transaction::generateTransactionNo();
+    Transaction::create([
+        'user_id'             => $user->id,
+        'transaction_no'      => $transactionNo,
+        'transaction_type'    => 'SUBSCRIPTION',
+        'receiver_id'         => 0,
         'transaction_details' => json_encode([
-            'product' => $p->name,
-            'user' => Auth::User()->email,
-            'plan' => 'soon',
-            'start_date' =>Carbon::now(),
-            'end_date'=>Carbon::now()->addDays(100),
-            'package'=>$p->name,
-            'price'=>$p->price,
-            'token'=>$p->default_token,
-            'current_price'=>$mostRecentPayment->amount,
-            'poolcapital'=>0,
-            'current_poolcapital'=>0,
-            'LP'=>0,
-            'current_LP'=>0,
-            'period'=>$p->duration.' days',
-            'revenue_earned'=>0,
-            'revenue_type'=>'soon',
-            'status'=>'success',
-            'purchase_date'=>Carbon::now() ,
-            'username'=>Auth::User()->name
-
-
+            'product'            => $p->name,
+            'user'               => $user->email,
+            'plan'               => 'FC VIP (Lifetime)',
+            'start_date'         => $startDate,
+            'end_date'           => null,
+            'package'            => $p->name,
+            'price'              => (float) $p->price,
+            'token'              => $p->default_token,
+            'current_price'      => (float) $p->price,
+            'poolcapital'        => 0,
+            'current_poolcapital'=> 0,
+            'LP'                 => 0,
+            'current_LP'         => 0,
+            'period'             => 'Lifetime',
+            'revenue_earned'     => 0,
+            'revenue_type'       => 'permanent',
+            'status'             => 'success',
+            'purchase_date'      => $startDate,
+            'username'           => $user->name,
+            'payment_method'     => 'FROM_DEPOSITS_FC',
+            'payment_id'         => $pay->id,
+            'amount_paid'        => $amount,
         ])
     ]);
 
-return redirect()->route("user.dashboard");
+    $this->updateHasPaidPackage($p->name);
 
+    return redirect()->route("user.dashboard")
+        ->with('message', 'FC VIP package "' . $p->name . '" ($' . number_format($amount, 2) . ') activated successfully from your deposit balance.');
 }
 private function updateHasPaidPackage($packageName)
 {

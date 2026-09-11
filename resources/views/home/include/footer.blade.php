@@ -17,9 +17,9 @@ s0.parentNode.insertBefore(s1,s0);
                     <div class="fot-flex">
                             <div class="ft-about">
                             
-                                <p>our solution is to help people to achieving their goals
-                                    and to give everyone financial freedom for innovation technology friendly users to spend time, full access
-                                    on platform</p>
+                                <p>Our solution is to empower people to achieve 
+                                    their goals and pursue financial freedom through
+                                     innovative technology and accessible digital solutions.</p>
 </p>
                                 <div class="fa-social">
                 

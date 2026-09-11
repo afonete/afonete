@@ -363,14 +363,6 @@ ul li a{
                 </a>
               </li>
 
-
-              <li>
-                <a  href="{{route('fcpackages')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                  <i class="fa-solid fa-box"></i>
-                   <span class="flex-1 ms-3 whitespace-nowrap">Manage FC</span>
-                </a>
-              </li>
-
               <li>
                 <a href="{{ route('admin.fom-licence-miner.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.fom-licence-miner.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
                   <i class="fa-solid fa-microchip"></i>
@@ -463,6 +455,20 @@ ul li a{
                        <span class="flex-1 ms-3 whitespace-nowrap">Referral Bonuses</span>
                     </a>
                 </li>
+                @php
+                    try { $adminPendingRankApps = \App\Models\UserRank::where('status', 'pending')->count(); } catch (\Throwable $e) { $adminPendingRankApps = 0; }
+                @endphp
+                <li>
+                    <a href="{{ route('admin.rank.applications') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.rank.applications','admin.rank.approve') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                      <i class="fa-solid fa-award"></i>
+                       <span class="flex-1 ms-3 whitespace-nowrap">Rank Applications</span>
+                       @if($adminPendingRankApps > 0)
+                           <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingRankApps }} pending rank application(s)">
+                               {{ $adminPendingRankApps }}
+                           </span>
+                       @endif
+                    </a>
+                </li>
                 <li>
                     <a href="{{route('admin.token-settings')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-coins"></i>
@@ -514,6 +520,32 @@ ul li a{
         </ul>
        </li>
 
+
+       {{-- ═══ FC PACKAGES (top-level, collapsible, sits right below Investments) ═══ --}}
+       <li>
+        <a href="#" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('fcpackages*','admin.fc-ranks.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+          <i class="fa-solid fa-crown text-yellow-500"></i>
+           <span class="flex-1 ms-3 whitespace-nowrap">FC Packages</span>
+           <span class="inline-flex items-center justify-center px-2 ms-2 text-xs font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-300 rounded-full">FC VIP</span>
+           <span class="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 dark:text-gray-300">
+            <i class="fa-solid fa-angle-right"></i>
+         </span>
+        </a>
+        <ul class="submenu ml-2 py-2">
+          <li>
+              <a href="{{ route('fcpackages') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('fcpackages*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                 <i class="fa-solid fa-gem ml-1 mr-2 text-yellow-500"></i>
+                 <span class="flex-1 ms-1 whitespace-nowrap text-sm">FC VIP Packages</span>
+              </a>
+          </li>
+          <li>
+              <a href="{{ route('admin.fc-ranks.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.fc-ranks.*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                 <i class="fa-solid fa-medal ml-1 mr-2 text-yellow-500"></i>
+                 <span class="flex-1 ms-1 whitespace-nowrap text-sm">FC Streamline Ranks</span>
+              </a>
+          </li>
+        </ul>
+       </li>
 
 
        {{-- ═══ KYC Verifications ═══ --}}

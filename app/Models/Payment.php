@@ -126,6 +126,49 @@ class Payment extends Model
     }
 
     /**
+     * True when this payment row is an FC VIP package (lifetime, no tokens, no ROI).
+     */
+    public function isFc(): bool
+    {
+        $category = strtoupper(trim((string) $this->category));
+        if ($category === 'FC') {
+            return true;
+        }
+        if (!empty($this->payable_type) && stripos((string) $this->payable_type, 'FCpackage') !== false) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Query scope: exclude FC VIP package payments (used wherever a query should
+     * only return UVP/VENTURE rows — token math, daily ROI, renewals, etc.).
+     */
+    public function scopeExcludeFc($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($c) {
+                $c->whereNull('category')
+                  ->orWhere(\Illuminate\Support\Facades\DB::raw('UPPER(category)'), '!=', 'FC');
+            })->where(function ($p) {
+                $p->whereNull('payable_type')
+                  ->orWhere('payable_type', 'NOT LIKE', '%FCpackage%');
+            });
+        });
+    }
+
+    /**
+     * Query scope: only FC VIP package payments.
+     */
+    public function scopeOnlyFc($query)
+    {
+        return $query->where(function ($q) {
+            $q->where(\Illuminate\Support\Facades\DB::raw('UPPER(category)'), 'FC')
+              ->orWhere('payable_type', 'LIKE', '%FCpackage%');
+        });
+    }
+
+    /**
      * Query scope: exclude FOM Licence Miner payments (UVP/FC listings only).
      *
      * Rows with category VENTURE/FC are always kept. Everything else is
@@ -176,9 +219,22 @@ class Payment extends Model
             });
     }
 
+/**
+ * Inverse of the polymorphic relation used by FCpackage::payments()
+ * (morphMany 'payable') and the UVP VenturePayable inverse.
+ *
+ * We expose both names (`payable` and `VenturePayable`) because existing
+ * code in InvestmentController / DirectPackagePaymentService uses the
+ * VenturePayable alias; FCpackage uses the standard 'payable' name.
+ */
+public function payable()
+{
+    return $this->morphTo('payable', 'payable_type', 'payable_id');
+}
+
 public function VenturePayable()
 {
-    return $this->morphTo();
+    return $this->morphTo('payable', 'payable_type', 'payable_id');
 }
 
 
