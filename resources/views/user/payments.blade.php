@@ -5,8 +5,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/charts.css/dist/charts.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.3/dist/sweetalert2.min.css">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-   <div class="content-wrapper">
-<head>
+   <div class="content-wrapper" style="background-color: #f8fafc; min-height: 100vh;">
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/gojs/release/go.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
@@ -82,8 +82,6 @@
           data = data.slice(data.length - 10, data.length);
         }
         </script>
-</head>
-<body>
 
    <div class="container-fluid py-4 max-w-7xl mx-auto">
 
@@ -789,6 +787,5 @@
 
     })
   </script>
-</body>
-</div>
+    </div>
 </div>

@@ -1,7 +1,9 @@
 {{-- ─────────────────────────────────────────────────────────────────────
      Shared Finance section navbar (Bootstrap 4 — Tailwind is NOT loaded).
      Usage:  @include('user.finance-nav', ['active' => 'commission'])
-     Keys:   overview | commission | transaction | subscription
+     Keys:   overview | commissions | commission | transaction | subscription
+     "commissions" = Commission tab on /user/overview (table on overview page)
+     "commission"  = Referral Bonuses page (/user/commission)
      ───────────────────────────────────────────────────────────────────── --}}
 @php($active = $active ?? '')
 <div class="mb-4">
@@ -11,6 +13,13 @@
                class="nav-link font-weight-bold {{ $active === 'overview' ? 'active bg-primary text-white shadow-sm' : 'text-dark bg-white border' }}"
                style="border-radius: 8px;">
                 <i class="fas fa-chart-pie mr-1"></i> Overview
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('overview') }}#commissions"
+               class="nav-link font-weight-bold {{ $active === 'commissions' ? 'active bg-primary text-white shadow-sm' : 'text-dark bg-white border' }}"
+               style="border-radius: 8px;">
+                <i class="fas fa-coins mr-1"></i> Commission
             </a>
         </li>
         <li class="nav-item">

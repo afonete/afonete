@@ -475,17 +475,23 @@ ul li a{
                        <span class="flex-1 ms-3 whitespace-nowrap">Token Prices</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{{route('admin.token-withdrawals')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                      <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                       <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
-                       @if($adminPendingTokenWd > 0)
-                           <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingTokenWd }} pending token withdrawal(s)">
-                               {{ $adminPendingTokenWd }}
-                           </span>
-                       @endif
-                    </a>
-                </li>
+               <li>
+                <a href="{{route('admin.token-withdrawals')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.token-withdrawals*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                  <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Token Withdrawals</span>
+                   @if($adminPendingTokenWd > 0)
+                       <span class="inline-flex items-center justify-center px-2 py-0.5 ms-2 text-xs font-extrabold text-white bg-red-600 rounded-full shadow-sm animate-pulse" title="{{ $adminPendingTokenWd }} pending token withdrawal(s)">
+                           {{ $adminPendingTokenWd }}
+                       </span>
+                   @endif
+                </a>
+               </li>
+               <li>
+                <a href="{{ route('admin.token-savings.index') }}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group {{ request()->routeIs('admin.token-savings*') ? 'bg-gray-100 dark:bg-gray-700 font-bold' : '' }}">
+                  <i class="fa-solid fa-piggy-bank"></i>
+                   <span class="flex-1 ms-3 whitespace-nowrap">Saving Wallet</span>
+                </a>
+               </li>
                 <li>
                     <a href="{{route('admin.withdrawal')}}" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                       <i class="fa-solid fa-money-bill-transfer"></i>

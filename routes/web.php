@@ -91,6 +91,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('user/pay/fc1', [PaymentController::class, 'fc1'])->name('fc1');
     Route::post('user/pay/ventures', [PaymentController::class, 'ventures'])->name('ventures');
     // ── INTERNAL EXCHANGE & WALLET TRANSFERS ──
+    // Cash Account  → /user/internal-exchange         (wallets, USD transfers, history — user.payments view)
+    // Coin Account  → /user/dashboard/payments        (Token swap/buy — internal-exchange view)
+    // Trading Account also resolves to /user/dashboard/payments.
     Route::get('user/internal-exchange', [UserDashboardController::class, 'payments'])->name('user.internal-exchange');
     Route::post('user/internal-exchange/transfer', [FinanceController::class, 'internalWalletTransfer'])->name('user.internal-exchange.transfer');
     Route::post('user/internal-exchange/user-transfer', [FinanceController::class, 'userToUserTransfer'])->name('user.internal-exchange.user-transfer');
@@ -481,6 +484,10 @@ Route::post('admin/deposit-otherwise-decision', [AdminController::class, 'Otherw
     Route::get('admin/token-withdrawals', [AdminController::class, 'tokenWithdrawals'])->name('admin.token-withdrawals');
     Route::post('admin/token-withdrawals/approve', [AdminController::class, 'approveTokenWithdrawal'])->name('admin.token-withdrawals.approve');
     Route::post('admin/token-withdrawals/reject', [AdminController::class, 'rejectTokenWithdrawal'])->name('admin.token-withdrawals.reject');
+
+    // ── TOKEN SAVING WALLET (admin) ────────────────────────────────────
+    Route::get('admin/token-savings', [\App\Http\Controllers\Admin\TokenSavingAdminController::class, 'index'])
+        ->name('admin.token-savings.index');
 
     // ── REFERRAL BONUSES (admin) ────────────────────────────────────────
     // ── FOM REFERRAL MANAGEMENT (admin) ────────────────────────────────

@@ -181,7 +181,7 @@ class InvestmentController extends Controller
         $daysRemaining = $expiresAt ? max(0, (int) $now->diffInDays($expiresAt, false)) : null;
 
         // Compute max renewals
-        $maxRenewals = $package && $package->duration ? (int) floor(($package->duration - 1) / 30) : 0;
+        $maxRenewals = $package && $package->duration ? \App\Services\RenewalCalculator::maxRenewals((int) $package->duration) : 0;
 
         return view('user.investments.show', compact(
             'payment','package','uvpPrice','renewalPrice','lockedTokens',

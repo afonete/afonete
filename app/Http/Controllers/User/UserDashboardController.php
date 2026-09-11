@@ -732,7 +732,7 @@ class UserDashboardController extends Controller{
             $maxRenewals  = \App\Services\RenewalCalculator::maxRenewals($pkgDuration);
 
             $nextRenewalNum       = $renewalsDone + 1;
-            $nextRenewalThreshold = $nextRenewalNum * 30;
+            $nextRenewalThreshold = \App\Services\RenewalCalculator::renewalDueDay($nextRenewalNum, $pkgDuration);
 
             if ($renewalsDone < $maxRenewals && $daysSince >= ($nextRenewalThreshold - 1)) {
                 $renewalDue    = true;
@@ -1214,7 +1214,7 @@ class UserDashboardController extends Controller{
             }
 
             $packageDuration = (int) $package2->duration;
-            $maxRenewals     = (int) floor(($packageDuration - 1) / 30);
+            $maxRenewals     = \App\Services\RenewalCalculator::maxRenewals($packageDuration);
 
             for ($i = 1; $i <= $daysPassed; $i++) {
                 $earnedAt = $startDate->copy()->addDays($i);

@@ -7,13 +7,25 @@ use Carbon\Carbon;
 /**
  * RenewalCalculator — single source of truth for the package renewal math.
  *
- * Per spec (Issue 2 + 6):
+ * Per spec:
  *   • Daily ROI = (package_amount × 80%) × (Adventures.percentage / 100)
  *     → Cashout (25%): withdrawable anytime, min $10
  *     → Trading Voucher (75%): accumulates, used every 30 days for renewal
  *
- *   • Each renewal covers 30 days, EXCEPT the last renewal which covers
- *     `leftover_days` if the package duration is not a multiple of 30.
+ *   • Renewals pay IN ARREARS for the 30-day window that just ended.
+ *     The first 30 days (Day 1–30) are a grace period: you earn first,
+ *     then pay renewal #1 AT day 30 to cover days 1–30. Renewal #2 is
+ *     due at day 60 covering days 31–60, etc.
+ *
+ *   • Each regular renewal covers exactly 30 days at the full monthly fee.
+ *     If the package duration is not a multiple of 30, there is ONE extra
+ *     final renewal due on the EXPIRY DAY that covers the remaining days
+ *     (pro-rated fee). For example, a 100-day UVP has:
+ *         #1 day 30  → covers days  1–30  (30 days, full fee)
+ *         #2 day 60  → covers days 31–60  (30 days, full fee)
+ *         #3 day 90  → covers days 61–90  (30 days, full fee)
+ *         #4 day 100 → covers days 91–100 (10 days, pro-rated)
+ *     giving 30 + 30 + 30 + 10 = 100 days total covered.
  *
  *   • Renewal fee = monthly_fee × (days_covered / 30)
  *     where monthly_fee = daily_income × 75% × 30
@@ -23,16 +35,18 @@ use Carbon\Carbon;
  *   • Tokens received = renewal_fee / renewal_price  (from token_settings)
  *
  *   • Package has a FIXED expiration (set at purchase). Renewals do NOT extend
- *     it — they just unlock income for the next window(s). Package ends at
- *     purchase date + duration regardless of renewals.
+ *     it — they just settle payment for each elapsed window so income can
+ *     keep flowing. Package ends at purchase date + duration regardless.
  *
- *   • Daily income is paused on any day i > 30 where the renewal for that
- *     30-day window hasn't been completed yet:
+ *   • Daily income is paused on any day i where the renewal that covers
+ *     the preceding 30-day window hasn't been completed yet:
  *       $neededRenewal = floor((i - 1) / 30)
- *     Day 1-30 → 0 renewals needed (free window)
- *     Day 31-60 → renewal #1 must be done
- *     Day 61-90 → renewal #2 must be done
- *     Day 91-100 → renewal #3 must be done  (for 100-day package, max=3)
+ *     Day 1–30   → 0 renewals needed (grace period — earn first, pay at day 30)
+ *     Day 31–60  → renewal #1 must be done
+ *     Day 61–90  → renewal #2 must be done
+ *     Day 91–100 → renewal #3 must be done  (100-day package)
+ *     Renewal #4 (final partial for 100-day) is due AT expiry (day 100)
+ *     as a closing settlement — it doesn't gate in-period earning.
  */
 class RenewalCalculator
 {
@@ -66,8 +80,12 @@ class RenewalCalculator
         int $renewalsDone,
         float $renewalPrice
     ): array {
-        $maxRenewals = (int) floor(($packageDuration - 1) / 30);
+        $maxRenewals = self::maxRenewals($packageDuration);
         $isValid = ($renewalsDone + 1) === $renewalNumber && $renewalNumber <= $maxRenewals;
+
+        // leftover_days = remainder when package duration is divided by 30.
+        // e.g. 100 → 10,  400 → 10,  180 → 0,  30 → 0
+        $leftoverDays = $packageDuration % 30;
 
         if (!$isValid) {
             return [
@@ -77,7 +95,7 @@ class RenewalCalculator
                 'days_covered'     => 0,
                 'is_partial'       => false,
                 'is_last_renewal'  => false,
-                'leftover_days'    => $packageDuration - ($maxRenewals * 30),
+                'leftover_days'    => $leftoverDays,
                 'max_renewals'     => $maxRenewals,
                 'is_valid'         => false,
                 'reason'           => "Renewal #{$renewalNumber} is not valid. Max renewals for {$packageDuration}-day package: {$maxRenewals}.",
@@ -88,15 +106,14 @@ class RenewalCalculator
         $dailyTrading = ($packageAmount * 0.80 * ($percentage / 100)) * 0.75;
         $monthlyFee   = round($dailyTrading * 30, 2);
 
-        // Days covered by this renewal (last renewal may be partial)
-        $leftoverDays  = $packageDuration - ($maxRenewals * 30);
+        // The final renewal is pro-rated (covers $leftoverDays) ONLY when
+        // duration is not an exact multiple of 30. All other renewals
+        // (including the one due at day (maxRenewals-1)*30 — e.g. day 90
+        // for a 100-day package) cover a full 30 days at the full monthly fee.
         $isLastRenewal = ($renewalNumber === $maxRenewals);
-        // Partial = last renewal AND it covers fewer than 30 days.
-        // When leftoverDays == 30, the last renewal is a full month and should
-        // NOT be labeled as partial (it covers the same 30 days as any other).
-        $isPartial     = $isLastRenewal && $leftoverDays > 0 && $leftoverDays < 30;
+        $isPartial     = $isLastRenewal && $leftoverDays > 0;
 
-        if ($isLastRenewal && $leftoverDays > 0) {
+        if ($isPartial) {
             $daysCovered = $leftoverDays;
             $renewalFee  = round($monthlyFee * ($leftoverDays / 30), 2);
         } else {
@@ -124,10 +141,20 @@ class RenewalCalculator
 
     /**
      * Compute the max number of renewals allowed for a package duration.
+     *
+     * Renewals pay IN ARREARS, with one renewal per 30-day window and
+     * (optionally) one final pro-rated renewal on the expiry day for any
+     * remainder less than 30 days. This is ceil(duration / 30).
+     *
+     *   100 days → ceil(100/30) = 4 renewals (30, 60, 90 full + 100 partial)
+     *   400 days → ceil(400/30) = 14 renewals (13 full + 400 partial)
+     *   180 days → ceil(180/30) = 6 renewals (all 30-day, no partial)
+     *   30 days  → ceil(30/30)  = 1 renewal (30-day full, no partial)
      */
     public static function maxRenewals(int $packageDuration): int
     {
-        return (int) floor(($packageDuration - 1) / 30);
+        if ($packageDuration <= 0) return 0;
+        return (int) ceil($packageDuration / 30);
     }
 
     /**
@@ -147,11 +174,21 @@ class RenewalCalculator
     }
 
     /**
-     * Compute the renewal due date (in days from package start) for a given
-     * renewal number. Renewal #N is due at day N*30.
+     * Compute the renewal due day (days since package start) for renewal #N
+     * of a package with given duration.
+     *
+     * Regular renewals are due every 30 days (day 30, 60, 90, …).
+     * The final (pro-rated) renewal is due ON THE EXPIRY DAY when duration
+     * is not a multiple of 30 — e.g. for a 100-day package, renewal #4 is
+     * due at day 100 (not day 120).
      */
-    public static function renewalDueDay(int $renewalNumber): int
+    public static function renewalDueDay(int $renewalNumber, int $packageDuration = 0): int
     {
+        $maxRenewals = self::maxRenewals($packageDuration);
+        $leftoverDays = $packageDuration % 30;
+        if ($packageDuration > 0 && $leftoverDays > 0 && $renewalNumber === $maxRenewals) {
+            return $packageDuration; // final pro-rated renewal due at expiry
+        }
         return $renewalNumber * 30;
     }
 
@@ -209,11 +246,12 @@ class RenewalCalculator
         $schedule     = [];
 
         for ($n = 1; $n <= $maxRenewals; $n++) {
-            $result = self::compute($packageAmount, $percentage, $packageDuration, $n, $n - 1, $renewalPrice);
+            $result  = self::compute($packageAmount, $percentage, $packageDuration, $n, $n - 1, $renewalPrice);
+            $dueDay  = self::renewalDueDay($n, $packageDuration);
             $schedule[] = [
                 'renewal_number' => $n,
-                'due_at_day'     => self::renewalDueDay($n),
-                'due_at_date'    => $packageStart->copy()->addDays(self::renewalDueDay($n))->toDateString(),
+                'due_at_day'     => $dueDay,
+                'due_at_date'    => $packageStart->copy()->addDays($dueDay)->toDateString(),
                 'days_covered'   => $result['days_covered'],
                 'fee'            => $result['renewal_fee'],
                 'tokens'         => $result['tokens_received'],

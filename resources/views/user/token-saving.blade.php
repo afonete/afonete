@@ -83,27 +83,30 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <form action="{{ route('user.token-saving.deposit') }}" method="POST" class="row align-items-end js-transaction-password-form">
+                <form action="{{ route('user.token-saving.deposit') }}" method="POST" class="js-transaction-password-form">
                     @csrf
                     <input type="hidden" name="transaction_password" class="js-transaction-password-value">
-                    <div class="col-md-8 mb-2">
+                    <div class="mb-2">
                         <label class="font-weight-bold small text-muted text-uppercase">Amount of {{ $symbol }} to lock for 6 months</label>
                         <div class="input-group">
                             <input type="number" name="amount" step="0.01" min="0.01" max="{{ $availableToken }}" required
-                                   placeholder="Available: {{ number_format($availableToken, 2) }}" class="form-control font-weight-bold"
-                                   style="border-radius:8px 0 0 8px;">
+                                   placeholder="Available: {{ number_format($availableToken, 2) }}"
+                                   class="form-control font-weight-bold"
+                                   style="border-radius:8px 0 0 8px; height: 46px;">
                             <div class="input-group-append">
-                                <span class="input-group-text font-weight-bold bg-success text-white" style="border-radius:0 8px 8px 0;">{{ $symbol }}</span>
+                                <span class="input-group-text font-weight-bold bg-light text-muted border-left-0"
+                                      style="border-radius:0;">
+                                    {{ $symbol }}
+                                </span>
+                                <button type="submit"
+                                        class="btn btn-success font-weight-bold px-4 shadow-sm"
+                                        {{ $availableToken <= 0 ? 'disabled' : '' }}
+                                        style="border-radius:0 8px 8px 0; height: 46px; border: none;">
+                                    <i class="fas fa-piggy-bank mr-1"></i> Save Tokens
+                                </button>
                             </div>
                         </div>
-                        <small class="text-muted mt-1 d-block">Tokens will be locked for 6 months from today, then released to Available Token and you become loan-eligible.</small>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <button type="submit" class="btn btn-success btn-block font-weight-bold py-2 shadow-sm"
-                                {{ $availableToken <= 0 ? 'disabled' : '' }}
-                                style="border-radius:8px;">
-                            <i class="fas fa-piggy-bank mr-1"></i> Save Tokens
-                        </button>
+                        <small class="text-muted mt-2 d-block">Tokens will be locked for 6 months from today, then released to Available Token and you become loan-eligible.</small>
                     </div>
                 </form>
             </div>

@@ -18,38 +18,90 @@ class FinanceController extends Controller
     public function overview()
     {
         $user = Auth::User();
-        $transactions = $user->transactions()->where("transaction_type","INCOME")->get();
 
-        // dd($transactions);
-        $added = Auth::User()->deposits()->sum("amount_deposited");
-        $removed = Auth::User()->deposits()->sum("amount_removed");
-        // $balance = $added - $removed;
+        // History: INCOME transactions paginated 10 per page
+        $transactions = $user->transactions()
+            ->where("transaction_type", "INCOME")
+            ->latest('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
         $balance = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
 
-        $send = Auth::User()->Transferred()->sum("amount");
-        $received = Auth::User()->Received()->sum("amount");
-        // $balance += $received - $send;
+        // ── All system-generated COMMISSION transactions (paginated 10/page) ──
+        // Covers every commission source: direct referral bonuses, indirect
+        // referral bonuses, volume bonuses, leader bonuses, FC leadership
+        // bonuses, streamline-rank bonuses, FOM residual/royal/incentive
+        // commissions — anything written with transaction_type=COMMISSION.
+        $commissions = Transaction::where('user_id', $user->id)
+            ->where('transaction_type', 'COMMISSION')
+            ->latest('created_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('user.overview',["transaction"=>$transactions,"balance"=>$balance]); // Adjust the view path as needed
+        $commissions->getCollection()->transform(function ($t) {
+            $d = json_decode($t->transaction_details, true) ?: [];
+            $t->c_amount      = (float) ($d['amount'] ?? 0);
+            $t->c_type        = $d['revenue_type'] ?? $d['trx_type'] ?? $d['type'] ?? 'Commission';
+            $t->c_description = $d['description'] ?? ($d['note'] ?? '');
+            $t->c_level       = $d['level'] ?? ($d['tier'] ?? null);
+            $t->c_from_user   = $d['from_username'] ?? $d['username'] ?? $d['from_name'] ?? ($d['from_user'] ?? null);
+            $t->c_package     = $d['package'] ?? $d['package_name'] ?? null;
+            $t->c_source_id   = $d['source_id'] ?? $d['payment_id'] ?? $d['from_id'] ?? null;
+            $t->c_cash        = isset($d['cash']) ? (float) $d['cash'] : (isset($d['cash_25']) ? (float) $d['cash_25'] : null);
+            $t->c_trading     = isset($d['trading_voucher']) ? (float) $d['trading_voucher']
+                                : (isset($d['trx_voucher']) ? (float) $d['trx_voucher']
+                                : (isset($d['trading_75']) ? (float) $d['trading_75'] : null));
+            $t->c_status      = $d['status'] ?? 'success';
+            return $t;
+        });
+
+        return view('user.overview', [
+            'transaction' => $transactions,
+            'balance'     => $balance,
+            'commissions' => $commissions,
+        ]);
     }
 
     public function transaction()
     {
         $user = Auth::User();
-        $transactions = Transaction::where("transaction_type","TRANSFER")
-      ->where('user_id',$user->id)->orWhere('receiver_id',$user->id)->get();
 
-        // dd($transactions);
-        $added = Auth::User()->deposits()->sum("amount_deposited");
-        $removed = Auth::User()->deposits()->sum("amount_removed");
-        $balance = $added - $removed;
-        $send = Auth::User()->Transferred()->sum("amount");
-        $received = Auth::User()->Received()->sum("amount");
-        // $balance += $received - $send;
+        // All transactions where this user is sender OR receiver.
+        // Group the OR so it doesn't bleed into other where clauses.
+        $transactions = Transaction::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('receiver_id', $user->id);
+            })
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
+
+        $transactions->getCollection()->transform(function ($t) use ($user) {
+            $d = json_decode($t->transaction_details) ?: (object) [];
+            $t->d_date        = isset($d->date) ? Carbon::parse($d->date)->format('F j, Y, g:i A')
+                                : ($t->created_at ? Carbon::parse($t->created_at)->format('F j, Y, g:i A') : '—');
+            $t->d_daily_vup   = $d->daily_vup ?? 0;
+            $t->d_direct      = $d->direct_bonus ?? 0;
+            $t->d_volume      = $d->volume_bonus ?? 0;
+            $t->d_leader      = $d->leader_bonus ?? 0;
+            $t->d_total       = $d->total ?? ($d->amount ?? 0);
+            $t->d_credit      = $d->credit ?? '—';
+            $t->d_cash        = $d->cash ?? ($d->cash_25 ?? 0);
+            $t->d_trading     = $d->trx_voucher ?? ($d->trading_75 ?? 0);
+            $t->d_sendername  = $d->sendername ?? ($d->to_username ?? ($d->receiver ?? '—'));
+            $t->d_sender      = $d->sender ?? ($d->from_user ?? $t->user_id);
+            $t->d_trx_type    = $d->trx_type ?? $t->transaction_type;
+            $t->d_amount      = $d->amount ?? 0;
+            $t->d_description = $d->to_sender ?? ($d->to_receiver ?? ($d->description ?? '—'));
+            $t->d_status      = $d->status ?? '—';
+            $t->d_direction   = ($t->user_id == $user->id) ? 'sent' : 'received';
+            return $t;
+        });
+
         $balance = $user->ChartAccount()->where("acc_type","CASHOUT")->sum("amount");
 
-
-        return view('user.transaction',["trns"=>$transactions,"balance"=>$balance]); // Adjust the view path as needed
+        return view('user.transaction', ["trns" => $transactions, "balance" => $balance]);
     }
 
     public function transfer(Request $request){
@@ -1026,18 +1078,19 @@ public function getTeamTree(Request $request,$id){
     public function subscription()
     {
         $user = Auth::User();
-        $trans = $user->transactions()
-                            ->orderBy('created_at', 'desc')
-                            ->paginate(15);
-        $transactions = $trans->filter(function ($trx){
-            return $trx->transaction_type == 'SUBSCRIPTION';
-        });
 
-      $balance = $user->investments()->where('status',1)->sum('amount');
-    //   dd($balance);
-    // $balance = $user->DailyIncomes()->where("is_redeemed",false)->sum("amount");
+        // Only SUBSCRIPTION transactions — paginate 10 per page at the DB layer
+        // (filtering BEFORE paginate() preserves correct count/offsets, unlike
+        // the old collection->filter() after pagination).
+        $transactions = $user->transactions()
+            ->where('transaction_type', 'SUBSCRIPTION')
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('user.subscription',['transaction'=>$transactions,'balance'=>$balance.'.00']); // Adjust the view path as needed
+        $balance = $user->investments()->where('status', 1)->sum('amount');
+
+        return view('user.subscription', ['transaction' => $transactions, 'balance' => number_format((float) $balance, 2)]);
     }
 
     public function getDirectAndIndirectReferrals()
@@ -1168,7 +1221,8 @@ public function getTeamTree(Request $request,$id){
 
             // Is renewal due? (every 30 days from package purchase)
             $packageStart   = Carbon::parse($activePayment->created_at);
-            $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
+            $dueDay         = RenewalCalculator::renewalDueDay($renewalNumber, $pkgDuration);
+            $renewalDueDate = $packageStart->copy()->addDays($dueDay);
             // No 1-day-early grace (Issue 6): renewal is due on the exact day or after.
             $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
 
@@ -1241,7 +1295,8 @@ public function getTeamTree(Request $request,$id){
 
             if (!$allRenewalsDone) {
                 $packageStart   = Carbon::parse($payment->created_at);
-                $renewalDueDate = $packageStart->copy()->addDays(30 * $renewalNumber);
+                $dueDay         = RenewalCalculator::renewalDueDay($renewalNumber, $pkgDuration);
+                $renewalDueDate = $packageStart->copy()->addDays($dueDay);
                 $isDue          = Carbon::now()->gte($renewalDueDate->startOfDay());
 
                 $calc = RenewalCalculator::compute(
@@ -1391,11 +1446,18 @@ public function getTeamTree(Request $request,$id){
         );
 
         // 3. Record the renewal
-        $renewedAt      = Carbon::now();
-        // next_renewal_due: null if this was the last renewal for this package duration
-        $nextRenewalDue = $renewalNumber < $maxRenewals
-            ? $renewedAt->copy()->addDays(30)
-            : null;
+        $renewedAt = Carbon::now();
+        // next_renewal_due: null if this was the last renewal for this package duration.
+        // For regular renewals the next due is package_start + (next_N * 30); for the
+        // final pro-rated renewal the due date is the package expiry day.
+        if ($renewalNumber < $maxRenewals) {
+            $nextN = $renewalNumber + 1;
+            $nextDueDay = RenewalCalculator::renewalDueDay($nextN, $pkgDurationPay);
+            $pkgStartForPay = Carbon::parse($activePayment->created_at);
+            $nextRenewalDue = $pkgStartForPay->copy()->addDays($nextDueDay);
+        } else {
+            $nextRenewalDue = null;
+        }
 
         $trxNo = Transaction::generateTransactionNo();
 
@@ -1666,7 +1728,7 @@ public function getTeamTree(Request $request,$id){
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    //  TOKEN WITHDRAWAL — user requests withdrawal to  wallet
+    //  TOKEN WITHDRAWAL — user requests withdrawal to FONE wallet
     //  Admin must approve. Tokens are held (deducted on request).
     // ═══════════════════════════════════════════════════════════════════════
 

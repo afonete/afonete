@@ -25,7 +25,7 @@
         <div class="w-full p-4">
 
 
-            {{-- Nav (shared Bootstrap finance navbar — Tailwind is not loaded on these pages) --}}
+            {{-- Nav (shared Bootstrap finance navbar --}}
             @include('user.finance-nav', ['active' => 'transaction'])
 
 
@@ -82,7 +82,12 @@
             </div>
 
             <div class="bg-white p-3 my-5 rounded shadow-md">
-                <h2 class="text-xl font-bold">History</h2>
+                <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                    <h2 class="text-xl font-bold mb-0">History</h2>
+                    <span class="badge badge-secondary font-weight-bold px-3 py-2" style="font-size:0.85rem;">
+                        {{ $trns->total() }} record{{ $trns->total() !== 1 ? 's' : '' }} · 10 per page
+                    </span>
+                </div>
                 <div class="overflow-x-auto py-2">
                     @if(session('success'))
                         <div class="bg-green-500 text-white p-4 rounded mb-4">
@@ -91,74 +96,94 @@
                     @endif
 
 
-                    <table class="table-auto w-full">
-                        <thead>
+                    <table class="table table-bordered table-hover table-sm w-full" style="font-size: 0.82rem;">
+                        <thead class="bg-light">
                             <tr>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Sr. No</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Transaction No</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Daily</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Daily Vup</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Direct Bonus</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Volume Bonus</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Leadership Bonus</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Total</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Credit</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Cash (25%)</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Trading Voucher (75%)</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Sender Username</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Sender ID</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Transaction Type</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Amount</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Description</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Status</th>
-                                <th class="px-4 py-1 font-medium border-b  text-blue-900">Details</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Sr. No</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Transaction No</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Date</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Direction</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Daily VUP</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Direct Bonus</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Volume Bonus</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Leader Bonus</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900 text-right">Total</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Credit</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900 text-right">Cash (25%)</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900 text-right">Trading Voucher (75%)</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Counterparty</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Sender ID</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Tx Type</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900 text-right">Amount</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900">Description</th>
+                                <th class="px-2 py-2 font-weight-bold text-blue-900 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                        @php
-                            use Carbon\Carbon;
-                        @endphp
-
-
-                            @foreach ( $trns as $trx)
+                            @forelse ($trns as $idx => $trx)
                                 @php
-                                    $data = json_decode($trx->transaction_details);
-                                    $formattedDate = Carbon::parse($data->date)->format('F j, Y, g:i A');
-
+                                    $rowNo = ($trns->currentPage() - 1) * $trns->perPage() + $idx + 1;
                                 @endphp
                                 <tr>
-                                    <td class="border-b px-4 py-2">{{$loop->iteration}}</td>
-                                    <td class="border-b px-4 py-2">{{$trx->transaction_no}}</td>
-                                    <td class="border-b px-4 py-2">{{$formattedDate}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->daily_vup}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->direct_bonus}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->volume_bonus}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->leader_bonus}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->total}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->credit}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->cash}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->trx_voucher}}</td>
-
-                                    <td class="border-b px-4 py-2">{{$data->sendername}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->sender}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->trx_type}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->amount}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->to_sender}}</td>
-                                    <td class="border-b px-4 py-2">{{$data->status}}</td>
-                                    <td class="border-b px-4 py-2">
-                                        <button class="bg-orange-500 text-white px-4 py-0.5 rounded">Details</button>
+                                    <td class="border-b px-2 py-2 text-muted font-weight-bold">{{ $rowNo }}</td>
+                                    <td class="border-b px-2 py-2 font-mono font-weight-bold text-primary small">{{ $trx->transaction_no ?: '#'.$trx->id }}</td>
+                                    <td class="border-b px-2 py-2 text-nowrap small">{{ $trx->d_date }}</td>
+                                    <td class="border-b px-2 py-2 text-center">
+                                        @if($trx->d_direction === 'sent')
+                                            <span class="badge badge-danger px-2 py-1" style="font-size:0.7rem;">SENT</span>
+                                        @else
+                                            <span class="badge badge-success px-2 py-1" style="font-size:0.7rem;">RECEIVED</span>
+                                        @endif
+                                    </td>
+                                    <td class="border-b px-2 py-2">{{ $trx->d_daily_vup }}</td>
+                                    <td class="border-b px-2 py-2">{{ $trx->d_direct }}</td>
+                                    <td class="border-b px-2 py-2">{{ $trx->d_volume }}</td>
+                                    <td class="border-b px-2 py-2">{{ $trx->d_leader }}</td>
+                                    <td class="border-b px-2 py-2 text-right font-weight-bold">{{ $trx->d_total }}</td>
+                                    <td class="border-b px-2 py-2">{{ $trx->d_credit }}</td>
+                                    <td class="border-b px-2 py-2 text-right">{{ $trx->d_cash }}</td>
+                                    <td class="border-b px-2 py-2 text-right">{{ $trx->d_trading }}</td>
+                                    <td class="border-b px-2 py-2 small font-weight-bold">{{ $trx->d_sendername }}</td>
+                                    <td class="border-b px-2 py-2 small">{{ $trx->d_sender }}</td>
+                                    <td class="border-b px-2 py-2">
+                                        <span class="badge badge-info text-white px-2 py-1" style="font-size:0.7rem;">{{ ucwords(str_replace(['_','-'],' ', $trx->d_trx_type)) }}</span>
+                                    </td>
+                                    <td class="border-b px-2 py-2 text-right font-weight-bold text-success">${{ number_format((float) $trx->d_amount, 4) }}</td>
+                                    <td class="border-b px-2 py-2 small">{{ $trx->d_description }}</td>
+                                    <td class="border-b px-2 py-2 text-center">
+                                        @php $st = strtolower((string) $trx->d_status); @endphp
+                                        @if($st === 'success' || $st === 'completed' || $st === 'approved')
+                                            <span class="badge badge-success">Success</span>
+                                        @elseif($st === 'pending')
+                                            <span class="badge badge-warning text-dark">Pending</span>
+                                        @elseif($st === 'failed' || $st === 'rejected')
+                                            <span class="badge badge-danger">{{ ucfirst($st) }}</span>
+                                        @else
+                                            <span class="badge badge-light border">{{ ucfirst($st ?: 'OK') }}</span>
+                                        @endif
                                     </td>
                                 </tr>
-
-                            @endforeach
-
-
+                            @empty
+                                <tr>
+                                    <td colspan="18" class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox text-3xl mb-2 d-block text-gray-300"></i>
+                                        No transactions recorded yet.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
+
+                @if($trns->hasPages())
+                    <div class="d-flex justify-content-center mt-3">
+                        {{ $trns->links('pagination::bootstrap-4') }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>
+</div>
 </body>
 </html>
 

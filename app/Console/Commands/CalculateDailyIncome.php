@@ -90,10 +90,12 @@ class CalculateDailyIncome extends Command
             }
 
             $packageDuration = (int) $package2->duration;
-            // max_renewals = ceil(duration/30) - 1, equivalent to floor((duration-1)/30).
-            // For a 100-day package: floor(99/30) = 3.
-            // The 3rd renewal covers the leftover days (e.g. 91–100, i.e. 10 days).
-            $maxRenewals = (int) floor(($packageDuration - 1) / 30);
+            // max_renewals = ceil(duration/30). Renewals pay in arrears:
+            //   100-day package → 4 renewals (30,60,90 full + 100 final pro-rated)
+            // Only the first (maxRenewals - 1) renewals gate in-period daily income.
+            // The final renewal (when it is a pro-rated partial due at expiry) is
+            // a closing settlement and does NOT block days within the final window.
+            $maxRenewals = (int) ceil($packageDuration / 30);
 
             for ($i = 1; $i <= $daysPassed; $i++) {
                 $earnedAt = $startDate->copy()->addDays($i);
